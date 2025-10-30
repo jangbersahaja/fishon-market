@@ -44,11 +44,11 @@ export class NotificationErrorBoundary extends React.Component<
       }
 
       return (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            We're having trouble loading notifications
+        <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+          <AlertCircle className="w-12 h-12 mb-4 text-red-500" />
+          <h3 className="mb-2 text-lg font-semibold">Something went wrong</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            We&#39;re having trouble loading notifications
           </p>
           <Button
             onClick={() => {
