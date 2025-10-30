@@ -1,10 +1,6 @@
 export { BookingCard } from "./BookingCard";
 export { BookingsClient } from "./BookingsClient";
 export { BookingStatusBadge } from "./BookingStatusBadge";
-export { BookingSummary } from "./BookingSummary";
-export { BookingTimeline } from "./BookingTimeline";
-export { DashboardHeader } from "./DashboardHeader";
-export { DashboardNav } from "./DashboardNav";
 export { EmptyState } from "./EmptyState";
 export { FavoriteButton } from "./FavoriteButton";
 export { ProfileForm } from "./ProfileForm";

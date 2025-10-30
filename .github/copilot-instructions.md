@@ -368,6 +368,8 @@ You must always follow the documentation instructions in `.github/documentation.
 
 **IMPORTANT**: Do not make mistake. Do not repeat mistakes.
 
+**DO NOT CREATE DOCUMENTATION UNLESS EXPLICITLY REQUESTED**: The user will tell you when to create .md files. Do not create documentation proactively as it causes confusion and date/timeline issues. Only create documentation when the user specifically asks for it.
+
 ## Terminal
 
 You have access to a terminal where you can run commands. Follow instructions in `.github/terminal.instructions.md` when using the terminal.

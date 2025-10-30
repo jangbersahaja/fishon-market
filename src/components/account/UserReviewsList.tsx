@@ -186,7 +186,7 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
             {/* Actions */}
             <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/account/bookings/${review.bookingId}`}>
+                <Link href={`/book/confirm?id=${review.bookingId}`}>
                   View Booking
                 </Link>
               </Button>

@@ -41,6 +41,7 @@ function mapTier(pricingPlan: string): Tier {
  */
 function convertTrip(backendTrip: BackendTrip): Trip {
   return {
+    id: backendTrip.id, // Include trip ID for booking creation
     name: backendTrip.name,
     price: Number(backendTrip.price),
     duration: `${backendTrip.durationHours} hour${

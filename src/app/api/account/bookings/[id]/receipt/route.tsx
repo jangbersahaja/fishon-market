@@ -1,6 +1,10 @@
 import ReceiptTemplate from "@/components/receipt/ReceiptTemplate";
 import { authOptions } from "@/lib/auth/auth-options";
 import { prisma } from "@/lib/database/prisma";
+import {
+  enrichBookingWithTripData,
+  type EnrichedBooking,
+} from "@/lib/services/booking-display-service";
 import { renderToStream } from "@react-pdf/renderer";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -37,6 +41,8 @@ export async function GET(
           },
         },
       },
+      // Also select guest fields for guest bookings
+      // TypeScript will include these by default with the updated schema
     });
 
     if (!booking) {
@@ -66,27 +72,36 @@ export async function GET(
       .toString()
       .padStart(2, "0")}-${booking.id.slice(-6).toUpperCase()}`;
 
+    // Enrich booking with trip/charter data
+    const enrichedBooking: EnrichedBooking = await enrichBookingWithTripData(
+      booking
+    );
+
     // Prepare receipt data
     const receiptData = {
       booking: {
-        id: booking.id,
-        charterName: booking.charterName,
-        location: booking.location,
-        tripName: booking.tripName,
-        date: booking.date,
-        days: booking.days,
-        adults: booking.adults,
-        children: booking.children,
-        startTime: booking.startTime,
-        unitPrice: booking.unitPrice,
-        totalPrice: booking.totalPrice,
-        paidAt: booking.paidAt,
-        createdAt: booking.createdAt,
+        id: enrichedBooking.id,
+        charterName: enrichedBooking.charterName,
+        location: enrichedBooking.location,
+        tripName: enrichedBooking.tripName,
+        date: enrichedBooking.date,
+        days: enrichedBooking.days,
+        adults: enrichedBooking.adults,
+        children: enrichedBooking.children,
+        startTime: enrichedBooking.startTime,
+        unitPrice: enrichedBooking.unitPrice,
+        totalPrice: enrichedBooking.totalPrice,
+        paidAt: enrichedBooking.paidAt,
+        createdAt: enrichedBooking.createdAt,
       },
       user: {
-        name: booking.user.name,
-        email: booking.user.email,
-        phone: booking.user.phone,
+        name:
+          booking.user?.name ||
+          `${booking.guestFirstName || ""} ${
+            booking.guestLastName || ""
+          }`.trim(),
+        email: booking.user?.email || booking.guestEmail || "",
+        phone: booking.user?.phone || booking.guestPhone || "",
       },
       receiptNumber,
     };

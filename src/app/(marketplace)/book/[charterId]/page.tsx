@@ -1,3 +1,4 @@
+import { BookingProgressTimeline } from "@/components/booking";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { getCharterById } from "@/lib/services/charter-service";
@@ -79,6 +80,7 @@ export default async function CheckoutPage({
   const charterData = {
     id: charterId,
     name: charter.name,
+    address: charter.address,
     location: charter.location,
     species: charter.species,
     techniques: charter.techniques,
@@ -100,9 +102,15 @@ export default async function CheckoutPage({
         <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
           Complete Your Booking
         </h1>
-        <p className="text-sm text-gray-600 sm:text-base">
+        <p className="mb-6 text-sm text-gray-600 sm:text-base">
           Review your trip details and tell the captain about yourself
         </p>
+
+        {/* Progress Timeline */}
+        <div className="px-4 py-6 mb-6 bg-white border border-gray-200 rounded-lg sm:px-8">
+          <BookingProgressTimeline currentStep="details" />
+        </div>
+
         <CheckoutForm
           startTimes={startTimes}
           defaultStartTime={defaultStartTime}

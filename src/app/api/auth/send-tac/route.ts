@@ -1,5 +1,5 @@
-import { sendMail } from "@/lib/helpers/email";
 import { prisma } from "@/lib/database/prisma";
+import { sendVerificationCode } from "@/lib/services/email-service";
 import { NextResponse } from "next/server";
 
 // Generate 6-digit TAC
@@ -45,22 +45,14 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send email
-    const subject = "Your Fishon Sign In Code";
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #ec2227;">Your Sign In Code</h2>
-        <p>Hi ${user.name || "there"},</p>
-        <p>Use this code to sign in to your Fishon account:</p>
-        <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
-          ${code}
-        </div>
-        <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
-        <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-      </div>
-    `;
-
-    await sendMail({ to: email, subject, html });
+    // Send email using new email service
+    await sendVerificationCode({
+      to: email,
+      userName: user.name ?? "there",
+      code,
+      purpose: "login",
+      expiryMinutes: 10,
+    });
 
     return NextResponse.json(
       { message: "TAC sent successfully", sentAt: Date.now() },

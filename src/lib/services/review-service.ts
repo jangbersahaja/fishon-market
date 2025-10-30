@@ -63,9 +63,7 @@ export async function canReviewBooking(
     };
   }
 
-  // Calculate trip end time (date + startTime + duration)
   // Reviews available 30 minutes BEFORE trip ends (for sharing experience while fresh)
-  // Note: Currently using local time. TODO: Standardize to Malaysia timezone
   const tripEndTime = calculateTripEndTime(booking);
   const reviewAvailableTime = new Date(tripEndTime);
   reviewAvailableTime.setMinutes(reviewAvailableTime.getMinutes() - 30); // 30min before end

@@ -8,7 +8,6 @@ interface YourDetailsCardProps {
   lastName: string;
   email: string;
   phone: string;
-  disabled?: boolean;
   onFirstNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
@@ -20,7 +19,6 @@ export default function YourDetailsCard({
   lastName,
   email,
   phone,
-  disabled = false,
   onFirstNameChange,
   onLastNameChange,
   onEmailChange,
@@ -30,28 +28,51 @@ export default function YourDetailsCard({
   const { openModal } = useAuthModal();
   const isLoggedIn = !!session?.user;
 
+  // Check if details are prefilled from account
+  const isPrefilled = isLoggedIn && (!!firstName || !!lastName || !!email);
+
   return (
     <section className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold sm:text-lg">Your Details</h2>
+        {isPrefilled && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full">
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <span>Account details filled</span>
+          </div>
+        )}
       </div>
 
       {!isLoggedIn && (
-        <div className="p-3 mb-4 border rounded-lg bg-amber-50 border-amber-200">
-          <div className="flex items-center gap-1 text-sm text-amber-800">
+        <div className="p-3 mb-4 border rounded-lg bg-blue-50 border-blue-200">
+          <div className="text-sm text-blue-800">
             <button
               type="button"
               onClick={() => openModal("signin")}
-              className="text-sm font-bold cursor-pointer hover:underline"
+              className="font-semibold cursor-pointer hover:underline text-[#ec2227]"
             >
               Sign in
-            </button>
-            <span>to autofill your details and track your bookings.</span>
+            </button>{" "}
+            to autofill your details and track your bookings, or continue as a
+            guest.
           </div>
         </div>
       )}
 
-      <div className={`space-y-4 ${disabled ? "opacity-60" : ""}`}>
+      <div className="space-y-4">
+        {/* Removed opacity-60 for disabled state */}
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
@@ -63,7 +84,6 @@ export default function YourDetailsCard({
               onChange={(e) => onFirstNameChange(e.target.value)}
               placeholder="Your first name"
               required
-              disabled={disabled}
               className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
             />
           </label>
@@ -78,7 +98,6 @@ export default function YourDetailsCard({
               onChange={(e) => onLastNameChange(e.target.value)}
               placeholder="Your last name"
               required
-              disabled={disabled}
               className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
             />
           </label>
@@ -95,7 +114,6 @@ export default function YourDetailsCard({
               onChange={(e) => onEmailChange(e.target.value)}
               placeholder="you@example.com"
               required
-              disabled={disabled}
               className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
             />
           </label>
@@ -109,7 +127,6 @@ export default function YourDetailsCard({
               value={phone}
               onChange={(e) => onPhoneChange(e.target.value)}
               placeholder="+60 12-345 6789"
-              disabled={disabled}
               className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
             />
           </label>

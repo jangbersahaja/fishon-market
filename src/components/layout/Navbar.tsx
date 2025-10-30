@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
+import { CheckYourBookings } from "@/components/booking";
+import { NotificationBell } from "@/components/notifications";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,8 +33,8 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
   const headerClass = !transparentOnTop
     ? `${base} ${solid}`
     : open
-    ? `${base} ${solid}`
-    : `${base} bg-transparent absolute`;
+      ? `${base} ${solid}`
+      : `${base} bg-transparent absolute`;
 
   return (
     <header className={headerClass}>
@@ -58,6 +60,9 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
         <nav className="items-center hidden gap-6 md:flex" aria-label="Primary">
           {isAuthed ? (
             <>
+              {/* Notification Bell */}
+              <NotificationBell />
+
               <Link
                 href="/account"
                 aria-current={isActive("/account") ? "page" : undefined}
@@ -83,6 +88,9 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
             </>
           ) : (
             <>
+              {/* Guest users: Show "Check Your Bookings" if they have any */}
+              <CheckYourBookings />
+
               <button
                 onClick={() => openModal("signin", pathname)}
                 className="text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
@@ -162,6 +170,11 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
             </>
           ) : (
             <>
+              {/* Mobile: Check Your Bookings as a link */}
+              <div className="pb-2 mb-2 border-b border-white/20">
+                <CheckYourBookings />
+              </div>
+
               <button
                 onClick={() => {
                   setOpen(false);

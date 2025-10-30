@@ -49,7 +49,7 @@ export function CallCaptainButton({
 // Chat with Captain Button (placeholder for future)
 // ============================================================================
 interface ChatCaptainButtonProps {
-  bookingId: string;
+  bookingId?: string; // Optional for future use
   disabled?: boolean;
   variant?: "default" | "outline";
   size?: "default" | "sm" | "lg";
@@ -58,7 +58,6 @@ interface ChatCaptainButtonProps {
 }
 
 export function ChatCaptainButton({
-  bookingId,
   disabled = true,
   variant = "outline",
   size = "default",
@@ -155,7 +154,7 @@ export function WriteReviewButton({
       } bg-amber-500 hover:bg-amber-600 text-white ${className}`}
       asChild
     >
-      <Link href={`/account/reviews/new?bookingId=${bookingId}`}>
+      <Link href={`/account/reviews?action=new&bookingId=${bookingId}`}>
         <Edit className="w-4 h-4 mr-2" />
         Write Review
       </Link>
@@ -177,7 +176,7 @@ export function ViewReviewButton({
       className={`${fullWidth ? "w-full" : ""} ${className}`}
       asChild
     >
-      <Link href={`/account/reviews/${bookingId}`}>
+      <Link href={`/account/reviews?bookingId=${bookingId}`}>
         <Eye className="w-4 h-4 mr-2" />
         View Review
       </Link>
@@ -212,7 +211,7 @@ export function PayNowButton({
       } bg-green-600 hover:bg-green-700 text-white ${className}`}
       asChild
     >
-      <Link href={`/account/bookings/${bookingId}/payment`}>
+      <Link href={`/book/payment/${bookingId}`}>
         <CreditCard className="w-4 h-4 mr-2" />
         Pay Now
       </Link>
@@ -229,33 +228,16 @@ interface CancelBookingButtonProps {
   size?: "default" | "sm" | "lg";
   className?: string;
   fullWidth?: boolean;
-  onCancel?: () => void; // Optional callback for custom cancel logic
+  onCancel?: () => void; // Required callback for cancel logic
 }
 
 export function CancelBookingButton({
-  bookingId,
   variant = "default",
   size = "default",
   className = "",
   fullWidth = false,
   onCancel,
 }: CancelBookingButtonProps) {
-  if (onCancel) {
-    return (
-      <Button
-        variant={variant}
-        size={size}
-        className={`${
-          fullWidth ? "w-full" : ""
-        } bg-red-600 hover:bg-red-700 text-white ${className}`}
-        onClick={onCancel}
-      >
-        <X className="w-4 h-4 mr-2" />
-        Cancel Booking
-      </Button>
-    );
-  }
-
   return (
     <Button
       variant={variant}
@@ -263,12 +245,10 @@ export function CancelBookingButton({
       className={`${
         fullWidth ? "w-full" : ""
       } bg-red-600 hover:bg-red-700 text-white ${className}`}
-      asChild
+      onClick={onCancel}
     >
-      <Link href={`/account/bookings/${bookingId}/cancel`}>
-        <X className="w-4 h-4 mr-2" />
-        Cancel Booking
-      </Link>
+      <X className="w-4 h-4 mr-2" />
+      Cancel Booking
     </Button>
   );
 }
@@ -298,7 +278,7 @@ export function ViewDetailsButton({
       className={`${fullWidth ? "w-full" : ""} ${className}`}
       asChild
     >
-      <Link href={`/account/bookings/${bookingId}`}>View Details</Link>
+      <Link href={`/book/confirm?id=${bookingId}`}>View Details</Link>
     </Button>
   );
 }

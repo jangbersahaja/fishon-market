@@ -67,13 +67,17 @@ async function enrichBookingsWithCaptainData(
 ): Promise<BookingWithDetails[]> {
   if (bookings.length === 0) return [];
 
-  // Get unique charter IDs
-  const charterIds = [...new Set(bookings.map((b) => b.captainCharterId))];
+  // Get unique charter IDs and trip IDs
+  const charterIds = [...new Set(bookings.map((b) => b.charterId))];
+  const tripIds = [...new Set(bookings.map((b) => b.tripId))];
 
-  // Fetch captain data from fishon-captain database using raw SQL
+  // Fetch captain and charter data from fishon-captain database
   const captainDataRaw = await prismaCaptain.$queryRaw<
     Array<{
       id: string;
+      name: string;
+      city: string;
+      state: string;
       captainPhone: string;
       backupPhone: string | null;
       startingPoint: string;
@@ -83,6 +87,9 @@ async function enrichBookingsWithCaptainData(
   >`
     SELECT 
       c.id,
+      c.name,
+      c.city,
+      c.state,
       cp.phone as "captainPhone",
       c."backupPhone",
       c."startingPoint",
@@ -93,43 +100,93 @@ async function enrichBookingsWithCaptainData(
     WHERE c.id = ANY(${charterIds}::text[])
   `;
 
-  // Convert Decimal types to numbers for serialization
-  const captainData = captainDataRaw.map((c) => ({
-    id: c.id,
-    captainPhone: c.captainPhone,
-    backupPhone: c.backupPhone,
-    startingPoint: c.startingPoint,
-    latitude: c.latitude ? Number(c.latitude) : null,
-    longitude: c.longitude ? Number(c.longitude) : null,
-  }));
+  // Fetch trip data from fishon-captain database
+  const tripDataRaw = await prismaCaptain.$queryRaw<
+    Array<{
+      id: string;
+      name: string;
+      charterId: string;
+      durationHours: number;
+    }>
+  >`
+    SELECT 
+      id,
+      name,
+      "charterId",
+      "durationHours"
+    FROM "Trip"
+    WHERE id = ANY(${tripIds}::text[])
+  `;
 
-  // Create a map for quick lookup
-  const captainMap = new Map(
-    captainData.map((c) => [
+  // Convert Decimal types to numbers and create lookup maps
+  const charterMap = new Map(
+    captainDataRaw.map((c) => [
       c.id,
       {
+        name: c.name,
+        city: c.city,
+        state: c.state,
+        location: `${c.city}, ${c.state}`,
         captainPhone: c.captainPhone,
         captainBackupPhone: c.backupPhone,
         startingPoint: c.startingPoint,
-        latitude: c.latitude,
-        longitude: c.longitude,
+        latitude: c.latitude ? Number(c.latitude) : null,
+        longitude: c.longitude ? Number(c.longitude) : null,
       },
     ])
   );
 
-  // Enrich bookings with captain data
+  const tripMap = new Map(
+    tripDataRaw.map((t) => [
+      t.id,
+      {
+        name: t.name,
+        charterId: t.charterId,
+        durationHours: t.durationHours,
+      },
+    ])
+  );
+
+  // Enrich bookings with captain, charter, and trip data
   return bookings.map((booking) => {
-    const captain = captainMap.get(booking.captainCharterId) || {
-      captainPhone: null,
-      captainBackupPhone: null,
-      startingPoint: null,
-      latitude: null,
-      longitude: null,
-    };
-    return {
+    const trip = tripMap.get(booking.tripId);
+    const charter = trip ? charterMap.get(trip.charterId) : null;
+
+    // Parse guests JSON
+    const guests = booking.guests as {
+      adults: number;
+      children: number;
+    } | null;
+
+    // Convert Prisma Decimal types to numbers and map field names
+    const serializedBooking = {
       ...booking,
-      ...captain,
-    } as BookingWithDetails;
+      // Add missing fields from trip/charter
+      captainCharterId: booking.charterId, // Map charterId to captainCharterId for backwards compatibility
+      charterName: charter?.name || "Unknown Charter",
+      location: charter?.location || "Unknown Location",
+      tripName: trip?.name || "Unknown Trip",
+      durationHours: trip?.durationHours || 0,
+      // Map Prisma field names to interface field names
+      unitPrice: booking.tripPrice ? Number(booking.tripPrice) : 0,
+      totalPrice: booking.finalPrice ? Number(booking.finalPrice) : 0,
+      // Convert Decimal fields to numbers
+      tripPrice: booking.tripPrice ? Number(booking.tripPrice) : 0,
+      finalPrice: booking.finalPrice ? Number(booking.finalPrice) : 0,
+      // Extract guests
+      adults: guests?.adults || 0,
+      children: guests?.children || 0,
+      // Captain contact info
+      captainPhone: charter?.captainPhone || null,
+      captainBackupPhone: charter?.captainBackupPhone || null,
+      startingPoint: charter?.startingPoint || null,
+      latitude: charter?.latitude || null,
+      longitude: charter?.longitude || null,
+      discount: booking.discount, // Already JSON
+      tax: booking.tax, // Already JSON
+    };
+
+    return serializedBooking as BookingWithDetails;
   });
 }
 

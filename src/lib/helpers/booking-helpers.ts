@@ -160,7 +160,7 @@ export function getBookingActionButton(
     case "PAID":
       return {
         label: "View Trip",
-        href: `/account/bookings/${bookingId}`,
+        href: `/book/confirm?id=${bookingId}`,
         variant: "default",
       };
     case "REJECTED":

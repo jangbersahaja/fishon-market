@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
     const review = await createReview({
       userId: session.user.id,
       bookingId,
-      captainCharterId: check.booking.captainCharterId,
-      charterName: check.booking.charterName,
+      captainCharterId: check.booking.charterId, // Updated field name
+      charterName: "", // Will need to fetch from charter data
       overallRating,
       badges,
       comment,

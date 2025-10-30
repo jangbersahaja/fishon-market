@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
+import { createNotification } from "@/lib/services/notification-service";
+import { getTripById } from "@/lib/services/trip-service";
+import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { CreditCard, Shield } from "lucide-react";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export default async function PaymentPage({
@@ -11,16 +16,22 @@ export default async function PaymentPage({
   const { bookingId } = await params;
   const session = await auth();
 
-  if (!session?.user?.id) {
-    redirect(`/login?next=${encodeURIComponent(`/book/payment/${bookingId}`)}`);
-  }
-
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
   });
 
-  if (!booking || booking.userId !== session.user.id) {
+  if (!booking) {
     redirect("/");
+  }
+
+  // Check authorization: User must be logged in and own the booking
+  // OR booking must be a guest booking (userId is null)
+  const isAuthenticatedOwner =
+    session?.user?.id && booking.userId === session.user.id;
+  const isGuestBooking = !booking.userId && booking.guestEmail;
+
+  if (!isAuthenticatedOwner && !isGuestBooking) {
+    redirect(`/login?next=${encodeURIComponent(`/book/payment/${bookingId}`)}`);
   }
 
   // Only APPROVED bookings can be paid
@@ -28,26 +39,128 @@ export default async function PaymentPage({
     redirect(`/book/confirm?id=${bookingId}`);
   }
 
+  // Enrich booking with trip and charter data
+  const enrichedBooking = await enrichBookingWithTripData(booking);
+
   async function handlePayment() {
     "use server";
     const session = await auth();
-    if (!session?.user?.id) return;
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
     });
 
-    if (!booking || booking.userId !== session.user.id) return;
+    if (!booking) return;
+
+    // Check authorization: must be authenticated owner OR guest booking
+    const isAuthenticatedOwner =
+      session?.user?.id && booking.userId === session.user.id;
+    const isGuestBooking = !booking.userId && booking.guestEmail;
+
+    if (!isAuthenticatedOwner && !isGuestBooking) return;
     if (booking.status !== "APPROVED") return;
 
     // Mock payment - just update status to PAID
-    await prisma.booking.update({
+    const updated = await prisma.booking.update({
       where: { id: bookingId },
       data: {
         status: "PAID",
         paidAt: new Date(),
       },
     });
+
+    console.log("✅ Payment completed for booking:", bookingId);
+
+    // Notify captain app via webhook (non-blocking)
+    (async () => {
+      try {
+        const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
+        const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+        console.log("📤 [WEBHOOK] Preparing to send booking.paid webhook", {
+          hookUrl,
+          hasSecret: !!hookSecret,
+          bookingId: updated.id,
+          charterId: updated.charterId,
+        });
+
+        if (hookUrl && hookSecret) {
+          // Fetch trip data for webhook payload
+          const trip = await getTripById(updated.tripId);
+          const user = updated.userId
+            ? await prisma.user.findUnique({ where: { id: updated.userId } })
+            : null;
+
+          const anglerName =
+            user?.name ||
+            (updated.guestFirstName
+              ? `${updated.guestFirstName} ${updated.guestLastName}`
+              : "Angler");
+
+          const payload = {
+            type: "booking.paid",
+            booking: {
+              id: updated.id,
+              tripId: updated.tripId,
+              charterId: updated.charterId,
+              status: updated.status,
+              date: updated.date.toISOString(),
+              anglerName,
+              charterName: trip?.charter?.name || "Your charter",
+            },
+          };
+
+          console.log("🚀 [WEBHOOK] Sending payment webhook to captain app...");
+          sendWithRetry(hookUrl, payload, {
+            headers: { "x-captain-secret": hookSecret },
+            attempts: 3,
+            baseDelayMs: 300,
+          });
+        } else {
+          console.warn("⚠️ [WEBHOOK] Skipping webhook - missing URL or secret");
+        }
+      } catch (webhookError) {
+        console.error(
+          "❌ [WEBHOOK] Failed to send payment webhook:",
+          webhookError
+        );
+      }
+    })();
+
+    // Notify angler (non-blocking)
+    (async () => {
+      try {
+        const recipientUserId = updated.userId;
+        if (!recipientUserId) return;
+
+        const trip = await getTripById(updated.tripId);
+        if (!trip) return;
+
+        await createNotification({
+          userId: recipientUserId,
+          type: "BOOKING_PAID",
+          title: "Payment Confirmed! ✅",
+          message: `Your payment for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed. See you on the water!`,
+          actionUrl: `/book/confirm?id=${updated.id}`,
+          actionLabel: "View Confirmation",
+          bookingId: updated.id,
+          charterId: updated.charterId,
+          metadata: {
+            charterName: trip.charter.name,
+            tripDate: updated.date.toISOString().slice(0, 10),
+          },
+        });
+      } catch (err) {
+        console.error("Failed to create payment notification:", err);
+      }
+    })();
+
+    // Revalidate pages
+    try {
+      revalidatePath("/book/confirm", "page");
+      revalidatePath("/account/bookings", "page");
+    } catch (error) {
+      console.error("Revalidation failed:", error);
+    }
 
     redirect(`/book/confirm?id=${bookingId}`);
   }
@@ -76,13 +189,13 @@ export default async function PaymentPage({
               <div className="flex justify-between">
                 <dt className="text-gray-600">Charter:</dt>
                 <dd className="font-medium text-gray-900">
-                  {booking.charterName}
+                  {enrichedBooking.charterName}
                 </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-600">Trip:</dt>
                 <dd className="font-medium text-gray-900">
-                  {booking.tripName}
+                  {enrichedBooking.tripName}
                 </dd>
               </div>
               <div className="flex justify-between">
@@ -106,8 +219,9 @@ export default async function PaymentPage({
               <div className="flex justify-between">
                 <dt className="text-gray-600">Guests:</dt>
                 <dd className="font-medium text-gray-900">
-                  {booking.adults} Adult(s)
-                  {booking.children > 0 && `, ${booking.children} Child(ren)`}
+                  {enrichedBooking.adults} Adult(s)
+                  {enrichedBooking.children > 0 &&
+                    `, ${enrichedBooking.children} Child(ren)`}
                 </dd>
               </div>
             </dl>
@@ -121,11 +235,11 @@ export default async function PaymentPage({
               </span>
               <div className="text-right">
                 <div className="text-3xl font-bold text-[#ec2227]">
-                  RM {booking.totalPrice.toFixed(2)}
+                  RM {enrichedBooking.totalPrice.toFixed(2)}
                 </div>
                 <div className="mt-1 text-sm text-gray-500">
                   ({booking.days} day{booking.days > 1 ? "s" : ""} × RM{" "}
-                  {booking.unitPrice.toFixed(2)})
+                  {enrichedBooking.unitPrice.toFixed(2)})
                 </div>
               </div>
             </div>
@@ -153,7 +267,7 @@ export default async function PaymentPage({
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#ec2227] px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-[#d01f23] focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:ring-offset-2"
             >
               <CreditCard className="w-5 h-5" />
-              Confirm Payment - RM {booking.totalPrice.toFixed(2)}
+              Confirm Payment - RM {enrichedBooking.totalPrice.toFixed(2)}
             </button>
           </form>
 

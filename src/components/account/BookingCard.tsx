@@ -1,7 +1,6 @@
 import {
   BookAgainButton,
   CallCaptainButton,
-  CancelBookingButton,
   ChatCaptainButton,
   NavigateButtons,
   PayNowButton,
@@ -10,6 +9,7 @@ import {
   ViewReviewButton,
   WriteReviewButton,
 } from "@/components/account/BookingActionButtons";
+import { CancelBookingAction } from "@/components/account/CancelBookingAction";
 import { Button } from "@/components/ui/button";
 import {
   convert24to12Hour,
@@ -169,7 +169,7 @@ export function BookingCard({
         {booking.status === "PENDING" && (
           <div className="flex gap-3">
             <ViewDetailsButton bookingId={booking.id} fullWidth />
-            <CancelBookingButton bookingId={booking.id} fullWidth />
+            <CancelBookingAction bookingId={booking.id} fullWidth />
           </div>
         )}
 
@@ -178,7 +178,7 @@ export function BookingCard({
           <div className="flex flex-col gap-3">
             <div className="flex gap-3">
               <ViewDetailsButton bookingId={booking.id} fullWidth />
-              <CancelBookingButton bookingId={booking.id} fullWidth />
+              <CancelBookingAction bookingId={booking.id} fullWidth />
             </div>
             <PayNowButton bookingId={booking.id} fullWidth />
           </div>

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
 };
 
-const lastUpdated = "18 September 2025";
+const lastUpdated = "27 October 2025";
 
 export default function HelpCenterPage() {
   return (
@@ -214,23 +214,121 @@ export default function HelpCenterPage() {
             </div>
 
             {/* CTA */}
-            <div className="p-6 border mt-14 rounded-xl border-neutral-200">
-              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold">
-                    Need personalised help?
-                  </h3>
-                  <p className="text-neutral-700">
-                    Our team replies as fast as possible during business hours
-                    (MYT).
-                  </p>
+            {/* Contact Options Grid */}
+            <div className="grid grid-cols-1 gap-6 mt-14 md:grid-cols-3 not-prose">
+              <div className="p-6 bg-white border border-neutral-200 rounded-lg">
+                <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-blue-50">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
                 </div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  Email Support
+                </h3>
+                <p className="mb-4 text-sm text-neutral-600">
+                  Send us an email and we&apos;ll respond within 24 hours.
+                </p>
                 <a
-                  href="/contact"
-                  className="inline-flex items-center rounded-md bg-[#EC2227] px-5 py-2.5 text-white shadow hover:opacity-95"
+                  href="mailto:hello@fishon.my"
+                  className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-neutral-300 rounded-md shadow-sm hover:bg-gray-50"
                 >
-                  Contact Us
+                  hello@fishon.my
                 </a>
+              </div>
+
+              <div className="p-6 bg-white border border-neutral-200 rounded-lg">
+                <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-green-50">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  WhatsApp
+                </h3>
+                <p className="mb-4 text-sm text-neutral-600">
+                  Chat with our support team on WhatsApp.
+                </p>
+                <a
+                  href="https://wa.me/60123456789"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700"
+                >
+                  Chat on WhatsApp
+                </a>
+              </div>
+
+              <div className="p-6 bg-white border border-neutral-200 rounded-lg">
+                <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-purple-50">
+                  <svg
+                    className="w-6 h-6 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  Live Chat
+                </h3>
+                <p className="mb-4 text-sm text-neutral-600">
+                  Chat with our support team in real-time.
+                </p>
+                <button
+                  disabled
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-neutral-200 rounded-md cursor-not-allowed"
+                >
+                  Coming Soon
+                </button>
+              </div>
+            </div>
+
+            {/* Additional Common Questions from Account Support */}
+            <div className="mt-10 not-prose">
+              <h2 className="text-2xl font-semibold">More Questions</h2>
+              <div className="mt-4 border divide-y rounded-xl border-neutral-200">
+                <Faq
+                  q="How do I modify my booking?"
+                  a="To modify your booking, please contact the captain directly or reach out to our support team. Modification policies vary by charter."
+                />
+                <Faq
+                  q="What is the cancellation policy?"
+                  a="Cancellation policies vary by charter. You can cancel PENDING or APPROVED bookings from your bookings page. Check the charter details for specific policies."
+                />
+                <Faq
+                  q="How long does captain approval take?"
+                  a="Captains typically respond within 6-24 hours. Your booking hold expires after 12 hours if not approved. You'll receive an email notification once the captain responds."
+                />
+                <Faq
+                  q="When will I be charged?"
+                  a="You're only charged after the captain approves your booking. Once approved, you'll receive a payment link to complete your booking confirmation."
+                />
               </div>
             </div>
           </article>

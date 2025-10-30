@@ -21,6 +21,7 @@ export async function middleware(request: NextRequest) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
+      cookieName: "next-auth.session-token.market",
     });
 
     if (!token) {
@@ -31,29 +32,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Protect checkout/payment routes (requires authentication)
-  if (pathname.startsWith("/checkout") || pathname.startsWith("/pay")) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-
-    if (!token) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
-    }
+  // 3. Allow /book/payment to handle its own authentication
+  // (it will redirect to login with proper bookingId context)
+  if (pathname.startsWith("/book/payment")) {
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/account/:path*",
-    "/checkout/:path*",
-    "/pay/:path*",
-  ],
+  matcher: ["/admin/:path*", "/account/:path*", "/book/payment/:path*"],
 };

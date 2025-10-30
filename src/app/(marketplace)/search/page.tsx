@@ -168,8 +168,7 @@ export default async function SearchResults({
     <main className="bg-white min-h-dvh">
       {/* Responsive SearchBox: non-sticky on mobile, sticky on desktop under fixed navbar */}
       <div className="sticky top-0 z-40 w-full" style={{ willChange: "top" }}>
-        <div className="h-10 bg-[#ec2227] w-full rounded-b-full" />
-        <div className="w-full px-3 py-3 mx-auto -mt-10 max-w-7xl">
+        <div className="w-full px-3 py-3 mx-auto max-w-7xl">
           <SearchBox />
         </div>
       </div>

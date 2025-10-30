@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
+import { GuestBookingVerificationModal } from "@/components/booking";
+import { useBookingStorage } from "@/hooks/useBookingStorage";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -18,6 +20,7 @@ function toInt(v: string | null, fallback: number) {
 }
 
 type Trip = {
+  id?: string; // Trip ID from captain DB
   name: string;
   duration?: string;
   description?: string;
@@ -46,6 +49,7 @@ interface Captain {
 type CharterData = {
   id?: string;
   name?: string;
+  address?: string;
   location?: string;
   images?: string[];
   boat?: Boat;
@@ -76,6 +80,7 @@ export default function CheckoutForm({
   const pathname = usePathname();
   const { data: session } = useSession();
   const { openModal } = useAuthModal();
+  const { addBooking } = useBookingStorage();
   const isLoggedIn = !!session?.user;
 
   // Get current pathname to preserve it when updating search params
@@ -99,6 +104,7 @@ export default function CheckoutForm({
   const [startTime, setStartTime] = useState<string | undefined>(
     defaultStartTime
   );
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   // Prefill after in-page login if fields are still blank
   useEffect(() => {
@@ -167,43 +173,143 @@ export default function CheckoutForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!charterId) return;
 
-    // Enforce login before proceeding
-    if (!isLoggedIn) {
-      openModal("signin", undefined, { showHomeButton: true });
+    console.log("=== BOOKING SUBMISSION DEBUG ===");
+    console.log("charterId:", charterId);
+    console.log("canSubmit:", canSubmit);
+    console.log("date:", date);
+    console.log("days:", days);
+    console.log("adults:", adults);
+    console.log("firstName:", firstName);
+    console.log("lastName:", lastName);
+    console.log("email:", email);
+    console.log("effectiveStartTimes:", effectiveStartTimes);
+    console.log("startTime:", startTime);
+    console.log("tripIndex:", tripIndex);
+    console.log("trips:", trips);
+    console.log("selectedTrip:", trips?.[tripIndex]);
+    console.log("tripId:", (trips?.[tripIndex] as any)?.id);
+    console.log("isLoggedIn:", isLoggedIn);
+
+    if (!charterId || !canSubmit) {
+      console.log("❌ Submission blocked - charterId or canSubmit failed");
       return;
     }
 
-    if (!canSubmit) return;
-    setSubmitting(true);
     setError(null);
+
+    // Authenticated user flow - direct booking creation
+    if (isLoggedIn) {
+      setSubmitting(true);
+      try {
+        // Get tripId from selected trip
+        const selectedTrip = trips?.[tripIndex];
+        const tripId = (selectedTrip as any)?.id;
+
+        if (!tripId) {
+          throw new Error("Trip ID is missing. Please select a valid trip.");
+        }
+
+        const res = await fetch("/api/bookings/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            charterId,
+            tripId, // Send tripId instead of tripIndex
+            date,
+            days,
+            adults,
+            children,
+            startTime,
+            firstName,
+            lastName,
+            email,
+            phone,
+            note,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error || "Failed to create booking");
+        }
+        const data = await res.json();
+        const bookingId = data?.booking?.id;
+        if (bookingId) {
+          // Save to local storage for guest tracking (even for logged-in users)
+          addBooking({
+            id: bookingId,
+            charterName: charter?.name || "Charter Trip",
+            date,
+            status: "PENDING",
+          });
+
+          router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+        } else {
+          throw new Error("Missing booking id");
+        }
+      } catch (err: any) {
+        setError(err?.message || String(err));
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Guest flow - show verification modal
+    setShowVerificationModal(true);
+  }
+
+  // Handle guest booking after email verification
+  async function handleGuestVerified(token: string) {
+    setShowVerificationModal(false);
+    setSubmitting(true);
+
     try {
-      const res = await fetch("/api/bookings/create", {
+      // Get tripId from selected trip
+      const selectedTrip = trips?.[tripIndex];
+      const tripId = (selectedTrip as any)?.id;
+
+      if (!tripId) {
+        throw new Error("Trip ID is missing. Please select a valid trip.");
+      }
+
+      const res = await fetch("/api/bookings/create-guest", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
+          verificationToken: token,
           charterId,
-          tripIndex,
+          tripId, // Send tripId instead of tripIndex
           date,
           days,
           adults,
           children,
           startTime,
-          firstName,
-          lastName,
-          email,
-          phone,
+          guestFirstName: firstName,
+          guestLastName: lastName,
+          guestEmail: email,
+          guestPhone: phone,
           note,
         }),
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || "Failed to create booking");
       }
+
       const data = await res.json();
       const bookingId = data?.booking?.id;
       if (bookingId) {
+        // Save to local storage for guest tracking
+        addBooking({
+          id: bookingId,
+          charterName: charter?.name || "Charter Trip",
+          date,
+          status: "PENDING",
+        });
+
         router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
       } else {
         throw new Error("Missing booking id");
@@ -260,12 +366,6 @@ export default function CheckoutForm({
         <BookingSummaryCard
           charter={charter}
           captain={charter?.captain}
-          date={date}
-          days={days}
-          adults={adults}
-          childrenCount={children}
-          tripName={chosenTrip?.name}
-          startTime={startTime}
           totalPrice={estTotal}
         />
       </div>
@@ -280,7 +380,6 @@ export default function CheckoutForm({
             lastName={lastName}
             email={email}
             phone={phone}
-            disabled={!isLoggedIn}
             onFirstNameChange={setFirstName}
             onLastNameChange={setLastName}
             onEmailChange={setEmail}
@@ -345,43 +444,98 @@ export default function CheckoutForm({
           />
 
           {/* Submit Button */}
-          <div className="flex flex-col gap-3 p-5 bg-white border rounded-2xl border-black/10 sm:p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
             <button
               type="submit"
               disabled={!canSubmit || submitting}
-              className="w-full sm:w-auto rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
+              onClick={() => {
+                console.log("🖱️ Button clicked!");
+                console.log("Button disabled:", !canSubmit || submitting);
+              }}
+              className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
               {submitting ? "Submitting..." : "Request to Book"}
             </button>
-            {!isLoggedIn && (
-              <p className="text-sm text-gray-700">
-                Please{" "}
-                <button
-                  type="button"
-                  className="font-semibold text-[#ec2227] underline underline-offset-2"
-                  onClick={() =>
-                    openModal("signin", undefined, { showHomeButton: true })
-                  }
-                >
-                  sign in
-                </button>{" "}
-                or{" "}
-                <button
-                  type="button"
-                  className="font-semibold text-[#ec2227] underline underline-offset-2"
-                  onClick={() =>
-                    openModal("register", undefined, { showHomeButton: true })
-                  }
-                >
-                  create an account
-                </button>{" "}
-                to continue.
-              </p>
-            )}
+
             {!canSubmit && (
-              <p className="text-sm text-gray-600">
-                Please complete all required fields
-              </p>
+              <div className="text-sm text-gray-600">
+                <p className="mb-2 font-medium text-center text-gray-700">
+                  Please complete all required fields
+                </p>
+                <ul className="space-y-1 text-xs">
+                  {!charterId && (
+                    <li className="text-red-600">❌ Charter ID missing</li>
+                  )}
+                  {!date && <li className="text-red-600">❌ Date required</li>}
+                  {!(days > 0) && (
+                    <li className="text-red-600">
+                      ❌ Days must be greater than 0
+                    </li>
+                  )}
+                  {!(adults >= 1) && (
+                    <li className="text-red-600">
+                      ❌ At least 1 adult required
+                    </li>
+                  )}
+                  {!firstName && (
+                    <li className="text-red-600">❌ First name required</li>
+                  )}
+                  {!lastName && (
+                    <li className="text-red-600">❌ Last name required</li>
+                  )}
+                  {!email && (
+                    <li className="text-red-600">❌ Email required</li>
+                  )}
+                  {Array.isArray(effectiveStartTimes) &&
+                    effectiveStartTimes.length > 0 &&
+                    !startTime && (
+                      <li className="text-red-600">❌ Start time required</li>
+                    )}
+                </ul>
+              </div>
+            )}
+
+            {!isLoggedIn && canSubmit && (
+              <div className="pt-3 space-y-3 border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-700">
+                  Have an account? Sign in for faster bookings
+                </p>
+                <ul className="space-y-1.5 text-sm text-gray-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">✓</span>
+                    <span>Auto-fill your details</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">✓</span>
+                    <span>Track all your bookings in one place</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-0.5">✓</span>
+                    <span>Save favorites and preferences</span>
+                  </li>
+                </ul>
+                <div className="flex items-center gap-2 text-sm">
+                  <button
+                    type="button"
+                    className="font-semibold text-[#ec2227] underline underline-offset-2 hover:text-[#d01f24] transition-colors"
+                    onClick={() =>
+                      openModal("signin", undefined, { showHomeButton: true })
+                    }
+                  >
+                    Sign in
+                  </button>
+                  <span className="text-gray-400">or</span>
+                  <button
+                    type="button"
+                    className="font-semibold text-[#ec2227] underline underline-offset-2 hover:text-[#d01f24] transition-colors"
+                    onClick={() =>
+                      openModal("register", undefined, { showHomeButton: true })
+                    }
+                  >
+                    Create account
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -392,17 +546,20 @@ export default function CheckoutForm({
             <BookingSummaryCard
               charter={charter}
               captain={charter?.captain}
-              date={date}
-              days={days}
-              adults={adults}
-              childrenCount={children}
-              tripName={chosenTrip?.name}
-              startTime={startTime}
               totalPrice={estTotal}
             />
           </div>
         </div>
       </section>
+
+      {/* Guest Booking Verification Modal */}
+      <GuestBookingVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onVerified={handleGuestVerified}
+        email={email}
+        firstName={firstName}
+      />
     </form>
   );
 }

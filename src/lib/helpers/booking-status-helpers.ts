@@ -3,8 +3,53 @@
  * Utilities for determining booking lifecycle states
  */
 
-import type { BookingWithDetails } from "@/lib/services/booking-service";
 import { BookingStatus } from "@prisma/client";
+
+// Minimal booking interface for status checking
+interface BookingForStatus {
+  date: Date;
+  startTime: string | null;
+  days: number;
+  status: BookingStatus;
+  rejectionReason?: string | null;
+  cancellationReason?: string | null;
+}
+
+/**
+ * Get current time in Malaysian timezone (MYT/UTC+8)
+ */
+export function getMalaysianTime(): Date {
+  const now = new Date();
+  // Convert to Malaysian time (UTC+8)
+  const malaysianTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" })
+  );
+  return malaysianTime;
+}
+
+/**
+ * Calculate trip start time in Malaysian timezone
+ */
+export function calculateTripStartTime(booking: {
+  date: Date;
+  startTime: string | null;
+}): Date {
+  const { date, startTime } = booking;
+
+  // Parse the date string as Malaysian time
+  const tripStart = new Date(date);
+
+  // If startTime exists (e.g., "08:00"), parse and set the time
+  if (startTime) {
+    const [hours, minutes] = startTime.split(":").map(Number);
+    tripStart.setHours(hours || 0, minutes || 0, 0, 0);
+  } else {
+    // Default to start of day if no startTime
+    tripStart.setHours(0, 0, 0, 0);
+  }
+
+  return tripStart;
+}
 
 /**
  * Calculate trip end time based on booking date, startTime, and days
@@ -14,19 +59,9 @@ export function calculateTripEndTime(booking: {
   startTime: string | null;
   days: number;
 }): Date {
-  const { date, startTime, days } = booking;
+  const { days } = booking;
 
-  // Create a date object from booking date
-  const tripStart = new Date(date);
-
-  // If startTime exists (e.g., "07:00"), parse and set the time
-  if (startTime) {
-    const [hours, minutes] = startTime.split(":").map(Number);
-    tripStart.setHours(hours || 0, minutes || 0, 0, 0);
-  } else {
-    // Default to start of day if no startTime
-    tripStart.setHours(0, 0, 0, 0);
-  }
+  const tripStart = calculateTripStartTime(booking);
 
   // Add the duration in days
   // Assuming 8-hour fishing trips (standard charter duration)
@@ -38,15 +73,46 @@ export function calculateTripEndTime(booking: {
 }
 
 /**
+ * Check if a booking's trip is currently happening (started but not ended)
+ */
+export function isTripInProgress(booking: BookingForStatus): boolean {
+  if (booking.status !== BookingStatus.PAID) {
+    return false;
+  }
+
+  const tripStartTime = calculateTripStartTime(booking);
+  const tripEndTime = calculateTripEndTime(booking);
+  const now = getMalaysianTime();
+
+  return now >= tripStartTime && now < tripEndTime;
+}
+
+/**
  * Check if a booking's trip has been completed (trip end time has passed)
  */
-export function isTripCompleted(booking: BookingWithDetails): boolean {
+export function isTripCompleted(booking: BookingForStatus): boolean {
+  // Check database status first
+  if (booking.status === BookingStatus.COMPLETED) {
+    return true;
+  }
+
+  // Fallback: Calculate if trip should be completed (for PAID bookings not yet updated by cron)
   if (booking.status !== BookingStatus.PAID) {
     return false;
   }
 
   const tripEndTime = calculateTripEndTime(booking);
-  const now = new Date();
+  const now = getMalaysianTime();
+
+  console.log("🕐 Trip completion check:", {
+    now: now.toISOString(),
+    nowMYT: now.toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
+    tripEndTime: tripEndTime.toISOString(),
+    tripEndTimeMYT: tripEndTime.toLocaleString("en-MY", {
+      timeZone: "Asia/Kuala_Lumpur",
+    }),
+    isCompleted: now >= tripEndTime,
+  });
 
   return now >= tripEndTime;
 }
@@ -54,7 +120,7 @@ export function isTripCompleted(booking: BookingWithDetails): boolean {
 /**
  * Check if booking is in "In Progress" state
  */
-export function isInProgress(booking: BookingWithDetails): boolean {
+export function isInProgress(booking: BookingForStatus): boolean {
   // PENDING - waiting for captain approval
   // APPROVED - waiting for payment
   // PAID (future) - trip confirmed, waiting for trip date
@@ -74,15 +140,16 @@ export function isInProgress(booking: BookingWithDetails): boolean {
 
 /**
  * Check if booking is "Completed"
+ * Uses COMPLETED status from database
  */
-export function isCompleted(booking: BookingWithDetails): boolean {
-  return booking.status === BookingStatus.PAID && isTripCompleted(booking);
+export function isCompleted(booking: BookingForStatus): boolean {
+  return booking.status === BookingStatus.COMPLETED;
 }
 
 /**
  * Check if booking is "Cancelled"
  */
-export function isCancelled(booking: BookingWithDetails): boolean {
+export function isCancelled(booking: BookingForStatus): boolean {
   return (
     booking.status === BookingStatus.REJECTED ||
     booking.status === BookingStatus.EXPIRED ||
@@ -93,7 +160,7 @@ export function isCancelled(booking: BookingWithDetails): boolean {
 /**
  * Get cancellation reason display text
  */
-export function getCancellationReason(booking: BookingWithDetails): {
+export function getCancellationReason(booking: BookingForStatus): {
   title: string;
   description: string;
 } {
@@ -130,7 +197,7 @@ export function getCancellationReason(booking: BookingWithDetails): {
  */
 export type BookingTab = "in-progress" | "completed" | "cancelled";
 
-export function getBookingTab(booking: BookingWithDetails): BookingTab {
+export function getBookingTab(booking: BookingForStatus): BookingTab {
   if (isInProgress(booking)) return "in-progress";
   if (isCompleted(booking)) return "completed";
   if (isCancelled(booking)) return "cancelled";

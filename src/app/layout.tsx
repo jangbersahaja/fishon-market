@@ -2,6 +2,7 @@ import AuthModal from "@/components/auth/AuthModal";
 import { AuthModalProvider } from "@/components/auth/AuthModalContext";
 import Chrome from "@/components/layout/Chrome";
 import SessionProvider from "@/components/shared/SessionProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth/auth";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -41,6 +42,7 @@ export default async function RootLayout({
           <AuthModalProvider>
             <Chrome>{children}</Chrome>
             <AuthModal />
+            <Toaster />
           </AuthModalProvider>
         </SessionProvider>
       </body>

@@ -73,6 +73,12 @@ const nextConfig = {
         destination: "/book/confirm",
         permanent: true,
       },
+      // Old account booking detail route (deprecated 2025-10-28)
+      {
+        source: "/account/bookings/:id",
+        destination: "/book/confirm?id=:id",
+        permanent: true,
+      },
     ];
   },
 };
