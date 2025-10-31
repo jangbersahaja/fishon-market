@@ -45,12 +45,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Extend expiration for APPROVED bookings (48 hours to pay)
+    const APPROVED_EXPIRY_HOURS = 48;
+    const newExpiresAt = new Date(
+      Date.now() + APPROVED_EXPIRY_HOURS * 60 * 60 * 1000
+    );
+
     const updated = await prisma.booking.update({
       where: { id },
       data: {
         status: "APPROVED",
         captainDecisionAt: new Date(),
         cancellationReason: null,
+        // Extend expiration: anglers have 48 hours to complete payment
+        expiresAt: newExpiresAt,
       },
       select: {
         id: true,

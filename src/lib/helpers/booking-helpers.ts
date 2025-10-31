@@ -329,3 +329,88 @@ export function formatTripDuration(
 
   return "Duration TBD";
 }
+
+/**
+ * Urgency level for booking expiration UX
+ */
+export type UrgencyLevel = "low" | "medium" | "high" | "expired";
+
+/**
+ * Get urgency level based on time remaining until expiration
+ * @param expiresAt - Expiration date, or null if no expiration
+ * @returns Urgency level or null if no expiration
+ *
+ * Thresholds:
+ * - expired: Past expiration time
+ * - high: < 6 hours remaining
+ * - medium: < 24 hours remaining
+ * - low: >= 24 hours remaining
+ */
+export function getUrgencyLevel(expiresAt: Date | null): UrgencyLevel | null {
+  if (!expiresAt) return null;
+
+  const now = new Date();
+  const diff = expiresAt.getTime() - now.getTime();
+
+  // Already expired
+  if (diff <= 0) {
+    return "expired";
+  }
+
+  const hoursRemaining = diff / (1000 * 60 * 60);
+
+  // < 6 hours = high urgency (red)
+  if (hoursRemaining < 6) {
+    return "high";
+  }
+
+  // < 24 hours = medium urgency (yellow)
+  if (hoursRemaining < 24) {
+    return "medium";
+  }
+
+  // >= 24 hours = low urgency (green)
+  return "low";
+}
+
+/**
+ * Format expiration time remaining for display
+ * @param expiresAt - Expiration date
+ * @returns Formatted time string
+ *
+ * Format:
+ * - >= 1 hour: "24h 30m"
+ * - < 1 hour: "45m 30s"
+ * - Expired: "Expired"
+ */
+export function formatExpirationTime(expiresAt: Date): string {
+  const now = new Date();
+  const diff = expiresAt.getTime() - now.getTime();
+
+  if (diff <= 0) {
+    return "Expired";
+  }
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  // >= 1 hour: show "Xh Ym"
+  if (hours >= 1) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  // < 1 hour: show "Xm Ys"
+  return `${minutes}m ${seconds}s`;
+}
+
+/**
+ * Get milliseconds remaining until expiration
+ * @param expiresAt - Expiration date
+ * @returns Milliseconds remaining (0 if expired, negative values treated as 0)
+ */
+export function getExpiresIn(expiresAt: Date): number {
+  const now = new Date();
+  const diff = expiresAt.getTime() - now.getTime();
+  return Math.max(0, diff);
+}

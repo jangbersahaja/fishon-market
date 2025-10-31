@@ -280,6 +280,10 @@ model Booking {
   @@index([status])
   @@index([date])
   @@index([createdAt])
+  // Note: Unique constraint on (charterId, date, startTime) not added because:
+  // - Would prevent rebooking after cancellation/rejection
+  // - Serializable transaction isolation provides race condition protection
+  // - Application logic handles conflict detection for PAID bookings only
 }
 
 // Reviews & Ratings system (Phase 3)

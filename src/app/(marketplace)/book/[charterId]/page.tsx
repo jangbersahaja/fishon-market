@@ -1,6 +1,7 @@
 import { BookingProgressTimeline } from "@/components/booking";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { getCharterById } from "@/lib/services/charter-service";
 import { notFound } from "next/navigation";
 import CheckoutForm from "./ui/CheckoutForm";
@@ -13,6 +14,8 @@ type RouteSearchParams = Promise<{
   trip_index?: string;
   date?: string;
   days?: string;
+  startDate?: string;
+  endDate?: string;
   adults?: string;
   children?: string;
   start_time?: string;
@@ -28,6 +31,22 @@ export default async function CheckoutPage({
   const session = await auth();
   const { charterId } = await params;
   const sp = await searchParams;
+
+  // Normalize date params: support both formats (date+days or startDate+endDate)
+  let normalizedDate: string | undefined;
+  let normalizedDays: number = 1;
+
+  if (sp.startDate && sp.endDate) {
+    // Convert range format to schema format
+    normalizedDate = sp.startDate;
+    normalizedDays = calculateDays(sp.startDate, sp.endDate);
+  } else if (sp.date) {
+    // Use schema format directly
+    normalizedDate = sp.date;
+    const parsedDays = parseInt(sp.days || "1", 10);
+    normalizedDays =
+      Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 1;
+  }
 
   // Fetch charter data
   const charter = await getCharterById(charterId);
@@ -54,13 +73,13 @@ export default async function CheckoutPage({
 
   // Prefill user details if available
   let defaultUser:
-    | { firstName?: string; lastName?: string; email?: string }
+    | { firstName?: string; lastName?: string; email?: string; phone?: string }
     | undefined;
   if (session?.user?.id) {
     try {
       const user = await prisma.user.findUnique({
         where: { id: String((session.user as any).id) },
-        select: { name: true, email: true },
+        select: { name: true, email: true, phone: true },
       });
       if (user) {
         const name = user.name || "";
@@ -70,6 +89,7 @@ export default async function CheckoutPage({
           firstName: firstName || undefined,
           lastName,
           email: user.email || undefined,
+          phone: user.phone || undefined,
         };
       }
     } catch {}
@@ -99,8 +119,8 @@ export default async function CheckoutPage({
   };
 
   return (
-    <main className="w-full min-h-screen px-4 py-6 mx-auto bg-gray-50 sm:px-6">
-      <div className="mx-auto max-w-7xl">
+    <main className="w-full min-h-screen mx-auto bg-gray-50">
+      <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 ">
         <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
           Complete Your Booking
         </h1>
@@ -109,7 +129,7 @@ export default async function CheckoutPage({
         </p>
 
         {/* Progress Timeline */}
-        <div className="px-4 py-6 mb-6 bg-white border border-gray-200 rounded-lg sm:px-8">
+        <div className="px-4 py-10 pt-6 mb-6 sm:px-8">
           <BookingProgressTimeline currentStep="details" />
         </div>
 

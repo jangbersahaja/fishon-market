@@ -3,9 +3,14 @@
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { GuestBookingVerificationModal } from "@/components/booking";
 import { useBookingStorage } from "@/hooks/useBookingStorage";
+import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import { calculateDays } from "@/lib/helpers/date-range-helpers";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import BookingSummaryCard from "./BookingSummaryCard";
 import DateGuestsCard from "./DateGuestsCard";
@@ -13,6 +18,24 @@ import StartConversationCard from "./StartConversationCard";
 import StartTimeSelection from "./StartTimeSelection";
 import TripSelectionCard from "./TripSelectionCard";
 import YourDetailsCard from "./YourDetailsCard";
+
+// Zod validation schema for booking form
+const bookingSchema = z.object({
+  charterId: z.string().min(1, "Charter ID is required"),
+  tripId: z.string().min(1, "Trip ID is required"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  days: z.number().int().min(1).max(14, "Days must be between 1 and 14"),
+  adults: z.number().int().min(1, "At least one adult is required"),
+  children: z.number().int().min(0),
+  startTime: z.string().optional(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  note: z.string().optional(),
+});
+
+type BookingFormData = z.infer<typeof bookingSchema>;
 
 function toInt(v: string | null, fallback: number) {
   const n = Number(v);
@@ -82,7 +105,12 @@ export default function CheckoutForm({
   trips?: Trip[];
   selectedTripIndex?: number;
   charter?: CharterData;
-  defaultUser?: { firstName?: string; lastName?: string; email?: string };
+  defaultUser?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  };
 }) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -103,29 +131,147 @@ export default function CheckoutForm({
   const tripIndexParam = toInt(sp.get("trip_index"), selectedTripIndex ?? 0);
 
   const [tripIndex, setTripIndex] = useState<number>(tripIndexParam);
-  const [firstName, setFirstName] = useState(defaultUser?.firstName || "");
-  const [lastName, setLastName] = useState(defaultUser?.lastName || "");
-  const [email, setEmail] = useState(defaultUser?.email || "");
-  const [phone, setPhone] = useState("");
-  const [note, setNote] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<string | undefined>(
-    defaultStartTime
-  );
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+
+  // Fetch booked dates
+  useEffect(() => {
+    async function fetchBookedDates() {
+      if (!charterId) return;
+
+      try {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 3);
+
+        const response = await fetch(
+          `/api/charters/${charterId}/booked-dates?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setBookedDates(data.bookedDates || []);
+        }
+      } catch (error) {
+        console.error("[CheckoutForm] Failed to fetch booked dates:", error);
+      }
+    }
+
+    fetchBookedDates();
+  }, [charterId]);
+
+  // Calculate blocked dates
+  const blockedDatesSet = useMemo(() => {
+    if (!charter?.schedule) return new Set<string>();
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+
+    return calculateBlockedDates(
+      charter.schedule,
+      charter.unavailability,
+      bookedDates,
+      startDate,
+      endDate
+    );
+  }, [charter?.schedule, charter?.unavailability, bookedDates]);
+
+  // Validate if selected date is blocked
+  const isDateBlocked = useCallback(
+    (dateStr: string) => {
+      if (!dateStr) return false;
+      return blockedDatesSet.has(dateStr);
+    },
+    [blockedDatesSet]
+  );
+
+  // Validate date range
+  const isDateRangeValid = useCallback(
+    (dateStr: string, daysCount: number) => {
+      if (!dateStr || daysCount < 1) return false;
+
+      const startDate = new Date(dateStr + "T00:00:00");
+      for (let i = 0; i < daysCount; i++) {
+        const checkDate = new Date(startDate);
+        checkDate.setDate(checkDate.getDate() + i);
+        const checkDateStr = checkDate.toISOString().split("T")[0];
+        if (blockedDatesSet.has(checkDateStr)) {
+          return false;
+        }
+      }
+      return true;
+    },
+    [blockedDatesSet]
+  );
+
+  // Initialize React Hook Form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    trigger,
+    setError: setFormError,
+    clearErrors,
+  } = useForm<BookingFormData>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      charterId: charterId || "",
+      tripId: "",
+      date,
+      days,
+      adults,
+      children,
+      startTime: defaultStartTime,
+      firstName: defaultUser?.firstName || "",
+      lastName: defaultUser?.lastName || "",
+      email: defaultUser?.email || "",
+      phone: defaultUser?.phone || "",
+      note: "",
+    },
+  });
+
+  // Watch form fields for UI updates
+  const firstName = watch("firstName");
+  const lastName = watch("lastName");
+  const email = watch("email");
+  const phone = watch("phone");
+  const startTime = watch("startTime");
+  const selectedDate = watch("date");
+  const selectedDays = watch("days");
+
+  // Normalize URL params on mount: support both date+days and startDate+endDate formats
+  useEffect(() => {
+    const startDateParam = sp.get("startDate");
+    const endDateParam = sp.get("endDate");
+    const dateParam = sp.get("date");
+
+    // If we have startDate+endDate but not date+days, convert and redirect
+    if (startDateParam && endDateParam && !dateParam) {
+      const calculatedDays = calculateDays(startDateParam, endDateParam);
+      const params = new URLSearchParams(sp as any);
+      params.set("date", startDateParam);
+      params.set("days", String(calculatedDays));
+      params.delete("startDate");
+      params.delete("endDate");
+      router.replace(`${currentPath}?${params.toString()}`, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount - sp/router/currentPath are stable
 
   // Prefill after in-page login if fields are still blank
   useEffect(() => {
     if (!session?.user) return;
-    if (!email && session.user.email) setEmail(session.user.email);
+    if (!email && session.user.email) setValue("email", session.user.email);
     if (!firstName && session.user.name) {
       const [fn, ...rest] = (session.user.name || "").split(" ");
-      setFirstName(fn || "");
+      setValue("firstName", fn || "");
       const ln = rest.join(" ").trim();
-      if (!lastName && ln) setLastName(ln);
+      if (!lastName && ln) setValue("lastName", ln);
     }
-  }, [session?.user, email, firstName, lastName]);
+  }, [session?.user, email, firstName, lastName, setValue]);
 
   const effectiveStartTimes = useMemo(() => {
     const t = trips?.[tripIndex];
@@ -139,6 +285,14 @@ export default function CheckoutForm({
       Array.isArray(effectiveStartTimes) && effectiveStartTimes.length > 0
         ? Boolean(startTime)
         : true;
+
+    // Check if date is valid (not blocked)
+    const dateIsValid =
+      selectedDate && selectedDays > 0
+        ? !isDateBlocked(selectedDate) &&
+          isDateRangeValid(selectedDate, selectedDays)
+        : false;
+
     return Boolean(
       charterId &&
         date &&
@@ -147,7 +301,8 @@ export default function CheckoutForm({
         firstName &&
         lastName &&
         email &&
-        startTimeOk
+        startTimeOk &&
+        dateIsValid
     );
   }, [
     charterId,
@@ -159,6 +314,10 @@ export default function CheckoutForm({
     email,
     startTime,
     effectiveStartTimes,
+    selectedDate,
+    selectedDays,
+    isDateBlocked,
+    isDateRangeValid,
   ]);
 
   function handleTripSelect(idx: number) {
@@ -168,7 +327,7 @@ export default function CheckoutForm({
     if (startTime) params.set("start_time", startTime);
     router.replace(`${currentPath}?${params.toString()}`, { scroll: false });
     // reset start time when switching trips
-    setStartTime(undefined);
+    setValue("startTime", undefined);
   }
 
   const updateSearchParam = useCallback(
@@ -180,107 +339,137 @@ export default function CheckoutForm({
     [sp, router, currentPath]
   );
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // Update form when URL params change
+  useEffect(() => {
+    setValue("date", date);
+    setValue("days", days);
+    setValue("adults", adults);
+    setValue("children", children);
+  }, [date, days, adults, children, setValue]);
 
-    console.log("=== BOOKING SUBMISSION DEBUG ===");
-    console.log("charterId:", charterId);
-    console.log("canSubmit:", canSubmit);
-    console.log("date:", date);
-    console.log("days:", days);
-    console.log("adults:", adults);
-    console.log("firstName:", firstName);
-    console.log("lastName:", lastName);
-    console.log("email:", email);
-    console.log("effectiveStartTimes:", effectiveStartTimes);
-    console.log("startTime:", startTime);
-    console.log("tripIndex:", tripIndex);
-    console.log("trips:", trips);
-    console.log("selectedTrip:", trips?.[tripIndex]);
-    console.log("tripId:", (trips?.[tripIndex] as any)?.id);
-    console.log("isLoggedIn:", isLoggedIn);
+  // Update tripId when trip selection changes
+  useEffect(() => {
+    const selectedTrip = trips?.[tripIndex];
+    const tripId = (selectedTrip as any)?.id;
+    if (tripId) {
+      setValue("tripId", tripId);
+    }
+  }, [tripIndex, trips, setValue]);
 
-    if (!charterId || !canSubmit) {
-      console.log("❌ Submission blocked - charterId or canSubmit failed");
+  // Update charterId when charter changes
+  useEffect(() => {
+    if (charterId) {
+      setValue("charterId", charterId);
+    }
+  }, [charterId, setValue]);
+
+  // Validate selected date against blocked dates
+  useEffect(() => {
+    if (!selectedDate || !selectedDays) {
+      clearErrors("date");
       return;
     }
 
-    setError(null);
+    // Check if single date is blocked
+    if (isDateBlocked(selectedDate)) {
+      setFormError("date", {
+        type: "manual",
+        message:
+          "This date is not available. It may be outside operational days, marked as unavailable, or already fully booked.",
+      });
+      return;
+    }
+
+    // Check if date range overlaps with any blocked dates
+    if (!isDateRangeValid(selectedDate, selectedDays)) {
+      setFormError("date", {
+        type: "manual",
+        message: `The selected date range includes unavailable dates. Please select a different date or reduce the number of days.`,
+      });
+      return;
+    }
+
+    // Clear date errors if validation passes
+    clearErrors("date");
+  }, [
+    selectedDate,
+    selectedDays,
+    isDateBlocked,
+    isDateRangeValid,
+    setFormError,
+    clearErrors,
+  ]);
+
+  const onSubmit = handleSubmit(async (formData) => {
+    console.log("✅ Validation passed, submitting booking...");
 
     // Authenticated user flow - direct booking creation
     if (isLoggedIn) {
-      setSubmitting(true);
       try {
-        // Get tripId from selected trip
-        const selectedTrip = trips?.[tripIndex];
-        const tripId = (selectedTrip as any)?.id;
-
-        if (!tripId) {
-          throw new Error("Trip ID is missing. Please select a valid trip.");
-        }
-
         const res = await fetch("/api/bookings/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            charterId,
-            tripId, // Send tripId instead of tripIndex
-            date,
-            days,
-            adults,
-            children,
-            startTime,
-            firstName,
-            lastName,
-            email,
-            phone,
-            note,
-          }),
+          body: JSON.stringify(formData),
         });
+
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || "Failed to create booking");
+          setFormError("root", {
+            type: "manual",
+            message: data?.error || "Failed to create booking",
+          });
+          return;
         }
+
         const data = await res.json();
         const bookingId = data?.booking?.id;
+
         if (bookingId) {
           // Save to local storage for guest tracking (even for logged-in users)
           addBooking({
             id: bookingId,
             charterName: charter?.name || "Charter Trip",
-            date,
+            date: formData.date,
             status: "PENDING",
           });
 
           router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
         } else {
-          throw new Error("Missing booking id");
+          setFormError("root", {
+            type: "manual",
+            message: "Missing booking id",
+          });
         }
       } catch (err: any) {
-        setError(err?.message || String(err));
-        setSubmitting(false);
+        setFormError("root", {
+          type: "manual",
+          message: err?.message || String(err),
+        });
       }
       return;
     }
 
     // Guest flow - show verification modal
     setShowVerificationModal(true);
-  }
+  });
 
   // Handle guest booking after email verification
   async function handleGuestVerified(token: string) {
     setShowVerificationModal(false);
-    setSubmitting(true);
+
+    // Trigger validation and get form values
+    const isValid = await trigger();
+    if (!isValid) {
+      setFormError("root", {
+        type: "manual",
+        message: "Please fill in all required fields correctly",
+      });
+      return;
+    }
+
+    const formData = watch();
 
     try {
-      // Get tripId from selected trip
-      const selectedTrip = trips?.[tripIndex];
-      const tripId = (selectedTrip as any)?.id;
-
-      if (!tripId) {
-        throw new Error("Trip ID is missing. Please select a valid trip.");
-      }
-
       const res = await fetch("/api/bookings/create-guest", {
         method: "POST",
         headers: {
@@ -288,44 +477,47 @@ export default function CheckoutForm({
         },
         body: JSON.stringify({
           verificationToken: token,
-          charterId,
-          tripId, // Send tripId instead of tripIndex
-          date,
-          days,
-          adults,
-          children,
-          startTime,
-          guestFirstName: firstName,
-          guestLastName: lastName,
-          guestEmail: email,
-          guestPhone: phone,
-          note,
+          ...formData,
+          guestFirstName: formData.firstName,
+          guestLastName: formData.lastName,
+          guestEmail: formData.email,
+          guestPhone: formData.phone,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to create booking");
+        setFormError("root", {
+          type: "manual",
+          message: data?.error || "Failed to create booking",
+        });
+        return;
       }
 
       const data = await res.json();
       const bookingId = data?.booking?.id;
+
       if (bookingId) {
         // Save to local storage for guest tracking
         addBooking({
           id: bookingId,
           charterName: charter?.name || "Charter Trip",
-          date,
+          date: formData.date,
           status: "PENDING",
         });
 
         router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
       } else {
-        throw new Error("Missing booking id");
+        setFormError("root", {
+          type: "manual",
+          message: "Missing booking id",
+        });
       }
     } catch (err: any) {
-      setError(err?.message || String(err));
-      setSubmitting(false);
+      setFormError("root", {
+        type: "manual",
+        message: err?.message || String(err),
+      });
     }
   }
 
@@ -364,9 +556,9 @@ export default function CheckoutForm({
   return (
     <form onSubmit={onSubmit} className="mt-6">
       {/* Error display */}
-      {error && (
+      {errors.root && (
         <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
-          <p className="text-sm text-red-800">{error}</p>
+          <p className="text-sm text-red-800">{errors.root.message}</p>
         </div>
       )}
 
@@ -380,19 +572,17 @@ export default function CheckoutForm({
       </div>
 
       {/* Main grid */}
-      <section className="grid gap-6 lg:grid-cols-5">
+      <section className="grid gap-6 lg:grid-cols-5 ">
         {/* Left column: Form sections */}
-        <div className="space-y-6 lg:col-span-3">
+        <div className="p-5 space-y-6 bg-white border lg:col-span-3 rounded-2xl border-black/10 sm:p-6">
           {/* Your Details */}
           <YourDetailsCard
+            register={register}
+            errors={errors}
             firstName={firstName}
             lastName={lastName}
             email={email}
-            phone={phone}
-            onFirstNameChange={setFirstName}
-            onLastNameChange={setLastName}
-            onEmailChange={setEmail}
-            onPhoneChange={setPhone}
+            phone={phone || ""}
           />
 
           {/* Date + Guests (Search box style) */}
@@ -423,6 +613,8 @@ export default function CheckoutForm({
               updateSearchParam("children", String(clampedChildren));
             }}
             maxGuests={maxGuests}
+            blockedDatesSet={blockedDatesSet}
+            dateError={errors.date?.message}
           />
 
           {/* Trip Selection */}
@@ -440,7 +632,7 @@ export default function CheckoutForm({
             <StartTimeSelection
               startTimes={effectiveStartTimes}
               selectedTime={startTime}
-              onTimeSelect={setStartTime}
+              onTimeSelect={(v) => setValue("startTime", v)}
             />
           )}
 
@@ -451,22 +643,18 @@ export default function CheckoutForm({
             location={charter?.location}
             species={charter?.species || []}
             techniques={charter?.techniques || []}
-            note={note}
-            onNoteChange={setNote}
+            register={register}
+            errors={errors}
           />
 
           {/* Submit Button */}
-          <div className="flex flex-col gap-3 p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+          <div className="flex flex-col gap-3">
             <button
               type="submit"
-              disabled={!canSubmit || submitting}
-              onClick={() => {
-                console.log("🖱️ Button clicked!");
-                console.log("Button disabled:", !canSubmit || submitting);
-              }}
+              disabled={!canSubmit || isSubmitting}
               className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
-              {submitting ? "Submitting..." : "Request to Book"}
+              {isSubmitting ? "Submitting..." : "Request to Book"}
             </button>
 
             {!canSubmit && (
@@ -474,36 +662,6 @@ export default function CheckoutForm({
                 <p className="mb-2 font-medium text-center text-gray-700">
                   Please complete all required fields
                 </p>
-                <ul className="space-y-1 text-xs">
-                  {!charterId && (
-                    <li className="text-red-600">❌ Charter ID missing</li>
-                  )}
-                  {!date && <li className="text-red-600">❌ Date required</li>}
-                  {!(days > 0) && (
-                    <li className="text-red-600">
-                      ❌ Days must be greater than 0
-                    </li>
-                  )}
-                  {!(adults >= 1) && (
-                    <li className="text-red-600">
-                      ❌ At least 1 adult required
-                    </li>
-                  )}
-                  {!firstName && (
-                    <li className="text-red-600">❌ First name required</li>
-                  )}
-                  {!lastName && (
-                    <li className="text-red-600">❌ Last name required</li>
-                  )}
-                  {!email && (
-                    <li className="text-red-600">❌ Email required</li>
-                  )}
-                  {Array.isArray(effectiveStartTimes) &&
-                    effectiveStartTimes.length > 0 &&
-                    !startTime && (
-                      <li className="text-red-600">❌ Start time required</li>
-                    )}
-                </ul>
               </div>
             )}
 

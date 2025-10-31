@@ -59,7 +59,7 @@ export default function TripSelectionCard({
     });
 
   return (
-    <section className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="pb-5 border-b border-black/10">
       <h2 className="mb-4 text-base font-semibold sm:text-lg">Confirm Trips</h2>
 
       <div className="space-y-3">
@@ -79,7 +79,7 @@ export default function TripSelectionCard({
           return (
             <div
               key={trip.name + index}
-              className={`relative overflow-hidden rounded-xl border-2 transition-all cursor-pointer ${
+              className={`relative overflow-hidden rounded-xl border transition-all cursor-pointer ${
                 isSelected
                   ? "border-[#ec2227] bg-red-50/30"
                   : "border-black/10 hover:border-black/20"
@@ -114,7 +114,7 @@ export default function TripSelectionCard({
 
                     {/* Selection indicator */}
                     <div
-                      className={`flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all ${
+                      className={`flex items-center justify-center w-6 h-6 rounded-full border transition-all ${
                         isSelected
                           ? "bg-[#ec2227] border-[#ec2227]"
                           : "border-gray-300"

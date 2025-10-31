@@ -14,7 +14,7 @@ export default function StartTimeSelection({
   if (!startTimes || startTimes.length === 0) return null;
 
   return (
-    <section className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="pb-5 border-b border-black/10">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold sm:text-lg">
@@ -31,7 +31,7 @@ export default function StartTimeSelection({
               key={time}
               type="button"
               onClick={() => onTimeSelect(time)}
-              className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                 isSelected
                   ? "border-[#ec2227] bg-red-50 text-[#ec2227]"
                   : "border-black/10 hover:border-black/20 text-gray-700"

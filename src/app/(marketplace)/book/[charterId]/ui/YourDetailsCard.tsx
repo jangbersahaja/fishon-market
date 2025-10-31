@@ -2,27 +2,38 @@
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { useSession } from "next-auth/react";
+import { FieldErrors, UseFormRegister } from "react-hook-form";
+
+interface BookingFormData {
+  charterId: string;
+  tripId: string;
+  date: string;
+  days: number;
+  adults: number;
+  children: number;
+  startTime?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  note?: string;
+}
 
 interface YourDetailsCardProps {
+  register: UseFormRegister<BookingFormData>;
+  errors: FieldErrors<BookingFormData>;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  onFirstNameChange: (value: string) => void;
-  onLastNameChange: (value: string) => void;
-  onEmailChange: (value: string) => void;
-  onPhoneChange: (value: string) => void;
 }
 
 export default function YourDetailsCard({
+  register,
+  errors,
   firstName,
   lastName,
   email,
-  phone,
-  onFirstNameChange,
-  onLastNameChange,
-  onEmailChange,
-  onPhoneChange,
 }: YourDetailsCardProps) {
   const { data: session } = useSession();
   const { openModal } = useAuthModal();
@@ -32,7 +43,7 @@ export default function YourDetailsCard({
   const isPrefilled = isLoggedIn && (!!firstName || !!lastName || !!email);
 
   return (
-    <section className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="pb-5 border-b border-black/10">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold sm:text-lg">Your Details</h2>
         {isPrefilled && (
@@ -56,7 +67,7 @@ export default function YourDetailsCard({
       </div>
 
       {!isLoggedIn && (
-        <div className="p-3 mb-4 border rounded-lg bg-blue-50 border-blue-200">
+        <div className="p-3 mb-4 border border-blue-200 rounded-lg bg-blue-50">
           <div className="text-sm text-blue-800">
             <button
               type="button"
@@ -80,12 +91,17 @@ export default function YourDetailsCard({
             </span>
             <input
               type="text"
-              value={firstName}
-              onChange={(e) => onFirstNameChange(e.target.value)}
+              {...register("firstName")}
               placeholder="Your first name"
-              required
-              className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+                errors.firstName ? "border-red-500" : "border-black/10"
+              }`}
             />
+            {errors.firstName && (
+              <span className="block mt-1 text-xs text-red-600">
+                {errors.firstName.message}
+              </span>
+            )}
           </label>
 
           <label className="block text-sm">
@@ -94,12 +110,17 @@ export default function YourDetailsCard({
             </span>
             <input
               type="text"
-              value={lastName}
-              onChange={(e) => onLastNameChange(e.target.value)}
+              {...register("lastName")}
               placeholder="Your last name"
-              required
-              className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+                errors.lastName ? "border-red-500" : "border-black/10"
+              }`}
             />
+            {errors.lastName && (
+              <span className="block mt-1 text-xs text-red-600">
+                {errors.lastName.message}
+              </span>
+            )}
           </label>
         </div>
 
@@ -110,12 +131,17 @@ export default function YourDetailsCard({
             </span>
             <input
               type="email"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
+              {...register("email")}
               placeholder="you@example.com"
-              required
-              className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+                errors.email ? "border-red-500" : "border-black/10"
+              }`}
             />
+            {errors.email && (
+              <span className="block mt-1 text-xs text-red-600">
+                {errors.email.message}
+              </span>
+            )}
           </label>
 
           <label className="block text-sm">
@@ -124,11 +150,17 @@ export default function YourDetailsCard({
             </span>
             <input
               type="tel"
-              value={phone}
-              onChange={(e) => onPhoneChange(e.target.value)}
+              {...register("phone")}
               placeholder="+60 12-345 6789"
-              className="w-full px-4 py-2.5 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+                errors.phone ? "border-red-500" : "border-black/10"
+              }`}
             />
+            {errors.phone && (
+              <span className="block mt-1 text-xs text-red-600">
+                {errors.phone.message}
+              </span>
+            )}
           </label>
         </div>
       </div>

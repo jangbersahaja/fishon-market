@@ -1,5 +1,6 @@
 import BookingSummaryCard from "@/app/(marketplace)/book/[charterId]/ui/BookingSummaryCard";
 import {
+  BookingCountdown,
   BookingDetails,
   BookingProgressTimeline,
   CancellationInfo,
@@ -138,41 +139,53 @@ export default async function ConfirmationPage({
             {booking.status === "COMPLETED"
               ? "Trip Completed!"
               : booking.status === "PAID" && tripInProgress
-              ? "Trip In Progress!"
-              : booking.status === "PAID"
-              ? "Booking Confirmed!"
-              : booking.status === "APPROVED"
-              ? "Approved! Complete Payment"
-              : booking.status === "PENDING"
-              ? "Waiting For Captain Approval"
-              : booking.status === "REJECTED"
-              ? "Request Declined"
-              : booking.status === "EXPIRED"
-              ? "Booking Expired"
-              : booking.status === "CANCELLED"
-              ? "Booking Cancelled"
-              : "Booking Status"}
+                ? "Trip In Progress!"
+                : booking.status === "PAID"
+                  ? "Booking Confirmed!"
+                  : booking.status === "APPROVED"
+                    ? "Approved! Complete Payment"
+                    : booking.status === "PENDING"
+                      ? "Waiting For Captain Approval"
+                      : booking.status === "REJECTED"
+                        ? "Request Declined"
+                        : booking.status === "EXPIRED"
+                          ? "Booking Expired"
+                          : booking.status === "CANCELLED"
+                            ? "Booking Cancelled"
+                            : "Booking Status"}
           </h1>
 
           <p className="max-w-2xl text-gray-600">
             {booking.status === "COMPLETED"
               ? "Your fishing trip has been completed. We hope you had an amazing experience! Please share your feedback."
               : booking.status === "PAID" && tripInProgress
-              ? "Your fishing trip is currently in progress. Have a great time and stay safe!"
-              : booking.status === "PAID"
-              ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
-              : booking.status === "APPROVED"
-              ? "The captain has approved your request. Complete payment to confirm your booking."
-              : booking.status === "PENDING"
-              ? "Your booking request has been sent to the captain for review."
-              : booking.status === "REJECTED"
-              ? "The captain was unable to accommodate your request."
-              : booking.status === "EXPIRED"
-              ? "This booking hold has expired."
-              : booking.status === "CANCELLED"
-              ? "This booking has been cancelled."
-              : "View your booking details below."}
+                ? "Your fishing trip is currently in progress. Have a great time and stay safe!"
+                : booking.status === "PAID"
+                  ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
+                  : booking.status === "APPROVED"
+                    ? "The captain has approved your request. Complete payment to confirm your booking."
+                    : booking.status === "PENDING"
+                      ? "Your booking request has been sent to the captain for review."
+                      : booking.status === "REJECTED"
+                        ? "The captain was unable to accommodate your request."
+                        : booking.status === "EXPIRED"
+                          ? "This booking hold has expired."
+                          : booking.status === "CANCELLED"
+                            ? "This booking has been cancelled."
+                            : "View your booking details below."}
           </p>
+
+          {/* Countdown Timer for PENDING/APPROVED bookings */}
+          {(booking.status === "PENDING" || booking.status === "APPROVED") &&
+            booking.expiresAt && (
+              <div className="mt-4">
+                <BookingCountdown
+                  expiresAt={booking.expiresAt}
+                  size="lg"
+                  showIcon={true}
+                />
+              </div>
+            )}
         </div>
         {/* Progress Timeline */}
         <div className="px-10 mb-5 sm:px-15">

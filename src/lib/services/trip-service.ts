@@ -216,9 +216,18 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
 
 /**
  * Get the effective price for a trip (promo if available, otherwise regular price)
+ * @deprecated Use getNormalPrice for booking submissions to ensure normal price is charged
  */
 export function getEffectivePrice(trip: TripData): number {
   return trip.promoPrice ?? trip.price;
+}
+
+/**
+ * Get the normal price for a trip (always returns base price, never promo)
+ * Use this for booking submissions to ensure users are charged the normal price
+ */
+export function getNormalPrice(trip: TripData): number {
+  return trip.price;
 }
 
 /**

@@ -29,32 +29,45 @@ export async function GET(
         })();
 
     // Fetch PAID bookings for this charter in the date range
+    // For multi-day bookings, we need to block ALL days in the range
     const bookings = await prisma.booking.findMany({
       where: {
         charterId,
         status: "PAID",
         date: {
-          gte: startDate,
-          lte: endDate,
+          lte: endDate, // Booking starts before or on endDate
         },
       },
       select: {
         date: true,
+        days: true,
       },
-      distinct: ["date"],
       orderBy: {
         date: "asc",
       },
     });
 
-    // Format dates as YYYY-MM-DD strings
-    const bookedDates = bookings.map((booking) => {
-      const d = new Date(booking.date);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+    // Expand multi-day bookings into all blocked dates
+    const bookedDatesSet = new Set<string>();
+
+    bookings.forEach((booking) => {
+      // For each booking, block all days in range [date, date + days - 1]
+      for (let i = 0; i < booking.days; i++) {
+        const blockedDate = new Date(booking.date);
+        blockedDate.setUTCDate(blockedDate.getUTCDate() + i);
+
+        // Only include if within our query range
+        if (blockedDate >= startDate && blockedDate <= endDate) {
+          const y = blockedDate.getFullYear();
+          const m = String(blockedDate.getMonth() + 1).padStart(2, "0");
+          const day = String(blockedDate.getDate()).padStart(2, "0");
+          bookedDatesSet.add(`${y}-${m}-${day}`);
+        }
+      }
     });
+
+    // Convert Set to sorted array
+    const bookedDates = Array.from(bookedDatesSet).sort();
 
     return NextResponse.json({ bookedDates });
   } catch (error) {

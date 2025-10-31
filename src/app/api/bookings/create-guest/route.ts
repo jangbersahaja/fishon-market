@@ -4,11 +4,7 @@ import {
   sendBookingCreatedEmail,
   sendBookingReceivedCaptainEmail,
 } from "@/lib/services/email-service";
-import {
-  calculateFinalPrice,
-  getEffectivePrice,
-  getTripById,
-} from "@/lib/services/trip-service";
+import { calculateFinalPrice, getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
 import { jwtVerify } from "jose";
@@ -170,67 +166,177 @@ export async function POST(req: Request) {
       }
     }
 
-    // Calculate pricing
-    const tripPrice = getEffectivePrice(trip);
+    // Calculate pricing - IMPORTANT: Use normal price (not promo price)
+    const tripPrice = trip.price; // Always use base price, never promoPrice
     const finalPrice = calculateFinalPrice({ tripPrice, days: ds });
 
     // Hold expires in 12 hours
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
     // Availability guard: prevent overlapping bookings
-    const blockingStatuses = ["PENDING", "APPROVED", "PAID"] as const;
+    // Only PAID bookings block dates (confirmed and paid bookings)
+    const blockingStatuses = ["PAID"] as const;
 
     const newStart = new Date(
       Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
     );
     const newEnd = addDaysUTC(newStart, ds - 1);
 
-    const candidates = await prisma.booking.findMany({
-      where: {
-        charterId: trip.charter.id,
-        status: { in: blockingStatuses as any },
-        date: { lte: newEnd, gte: addDaysUTC(newStart, -31) },
-      },
-      select: { id: true, date: true, days: true, startTime: true },
-    });
+    // Retry configuration for handling race conditions
+    const MAX_RETRIES = 3;
+    const INITIAL_BACKOFF_MS = 100;
 
-    const conflicts = hasConflicts(candidates, newStart, ds, {
-      usesStartTimes: trip.startTimes.length > 0,
-      selectedStartTime:
-        trip.startTimes.length > 0 ? (startTime as string) : null,
-    });
+    let lastError: any;
+    let booking;
 
-    if (conflicts) {
-      return NextResponse.json(
-        {
-          error:
-            "Selected dates/time are no longer available. Please choose a different selection.",
-        },
-        { status: 409 }
-      );
+    // Retry loop with transaction to prevent double bookings
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        // Use transaction with serializable isolation to prevent race conditions
+        booking = await prisma.$transaction(
+          async (tx) => {
+            // Fetch candidates in a coarse window (within transaction)
+            const candidates = await tx.booking.findMany({
+              where: {
+                charterId: trip.charter.id,
+                status: { in: blockingStatuses as any },
+                date: { lte: newEnd, gte: addDaysUTC(newStart, -31) },
+              },
+              select: { id: true, date: true, days: true, startTime: true },
+            });
+
+            const conflicts = hasConflicts(candidates, newStart, ds, {
+              usesStartTimes: trip.startTimes.length > 0,
+              selectedStartTime:
+                trip.startTimes.length > 0 ? (startTime as string) : null,
+            });
+
+            if (conflicts) {
+              throw new Error("BOOKING_CONFLICT");
+            }
+
+            // Create guest booking atomically
+            return await tx.booking.create({
+              data: {
+                // No userId for guest bookings
+                guestFirstName,
+                guestLastName,
+                guestEmail: guestEmail.toLowerCase(),
+                guestPhone,
+                emailVerified: true, // Email was verified via token
+                tripId: trip.id,
+                charterId: trip.charter.id,
+                startTime:
+                  trip.startTimes.length > 0 ? (startTime as string) : null,
+                date: d,
+                days: ds,
+                guests: { adults: ad, children: ch } as Prisma.JsonObject,
+                tripPrice: tripPrice,
+                finalPrice: finalPrice,
+                expiresAt,
+                note:
+                  typeof note === "string" && note.trim()
+                    ? note.trim()
+                    : undefined,
+              },
+            });
+          },
+          {
+            isolationLevel: "Serializable", // Strongest isolation level
+            maxWait: 5000, // Wait up to 5s for lock
+            timeout: 10000, // Transaction timeout 10s
+          }
+        );
+
+        // Success - exit retry loop
+        break;
+      } catch (error: any) {
+        lastError = error;
+
+        // Handle booking conflict
+        if (error.message === "BOOKING_CONFLICT") {
+          return NextResponse.json(
+            {
+              error:
+                "Selected dates/time are no longer available. Please choose a different selection.",
+            },
+            { status: 409 }
+          );
+        }
+
+        // Handle unique constraint violation (P2002)
+        if (error.code === "P2002") {
+          console.warn(
+            `⚠️ Unique constraint violation on attempt ${attempt}/${MAX_RETRIES}`,
+            {
+              charterId: trip.charter.id,
+              date: d.toISOString().split("T")[0],
+              startTime: trip.startTimes.length > 0 ? startTime : null,
+            }
+          );
+
+          // If this was the last attempt, return conflict error
+          if (attempt === MAX_RETRIES) {
+            return NextResponse.json(
+              {
+                error:
+                  "This date/time was just booked by another angler. Please try a different selection.",
+              },
+              { status: 409 }
+            );
+          }
+
+          // Exponential backoff before retry
+          await new Promise((resolve) =>
+            setTimeout(resolve, INITIAL_BACKOFF_MS * attempt)
+          );
+          continue;
+        }
+
+        // Handle transaction timeout or deadlock
+        if (
+          error.code === "P2034" ||
+          error.message?.includes("transaction") ||
+          error.message?.includes("deadlock")
+        ) {
+          console.warn(
+            `⚠️ Transaction error on attempt ${attempt}/${MAX_RETRIES}:`,
+            error.message
+          );
+
+          if (attempt === MAX_RETRIES) {
+            return NextResponse.json(
+              {
+                error:
+                  "Unable to process booking due to high demand. Please try again.",
+              },
+              { status: 503 }
+            );
+          }
+
+          // Backoff before retry
+          await new Promise((resolve) =>
+            setTimeout(resolve, INITIAL_BACKOFF_MS * attempt)
+          );
+          continue;
+        }
+
+        // Unknown error - rethrow
+        throw error;
+      }
     }
 
-    // Create guest booking
-    const booking = await prisma.booking.create({
-      data: {
-        // No userId for guest bookings
-        guestFirstName,
-        guestLastName,
-        guestEmail: guestEmail.toLowerCase(),
-        guestPhone,
-        emailVerified: true, // Email was verified via token
-        tripId: trip.id,
-        charterId: trip.charter.id,
-        startTime: trip.startTimes.length > 0 ? (startTime as string) : null,
-        date: d,
-        days: ds,
-        guests: { adults: ad, children: ch } as Prisma.JsonObject,
-        tripPrice: tripPrice,
-        finalPrice: finalPrice,
-        expiresAt,
-        note: typeof note === "string" && note.trim() ? note.trim() : undefined,
-      },
-    });
+    // If we somehow exit the loop without a booking, return error
+    if (!booking) {
+      console.error(
+        "❌ Guest booking creation failed after retries:",
+        lastError
+      );
+      return NextResponse.json(
+        { error: "Failed to create booking. Please try again." },
+        { status: 500 }
+      );
+    }
 
     // Outbound webhook to captain app (non-blocking)
     try {

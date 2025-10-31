@@ -14,8 +14,9 @@ import {
 import { BookingStatus } from "@prisma/client";
 
 /**
- * Update expired pending bookings
- * Changes PENDING → EXPIRED if expiresAt has passed
+ * Update expired pending and approved bookings
+ * Changes PENDING → EXPIRED if expiresAt has passed (12 hours after creation)
+ * Changes APPROVED → EXPIRED if expiresAt has passed (48 hours after approval)
  */
 export async function updateExpiredBookings(): Promise<{
   updated: number;
@@ -26,21 +27,26 @@ export async function updateExpiredBookings(): Promise<{
   let errors = 0;
 
   try {
-    // Find all PENDING bookings where expiresAt has passed
+    // Find all PENDING or APPROVED bookings where expiresAt has passed
     const expiredBookings = await prisma.booking.findMany({
       where: {
-        status: BookingStatus.PENDING,
+        status: {
+          in: [BookingStatus.PENDING, BookingStatus.APPROVED],
+        },
         expiresAt: {
           lt: now,
         },
       },
       select: {
         id: true,
+        status: true,
         expiresAt: true,
       },
     });
 
-    console.log(`🔄 Found ${expiredBookings.length} expired PENDING bookings`);
+    console.log(
+      `🔄 Found ${expiredBookings.length} expired bookings (PENDING/APPROVED)`
+    );
 
     // Update each booking to EXPIRED status
     for (const booking of expiredBookings) {

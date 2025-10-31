@@ -52,6 +52,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               fill
               className="object-contain"
               priority
+              sizes="150px"
             />
           </span>
         </Link>

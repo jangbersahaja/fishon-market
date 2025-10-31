@@ -8,3 +8,8 @@ export { EmailVerificationModal } from "./EmailVerificationModal";
 export { GuestBookingVerificationModal } from "./GuestBookingVerificationModal";
 export { ReviewSection } from "./ReviewSection";
 export { TripPreparation } from "./TripPreparation";
+
+// Booking Expiration & UX Components
+export { BookingCountdown, BookingCountdownText } from "./BookingCountdown";
+export { BookingExpiredScreen } from "./BookingExpiredScreen";
+export { DateNoLongerAvailableScreen } from "./DateNoLongerAvailableScreen";

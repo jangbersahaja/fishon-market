@@ -1,5 +1,7 @@
 "use client";
 
+import { FieldErrors, UseFormRegister } from "react-hook-form";
+
 interface Captain {
   name: string;
   avatarUrl?: string;
@@ -8,26 +10,41 @@ interface Captain {
   intro?: string;
 }
 
+interface BookingFormData {
+  charterId: string;
+  tripId: string;
+  date: string;
+  days: number;
+  adults: number;
+  children: number;
+  startTime?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  note?: string;
+}
+
 interface StartConversationCardProps {
   captain?: Captain | null;
   charterName?: string;
   location?: string;
   species?: string[];
   techniques?: string[];
-  note: string;
-  onNoteChange: (value: string) => void;
+  register: UseFormRegister<BookingFormData>;
+  errors: FieldErrors<BookingFormData>;
 }
 
 export default function StartConversationCard({
   captain,
   charterName,
-  note,
-  onNoteChange,
+  register,
+  errors,
 }: StartConversationCardProps) {
   const displayName = captain?.name || charterName || "Your Captain";
 
   return (
-    <section className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="">
       <h2 className="mb-4 text-base font-semibold sm:text-lg">
         Say hello to captain
       </h2>
@@ -66,15 +83,19 @@ export default function StartConversationCard({
       <div>
         <label className="block text-slate-800">
           <textarea
-            value={note}
-            onChange={(e) => onNoteChange(e.target.value)}
+            {...register("note")}
             placeholder={`Introduce yourself to ${
               displayName.split(" ")[0]
             }. Share your fishing experience, what you hope to catch, or any special requests...`}
             rows={4}
-            className="w-full px-4 py-3 border border-black/10 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow"
+            className={`w-full px-4 py-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              errors.note ? "border-red-500" : "border-black/10"
+            }`}
           />
         </label>
+        {errors.note && (
+          <p className="mt-1 text-xs text-red-500">{errors.note.message}</p>
+        )}
         <p className="mt-2 text-xs text-gray-500">
           This message will be sent to the captain with your booking request.
         </p>

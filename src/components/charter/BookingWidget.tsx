@@ -2,6 +2,7 @@
 import CalendarPicker from "@/components/shared/CalendarPicker";
 import type { Trip } from "@/data/mock/charter";
 import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
 import { useEffect, useMemo, useState } from "react";
 
@@ -56,7 +57,6 @@ export default function BookingWidget({
   const [days, setDays] = useState<number>(initDays);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
-  const MAX_DAYS = 14;
 
   // Fetch booked dates from API
   useEffect(() => {
@@ -121,40 +121,41 @@ export default function BookingWidget({
       </div>
 
       <div className="mt-4">
-        <label className="block text-xs font-medium text-gray-700">Date</label>
+        <label className="block text-xs font-medium text-gray-700">
+          Date{days > 1 ? " Range" : ""}
+        </label>
         <div className="mt-1">
           <CalendarPicker
             value={date}
-            onChange={setDate}
+            initialDays={days}
+            onChange={(newDate) => {
+              setDate(newDate);
+              // When switching to single day, reset to 1 day
+              if (days > 1) {
+                setDays(1);
+              }
+            }}
+            onRangeChange={(range) => {
+              // Calculate days from range
+              const calculatedDays = calculateDays(
+                range.startDate,
+                range.endDate
+              );
+              setDate(range.startDate);
+              setDays(calculatedDays);
+            }}
             disablePast={true}
             blockedDates={blockedDates}
             buttonClassName="h-10 rounded-lg border border-gray-300 px-3 text-sm"
+            enableModeToggle={true}
+            mode="single"
           />
         </div>
-      </div>
-
-      <div className="mt-4">
-        <label className="block text-xs font-medium text-gray-700">Days</label>
-        <div className="flex items-center justify-between h-10 px-3 mt-1 border border-gray-300 rounded-lg">
-          <button
-            type="button"
-            className="text-sm leading-none border border-gray-300 rounded-full h-7 w-7 hover:bg-gray-50"
-            onClick={() => setDays((d) => Math.max(1, d - 1))}
-            aria-label="Decrease days"
-          >
-            −
-          </button>
-          <span className="min-w-[2ch] text-sm text-center">{days}</span>
-          <button
-            type="button"
-            className="text-sm leading-none border border-gray-300 rounded-full h-7 w-7 hover:bg-gray-50"
-            onClick={() => setDays((d) => Math.min(MAX_DAYS, d + 1))}
-            aria-label="Increase days"
-          >
-            +
-          </button>
-        </div>
-        <span className="text-[11px] text-gray-500">up to {MAX_DAYS} days</span>
+        {days > 1 && (
+          <p className="mt-1 text-xs text-gray-500">
+            {days} consecutive days selected
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 mt-3 sm:grid-cols-2">

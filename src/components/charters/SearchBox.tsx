@@ -2,6 +2,7 @@
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
 import charters, { Charter } from "@/data/mock/charter";
+import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -65,6 +66,9 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
 
   const spDestination = searchParams.get("destination") || "";
   const spDateStr = searchParams.get("date");
+  const spStartDateStr = searchParams.get("startDate");
+  const spEndDateStr = searchParams.get("endDate");
+  const spDays = parseInt(searchParams.get("days") || "", 10);
   const spAdults = parseInt(searchParams.get("adults") || "", 10);
   const spChildren = parseInt(searchParams.get("children") || "", 10);
   // Destination (with basic suggestions; next step: plug Google Places Autocomplete restricted to Malaysia)
@@ -92,9 +96,12 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     return out.slice(0, 8);
   }, [destination]);
 
-  // Date (custom popover)
+  // Date (custom popover) - support both single date and range
   const [selectedDate, setSelectedDate] = useState<string | undefined>(
-    spDateStr || undefined
+    spDateStr || spStartDateStr || undefined
+  );
+  const [days, setDays] = useState<number>(
+    Number.isFinite(spDays) && spDays > 0 ? spDays : 1
   );
 
   // Guests (dropdown counters)
@@ -116,6 +123,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
   function replaceQuery(next: {
     destination?: string;
     dateStr?: string | undefined;
+    daysCount?: number;
     adults?: number;
     children?: number;
   }) {
@@ -130,6 +138,11 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     const dStr = next.dateStr !== undefined ? next.dateStr : selectedDate;
     if (dStr) params.set("date", dStr);
     else params.delete("date");
+
+    // days (for multi-day bookings)
+    const d = next.daysCount ?? days;
+    if (Number.isFinite(d) && d > 1) params.set("days", String(d));
+    else params.delete("days");
 
     // guests
     const a = next.adults ?? adults;
@@ -156,7 +169,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     }, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destination, selectedDate, adults, children]);
+  }, [destination, selectedDate, days, adults, children]);
 
   // Submit (for now, just log)
   function onSubmit(e: React.FormEvent) {
@@ -164,6 +177,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     const params = new URLSearchParams();
     if (destination) params.set("destination", destination);
     if (selectedDate) params.set("date", selectedDate);
+    if (days > 1) params.set("days", String(days));
     if (adults) params.set("adults", String(adults));
     if (children) params.set("children", String(children));
     router.push(`/search?${params.toString()}`);
@@ -274,7 +288,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
             {/* Date (custom popover) */}
             <div className="relative flex flex-col w-full lg:flex-1 lg:border-r border-gray-300 pt-1 px-3 hover:bg-gray-100/50">
               <label className="text-xs font-bold" htmlFor="date">
-                Date
+                Date{days > 1 ? " Range" : ""}
               </label>
               <div className="relative">
                 {/* left icon */}
@@ -282,14 +296,33 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
 
                 <CalendarPicker
                   value={selectedDate}
-                  onChange={(v) => setSelectedDate(v)}
+                  initialDays={days}
+                  onChange={(v) => {
+                    setSelectedDate(v);
+                    if (days > 1) setDays(1); // Reset to single day
+                  }}
+                  onRangeChange={(range) => {
+                    const calculatedDays = calculateDays(
+                      range.startDate,
+                      range.endDate
+                    );
+                    setSelectedDate(range.startDate);
+                    setDays(calculatedDays);
+                  }}
                   className="w-full"
                   buttonClassName="px-9 text-left text-sm border-0 outline-none focus:ring-0 shadow-none bg-transparent w-full"
+                  enableModeToggle={true}
+                  mode="single"
                 />
 
                 {/* right chevron */}
                 <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600" />
               </div>
+              {days > 1 && (
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  {days} days selected
+                </p>
+              )}
             </div>
 
             <hr className="border-t border-gray-300 flex lg:hidden my-3" />

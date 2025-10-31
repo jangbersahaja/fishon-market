@@ -1,5 +1,11 @@
+import { BookingExpiredScreen } from "@/components/booking/BookingExpiredScreen";
+import { DateNoLongerAvailableScreen } from "@/components/booking/DateNoLongerAvailableScreen";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import {
+  checkDateAvailability,
+  getNextAvailableDates,
+} from "@/lib/helpers/availability-helpers";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
@@ -34,21 +40,93 @@ export default async function PaymentPage({
     redirect(`/login?next=${encodeURIComponent(`/book/payment/${bookingId}`)}`);
   }
 
-  // Only APPROVED bookings can be paid
+  // CHECK 1: Booking status must be APPROVED
+  if (booking.status === "EXPIRED") {
+    // Show BookingExpiredScreen with appropriate messaging
+    const enrichedBooking = await enrichBookingWithTripData(booking);
+    const expirationType = booking.captainDecisionAt ? "APPROVED" : "PENDING";
+
+    return (
+      <BookingExpiredScreen
+        booking={{
+          id: booking.id,
+          status: "EXPIRED",
+          date: booking.date,
+          startTime: booking.startTime || "08:00", // Trip departure time (e.g., "08:00" = 8 AM)
+          expiresAt: booking.expiresAt,
+          charter: {
+            id: booking.charterId,
+            title: enrichedBooking.charterName,
+            location: undefined, // TODO: Add location to enriched data
+          },
+        }}
+        expirationType={expirationType as "PENDING" | "APPROVED"}
+      />
+    );
+  }
+
   if (booking.status !== "APPROVED") {
     redirect(`/book/confirm?id=${bookingId}`);
   }
 
-  // Enrich booking with trip and charter data
+  // CHECK 2: Verify date is still available (no PAID conflicts)
+  // This catches edge cases where another angler paid between approval and now
+  const availabilityCheck = await checkDateAvailability({
+    charterId: booking.charterId,
+    date: booking.date,
+    days: booking.days,
+    startTime: booking.startTime,
+    excludeBookingId: booking.id, // Exclude current booking
+  });
+
+  if (!availabilityCheck.isAvailable) {
+    // Date is no longer available - show friendly screen
+    const enrichedBooking = await enrichBookingWithTripData(booking);
+
+    // Fetch alternative available dates (next 5)
+    const alternativeDates = await getNextAvailableDates(
+      booking.charterId,
+      new Date(), // Start from today
+      5, // Get 5 alternatives
+      booking.days,
+      booking.startTime
+    );
+
+    return (
+      <DateNoLongerAvailableScreen
+        booking={{
+          id: booking.id,
+          date: booking.date,
+          charter: {
+            id: booking.charterId,
+            title: enrichedBooking.charterName,
+            location: undefined, // TODO: Add location to enriched data
+          },
+        }}
+        alternativeDates={alternativeDates}
+      />
+    );
+  }
+
+  // All checks passed - proceed with payment
   const enrichedBooking = await enrichBookingWithTripData(booking);
 
   async function handlePayment() {
     "use server";
+    console.log("🚀 [PAYMENT] handlePayment called for bookingId:", bookingId);
+
     const session = await auth();
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
     });
+
+    console.log(
+      "📦 [PAYMENT] Booking found:",
+      booking
+        ? { id: booking.id, status: booking.status, date: booking.date }
+        : "NOT FOUND"
+    );
 
     if (!booking) return;
 
@@ -57,8 +135,61 @@ export default async function PaymentPage({
       session?.user?.id && booking.userId === session.user.id;
     const isGuestBooking = !booking.userId && booking.guestEmail;
 
-    if (!isAuthenticatedOwner && !isGuestBooking) return;
-    if (booking.status !== "APPROVED") return;
+    if (!isAuthenticatedOwner && !isGuestBooking) {
+      console.log("❌ [PAYMENT] Authorization failed");
+      return;
+    }
+
+    if (booking.status !== "APPROVED") {
+      console.log(
+        "❌ [PAYMENT] Booking status not APPROVED, current status:",
+        booking.status
+      );
+      return;
+    }
+
+    // CRITICAL: Re-check availability before processing payment
+    // This prevents race conditions where multiple users try to pay simultaneously
+    const { checkDateAvailability } = await import(
+      "@/lib/helpers/availability-helpers"
+    );
+
+    console.log("🔍 [PAYMENT] Checking availability before payment:", {
+      bookingId: booking.id,
+      charterId: booking.charterId,
+      date: booking.date,
+      startTime: booking.startTime,
+      days: booking.days,
+    });
+
+    const availabilityCheck = await checkDateAvailability({
+      charterId: booking.charterId,
+      date: booking.date,
+      days: booking.days,
+      startTime: booking.startTime,
+      excludeBookingId: booking.id,
+    });
+
+    console.log("✅ [PAYMENT] Availability check result:", availabilityCheck);
+
+    if (!availabilityCheck.isAvailable) {
+      console.log("❌ [PAYMENT] Date no longer available - blocking payment");
+
+      // Update booking status to EXPIRED since date is no longer available
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: "EXPIRED",
+          rejectionReason:
+            "Date was booked by another angler while you were completing payment. Please select another available date.",
+        },
+      });
+
+      // Date is no longer available - redirect back to payment page
+      // The page render will show DateNoLongerAvailableScreen
+      revalidatePath(`/book/payment/${bookingId}`, "page");
+      redirect(`/book/payment/${bookingId}`);
+    }
 
     // Mock payment - just update status to PAID
     const updated = await prisma.booking.update({

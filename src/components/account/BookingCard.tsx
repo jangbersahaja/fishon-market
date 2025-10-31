@@ -10,6 +10,7 @@ import {
   WriteReviewButton,
 } from "@/components/account/BookingActionButtons";
 import { CancelBookingAction } from "@/components/account/CancelBookingAction";
+import { BookingCountdown } from "@/components/booking";
 import { Button } from "@/components/ui/button";
 import {
   convert24to12Hour,
@@ -18,6 +19,7 @@ import {
   formatTripDuration,
   getTimeRemaining,
   getTripCountdown,
+  getUrgencyLevel,
 } from "@/lib/helpers/booking-helpers";
 import {
   getCancellationReason,
@@ -136,15 +138,24 @@ export function BookingCard({
         </div>
       </div>
 
-      {/* Timer for PENDING status */}
-      {booking.status === "PENDING" && !timeRemaining.isExpired && (
-        <div className="p-3 mb-4 border rounded-md bg-amber-50 border-amber-200">
-          <p className="text-sm text-amber-800">
-            <Clock className="inline w-4 h-4 mr-1" />
-            Hold expires in {timeRemaining.displayText}
-          </p>
-        </div>
-      )}
+      {/* Countdown Timer for PENDING & APPROVED status */}
+      {(booking.status === "PENDING" || booking.status === "APPROVED") &&
+        booking.expiresAt &&
+        !timeRemaining.isExpired && (
+          <div className="mb-4">
+            <BookingCountdown
+              expiresAt={booking.expiresAt}
+              size="md"
+              showIcon={true}
+              className="w-full justify-center py-2"
+            />
+            {booking.status === "APPROVED" && (
+              <p className="mt-2 text-xs text-center text-gray-600">
+                Complete payment to secure your booking
+              </p>
+            )}
+          </div>
+        )}
 
       {/* Cancellation Reason */}
       {cancelled && cancellationInfo && (
@@ -176,6 +187,25 @@ export function BookingCard({
         {/* APPROVED: Pay Now + Cancel */}
         {booking.status === "APPROVED" && (
           <div className="flex flex-col gap-3">
+            {/* High urgency alert (< 6 hours remaining) */}
+            {booking.expiresAt &&
+              getUrgencyLevel(booking.expiresAt) === "high" && (
+                <div className="p-3 border border-red-200 rounded-md bg-red-50 animate-pulse">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-900">
+                        ⚠️ Payment Required Soon!
+                      </p>
+                      <p className="mt-0.5 text-xs text-red-700">
+                        Your booking will expire if payment is not completed.
+                        Secure your spot now!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             <div className="flex gap-3">
               <ViewDetailsButton bookingId={booking.id} fullWidth />
               <CancelBookingAction bookingId={booking.id} fullWidth />
