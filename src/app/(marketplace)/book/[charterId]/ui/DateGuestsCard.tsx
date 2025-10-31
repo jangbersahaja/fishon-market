@@ -1,10 +1,15 @@
 "use client";
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
+import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
 import { ChevronDown, Minus, Plus, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function DateGuestsCard({
+  schedule,
+  unavailability,
+  charterId,
   date,
   onDateChange,
   days,
@@ -15,6 +20,9 @@ export default function DateGuestsCard({
   onChildrenChange,
   maxGuests,
 }: {
+  schedule?: CharterSchedule;
+  unavailability?: UnavailabilityPeriod[];
+  charterId?: string;
   date: string;
   onDateChange: (v: string) => void;
   days: number;
@@ -26,6 +34,48 @@ export default function DateGuestsCard({
   maxGuests?: number;
 }) {
   const [open, setOpen] = useState<null | "days" | "guests">(null);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+
+  // Fetch booked dates from API
+  useEffect(() => {
+    async function fetchBookedDates() {
+      if (!charterId) return;
+
+      try {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 3);
+
+        const response = await fetch(
+          `/api/charters/${charterId}/booked-dates?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setBookedDates(data.bookedDates || []);
+        }
+      } catch (error) {
+        console.error("[DateGuestsCard] Failed to fetch booked dates:", error);
+      }
+    }
+
+    fetchBookedDates();
+  }, [charterId]);
+
+  // Calculate all blocked dates (schedule + unavailability + bookings)
+  const blockedDates = useMemo(() => {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+
+    return calculateBlockedDates(
+      schedule,
+      unavailability,
+      bookedDates,
+      startDate,
+      endDate
+    );
+  }, [schedule, unavailability, bookedDates]);
 
   const totalGuests = adults + childrenCount;
   const overMax = typeof maxGuests === "number" && totalGuests > maxGuests;
@@ -51,6 +101,7 @@ export default function DateGuestsCard({
           <CalendarPicker
             value={date}
             onChange={onDateChange}
+            blockedDates={blockedDates}
             buttonClassName="hover:border-gray-400"
           />
         </div>

@@ -1,7 +1,9 @@
 "use client";
 import CalendarPicker from "@/components/shared/CalendarPicker";
 import type { Trip } from "@/data/mock/charter";
-import { useState } from "react";
+import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
+import { useEffect, useMemo, useState } from "react";
 
 function todayIso() {
   const d = new Date();
@@ -14,6 +16,8 @@ function todayIso() {
 export default function BookingWidget({
   trips,
   charterId,
+  schedule,
+  unavailability,
   defaultPersons = 2,
   personsMax,
   childFriendly = true,
@@ -21,6 +25,8 @@ export default function BookingWidget({
 }: {
   trips: Trip[];
   charterId: string;
+  schedule?: CharterSchedule;
+  unavailability?: UnavailabilityPeriod[];
   defaultPersons?: number;
   personsMax?: number;
   childFriendly?: boolean;
@@ -48,7 +54,53 @@ export default function BookingWidget({
   const [children, setChildren] = useState(initChildren);
   const [date, setDate] = useState<string>(initDate);
   const [days, setDays] = useState<number>(initDays);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const MAX_DAYS = 14;
+
+  // Fetch booked dates from API
+  useEffect(() => {
+    async function fetchBookedDates() {
+      if (!charterId) return;
+
+      setIsLoadingBookings(true);
+      try {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 3);
+
+        const response = await fetch(
+          `/api/charters/${charterId}/booked-dates?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setBookedDates(data.bookedDates || []);
+        }
+      } catch (error) {
+        console.error("[BookingWidget] Failed to fetch booked dates:", error);
+      } finally {
+        setIsLoadingBookings(false);
+      }
+    }
+
+    fetchBookedDates();
+  }, [charterId]);
+
+  // Calculate all blocked dates (schedule + unavailability + bookings)
+  const blockedDates = useMemo(() => {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+
+    return calculateBlockedDates(
+      schedule,
+      unavailability,
+      bookedDates,
+      startDate,
+      endDate
+    );
+  }, [schedule, unavailability, bookedDates]);
 
   const totalGuests = adults + children;
   const overMax = personsMax !== undefined && totalGuests > (personsMax ?? 0);
@@ -75,6 +127,7 @@ export default function BookingWidget({
             value={date}
             onChange={setDate}
             disablePast={true}
+            blockedDates={blockedDates}
             buttonClassName="h-10 rounded-lg border border-gray-300 px-3 text-sm"
           />
         </div>

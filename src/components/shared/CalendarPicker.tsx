@@ -37,12 +37,14 @@ export default function CalendarPicker({
   value,
   onChange,
   disablePast = true,
+  blockedDates = new Set(),
   className = "",
   buttonClassName = "",
 }: {
   value?: string; // "YYYY-MM-DD"
   onChange: (v: string) => void;
   disablePast?: boolean;
+  blockedDates?: Set<string>; // Set of YYYY-MM-DD date strings to block
   className?: string;
   buttonClassName?: string; // style the trigger if needed
 }) {
@@ -95,6 +97,11 @@ export default function CalendarPicker({
     const cand = new Date(y, m, d);
     cand.setHours(0, 0, 0, 0);
     return cand.getTime() < today.getTime();
+  };
+
+  const isBlocked = (y: number, m: number, d: number) => {
+    const dateStr = formatLocalYMD(new Date(y, m, d));
+    return blockedDates.has(dateStr);
   };
 
   const monthNames = [
@@ -198,7 +205,9 @@ export default function CalendarPicker({
                 w.map((d, di) => {
                   if (d === null)
                     return <div key={`${wi}-${di}`} className="h-8" />;
-                  const disabled = isPast(viewYear, viewMonth, d);
+                  const isPastDate = isPast(viewYear, viewMonth, d);
+                  const isBlockedDate = isBlocked(viewYear, viewMonth, d);
+                  const disabled = isPastDate || isBlockedDate;
                   const isSel =
                     !!selected &&
                     selected.getFullYear() === viewYear &&
@@ -217,13 +226,14 @@ export default function CalendarPicker({
                       className={[
                         "h-8 rounded text-sm",
                         disabled
-                          ? "cursor-not-allowed text-gray-300"
+                          ? "cursor-not-allowed text-gray-300 line-through"
                           : "hover:bg-gray-100",
                         isSel
                           ? "bg-[#ec2227] text-white hover:bg-[#c11212]"
                           : "",
                       ].join(" ")}
                       aria-pressed={isSel}
+                      title={isBlockedDate ? "Not available" : undefined}
                     >
                       {d}
                     </button>

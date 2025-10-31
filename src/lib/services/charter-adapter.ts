@@ -3,11 +3,16 @@
  * to the frontend Charter format used by the UI components
  */
 
-import type { BackendCharter, BackendTrip } from "@/lib/api/captain-api";
+import type {
+  BackendCharter,
+  BackendSchedule,
+  BackendTrip,
+} from "@/lib/api/captain-api";
 import { getCityDistrict } from "@/lib/helpers/city-district-mapping";
 import type {
   Captain,
   Charter,
+  CharterSchedule,
   FishingType,
   Pickup,
   Policies,
@@ -136,6 +141,43 @@ function convertPolicies(
 }
 
 /**
+ * Convert backend schedule to frontend schedule format
+ */
+function convertSchedule(
+  backendSchedule: BackendSchedule | null
+): CharterSchedule | undefined {
+  if (!backendSchedule) {
+    return undefined;
+  }
+
+  return {
+    type: backendSchedule.type,
+    operationalDays: backendSchedule.operationalDays,
+  };
+}
+
+/**
+ * Convert backend unavailability to frontend format
+ */
+function convertUnavailability(
+  backendUnavailability: Array<{
+    startDate: string;
+    endDate: string;
+    reason: string | null;
+  }> | null
+) {
+  if (!backendUnavailability || backendUnavailability.length === 0) {
+    return undefined;
+  }
+
+  return backendUnavailability.map((period) => ({
+    startDate: period.startDate,
+    endDate: period.endDate,
+    reason: period.reason,
+  }));
+}
+
+/**
  * Convert backend charter to frontend Charter format
  */
 export function convertBackendCharterToFrontend(
@@ -225,6 +267,8 @@ export function convertBackendCharterToFrontend(
     captain: convertCaptain(backendCharter.captain),
     fishingType: mapFishingType(backendCharter.charterType),
     tier: mapTier(backendCharter.pricingPlan),
+    schedule: convertSchedule(backendCharter.schedule),
+    unavailability: convertUnavailability(backendCharter.unavailability),
   };
 }
 

@@ -88,12 +88,14 @@ export default async function CheckoutPage({
       Array.isArray(charter.images) && charter.images.length
         ? charter.images
         : charter.imageUrl
-        ? [charter.imageUrl]
-        : ["/placeholder-1.jpg"],
+          ? [charter.imageUrl]
+          : ["/placeholder-1.jpg"],
     boat: charter.boat,
     includes: charter.includes,
     coordinates: charter.coordinates,
     captain: charter.captain,
+    schedule: charter.schedule,
+    unavailability: charter.unavailability,
   };
 
   return (

@@ -14,6 +14,7 @@ import {
   CaptainSection,
   GuestFeedback,
   LocationMap,
+  OperationalScheduleCard,
   PhotoGallery,
   PoliciesCard,
   summariseBadges,
@@ -236,6 +237,14 @@ export default async function CharterViewPage({
               {/* Boat */}
               <BoatCard boat={uiBoat as any} />
 
+              {/* Operational Schedule */}
+              {charter?.schedule && (
+                <OperationalScheduleCard
+                  scheduleType={charter.schedule.type}
+                  operationalDays={charter.schedule.operationalDays}
+                />
+              )}
+
               {/* Species + Techniques */}
               <TargetSpeciesCard species={charter?.species ?? []} />
               <TechniqueCard techniques={charter?.techniques ?? []} />
@@ -252,6 +261,8 @@ export default async function CharterViewPage({
             <div className="h-fit md:sticky md:top-6">
               <BookingWidget
                 trips={trips}
+                schedule={charter?.schedule}
+                unavailability={charter?.unavailability}
                 defaultPersons={persons}
                 personsMax={personsMax}
                 childFriendly={!!charter?.policies?.childFriendly}

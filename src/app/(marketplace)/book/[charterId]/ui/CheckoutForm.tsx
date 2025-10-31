@@ -58,6 +58,15 @@ type CharterData = {
   captain?: Captain | null;
   species?: string[];
   techniques?: string[];
+  schedule?: {
+    type: "EVERYDAY" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM";
+    operationalDays: number[];
+  };
+  unavailability?: Array<{
+    startDate: string | Date;
+    endDate: string | Date;
+    reason?: string | null;
+  }>;
 };
 
 export default function CheckoutForm({
@@ -388,6 +397,9 @@ export default function CheckoutForm({
 
           {/* Date + Guests (Search box style) */}
           <DateGuestsCard
+            schedule={charter?.schedule}
+            unavailability={charter?.unavailability}
+            charterId={charterId || undefined}
             date={date}
             onDateChange={(d) => updateSearchParam("date", d)}
             days={days}
