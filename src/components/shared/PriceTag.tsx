@@ -10,6 +10,7 @@ type Props = {
   variant?: "from" | "total" | "per-day";
   size?: "sm" | "md" | "lg";
   className?: string;
+  color?: "default" | "chrome";
 };
 
 export default function PriceTag({
@@ -17,6 +18,7 @@ export default function PriceTag({
   variant = "from",
   size = "md",
   className = "",
+  color = "default",
 }: Props) {
   const sizeClasses = {
     sm: {
@@ -53,15 +55,21 @@ export default function PriceTag({
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       {labels[variant] && (
-        <span className={`${currentSize.label} text-gray-500`}>
+        <span
+          className={`${currentSize.label} ${color === "chrome" ? "text-gray-100" : "text-gray-500"}`}
+        >
           {labels[variant]}
         </span>
       )}
-      <span className={`${currentSize.price} font-bold text-[#ec2227]`}>
+      <span
+        className={`${currentSize.price} font-bold ${color === "chrome" ? "text-gray-100" : "text-[#ec2227] "}`}
+      >
         RM{price}
       </span>
       {suffixes[variant] && (
-        <span className={`${currentSize.suffix} text-gray-500`}>
+        <span
+          className={`${currentSize.suffix} ${color === "chrome" ? "text-gray-100" : "text-gray-500"}`}
+        >
           {suffixes[variant]}
         </span>
       )}

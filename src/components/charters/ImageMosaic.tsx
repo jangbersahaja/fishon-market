@@ -87,7 +87,7 @@ export default function ImageMosaic({
     <>
       {/* Desktop: Mosaic Layout */}
       <div
-        className={`hidden md:block relative w-full h-full rounded-xl overflow-hidden ${className}`}
+        className={`hidden md:block relative w-full h-full rounded-t-xl overflow-hidden ${className}`}
       >
         <div className="grid h-full grid-cols-3 gap-1">
           {/* Main image - 2/3 width */}

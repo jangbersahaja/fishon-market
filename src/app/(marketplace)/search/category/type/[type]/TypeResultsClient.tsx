@@ -2,8 +2,8 @@ import BaseCharterCard from "@/components/charters/BaseCharterCard";
 import Breadcrumbs from "@/components/search/Breadcrumbs";
 import ResultsMap from "@/components/search/ResultsMap";
 import SearchResultsHeader from "@/components/search/SearchResultsHeader";
-import type { Charter } from "@/data/mock/charter";
 import type { MapItem } from "@/utils/mapItems";
+import type { Charter } from "@fishon/ui";
 
 export default function TypeResultsClient({
   prettyType,

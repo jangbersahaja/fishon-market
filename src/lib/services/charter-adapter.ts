@@ -190,6 +190,25 @@ export function convertBackendCharterToFrontend(
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((m) => m.url) || [];
 
+  // Extract videos - prefer dedicated videos array, fall back to media array
+  const videos =
+    backendCharter.videos && backendCharter.videos.length > 0
+      ? backendCharter.videos
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((v) => ({
+            url: v.url,
+            name: v.name || undefined,
+            thumbnailUrl: v.thumbnailUrl || undefined,
+          }))
+      : backendCharter.media
+          ?.filter((m) => m.kind === "CHARTER_VIDEO")
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((m) => ({
+            url: m.url,
+            name: m.name,
+            thumbnailUrl: m.thumbnailUrl,
+          })) || [];
+
   // Build location string
   // Note: backendCharter.district actually contains city name (aliased from city field in DB)
   // We map it to actual administrative district for image matching
@@ -253,6 +272,7 @@ export function convertBackendCharterToFrontend(
     coordinates,
     images: images.length > 0 ? images : undefined,
     imageUrl: images[0] || undefined,
+    videos: videos.length > 0 ? videos : undefined,
     description: backendCharter.description,
     trip: trips,
     species,

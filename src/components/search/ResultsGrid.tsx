@@ -1,5 +1,5 @@
 import CharterCard from "@/components/charters/CharterCard";
-import type { Charter } from "@/data/mock/charter";
+import type { Charter } from "@fishon/ui";
 import Link from "next/link";
 
 export default function ResultsGrid({ items }: { items: Charter[] }) {

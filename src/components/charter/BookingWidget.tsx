@@ -1,9 +1,8 @@
 "use client";
 import CalendarPicker from "@/components/shared/CalendarPicker";
-import type { Trip } from "@/data/mock/charter";
 import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
-import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
+import type { CharterSchedule, Trip, UnavailabilityPeriod } from "@fishon/ui";
 import { useEffect, useMemo, useState } from "react";
 
 function todayIso() {

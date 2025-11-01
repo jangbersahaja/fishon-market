@@ -1,6 +1,6 @@
 //utils/mapItems.ts
 // Convert charters to the lightweight data the map needs.
-import type { Charter } from "@/data/mock/charter";
+import type { Charter } from "@fishon/ui";
 import { getRatingMap } from "./ratings";
 
 export type MapItem = {

@@ -1,12 +1,14 @@
 import BookingWidget from "@/components/charter/BookingWidget";
 import EnhancedReviewsList from "@/components/charter/EnhancedReviewsList";
+import { PhotoGallery } from "@/components/charter/PhotoGallery";
+import { VideoGallery } from "@/components/charter/VideoGallery";
 import StarRating from "@/components/ratings/StarRating";
-import { Charter, Trip } from "@/data/mock/charter";
 import { getCharterById } from "@/lib/services/charter-service";
 import {
   getCharterRatingStats,
   getCharterReviews,
 } from "@/lib/services/review-service";
+import type { Charter, Trip } from "@fishon/ui";
 import {
   AboutSection,
   AmenitiesCard,
@@ -15,7 +17,6 @@ import {
   GuestFeedback,
   LocationMap,
   OperationalScheduleCard,
-  PhotoGallery,
   PoliciesCard,
   summariseBadges,
   TargetSpeciesCard,
@@ -179,7 +180,7 @@ export default async function CharterViewPage({
   }
 
   return (
-    <main className="bg-white min-h-dvh">
+    <main className="mb-6 bg-white min-h-dvh">
       <section className="px-4 mx-auto max-w-7xl sm:px-6">
         {/* Breadcrumbs */}
         <nav className="pt-6 text-sm text-gray-500">
@@ -228,14 +229,16 @@ export default async function CharterViewPage({
         <section className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-5">
           {/* Left column */}
           <div className="md:col-span-3">
+            {/* Video Gallery */}
+            {charter?.videos && charter.videos.length > 0 && (
+              <VideoGallery videos={charter.videos} />
+            )}
+
             <AboutSection description={desc} />
 
-            {/* Captain */}
-            <CaptainSection charter={charter} />
-
             <div className="grid grid-cols-1 gap-5">
-              {/* Boat */}
-              <BoatCard boat={uiBoat as any} />
+              {/* Amenities */}
+              <AmenitiesCard includes={charter?.includes ?? []} />
 
               {/* Operational Schedule */}
               {charter?.schedule && (
@@ -249,8 +252,6 @@ export default async function CharterViewPage({
               <TargetSpeciesCard species={charter?.species ?? []} />
               <TechniqueCard techniques={charter?.techniques ?? []} />
             </div>
-            {/* Amenities */}
-            <AmenitiesCard includes={charter?.includes ?? []} />
 
             {/* Map */}
             <LocationMap title={title} mapEmbedSrc={mapEmbedSrc} />
@@ -271,6 +272,12 @@ export default async function CharterViewPage({
             </div>
           </div>
         </section>
+
+        {/* Captain */}
+        <CaptainSection charter={charter} />
+
+        {/* Boat */}
+        <BoatCard boat={uiBoat as any} />
 
         <PoliciesCard
           policies={charter.policies as any}

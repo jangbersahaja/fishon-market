@@ -1,7 +1,7 @@
 "use client";
 
 import BaseCharterCard from "@/components/charters/BaseCharterCard";
-import { Charter } from "@/data/mock/charter";
+import type { Charter } from "@fishon/ui";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdError } from "react-icons/md";
@@ -185,14 +185,14 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
         {/* Cards (carousel) */}
         {nearby.length > 0 && (
           <>
-            <h2 className="text-2xl font-bold text-center text-white lg:text-start">
+            <h2 className="text-3xl font-bold text-center text-white">
               Discover Trip Near You
             </h2>
-            <div className="relative mt-5">
+            <div className="relative">
               {/* track */}
               <div
                 ref={trackRef}
-                className="flex gap-5 pb-3 overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                className="flex gap-10 py-10 overflow-x-auto snap-x snap-mandatory scroll-smooth"
               >
                 {nearby.map((c) => {
                   // Build booking context if present

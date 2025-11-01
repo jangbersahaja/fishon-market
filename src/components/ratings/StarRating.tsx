@@ -13,6 +13,7 @@ type Props = {
   reviewCount?: number;
   showValue?: boolean;
   textSize?: string;
+  variant?: "default" | "chrome";
 };
 
 export default function StarRating({
@@ -21,6 +22,7 @@ export default function StarRating({
   reviewCount,
   showValue = false,
   textSize = "text-xs",
+  variant = "default",
 }: Props) {
   const full = Math.floor(value);
   const half = value - full >= 0.5;
@@ -28,7 +30,13 @@ export default function StarRating({
 
   // If no rating, show "Just Listed"
   if (value === 0) {
-    return <span className={`${textSize} text-gray-500`}>Just Listed</span>;
+    return (
+      <span
+        className={`${textSize} ${variant === "chrome" ? "text-gray-100" : "text-gray-500"}`}
+      >
+        Just Listed
+      </span>
+    );
   }
 
   return (

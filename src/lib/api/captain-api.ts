@@ -82,6 +82,15 @@ export type BackendCharter = {
     kind: string;
     url: string;
     sortOrder: number;
+    thumbnailUrl?: string | null;
+    name?: string;
+  }>;
+  videos?: Array<{
+    kind: string;
+    url: string;
+    sortOrder: number;
+    thumbnailUrl?: string | null;
+    name?: string | null;
   }>;
   pickup: BackendPickup | null;
   policies: BackendPolicies | null;

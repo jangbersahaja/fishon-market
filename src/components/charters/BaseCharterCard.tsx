@@ -6,14 +6,15 @@ import ImageMosaic from "@/components/charters/ImageMosaic";
 import StarRating from "@/components/ratings/StarRating";
 import PriceTag from "@/components/shared/PriceTag";
 import SafeImage from "@/components/shared/SafeImage";
-import { Charter } from "@/data/mock/charter";
 import { getAverageRating, getCharterReviews } from "@/lib/helpers/ratings";
 import {
   capitalize,
   formatCharterName,
   formatLocation,
 } from "@/lib/helpers/text-formatters";
-import { Calendar, MapPin } from "lucide-react";
+import type { Charter } from "@fishon/ui";
+import { ALL_SPECIES } from "@fishon/ui";
+import { Calendar, Clock, MapPin, ShipIcon } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -101,9 +102,7 @@ export default function BaseCharterCard({
     typeof captain?.yearsExperience === "number"
       ? captain.yearsExperience
       : undefined;
-  const crewCount =
-    typeof captain?.crewCount === "number" ? captain.crewCount : undefined;
-  const captainAvatar = captain?.image as string | undefined;
+  const captainAvatar = captain?.avatarUrl as string | undefined;
 
   // Fishing type badge
   const fishingType = (c as any).fishingType as string | undefined;
@@ -119,13 +118,13 @@ export default function BaseCharterCard({
   // Image height classes based on aspect ratio
   const imageHeightClasses = {
     square: {
-      full: "h-84 md:h-72",
+      full: "h-56 md:h-60",
       compact: "h-44",
-      nearby: "h-64",
+      nearby: "h-84",
       favorite: "h-48",
     },
     landscape: {
-      full: "h-56 md:h-64",
+      full: "h-48 md:h-52",
       compact: "h-32",
       nearby: "h-48",
       favorite: "h-40",
@@ -199,62 +198,82 @@ export default function BaseCharterCard({
   if (variant === "nearby") {
     return (
       <article
-        className={`overflow-hidden bg-white shadow-sm rounded-xl ${className}`}
+        className={`overflow-hidden shadow-sm rounded-xl transition-all duration-300 ease-in-out group hover:shadow-2xl hover:-translate-y-1 ${className}`}
       >
-        <Link href={href}>
-          <div className={`relative w-full ${imageHeight} bg-gray-100`}>
-            <SafeImage
-              src={img}
-              alt={formatCharterName(c.name)}
-              fill
-              className={imageObjectFit}
-            />
-            {showFavoriteButton && (
-              <div className="absolute z-10 top-3 right-3">
-                <FavoriteButton
-                  captainCharterId={idForLink}
-                  charterName={c.name}
-                  location={c.location}
-                  initialIsFavorited={initialIsFavorited}
-                  charterData={c as any}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1 p-3">
-            <div className="flex gap-1">
-              <StarRating
-                value={avg ?? 0}
-                size={16}
-                reviewCount={reviews.length}
+        <div className={`relative w-full ${imageHeight} bg-gray-100`}>
+          <SafeImage
+            src={img}
+            alt={formatCharterName(c.name)}
+            fill
+            className={imageObjectFit}
+          />
+          {showFavoriteButton && (
+            <div className="absolute z-10 top-3 right-3">
+              <FavoriteButton
+                captainCharterId={idForLink}
+                charterName={c.name}
+                location={c.location}
+                initialIsFavorited={initialIsFavorited}
+                charterData={c as any}
               />
             </div>
-
-            <h3 className="text-base font-semibold line-clamp-1">
-              {formatCharterName(c.name)}
-            </h3>
-
-            <p className="text-xs text-gray-600 line-clamp-1">
-              {formatLocation(c.location)}
-            </p>
-
-            <div className="flex items-center justify-between mt-1 text-xs text-gray-700">
-              {distance !== undefined && (
-                <span className="font-medium">{distance.toFixed(1)} km</span>
-              )}
-              {typeof minPrice === "number" && (
-                <PriceTag price={minPrice} variant="from" size="sm" />
-              )}
+          )}
+          {distance !== undefined && (
+            <span className="absolute z-10 top-3 left-3 px-3 py-1.5 bg-white font-medium rounded-full text-xs">
+              {distance.toFixed(1)} km from you
+            </span>
+          )}
+          <div className="absolute bottom-0 w-full ">
+            <div className="bg-gradient-to-t from-[#ec2227] to-[#ec2227]/0 w-full flex flex-col items-center">
+              <h3 className="pt-10 pb-2 text-2xl font-bold text-center text-white line-clamp-1">
+                {formatCharterName(c.name)}
+              </h3>
             </div>
-
-            {Array.isArray(c.trip) && c.trip.length > 0 && (
-              <div className="mt-1 text-xs text-gray-700 line-clamp-1">
-                {c.trip.map((t) => t.name).join(" • ")}
-              </div>
-            )}
           </div>
-        </Link>
+        </div>
+        <div className="flex flex-col items-center px-3 pb-3 bg-gradient-to-b from-[#ec2227] via-[#d11f24] to-[#d11f24] gap-2">
+          <p className="text-sm text-gray-200 line-clamp-1">
+            {formatLocation(c.location)}
+          </p>
+          <div className="flex items-center gap-1 text-gray-200">
+            <Clock className="w-3 h-3" />
+            <span className="text-sm">
+              {c.captain.yearsExperience}{" "}
+              {c.captain.yearsExperience === 1 ? "year" : "years"}
+            </span>
+            {" · "}
+            <StarRating
+              value={avg ?? 0}
+              size={24}
+              textSize="text-sm"
+              variant="chrome"
+              reviewCount={reviews.length}
+            />
+            {" · "}
+            <span className="text-sm">{c.boat.type}</span>
+          </div>
+
+          <div className="flex flex-col items-center w-full gap-2 p-3 text-xs border border-white/20 rounded-2xl">
+            {typeof minPrice === "number" && (
+              <PriceTag
+                price={minPrice}
+                variant="from"
+                size="lg"
+                color="chrome"
+              />
+            )}
+            <Link
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-1.5 bg-gradient-to-tr from-gray-100 to-gray-200 rounded-full shadow-md transition-colors hover:from-gray-50 hover:to-gray-100 flex justify-center hover:scale-101"
+            >
+              <span className="text-lg font-semibold text-[#ec2227] uppercase">
+                Book Trip
+              </span>
+            </Link>
+          </div>
+        </div>
       </article>
     );
   }
@@ -337,12 +356,12 @@ export default function BaseCharterCard({
   // Default: "full" variant
   return (
     <article
-      className={`flex flex-col h-full transition-all duration-300 ease-in-out group hover:bg-gray-50 hover:scale-101 rounded-2xl ${className}`}
+      className={`flex flex-col h-full transition-all duration-300 ease-in-out group hover:shadow-2xl hover:-translate-y-1 rounded-2xl bg-white border border-slate-200/60 overflow-hidden ${className}`}
     >
       {/* Cover image(s) - Use mosaic for multiple images, single for one */}
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <div
-          className={`relative w-full ${imageHeight} overflow-hidden rounded-t-2xl`}
+          className={`relative w-full ${imageHeight} overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200`}
         >
           {allImages.length >= 2 ? (
             <ImageMosaic
@@ -352,20 +371,22 @@ export default function BaseCharterCard({
             />
           ) : (
             <Link href={href}>
-              <div className="relative w-full h-full bg-gray-100">
+              <div className="relative w-full h-full bg-gradient-to-br from-slate-100 to-slate-200">
                 <SafeImage
                   src={img}
                   alt={formatCharterName(c.name)}
                   fill
-                  className={`${imageObjectFit} transition-all duration-300 ease-in-out group-hover:scale-105`}
+                  className={`${imageObjectFit} transition-all duration-500 ease-in-out group-hover:scale-110 group-hover:rotate-1`}
                 />
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/20 via-transparent to-transparent group-hover:opacity-100"></div>
               </div>
             </Link>
           )}
 
           {/* Favorite button overlay */}
           {showFavoriteButton && (
-            <div className="absolute z-10 top-3 right-3">
+            <div className="absolute z-10 transition-transform duration-200 transform top-3 right-3 group-hover:scale-110">
               <FavoriteButton
                 captainCharterId={idForLink}
                 charterName={c.name}
@@ -375,18 +396,27 @@ export default function BaseCharterCard({
               />
             </div>
           )}
+
+          {/* Top left badge */}
+          {fishingType && (
+            <div className="absolute z-10 top-3 left-3">
+              <span className="inline-flex items-center rounded-full bg-[#ec2227] text-white px-3 py-1.5 text-xs font-bold shadow-lg backdrop-blur-sm">
+                {capitalize(fishingType)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       <Link href={href}>
         {/* Body */}
-        <div className="flex flex-col flex-1 gap-3 p-3">
+        <div className="flex flex-col flex-1 gap-2.5 p-3 bg-gradient-to-br from-white via-slate-50/30 to-white">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold leading-tight truncate lg:text-lg">
-                <span className="text-lg">{formatCharterName(c.name)}</span>
+              <h3 className="text-lg font-bold leading-tight truncate lg:text-2xl text-slate-900 group-hover:text-[#ec2227] transition-colors duration-200">
+                {formatCharterName(c.name)}
               </h3>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1.5">
                 <StarRating
                   value={avg ?? 0}
                   size={14}
@@ -395,27 +425,21 @@ export default function BaseCharterCard({
                 />
               </div>
             </div>
-
-            {fishingType && (
-              <div className="shrink-0">
-                <span className="inline-flex items-center rounded-full bg-[#ec2227]/10 text-[#ec2227] px-2.5 py-1 text-[11px] font-medium">
-                  {capitalize(fishingType)}
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col gap-2">
             {/* Location */}
-            <div className="text-xs text-gray-600">
-              <MapPin className="inline w-3 h-3 mr-1" />
-              {formatLocation(c.location)}
+            <div className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg text-slate-700 bg-white/80 border-slate-200/60">
+              <MapPin className="w-4 h-4 text-[#ec2227] flex-shrink-0" />
+              <span className="text-xs font-medium truncate">
+                {formatLocation(c.location)}
+              </span>
             </div>
 
             {/* Captain row */}
-            <div className="flex items-center gap-2 text-xs text-gray-700">
+            <div className="flex items-center gap-2.5 text-xs text-slate-700 bg-white/80 rounded-lg px-3 py-2.5 border border-slate-200/60">
               {captainAvatar ? (
-                <span className="relative w-6 h-6 overflow-hidden border rounded-full border-black/10">
+                <span className="relative w-8 h-8 overflow-hidden rounded-full ring-2 ring-[#ec2227]/20">
                   <SafeImage
                     src={captainAvatar}
                     alt={`${captainName} avatar`}
@@ -424,7 +448,7 @@ export default function BaseCharterCard({
                   />
                 </span>
               ) : (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-[10px] text-gray-600">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ec2227]/10 text-xs font-bold text-[#ec2227] ring-2 ring-[#ec2227]/20">
                   {captainName
                     .split(" ")
                     .map((p: string) => p[0])
@@ -432,66 +456,90 @@ export default function BaseCharterCard({
                     .join("")}
                 </span>
               )}
-              <span className="truncate">
-                <strong>Captain:</strong> {captainName}
-                {captainYears !== undefined && (
-                  <span className="text-gray-500"> • {captainYears} yrs</span>
-                )}
-                {crewCount !== undefined && (
-                  <span className="text-gray-500"> • {crewCount} crew</span>
-                )}
-              </span>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="font-semibold capitalize truncate text-slate-900">
+                  {captainName.toLowerCase()}
+                </span>
+                <span className="text-[11px] text-slate-600">
+                  {captainYears !== undefined && <>{captainYears} yrs exp</>}
+                </span>
+              </div>
             </div>
 
             {/* Compact meta */}
-            <div className="text-xs text-gray-600">
-              <strong>Boat:</strong> {c.boat.type}
-              <span className="text-gray-400"> • </span>
-              {c.boat.capacity} pax
+            <div className="flex items-center gap-2 px-3 py-2 text-xs border rounded-lg bg-white/80 border-slate-200/60">
+              <ShipIcon className="h-4 w-4 text-[#ec2227]" />
+              <span className="font-medium text-slate-700">{c.boat.type}</span>
+              <span className="text-slate-400">•</span>
+              <span className="font-semibold text-slate-900">
+                {c.boat.capacity} pax
+              </span>
             </div>
 
             {/* Badges: species / techniques (first few) */}
-            <div className="mt-2 flex flex-col gap-2 text-[11px]">
-              <div className="flex flex-wrap gap-2">
-                {Array.isArray(c.species) &&
-                  c.species.slice(0, 3).map((s) => (
+            <div className="flex flex-wrap gap-1.5 text-[10px]">
+              {/* Species badges - Blue theme with local names */}
+              {Array.isArray(c.species) &&
+                c.species.slice(0, 3).map((s) => {
+                  const speciesData = ALL_SPECIES.find(
+                    (species) => species.id === s
+                  );
+                  const displayName = speciesData?.local_name || s;
+                  return (
                     <span
                       key={s}
-                      className="px-2 py-1 border rounded-full border-black/10 bg-gray-50"
+                      className="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200/60 text-blue-700 font-medium hover:border-blue-400 hover:bg-blue-100 transition-all duration-200"
                     >
-                      {s}
+                      {displayName}
                     </span>
-                  ))}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {Array.isArray(c.techniques) &&
-                  c.techniques.slice(0, 2).map((t) => (
-                    <span
-                      key={t}
-                      className="px-2 py-1 border rounded-full border-black/10 bg-gray-50"
-                    >
-                      {t}
-                    </span>
-                  ))}
-              </div>
+                  );
+                })}
+              {/* Techniques badges - Green theme */}
+              {Array.isArray(c.techniques) &&
+                c.techniques.slice(0, 2).map((t) => (
+                  <span
+                    key={t}
+                    className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200/60 text-emerald-700 font-medium hover:border-emerald-400 hover:bg-emerald-100 transition-all duration-200"
+                  >
+                    {t}
+                  </span>
+                ))}
             </div>
 
-            {/* Trip list */}
+            {/* Trip list - Show first 4 trips with count */}
             {Array.isArray(c.trip) && c.trip.length > 0 && (
-              <div className="mt-2.5 text-xs text-gray-700">
-                <strong>Trips:</strong>{" "}
-                {c.trip
-                  .map((t) => t.name)
-                  .filter(Boolean)
-                  .join(" • ")}
+              <div className="px-2.5 py-1.5 text-[10px] border rounded-lg bg-white/80 border-slate-200/60">
+                <span className="font-semibold text-slate-900">Trips:</span>{" "}
+                <span className="text-slate-700">
+                  {(() => {
+                    const tripNames = c.trip.map((t) => t.name).filter(Boolean);
+                    const shown = tripNames.slice(0, 3);
+                    const more = tripNames.length - shown.length;
+                    return (
+                      <>
+                        {shown.join(" • ")}
+                        {more > 0 && (
+                          <span className="ml-1 font-semibold text-[#ec2227]">
+                            + {more} more
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
+                </span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-auto">
+          <div className="flex items-center justify-between pt-1.5 mt-auto border-t border-slate-200/60">
             {typeof minPrice === "number" && (
-              <PriceTag price={minPrice} variant="from" size="md" />
+              <div className="flex flex-col">
+                <PriceTag price={minPrice} variant="from" size="lg" />
+              </div>
             )}
+            <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white text-xs font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105">
+              View Details
+            </button>
           </div>
         </div>
       </Link>
