@@ -136,7 +136,7 @@ export default function BaseCharterCard({
 
   // Image object-fit: contain for square (prevents cropping), cover for landscape
   const imageObjectFit =
-    imageAspect === "square" ? "object-contain" : "object-cover";
+    imageAspect === "square" ? "object-cover" : "object-cover";
 
   // Layout variants
   if (variant === "compact") {
