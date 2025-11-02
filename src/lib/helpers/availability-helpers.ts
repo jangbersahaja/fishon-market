@@ -43,14 +43,29 @@ export function calculateBlockedDates(
   // 2. Add unavailability periods
   if (unavailability && unavailability.length > 0) {
     unavailability.forEach((period) => {
-      const periodStart = new Date(period.startDate);
-      const periodEnd = new Date(period.endDate);
+      // Parse dates using local time (create Date from YYYY-MM-DD string)
+      const periodStartStr =
+        typeof period.startDate === "string"
+          ? period.startDate
+          : formatDateYMD(period.startDate);
+      const periodEndStr =
+        typeof period.endDate === "string"
+          ? period.endDate
+          : formatDateYMD(period.endDate);
 
+      // Parse YYYY-MM-DD strings to local dates
+      const [psy, psm, psd] = periodStartStr.split("-").map(Number);
+      const [pey, pem, ped] = periodEndStr.split("-").map(Number);
+      const periodStart = new Date(psy, psm - 1, psd);
+      const periodEnd = new Date(pey, pem - 1, ped);
+
+      // Use local time comparison
       const current = new Date(
         Math.max(periodStart.getTime(), startDate.getTime())
       );
       const end = new Date(Math.min(periodEnd.getTime(), endDate.getTime()));
 
+      // Normalize to local midnight
       current.setHours(0, 0, 0, 0);
       end.setHours(0, 0, 0, 0);
 

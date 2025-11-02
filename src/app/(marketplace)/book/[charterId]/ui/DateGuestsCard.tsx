@@ -56,8 +56,16 @@ export default function DateGuestsCard({
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 3);
 
+        // Format dates in local time (YYYY-MM-DD) to avoid UTC conversion issues
+        const formatLocalYMD = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
+
         const response = await fetch(
-          `/api/charters/${charterId}/booked-dates?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+          `/api/charters/${charterId}/booked-dates?startDate=${formatLocalYMD(startDate)}&endDate=${formatLocalYMD(endDate)}`
         );
 
         if (response.ok) {
@@ -91,7 +99,33 @@ export default function DateGuestsCard({
   }, [schedule, unavailability, bookedDates, shouldFetchLocally]);
 
   // Use provided blockedDatesSet or fallback to local calculation
-  const blockedDates = blockedDatesSet || localBlockedDates;
+  const blockedDates = useMemo(() => {
+    // Always ensure Set<string>
+    if (blockedDatesSet) {
+      return blockedDatesSet instanceof Set
+        ? new Set(
+            Array.from(blockedDatesSet).filter(
+              (v): v is string => typeof v === "string"
+            )
+          )
+        : new Set(
+            (blockedDatesSet as any[]).filter(
+              (v): v is string => typeof v === "string"
+            )
+          );
+    }
+    return localBlockedDates instanceof Set
+      ? new Set(
+          Array.from(localBlockedDates).filter(
+            (v): v is string => typeof v === "string"
+          )
+        )
+      : new Set(
+          (localBlockedDates as any[]).filter(
+            (v): v is string => typeof v === "string"
+          )
+        );
+  }, [blockedDatesSet, localBlockedDates]);
 
   const totalGuests = adults + childrenCount;
   const overMax = typeof maxGuests === "number" && totalGuests > maxGuests;

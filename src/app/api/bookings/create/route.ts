@@ -155,6 +155,64 @@ async function createAuthenticatedBooking(session: any, body: any) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // --- AVAILABILITY: Check for blocked dates (schedule/unavailability) ---
+    // Fetch charter schedule and unavailability from captain DB (or API)
+    let charterSchedule = null;
+    let charterUnavailability = null;
+    try {
+      // Try to get full charter details (schedule, unavailability)
+      // Use charterId from trip.charter.id
+      const { getCharterById } = await import("@/lib/services/charter-service");
+      const charter = await getCharterById(trip.charter.id);
+      charterSchedule = charter?.schedule ?? null;
+      charterUnavailability = charter?.unavailability ?? null;
+    } catch (e) {
+      console.error(
+        "[BookingAPI] Failed to fetch charter schedule/unavailability",
+        e
+      );
+    }
+
+    // Calculate blocked dates for the requested range
+    if (charterSchedule) {
+      const { calculateBlockedDates, formatDateYMD } = await import(
+        "@/lib/helpers/availability-helpers"
+      );
+      const { calculateEndDate } = await import(
+        "@/lib/helpers/date-range-helpers"
+      );
+      const startDate = d;
+      const endDateStr = calculateEndDate(formatDateYMD(d), ds);
+      const endDate = new Date(endDateStr + "T00:00:00Z");
+      const blockedDates = calculateBlockedDates(
+        charterSchedule,
+        charterUnavailability,
+        [], // Booked dates handled by conflict logic below
+        startDate,
+        endDate
+      );
+      // Check if any requested date is blocked
+      let blocked = false;
+      for (let i = 0; i < ds; i++) {
+        const checkDate = new Date(startDate);
+        checkDate.setUTCDate(checkDate.getUTCDate() + i);
+        const checkDateStr = formatDateYMD(checkDate);
+        if (blockedDates.has(checkDateStr)) {
+          blocked = true;
+          break;
+        }
+      }
+      if (blocked) {
+        return NextResponse.json(
+          {
+            error:
+              "Selected date(s) are not available due to non-operational days or unavailability. Please choose a different date.",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // If trip defines start times, require one selection
     if (trip.startTimes.length > 0) {
       const st = typeof startTime === "string" ? startTime : undefined;

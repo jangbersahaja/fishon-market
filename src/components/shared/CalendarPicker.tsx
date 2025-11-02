@@ -104,6 +104,17 @@ export default function CalendarPicker({
     selected?.getMonth() ?? today.getMonth()
   );
 
+  // Sync range state with external value changes
+  useEffect(() => {
+    if (currentMode === "single") {
+      // In single mode, clear range state
+      if (rangeStart || rangeEnd) {
+        setRangeStart(null);
+        setRangeEnd(null);
+      }
+    }
+  }, [value, currentMode, rangeStart, rangeEnd]);
+
   useEffect(() => {
     // keep view anchored to externally changed value
     if (selected) {

@@ -91,11 +91,16 @@ export function FavoriteButton({
     }
   };
 
+  // Determine icon size based on button size in className
+  const isLargeButton =
+    className.includes("w-12") || className.includes("h-12");
+  const iconSize = isLargeButton ? "h-6 w-6" : "h-5 w-5";
+
   return (
     <button
       onClick={handleToggle}
       disabled={isLoading}
-      className={`inline-flex items-center gap-2 rounded-full p-2 transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`inline-flex items-center justify-center gap-2 rounded-full p-2 transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${
         isFavorited
           ? "bg-red-100 text-red-600"
           : "bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600"
@@ -104,7 +109,7 @@ export function FavoriteButton({
       title={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
       <Heart
-        className={`h-5 w-5 ${
+        className={`${iconSize} ${
           isFavorited ? "fill-current" : ""
         } transition-all`}
       />

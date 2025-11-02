@@ -61,7 +61,6 @@ export function VideoGallery({ videos, className }: VideoGalleryProps) {
 
   return (
     <div className={cx("w-full overflow-hidden", className)}>
-      <h3 className="mb-3 text-lg font-semibold">Videos</h3>
       <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 h-[200px] sm:h-[240px] items-stretch no-scrollbar overscroll-x-contain overscroll-y-none snap-x snap-mandatory min-w-0 carousel-scroll">
         {items.map((v, i) => (
           <button

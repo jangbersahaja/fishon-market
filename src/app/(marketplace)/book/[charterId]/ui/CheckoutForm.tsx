@@ -144,8 +144,16 @@ export default function CheckoutForm({
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 3);
 
+        // Format dates in local time (YYYY-MM-DD) to avoid UTC conversion issues
+        const formatLocalYMD = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
+
         const response = await fetch(
-          `/api/charters/${charterId}/booked-dates?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+          `/api/charters/${charterId}/booked-dates?startDate=${formatLocalYMD(startDate)}&endDate=${formatLocalYMD(endDate)}`
         );
 
         if (response.ok) {
@@ -168,13 +176,21 @@ export default function CheckoutForm({
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 3);
 
-    return calculateBlockedDates(
+    const result = calculateBlockedDates(
       charter.schedule,
       charter.unavailability,
       bookedDates,
       startDate,
       endDate
     );
+    // Always return a Set<string>
+    return result instanceof Set
+      ? new Set(
+          Array.from(result).filter((v): v is string => typeof v === "string")
+        )
+      : new Set(
+          (result as any[]).filter((v): v is string => typeof v === "string")
+        );
   }, [charter?.schedule, charter?.unavailability, bookedDates]);
 
   // Validate if selected date is blocked
@@ -191,11 +207,19 @@ export default function CheckoutForm({
     (dateStr: string, daysCount: number) => {
       if (!dateStr || daysCount < 1) return false;
 
-      const startDate = new Date(dateStr + "T00:00:00");
+      // Parse YYYY-MM-DD string to local date
+      const [year, month, day] = dateStr.split("-").map(Number);
+      const startDate = new Date(year, month - 1, day);
+
       for (let i = 0; i < daysCount; i++) {
         const checkDate = new Date(startDate);
         checkDate.setDate(checkDate.getDate() + i);
-        const checkDateStr = checkDate.toISOString().split("T")[0];
+        // Format in local time
+        const y = checkDate.getFullYear();
+        const m = String(checkDate.getMonth() + 1).padStart(2, "0");
+        const d = String(checkDate.getDate()).padStart(2, "0");
+        const checkDateStr = `${y}-${m}-${d}`;
+
         if (blockedDatesSet.has(checkDateStr)) {
           return false;
         }

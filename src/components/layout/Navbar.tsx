@@ -28,7 +28,8 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
 
   // Always fixed; choose color based on variant/state
   const base = "z-40 w-full text-white transition-colors duration-300";
-  const solid = "bg-gradient-to-tr from-[#ec2227] via-[#d11f24] to-[#b01a1f]";
+  const solid =
+    "bg-gradient-to-tr from-[#ec2227] via-[#d11f24] to-[#b01a1f] shadow-md border-b border-white/20";
   const headerClass = !transparentOnTop
     ? `${base} ${solid}`
     : open

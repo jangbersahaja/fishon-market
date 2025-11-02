@@ -18,10 +18,26 @@ export async function GET(
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
 
+    // Parse dates consistently in local time
+    // Accepts either YYYY-MM-DD or ISO string format
+    const parseLocalDate = (dateStr: string): Date => {
+      // If it's YYYY-MM-DD format, parse as local date
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        return new Date(year, month - 1, day);
+      }
+      // Otherwise parse as ISO string (will use Date constructor)
+      const d = new Date(dateStr);
+      // Extract local components to avoid UTC interpretation
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    };
+
     // Default to 3 months if no range provided
-    const startDate = startDateParam ? new Date(startDateParam) : new Date();
+    const startDate = startDateParam
+      ? parseLocalDate(startDateParam)
+      : new Date();
     const endDate = endDateParam
-      ? new Date(endDateParam)
+      ? parseLocalDate(endDateParam)
       : (() => {
           const d = new Date();
           d.setMonth(d.getMonth() + 3);
@@ -48,13 +64,22 @@ export async function GET(
     });
 
     // Expand multi-day bookings into all blocked dates
+    // Use local Malaysia time (GMT+8) consistently
     const bookedDatesSet = new Set<string>();
 
     bookings.forEach((booking) => {
+      // Parse the date from DB as local date (not UTC)
+      const bookingDate = new Date(booking.date);
+
+      // Extract year, month, day in LOCAL time (Malaysia GMT+8)
+      const startYear = bookingDate.getFullYear();
+      const startMonth = bookingDate.getMonth();
+      const startDay = bookingDate.getDate();
+
       // For each booking, block all days in range [date, date + days - 1]
       for (let i = 0; i < booking.days; i++) {
-        const blockedDate = new Date(booking.date);
-        blockedDate.setUTCDate(blockedDate.getUTCDate() + i);
+        // Create new date in local time and add days
+        const blockedDate = new Date(startYear, startMonth, startDay + i);
 
         // Only include if within our query range
         if (blockedDate >= startDate && blockedDate <= endDate) {
