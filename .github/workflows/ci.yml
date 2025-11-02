@@ -36,18 +36,21 @@ jobs:
       - name: Run typecheck
         run: npm run typecheck
 
+      # Set up environment variables with fallbacks
+      - name: Set DATABASE_URL
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_market_ci' }}" >> $GITHUB_ENV
+
+      - name: Set CAPTAIN_DATABASE_URL
+        run: echo "CAPTAIN_DATABASE_URL=${{ secrets.CAPTAIN_DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_captain_ci' }}" >> $GITHUB_ENV
+
       # Generate Prisma clients (main schema and captain schema)
       - name: Generate Prisma client (main)
         if: ${{ hashFiles('prisma/schema.prisma') != '' }}
         run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL != '' && secrets.DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_market_ci' }}
 
       - name: Generate Prisma client (captain)
         if: ${{ hashFiles('prisma/schema-captain.prisma') != '' }}
         run: npx prisma generate --schema=prisma/schema-captain.prisma
-        env:
-          CAPTAIN_DATABASE_URL: ${{ secrets.CAPTAIN_DATABASE_URL != '' && secrets.CAPTAIN_DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_captain_ci' }}
 
       - name: Validate Prisma schemas
         if: ${{ hashFiles('prisma/schema.prisma') != '' }}
@@ -56,9 +59,6 @@ jobs:
           if [ -f prisma/schema-captain.prisma ]; then
             npx prisma validate --schema=prisma/schema-captain.prisma
           fi
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL != '' && secrets.DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_market_ci' }}
-          CAPTAIN_DATABASE_URL: ${{ secrets.CAPTAIN_DATABASE_URL != '' && secrets.CAPTAIN_DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_captain_ci' }}
 
       - name: Run tests
         run: npm run test:ci
