@@ -4,7 +4,7 @@
  */
 
 import { auth } from "@/lib/auth/auth";
-import { pusherServer } from "@/lib/pusher/server";
+import { getPusherServer } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -30,6 +30,16 @@ export async function POST(req: NextRequest) {
     // Private channels are prefixed with "private-user-{userId}"
     if (channelName !== `private-user-${userId}`) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Get Pusher instance
+    const pusherServer = getPusherServer();
+
+    if (!pusherServer) {
+      return NextResponse.json(
+        { error: "Pusher not configured" },
+        { status: 503 }
+      );
     }
 
     // Authenticate the user for this channel

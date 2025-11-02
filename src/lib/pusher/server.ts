@@ -5,24 +5,48 @@
 
 import Pusher from "pusher";
 
-if (
-  !process.env.PUSHER_APP_ID ||
-  !process.env.PUSHER_KEY ||
-  !process.env.PUSHER_SECRET ||
-  !process.env.PUSHER_CLUSTER
-) {
-  throw new Error(
-    "Missing Pusher environment variables. Please set PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, and PUSHER_CLUSTER in .env"
-  );
-}
+let pusherServerInstance: Pusher | null = null;
 
-export const pusherServer = new Pusher({
-  appId: process.env.PUSHER_APP_ID,
-  key: process.env.PUSHER_KEY,
-  secret: process.env.PUSHER_SECRET,
-  cluster: process.env.PUSHER_CLUSTER,
-  useTLS: true,
-});
+/**
+ * Get or initialize Pusher server instance (lazy initialization)
+ * Returns null in test/dev environments where Pusher is not configured
+ */
+export function getPusherServer(): Pusher | null {
+  // Return existing instance if already initialized
+  if (pusherServerInstance) return pusherServerInstance;
+
+  // Check if all required environment variables are present
+  if (
+    !process.env.PUSHER_APP_ID ||
+    !process.env.PUSHER_KEY ||
+    !process.env.PUSHER_SECRET ||
+    !process.env.PUSHER_CLUSTER
+  ) {
+    // In test/dev environments, log a warning but don't throw
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[Pusher] Missing environment variables. Real-time notifications disabled."
+      );
+      return null;
+    }
+
+    // In production, this is a critical error
+    throw new Error(
+      "Missing Pusher environment variables. Please set PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, and PUSHER_CLUSTER in .env"
+    );
+  }
+
+  // Initialize Pusher
+  pusherServerInstance = new Pusher({
+    appId: process.env.PUSHER_APP_ID,
+    key: process.env.PUSHER_KEY,
+    secret: process.env.PUSHER_SECRET,
+    cluster: process.env.PUSHER_CLUSTER,
+    useTLS: true,
+  });
+
+  return pusherServerInstance;
+}
 
 /**
  * Trigger a notification to a specific user's private channel
@@ -41,16 +65,29 @@ export async function triggerNotification(
     createdAt: Date;
   }
 ) {
+  const pusher = getPusherServer();
+
+  // Gracefully skip if Pusher is not configured
+  if (!pusher) {
+    console.log(`[Pusher] Skipping notification (Pusher not configured)`);
+    return { success: true, skipped: true };
+  }
+
   try {
-    await pusherServer.trigger(`private-user-${userId}`, "notification", {
+    await pusher.trigger(`private-user-${userId}`, "notification", {
       ...notification,
       createdAt: notification.createdAt.toISOString(),
     });
-    
-    console.log(`[Pusher] Notification sent to user ${userId}: ${notification.type}`);
+
+    console.log(
+      `[Pusher] Notification sent to user ${userId}: ${notification.type}`
+    );
     return { success: true };
   } catch (error) {
-    console.error(`[Pusher] Failed to send notification to user ${userId}:`, error);
+    console.error(
+      `[Pusher] Failed to send notification to user ${userId}:`,
+      error
+    );
     return { success: false, error };
   }
 }
@@ -61,17 +98,28 @@ export async function triggerNotification(
  * @param count - New unread notification count
  */
 export async function triggerNotificationCount(userId: string, count: number) {
+  const pusher = getPusherServer();
+
+  // Gracefully skip if Pusher is not configured
+  if (!pusher) {
+    console.log(`[Pusher] Skipping count update (Pusher not configured)`);
+    return { success: true, skipped: true };
+  }
+
   try {
-    await pusherServer.trigger(
-      `private-user-${userId}`,
-      "notification-count",
-      { count }
+    await pusher.trigger(`private-user-${userId}`, "notification-count", {
+      count,
+    });
+
+    console.log(
+      `[Pusher] Count update sent to user ${userId}: ${count} unread`
     );
-    
-    console.log(`[Pusher] Count update sent to user ${userId}: ${count} unread`);
     return { success: true };
   } catch (error) {
-    console.error(`[Pusher] Failed to send count update to user ${userId}:`, error);
+    console.error(
+      `[Pusher] Failed to send count update to user ${userId}:`,
+      error
+    );
     return { success: false, error };
   }
 }
