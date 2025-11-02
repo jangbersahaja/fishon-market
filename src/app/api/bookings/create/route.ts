@@ -394,7 +394,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Outbound webhook to captain app (non-blocking)
     try {
       const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-      const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+      const hookSecret = process.env.CAPTAIN_API_SECRET;
       if (hookUrl && hookSecret) {
         const guests = booking.guests as { adults: number; children: number };
         const payload = {
@@ -493,11 +493,9 @@ async function createAuthenticatedBooking(session: any, body: any) {
         const user = await prisma.user.findUnique({ where: { id: dbUserId } });
         const anglerName = user?.name ?? "Guest";
 
-        const base =
-          process.env.NEXT_PUBLIC_CAPTAIN_BASE_URL ||
-          process.env.NEXTAUTH_CAPTAIN_URL ||
-          "";
-        const bookingUrl = `${base}/captain/bookings/${encodeURIComponent(
+        const captainBaseUrl =
+          process.env.FISHON_CAPTAIN_API_URL || "http://localhost:3000";
+        const bookingUrl = `${captainBaseUrl}/captain/bookings/${encodeURIComponent(
           booking.id
         )}`;
 

@@ -7,9 +7,9 @@ import { getTripById } from "@/lib/services/trip-service";
 import { NextResponse } from "next/server";
 
 // Captain app will call this to update booking status to APPROVED or REJECTED
-// Security: requires header x-captain-secret === CAPTAIN_WEBHOOK_SECRET
+// Security: requires header x-captain-secret === CAPTAIN_API_SECRET
 export async function POST(req: Request) {
-  const secret = process.env.CAPTAIN_WEBHOOK_SECRET;
+  const secret = process.env.CAPTAIN_API_SECRET;
   if (!secret) {
     return NextResponse.json(
       { error: "Server not configured" },

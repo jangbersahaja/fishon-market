@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     // Notify captain app (best-effort)
     try {
       const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-      const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+      const hookSecret = process.env.CAPTAIN_API_SECRET;
       if (hookUrl && hookSecret) {
         const payload = {
           type: "booking.approved",

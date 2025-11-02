@@ -135,11 +135,9 @@ export async function POST(req: Request) {
         where: { id: updated.userId },
       });
 
-      const base =
-        process.env.NEXT_PUBLIC_CAPTAIN_BASE_URL ||
-        process.env.NEXTAUTH_CAPTAIN_URL ||
-        "";
-      const bookingUrl = `${base}/captain/bookings/${encodeURIComponent(
+      const captainBaseUrl =
+        process.env.FISHON_CAPTAIN_API_URL || "http://localhost:3000";
+      const bookingUrl = `${captainBaseUrl}/captain/bookings/${encodeURIComponent(
         updated.id
       )}`;
 
@@ -166,7 +164,7 @@ export async function POST(req: Request) {
   // Best-effort: notify Captain app that booking was paid
   try {
     const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-    const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+    const hookSecret = process.env.CAPTAIN_API_SECRET;
     if (hookUrl && hookSecret && updated) {
       const payload = {
         type: "booking.paid",

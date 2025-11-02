@@ -206,7 +206,7 @@ export default async function PaymentPage({
     (async () => {
       try {
         const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-        const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+        const hookSecret = process.env.CAPTAIN_API_SECRET;
         console.log("📤 [WEBHOOK] Preparing to send booking.paid webhook", {
           hookUrl,
           hasSecret: !!hookSecret,

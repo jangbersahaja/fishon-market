@@ -11,7 +11,7 @@
  */
 
 const CAPTAIN_API_BASE =
-  process.env.NEXT_PUBLIC_CAPTAIN_API_URL ||
+  process.env.NEXT_PUBLIC_CAPTAIN_URL ||
   process.env.FISHON_CAPTAIN_API_URL ||
   "";
 

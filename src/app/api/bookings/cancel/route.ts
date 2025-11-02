@@ -133,7 +133,7 @@ export async function POST(req: Request) {
   // Notify captain app (best-effort)
   try {
     const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-    const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+    const hookSecret = process.env.CAPTAIN_API_SECRET;
     console.log("📤 [WEBHOOK] Preparing to send booking.cancelled webhook", {
       hookUrl,
       hasSecret: !!hookSecret,
@@ -242,11 +242,9 @@ export async function POST(req: Request) {
           ? `${updated.guestFirstName} ${updated.guestLastName}`
           : "Angler");
 
-      const base =
-        process.env.NEXT_PUBLIC_CAPTAIN_BASE_URL ||
-        process.env.NEXTAUTH_CAPTAIN_URL ||
-        "";
-      const bookingUrl = `${base}/captain/bookings/${encodeURIComponent(
+      const captainBaseUrl =
+        process.env.FISHON_CAPTAIN_API_URL || "http://localhost:3000";
+      const bookingUrl = `${captainBaseUrl}/captain/bookings/${encodeURIComponent(
         updated.id
       )}`;
 

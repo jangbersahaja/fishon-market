@@ -30,14 +30,14 @@ export default async function AdminLogin({
   const error = params.error;
   const next = params.next || "/admin";
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <div className="flex items-center justify-center min-h-screen p-6 bg-gray-50">
       <form
         action={login}
-        className="w-full max-w-sm rounded-lg bg-white p-6 shadow"
+        className="w-full max-w-sm p-6 bg-white rounded-lg shadow"
       >
         <h1 className="mb-4 text-xl font-semibold">Admin Login</h1>
         {error && (
-          <p className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+          <p className="p-2 mb-3 text-sm text-red-700 border border-red-200 rounded bg-red-50">
             Invalid password
           </p>
         )}
