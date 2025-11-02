@@ -41,7 +41,12 @@ jobs:
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_market_ci' }}" >> $GITHUB_ENV
 
       - name: Set CAPTAIN_DATABASE_URL
-        run: echo "CAPTAIN_DATABASE_URL=${{ secrets.CAPTAIN_DATABASE_URL || 'postgresql://user:pass@localhost:5432/fishon_captain_ci' }}" >> $GITHUB_ENV
+        run: |
+          if [ -z "${{ secrets.CAPTAIN_DATABASE_URL }}" ]; then
+            echo 'CAPTAIN_DATABASE_URL=postgresql://user:pass@localhost:5432/fishon_captain_ci' >> $GITHUB_ENV
+          else
+            echo "CAPTAIN_DATABASE_URL=${{ secrets.CAPTAIN_DATABASE_URL }}" >> $GITHUB_ENV
+          fi
 
       # Generate Prisma clients (main schema and captain schema)
       - name: Generate Prisma client (main)
