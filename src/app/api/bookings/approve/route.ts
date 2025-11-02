@@ -1,7 +1,10 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
-import { sendMail } from "@/lib/helpers/email";
+import { sendBookingApprovedEmail } from "@/lib/services/email-service";
+import { createNotification } from "@/lib/services/notification-service";
+import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 function isStaffOrAdmin(role?: string | null) {
@@ -42,25 +45,51 @@ export async function POST(req: Request) {
       );
     }
 
+    // Extend expiration for APPROVED bookings (48 hours to pay)
+    const APPROVED_EXPIRY_HOURS = 48;
+    const newExpiresAt = new Date(
+      Date.now() + APPROVED_EXPIRY_HOURS * 60 * 60 * 1000
+    );
+
     const updated = await prisma.booking.update({
       where: { id },
       data: {
         status: "APPROVED",
         captainDecisionAt: new Date(),
         cancellationReason: null,
+        // Extend expiration: anglers have 48 hours to complete payment
+        expiresAt: newExpiresAt,
+      },
+      select: {
+        id: true,
+        status: true,
+        userId: true,
+        guestEmail: true,
+        guestFirstName: true,
+        guestLastName: true,
+        tripId: true,
+        charterId: true,
+        date: true,
+        days: true,
+        guests: true,
+        tripPrice: true,
+        finalPrice: true,
+        startTime: true,
+        expiresAt: true,
       },
     });
 
     // Notify captain app (best-effort)
     try {
       const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-      const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+      const hookSecret = process.env.CAPTAIN_API_SECRET;
       if (hookUrl && hookSecret) {
         const payload = {
           type: "booking.approved",
           booking: {
             id: updated.id,
-            captainCharterId: updated.captainCharterId,
+            tripId: updated.tripId,
+            charterId: updated.charterId,
             status: updated.status,
           },
         };
@@ -72,27 +101,84 @@ export async function POST(req: Request) {
       }
     } catch {}
 
+    // Notify angler (non-blocking best-effort)
+    (async () => {
+      try {
+        // Determine the recipient user ID (authenticated or guest)
+        const recipientUserId = updated.userId;
+        if (!recipientUserId) {
+          console.warn("No userId for booking notification:", updated.id);
+          return;
+        }
+
+        const trip = await getTripById(updated.tripId);
+        if (trip) {
+          await createNotification({
+            userId: recipientUserId,
+            type: "BOOKING_APPROVED",
+            title: "Booking Approved! 🎉",
+            message: `${trip.charter.name} approved your booking for ${updated.date.toISOString().slice(0, 10)}. Complete your payment to confirm your spot!`,
+            actionUrl: `/book/payment/${updated.id}`,
+            actionLabel: "Complete Payment",
+            bookingId: updated.id,
+            charterId: trip.charter.id,
+            metadata: {
+              charterName: trip.charter.name,
+              tripDate: updated.date.toISOString().slice(0, 10),
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Failed to create booking approved notification:", err);
+      }
+    })();
+
     // Email angler (best-effort)
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: updated.userId },
-      });
-      if (user?.email) {
-        const base =
-          process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const url = `${base}/book/confirm?id=${encodeURIComponent(updated.id)}`;
-        const html = `<div><p>Hi ${
-          user.name ?? "there"
-        },</p><p>Your booking <strong>${
-          updated.id
-        }</strong> was approved.</p><p>View: <a href="${url}">${url}</a></p></div>`;
-        await sendMail({
-          to: user.email,
-          subject: "Fishon booking approved",
-          html,
-        });
+      // Handle both authenticated and guest bookings
+      const user = updated.userId
+        ? await prisma.user.findUnique({
+            where: { id: updated.userId },
+          })
+        : null;
+
+      const email = user?.email || updated.guestEmail;
+      const name =
+        user?.name ||
+        (updated.guestFirstName
+          ? `${updated.guestFirstName} ${updated.guestLastName}`
+          : null);
+
+      if (email) {
+        // Get trip data for email
+        const trip = await getTripById(updated.tripId);
+        if (trip) {
+          const base =
+            process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
+          const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(updated.id)}`;
+          const paymentUrl = `${base}/book/payment/${encodeURIComponent(updated.id)}`;
+
+          await sendBookingApprovedEmail({
+            to: email,
+            userName: name ?? "there",
+            charterName: trip.charter.name,
+            tripDate: updated.date.toISOString().slice(0, 10),
+            paymentUrl,
+            confirmationUrl,
+          });
+        }
       }
-    } catch {}
+    } catch (err) {
+      console.error("Failed to send booking approved email:", err);
+    }
+
+    // Revalidate angler pages
+    try {
+      revalidatePath("/book/confirm", "page");
+      revalidatePath("/account/bookings", "page");
+    } catch (error) {
+      console.error("Revalidation failed:", error);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

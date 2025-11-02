@@ -3,11 +3,16 @@
  * to the frontend Charter format used by the UI components
  */
 
-import type { BackendCharter, BackendTrip } from "@/lib/api/captain-api";
+import type {
+  BackendCharter,
+  BackendSchedule,
+  BackendTrip,
+} from "@/lib/api/captain-api";
 import { getCityDistrict } from "@/lib/helpers/city-district-mapping";
 import type {
   Captain,
   Charter,
+  CharterSchedule,
   FishingType,
   Pickup,
   Policies,
@@ -41,6 +46,7 @@ function mapTier(pricingPlan: string): Tier {
  */
 function convertTrip(backendTrip: BackendTrip): Trip {
   return {
+    id: backendTrip.id, // Include trip ID for booking creation
     name: backendTrip.name,
     price: Number(backendTrip.price),
     duration: `${backendTrip.durationHours} hour${
@@ -135,6 +141,43 @@ function convertPolicies(
 }
 
 /**
+ * Convert backend schedule to frontend schedule format
+ */
+function convertSchedule(
+  backendSchedule: BackendSchedule | null
+): CharterSchedule | undefined {
+  if (!backendSchedule) {
+    return undefined;
+  }
+
+  return {
+    type: backendSchedule.type,
+    operationalDays: backendSchedule.operationalDays,
+  };
+}
+
+/**
+ * Convert backend unavailability to frontend format
+ */
+function convertUnavailability(
+  backendUnavailability: Array<{
+    startDate: string;
+    endDate: string;
+    reason: string | null;
+  }> | null
+) {
+  if (!backendUnavailability || backendUnavailability.length === 0) {
+    return undefined;
+  }
+
+  return backendUnavailability.map((period) => ({
+    startDate: period.startDate,
+    endDate: period.endDate,
+    reason: period.reason,
+  }));
+}
+
+/**
  * Convert backend charter to frontend Charter format
  */
 export function convertBackendCharterToFrontend(
@@ -146,6 +189,25 @@ export function convertBackendCharterToFrontend(
       ?.filter((m) => m.kind === "CHARTER_PHOTO")
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((m) => m.url) || [];
+
+  // Extract videos - prefer dedicated videos array, fall back to media array
+  const videos =
+    backendCharter.videos && backendCharter.videos.length > 0
+      ? backendCharter.videos
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((v) => ({
+            url: v.url,
+            name: v.name || undefined,
+            thumbnailUrl: v.thumbnailUrl || undefined,
+          }))
+      : backendCharter.media
+          ?.filter((m) => m.kind === "CHARTER_VIDEO")
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((m) => ({
+            url: m.url,
+            name: m.name,
+            thumbnailUrl: m.thumbnailUrl,
+          })) || [];
 
   // Build location string
   // Note: backendCharter.district actually contains city name (aliased from city field in DB)
@@ -210,6 +272,7 @@ export function convertBackendCharterToFrontend(
     coordinates,
     images: images.length > 0 ? images : undefined,
     imageUrl: images[0] || undefined,
+    videos: videos.length > 0 ? videos : undefined,
     description: backendCharter.description,
     trip: trips,
     species,
@@ -224,6 +287,8 @@ export function convertBackendCharterToFrontend(
     captain: convertCaptain(backendCharter.captain),
     fishingType: mapFishingType(backendCharter.charterType),
     tier: mapTier(backendCharter.pricingPlan),
+    schedule: convertSchedule(backendCharter.schedule),
+    unavailability: convertUnavailability(backendCharter.unavailability),
   };
 }
 

@@ -46,7 +46,7 @@ export default async function Home() {
             </Suspense>
           </div>
         </section>
-        <div className="flex w-full -mt-10 pt-20 pb-10 justify-center mx-auto bg-[#ec2227]">
+        <div className="flex w-full -mt-10 pt-20 pb-10 justify-center mx-auto bg-gradient-to-b from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
           <Suspense
             fallback={
               <div className="w-full px-5 mx-auto max-w-7xl py-7 text-white/80">
@@ -93,7 +93,7 @@ export default async function Home() {
                   Find customers and earn more
                 </p>
                 <Link
-                  href="/list-your-business"
+                  href="https://fishon-captain.vercel.app/"
                   className="mt-5 w-full rounded-md bg-[#ec2227] p-2 text-center font-bold text-white transition hover:bg-red-700"
                 >
                   List With Us

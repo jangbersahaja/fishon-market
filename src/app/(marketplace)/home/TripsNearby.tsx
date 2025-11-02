@@ -1,10 +1,7 @@
 "use client";
 
-import StarRating from "@/components/ratings/StarRating";
-import SafeImage from "@/components/shared/SafeImage";
-import { Charter } from "@/data/mock/charter";
-import { getAverageRating, getCharterReviews } from "@/lib/helpers/ratings";
-import Link from "next/link";
+import BaseCharterCard from "@/components/charters/BaseCharterCard";
+import type { Charter } from "@fishon/ui";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdError } from "react-icons/md";
@@ -188,98 +185,40 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
         {/* Cards (carousel) */}
         {nearby.length > 0 && (
           <>
-            <h2 className="text-2xl font-bold text-center text-white lg:text-start">
+            <h2 className="text-3xl font-bold text-center text-white">
               Discover Trip Near You
             </h2>
-            <div className="relative mt-5">
+            <div className="relative">
               {/* track */}
               <div
                 ref={trackRef}
-                className="flex gap-5 pb-3 overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                className="flex gap-10 py-10 overflow-x-auto snap-x snap-mandatory scroll-smooth"
               >
                 {nearby.map((c) => {
-                  const img =
-                    (c.images && c.images[0]) ||
-                    (c as any).imageUrl ||
-                    "/placeholder-1.jpg";
-                  const minPrice =
-                    c.trip && c.trip.length
-                      ? Math.min(...c.trip.map((t) => t.price))
-                      : undefined;
-                  const avg = getAverageRating(c.id);
-                  const reviews = getCharterReviews(c.id);
-                  // (stray JSX removed; ratings are rendered below)
-                  // Build link with existing booking context if present
-                  const params = new URLSearchParams();
-                  if (typeof adults === "number" && !Number.isNaN(adults))
-                    params.set("adults", String(adults));
-                  if (typeof children === "number" && !Number.isNaN(children))
-                    params.set("children", String(children));
-                  const total = (adults || 0) + (children || 0); // back-compat if needed
-                  if (total) params.set("booking_persons", String(total));
-                  if (date) params.set("date", date);
-                  const qs = params.toString();
-                  // Prefer backendId for linking when available; falls back to numeric id (dummy)
-                  const idForLink = (c as any).backendId ?? String(c.id);
-                  const href = qs
-                    ? `/charters/view/${idForLink}?${qs}`
-                    : `/charters/view/${idForLink}`;
+                  // Build booking context if present
+                  const context = {
+                    date: date || undefined,
+                    adults:
+                      typeof adults === "number" && !Number.isNaN(adults)
+                        ? adults
+                        : undefined,
+                    children:
+                      typeof children === "number" && !Number.isNaN(children)
+                        ? children
+                        : undefined,
+                  };
 
                   return (
-                    <article
+                    <BaseCharterCard
                       key={getCharterKey(c as any)}
-                      className="overflow-hidden bg-white shadow-sm w-80 shrink-0 snap-start rounded-xl"
-                    >
-                      <Link href={href}>
-                        <div className="relative w-full h-64">
-                          <SafeImage
-                            src={img}
-                            alt={`${c.name} cover`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1 p-3">
-                          <div className="flex gap-1">
-                            {avg ? (
-                              <>
-                                <StarRating value={avg} size={16} />
-                                <p className="text-xs text-gray-500">
-                                  • {reviews.length} reviews
-                                </p>
-                              </>
-                            ) : (
-                              <p className="text-xs text-gray-400">
-                                No reviews yet
-                              </p>
-                            )}
-                          </div>
-                          <h3 className="text-base font-semibold line-clamp-1">
-                            {c.name}
-                          </h3>
-                          <p className="line-clamp-1 text-[11px] text-gray-600">
-                            {c.location}
-                          </p>
-
-                          <div className="flex items-center justify-between text-xs text-gray-700">
-                            <span>{c._distance.toFixed(1)} km</span>
-                            {typeof minPrice === "number" && (
-                              <span>
-                                FROM{" "}
-                                <span className="font-bold text-[#ec2227] text-lg">
-                                  RM{minPrice}
-                                </span>
-                              </span>
-                            )}
-                          </div>
-                          {Array.isArray(c.trip) && c.trip.length > 0 && (
-                            <div className="line-clamp-1 text-[11px] text-gray-700">
-                              {c.trip.map((t) => t.name).join(" • ")}
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    </article>
+                      charter={c}
+                      variant="nearby"
+                      imageAspect="square"
+                      context={context}
+                      distance={c._distance}
+                      showFavoriteButton={true}
+                      className="w-80 shrink-0 snap-start"
+                    />
                   );
                 })}
               </div>

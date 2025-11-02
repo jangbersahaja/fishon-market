@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
-import { sendMail } from "@/lib/helpers/email";
+import {
+  sendBookingConfirmedAnglerEmail,
+  sendBookingConfirmedCaptainEmail,
+} from "@/lib/services/email-service";
+import { createNotification } from "@/lib/services/notification-service";
+import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { NextResponse } from "next/server";
 
@@ -38,50 +43,128 @@ export async function POST(req: Request) {
           .catch(() => null)
       : null;
 
-  // Best-effort: email the angler with a simple receipt/confirmation
-  try {
-    if (updated) {
+  // Notify angler (non-blocking best-effort)
+  (async () => {
+    try {
+      if (!updated || !session?.user?.id) return;
+
+      const trip = await getTripById(updated.tripId);
+      if (!trip) return;
+
+      await createNotification({
+        userId: session.user.id,
+        type: "BOOKING_PAID",
+        title: "Payment Confirmed! ✅",
+        message: `Your payment for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed. Get ready for an amazing trip!`,
+        actionUrl: `/book/confirm?id=${updated.id}`,
+        actionLabel: "View Booking Details",
+        bookingId: updated.id,
+        charterId: trip.charter.id,
+        metadata: {
+          charterName: trip.charter.name,
+          tripDate: updated.date.toISOString().slice(0, 10),
+        },
+      });
+    } catch (err) {
+      console.error("Failed to create payment notification:", err);
+    }
+  })();
+
+  // Email angler confirmation (non-blocking best-effort)
+  (async () => {
+    try {
+      if (!updated) return;
+
       const user = await prisma.user.findUnique({
         where: { id: updated.userId },
       });
-      if (user?.email) {
-        const base =
-          process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(
-          updated.id
-        )}`;
-        const html = `
-        <div>
-          <p>Hi ${user.name ?? "there"},</p>
-          <p>Your payment for <strong>${
-            updated.charterName
-          }</strong> has been received. Your booking is confirmed.</p>
-          <ul>
-            <li>Booking ID: ${updated.id}</li>
-            <li>Total: RM ${updated.totalPrice}</li>
-            <li>Date: ${updated.date.toISOString().slice(0, 10)}</li>
-            ${
-              updated.startTime
-                ? `<li>Start time: ${updated.startTime}</li>`
-                : ""
-            }
-          </ul>
-          <p>View your booking: <a href="${confirmationUrl}">${confirmationUrl}</a></p>
-        </div>
-      `;
-        await sendMail({
-          to: user.email,
-          subject: "Fishon booking payment received",
-          html,
-        });
-      }
+      if (!user?.email) return;
+
+      // Fetch trip data to get all details
+      const trip = await getTripById(updated.tripId);
+      if (!trip) return;
+
+      const captain = trip.charter.captain;
+      if (!captain) return;
+
+      const base =
+        process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
+      const bookingUrl = `${base}/book/confirm?id=${encodeURIComponent(
+        updated.id
+      )}`;
+
+      await sendBookingConfirmedAnglerEmail({
+        to: user.email,
+        userName: user.name ?? "there",
+        charterName: trip.charter.name,
+        captainName: captain.displayName,
+        captainEmail: captain.email,
+        captainPhone: captain.phone || "",
+        tripName: trip.name,
+        tripDate: updated.date.toISOString().slice(0, 10),
+        tripDays: updated.days,
+        durationHours: trip.durationHours,
+        startTime: updated.startTime ?? undefined,
+        finalPrice: `RM ${Number(updated.finalPrice).toFixed(2)}`,
+        bookingUrl,
+      });
+    } catch (err) {
+      console.error("Failed to send angler payment confirmation email:", err);
     }
-  } catch {}
+  })();
+
+  // Email captain confirmation (non-blocking best-effort)
+  (async () => {
+    try {
+      if (!updated) return;
+
+      // Fetch trip data to get captain info
+      const trip = await getTripById(updated.tripId);
+      if (!trip) return;
+
+      const captain = trip.charter.captain;
+      if (!captain?.email) {
+        console.warn(
+          "Captain email not available for payment confirmation:",
+          updated.id
+        );
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: updated.userId },
+      });
+
+      const captainBaseUrl =
+        process.env.FISHON_CAPTAIN_API_URL || "http://localhost:3000";
+      const bookingUrl = `${captainBaseUrl}/captain/bookings/${encodeURIComponent(
+        updated.id
+      )}`;
+
+      await sendBookingConfirmedCaptainEmail({
+        to: captain.email,
+        captainName: captain.displayName,
+        charterName: trip.charter.name,
+        anglerName: user?.name ?? "Angler",
+        anglerEmail: user?.email ?? "",
+        anglerPhone: user?.phone ?? "",
+        tripName: trip.name,
+        tripDate: updated.date.toISOString().slice(0, 10),
+        tripDays: updated.days,
+        durationHours: trip.durationHours,
+        startTime: updated.startTime ?? undefined,
+        finalPrice: `RM ${Number(updated.finalPrice).toFixed(2)}`,
+        bookingUrl,
+      });
+    } catch (err) {
+      console.error("Failed to send captain payment confirmation email:", err);
+    }
+  })();
 
   // Best-effort: notify Captain app that booking was paid
   try {
     const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-    const hookSecret = process.env.CAPTAIN_WEBHOOK_SECRET;
+    const hookSecret = process.env.CAPTAIN_API_SECRET;
     if (hookUrl && hookSecret && updated) {
       const payload = {
         type: "booking.paid",

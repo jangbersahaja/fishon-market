@@ -1,3 +1,20 @@
+/**
+ * ⚠️ LEGACY EMAIL SYSTEM - DEPRECATED ⚠️
+ *
+ * This file contains the OLD email system with inline HTML templates.
+ * It is kept for backward compatibility during migration only.
+ *
+ * NEW EMAIL SYSTEM: Use @fishon/email package instead
+ * Location: src/lib/services/email-service.ts
+ *
+ * Migration Date: October 28, 2025
+ * Package: @fishon/email (git+https://github.com/jangbersahaja/fishon-email)
+ *
+ * DO NOT ADD NEW EMAIL FUNCTIONS HERE - use the new email service instead.
+ *
+ * @deprecated Use src/lib/services/email-service.ts with @fishon/email package
+ */
+
 import nodemailer from "nodemailer";
 
 export type MailInput = {
@@ -8,6 +25,9 @@ export type MailInput = {
 
 let transporter: any | null = null;
 
+/**
+ * @deprecated Use email-service.ts - this is legacy SMTP setup
+ */
 function getTransporter(): any {
   if (transporter) return transporter;
   const host = process.env.SMTP_HOST;
@@ -43,6 +63,9 @@ function getTransporter(): any {
   return transporter;
 }
 
+/**
+ * @deprecated Use email-service.ts sendBookingCreatedEmail() with @fishon/email package
+ */
 export async function sendMail({ to, subject, html }: MailInput) {
   const from = process.env.SMTP_USER!;
   const t = getTransporter();
@@ -58,6 +81,10 @@ export async function sendMail({ to, subject, html }: MailInput) {
   }
 }
 
+/**
+ * @deprecated Use email-service.ts renderBookingCreatedEmail() with @fishon/email package
+ * This function generates inline HTML strings - the new system uses React Email components
+ */
 export function renderBookingCreatedEmail(params: {
   toName?: string;
   charterName: string;
@@ -84,6 +111,10 @@ export function renderBookingCreatedEmail(params: {
   </div>`;
 }
 
+/**
+ * @deprecated Use email-service.ts sendBookingApprovedEmail() or sendBookingRejectedEmail()
+ * This function generates inline HTML strings - the new system uses React Email components
+ */
 export function renderStatusEmail(params: {
   toName?: string;
   charterName: string;

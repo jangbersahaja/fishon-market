@@ -1,19 +1,34 @@
 import BookingSummaryCard from "@/app/(marketplace)/book/[charterId]/ui/BookingSummaryCard";
+import {
+  BookingCountdown,
+  BookingDetails,
+  BookingProgressTimeline,
+  CancellationInfo,
+  ReviewSection,
+  TripPreparation,
+} from "@/components/booking";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
-import { getCharterById } from "@/lib/services/charter-service";
-import { CheckCircle2 } from "lucide-react";
+import {
+  isCancelled,
+  isTripCompleted,
+  isTripInProgress,
+} from "@/lib/helpers/booking-status-helpers";
+import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
 import Link from "next/link";
-
-import NextActions from "./NextActions";
-import StatusTimeline from "./StatusTimeline";
+import { BookingConfirmActions } from "./BookingConfirmActions";
+import { BookingStatusRefresh } from "./BookingStatusRefresh";
 
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string | string[] }>;
 }) {
   const sp = await searchParams;
-  const id = sp.id;
+  // Handle case where id might be an array (multiple query params)
+  const id = Array.isArray(sp.id) ? sp.id[0] : sp.id;
+  const session = await auth();
+
   if (!id) {
     return (
       <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6">
@@ -23,7 +38,17 @@ export default async function ConfirmationPage({
     );
   }
 
-  const booking = await prisma.booking.findUnique({ where: { id } });
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          email: true,
+          name: true,
+        },
+      },
+    },
+  });
 
   if (!booking) {
     return (
@@ -36,148 +61,233 @@ export default async function ConfirmationPage({
     );
   }
 
-  // Fetch charter data for rich display
-  const charter = await getCharterById(booking.captainCharterId);
+  // Enrich booking with trip and charter data
+  const enrichedBooking = await enrichBookingWithTripData(booking);
 
-  const charterData = charter
+  const charterData = enrichedBooking.charter
     ? {
-        id: String(charter.id),
-        name: charter.name,
-        location: charter.location,
-        images: Array.isArray(charter.images)
-          ? charter.images
-          : charter.imageUrl
-          ? [charter.imageUrl]
-          : [],
-        boat: charter.boat,
-        includes: charter.includes,
-        coordinates: charter.coordinates,
+        id: enrichedBooking.charter.id,
+        name: enrichedBooking.charter.name,
+        // Use startingPoint from charter table for the starting point address
+        address: enrichedBooking.charter.startingPoint,
+        location: enrichedBooking.location,
+        // Transform images from { url: string }[] to string[]
+        images: enrichedBooking.charter.images?.map((img) => img.url) || [],
+        boat: enrichedBooking.charter.boat
+          ? {
+              name: enrichedBooking.charter.boat.name,
+              type: enrichedBooking.charter.boat.type,
+              capacity: enrichedBooking.charter.boat.capacity,
+              features: enrichedBooking.charter.features || [],
+            }
+          : undefined,
+        // Transform includes from { name: string; isIncluded: boolean }[] to string[]
+        includes:
+          enrichedBooking.charter.includes
+            ?.filter((item) => item.isIncluded)
+            .map((item) => item.name) || [],
+        // Transform coordinates from { latitude, longitude } to { lat, lng }
+        coordinates: enrichedBooking.charter.coordinates
+          ? {
+              lat: enrichedBooking.charter.coordinates.latitude,
+              lng: enrichedBooking.charter.coordinates.longitude,
+            }
+          : undefined,
       }
     : undefined;
 
-  const captainData = charter?.captain?.name
+  const captainData = enrichedBooking.charter?.captain
     ? {
-        name: charter.captain.name,
-        avatarUrl: charter.captain.avatarUrl,
+        // Rename displayName to name for component compatibility
+        name: enrichedBooking.charter.captain.displayName,
+        avatarUrl: enrichedBooking.charter.captain.avatarUrl || undefined,
       }
     : null;
 
-  return (
-    <main className="w-full py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
-      {/* Hero Section */}
-      <div className="py-8">
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-bold sm:text-3xl">
-            {booking.status === "PAID"
-              ? "Booking Confirmed!"
-              : "Request Received!"}
-          </h1>
-        </div>
+  // Determine booking state (using enriched booking with display fields)
+  const tripInProgress = isTripInProgress(enrichedBooking);
+  const tripCompleted = isTripCompleted(enrichedBooking);
+  const tripCancelled = isCancelled(enrichedBooking);
+  // Show trip preparation for paid bookings that haven't completed yet
+  const shouldShowTripPreparation =
+    booking.status === "PAID" && !tripCompleted && !tripCancelled;
 
-        <p className="mt-2 text-gray-600">
-          {booking.status === "PAID"
-            ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
-            : "Your booking request has been sent to the captain for review."}
-        </p>
-        <p className="mt-2 text-sm text-gray-500">
-          Booking reference:{" "}
+  // Debug: Log TripPreparation data
+  console.log("📋 TripPreparation Debug:", {
+    bookingStatus: booking.status,
+    tripInProgress,
+    tripCompleted,
+    tripCancelled,
+    shouldShowTripPreparation,
+    bookingDate: enrichedBooking.date,
+    bookingStartTime: enrichedBooking.startTime,
+    bookingDays: enrichedBooking.days,
+    captainPhone: enrichedBooking.charter?.captain?.phone,
+    startingPoint: enrichedBooking.charter?.startingPoint,
+    latitude: enrichedBooking.charter?.coordinates?.latitude,
+    longitude: enrichedBooking.charter?.coordinates?.longitude,
+    hasCharter: !!enrichedBooking.charter,
+    hasCaptain: !!enrichedBooking.charter?.captain,
+  });
+
+  return (
+    <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
+      {/* Hero Section with Progress Timeline */}
+      <div className="pb-10 space-y-6">
+        <div className="flex flex-col gap-3">
+          <h1 className="text-2xl font-bold sm:text-3xl">
+            {booking.status === "COMPLETED"
+              ? "Trip Completed!"
+              : booking.status === "PAID" && tripInProgress
+                ? "Trip In Progress!"
+                : booking.status === "PAID"
+                  ? "Booking Confirmed!"
+                  : booking.status === "APPROVED"
+                    ? "Approved! Complete Payment"
+                    : booking.status === "PENDING"
+                      ? "Waiting For Captain Approval"
+                      : booking.status === "REJECTED"
+                        ? "Request Declined"
+                        : booking.status === "EXPIRED"
+                          ? "Booking Expired"
+                          : booking.status === "CANCELLED"
+                            ? "Booking Cancelled"
+                            : "Booking Status"}
+          </h1>
+
+          <p className="max-w-2xl text-gray-600">
+            {booking.status === "COMPLETED"
+              ? "Your fishing trip has been completed. We hope you had an amazing experience! Please share your feedback."
+              : booking.status === "PAID" && tripInProgress
+                ? "Your fishing trip is currently in progress. Have a great time and stay safe!"
+                : booking.status === "PAID"
+                  ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
+                  : booking.status === "APPROVED"
+                    ? "The captain has approved your request. Complete payment to confirm your booking."
+                    : booking.status === "PENDING"
+                      ? "Your booking request has been sent to the captain for review."
+                      : booking.status === "REJECTED"
+                        ? "The captain was unable to accommodate your request."
+                        : booking.status === "EXPIRED"
+                          ? "This booking hold has expired."
+                          : booking.status === "CANCELLED"
+                            ? "This booking has been cancelled."
+                            : "View your booking details below."}
+          </p>
+
+          {/* Countdown Timer for PENDING/APPROVED bookings */}
+          {(booking.status === "PENDING" || booking.status === "APPROVED") &&
+            booking.expiresAt && (
+              <div className="mt-4">
+                <BookingCountdown
+                  expiresAt={booking.expiresAt}
+                  size="lg"
+                  showIcon={true}
+                />
+              </div>
+            )}
+        </div>
+        {/* Progress Timeline */}
+        <div className="px-10 mb-5 sm:px-15">
+          <BookingProgressTimeline
+            currentStep={tripCompleted ? "completed" : (booking.status as any)}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-end justify-between mb-2">
+        <div className="flex flex-col text-sm text-gray-500 sm:flex-row">
+          <span>Booking reference:</span>
           <code className="px-2 py-0.5 text-xs font-mono bg-gray-100 rounded">
             {booking.id}
           </code>
-        </p>
-      </div>
-
-      {/* Main Grid: Timeline + Actions (left) | Summary (right) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        {/* Left Column - Shows on mobile first, then left on desktop */}
-        <div className="order-2 space-y-6 lg:col-span-3 lg:order-1">
-          {/* Booking Details Card */}
-          <section className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
-            <h2 className="mb-4 text-base font-semibold sm:text-lg">
-              Booking Details
-            </h2>
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <dt className="text-gray-600">Charter</dt>
-                <dd className="font-medium text-gray-900">
-                  {booking.charterName}
-                </dd>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <dt className="text-gray-600">Trip</dt>
-                <dd className="font-medium text-gray-900">
-                  {booking.tripName}
-                </dd>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <dt className="text-gray-600">Date</dt>
-                <dd className="font-medium text-gray-900">
-                  {new Intl.DateTimeFormat(undefined, {
-                    weekday: "short",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  }).format(booking.date)}
-                </dd>
-              </div>
-              {booking.startTime && (
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <dt className="text-gray-600">Start time</dt>
-                  <dd className="font-medium text-gray-900">
-                    {booking.startTime}
-                  </dd>
-                </div>
-              )}
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <dt className="text-gray-600">Duration</dt>
-                <dd className="font-medium text-gray-900">
-                  {booking.days} day{booking.days > 1 ? "s" : ""}
-                </dd>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <dt className="text-gray-600">Guests</dt>
-                <dd className="font-medium text-gray-900">
-                  {booking.adults} adult{booking.adults > 1 ? "s" : ""}
-                  {booking.children > 0 &&
-                    `, ${booking.children} child${
-                      booking.children > 1 ? "ren" : ""
-                    }`}
-                </dd>
-              </div>
-              <div className="flex justify-between py-2">
-                <dt className="text-base font-semibold text-gray-900">Total</dt>
-                <dd className="text-base font-bold text-[#ec2227]">
-                  RM{booking.totalPrice}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <StatusTimeline
-            status={booking.status}
-            expiresAt={booking.expiresAt}
-          />
-
-          {/* Next Steps / Actions */}
-          <NextActions booking={booking} />
         </div>
 
-        {/* Right Column - Summary (shows first on mobile) */}
-        <div className="order-1 lg:col-span-2 lg:order-2">
-          <BookingSummaryCard
-            charter={charterData}
-            captain={captainData}
-            date={booking.date.toISOString().slice(0, 10)}
-            days={booking.days}
-            adults={booking.adults}
-            childrenCount={booking.children}
-            tripName={booking.tripName}
-            startTime={booking.startTime || undefined}
-            totalPrice={booking.totalPrice}
+        {/* Smart Refresh - Auto-refreshes on tab focus, manual button for PENDING/APPROVED */}
+        {(booking.status === "PENDING" || booking.status === "APPROVED") && (
+          <BookingStatusRefresh status={booking.status} />
+        )}
+      </div>
+
+      {/* Main Grid: Content (left) | Summary + Actions (right) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* Left Column - Main Content */}
+        <div className="order-2 space-y-6 lg:col-span-3 lg:order-1">
+          {/* Booking Details */}
+          <BookingDetails
+            booking={{
+              id: enrichedBooking.id,
+              charterName: enrichedBooking.charterName,
+              tripName: enrichedBooking.tripName,
+              guestName:
+                booking.user?.name ||
+                `${booking.guestFirstName} ${booking.guestLastName}` ||
+                "Guest",
+              location: enrichedBooking.location,
+              date: enrichedBooking.date,
+              durationHour: String(enrichedBooking.durationHour || ""),
+              startTime: enrichedBooking.startTime,
+              days: enrichedBooking.days,
+              adults: enrichedBooking.adults,
+              children: enrichedBooking.children,
+              unitPrice: enrichedBooking.unitPrice,
+              totalPrice: enrichedBooking.totalPrice,
+              status: enrichedBooking.status as any,
+              note: enrichedBooking.note,
+              rejectionReason: enrichedBooking.rejectionReason,
+              cancellationReason: enrichedBooking.cancellationReason,
+            }}
           />
+
+          {/* Cancellation Info (if cancelled) */}
+          {tripCancelled && enrichedBooking.cancellationReason && (
+            <CancellationInfo
+              cancellationReason={enrichedBooking.cancellationReason}
+              cancellationSource="customer"
+            />
+          )}
+
+          {/* Trip Preparation (for upcoming paid bookings) */}
+          {shouldShowTripPreparation && (
+            <TripPreparation
+              captainPhone={enrichedBooking.charter?.captain?.phone}
+              startingPoint={enrichedBooking.charter?.startingPoint}
+              location={enrichedBooking.location}
+              latitude={enrichedBooking.charter?.coordinates?.latitude}
+              longitude={enrichedBooking.charter?.coordinates?.longitude}
+              bookingId={booking.id}
+            />
+          )}
+
+          {/* Review Section (for completed trips) */}
+          {tripCompleted && (
+            <ReviewSection
+              bookingId={booking.id}
+              userId={session?.user?.id}
+              charterName={enrichedBooking.charterName}
+              tripDate={enrichedBooking.date}
+              location={enrichedBooking.location}
+            />
+          )}
+
+          {/* TODO: Implement chat feature */}
+
+          {/* Booking Actions */}
+          <BookingConfirmActions
+            bookingId={enrichedBooking.id}
+            charterId={enrichedBooking.charterId}
+            status={enrichedBooking.status as any}
+            userId={session?.user?.id}
+            bookingEmail={
+              booking.user?.email || enrichedBooking.guestEmail || ""
+            }
+          />
+        </div>
+
+        {/* Right Column - Summary + Actions */}
+        <div className="order-1 space-y-6 lg:col-span-2 lg:order-2">
+          {/* Charter Summary Card */}
+          <BookingSummaryCard charter={charterData} captain={captainData} />
         </div>
       </div>
 

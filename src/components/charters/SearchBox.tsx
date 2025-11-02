@@ -1,7 +1,7 @@
 "use client";
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
-import charters, { Charter } from "@/data/mock/charter";
+import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -65,15 +65,42 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
 
   const spDestination = searchParams.get("destination") || "";
   const spDateStr = searchParams.get("date");
+  const spStartDateStr = searchParams.get("startDate");
+  const spDays = parseInt(searchParams.get("days") || "", 10);
   const spAdults = parseInt(searchParams.get("adults") || "", 10);
   const spChildren = parseInt(searchParams.get("children") || "", 10);
-  // Destination (with basic suggestions; next step: plug Google Places Autocomplete restricted to Malaysia)
+
+  // Fetch real charter data for destination suggestions
+  type CharterSuggestion = {
+    id: string;
+    name: string;
+    location: string;
+    address: string;
+  };
+  const [charters, setCharters] = useState<CharterSuggestion[]>([]);
+
+  useEffect(() => {
+    async function fetchCharters() {
+      try {
+        const response = await fetch("/api/charters");
+        if (response.ok) {
+          const data = await response.json();
+          setCharters(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch charters for suggestions:", error);
+      }
+    }
+    fetchCharters();
+  }, []);
+
+  // Destination (with basic suggestions from real charter data)
   const [destination, setDestination] = useState(spDestination);
   const [showDestSuggestions, setShowDestSuggestions] = useState(false);
   const destinationSuggestions = useMemo(() => {
-    // Build suggestions from dummy data: location, name, and address
+    // Build suggestions from real charter data: location, name, and address
     const raw: string[] = [];
-    (charters as Charter[]).forEach((c) => {
+    charters.forEach((c) => {
       if (c.location) raw.push(c.location);
       if (c.name) raw.push(c.name);
       if (c.address) raw.push(c.address);
@@ -90,11 +117,14 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     }
     // Limit to top 8
     return out.slice(0, 8);
-  }, [destination]);
+  }, [destination, charters]);
 
-  // Date (custom popover)
+  // Date (custom popover) - support both single date and range
   const [selectedDate, setSelectedDate] = useState<string | undefined>(
-    spDateStr || undefined
+    spDateStr || spStartDateStr || undefined
+  );
+  const [days, setDays] = useState<number>(
+    Number.isFinite(spDays) && spDays > 0 ? spDays : 1
   );
 
   // Guests (dropdown counters)
@@ -116,6 +146,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
   function replaceQuery(next: {
     destination?: string;
     dateStr?: string | undefined;
+    daysCount?: number;
     adults?: number;
     children?: number;
   }) {
@@ -130,6 +161,11 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     const dStr = next.dateStr !== undefined ? next.dateStr : selectedDate;
     if (dStr) params.set("date", dStr);
     else params.delete("date");
+
+    // days (for multi-day bookings)
+    const d = next.daysCount ?? days;
+    if (Number.isFinite(d) && d > 1) params.set("days", String(d));
+    else params.delete("days");
 
     // guests
     const a = next.adults ?? adults;
@@ -156,7 +192,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     }, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destination, selectedDate, adults, children]);
+  }, [destination, selectedDate, days, adults, children]);
 
   // Submit (for now, just log)
   function onSubmit(e: React.FormEvent) {
@@ -164,6 +200,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     const params = new URLSearchParams();
     if (destination) params.set("destination", destination);
     if (selectedDate) params.set("date", selectedDate);
+    if (days > 1) params.set("days", String(days));
     if (adults) params.set("adults", String(adults));
     if (children) params.set("children", String(children));
     router.push(`/search?${params.toString()}`);
@@ -180,23 +217,23 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
       <form
         onSubmit={onSubmit}
         autoComplete="off"
-        className="w-full flex flex-col bg-white p-2 rounded-lg gap-3 shadow-lg ring-2 ring-[#ec2227]"
+        className="w-full flex flex-col bg-white p-2 rounded-2xl gap-3 shadow-2xl ring-2 ring-[#ec2227]/60 hover:ring-[#ec2227] transition-all duration-300"
       >
-        <div className="w-full flex lg:flex-row flex-col">
+        <div className="flex flex-col w-full lg:flex-row">
           {/* Destination */}
           <div className="flex w-full lg:flex-1">
-            <div className="relative z-10 flex flex-col w-full lg:border-r border-gray-300 pt-1 px-3 hover:bg-gray-100/50">
+            <div className="relative z-10 flex flex-col w-full px-3 pt-1 border-gray-300 lg:border-r hover:bg-gray-100/50">
               <label className="text-xs font-bold" htmlFor="destination">
                 Destination
               </label>
               <div className="relative">
                 {/* left icon */}
-                <IoIosPin className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                <IoIosPin className="absolute text-gray-600 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
 
                 <input
                   id="destination"
                   name="search-destination" // non-standard name to avoid browser history/autofill
-                  className="w-full text-sm outline-none bg-transparent py-2 px-8"
+                  className="w-full px-8 py-2 text-sm bg-transparent outline-none"
                   type="text"
                   placeholder="Search Destination"
                   value={destination}
@@ -230,7 +267,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                   <button
                     type="button"
                     onClick={() => setDestination("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute text-gray-400 -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
                     aria-label="Clear destination"
                   >
                     ×
@@ -240,12 +277,12 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
               {showDestSuggestions && destination.trim().length > 0 && (
                 <ul
                   id="destination-suggestions"
-                  className="absolute left-0 right-0 top-full z-20 mt-2 rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden"
+                  className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-md shadow-lg top-full"
                 >
                   {destinationSuggestions.map((s) => (
                     <li
                       key={s}
-                      className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setDestination(s);
@@ -261,49 +298,68 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
             <div
               className={`${
                 showRest ? "hidden " : "flex lg:hidden "
-              } z-0 absolute right-5 top-0 h-full items-center`}
+              }  h-full items-center`}
             >
-              <div className="flex justify-center items-center w-16 h-14 bg-red-600 text-white rounded-sm hover:bg-red-700 transition font-bold">
+              <div className="flex justify-center items-center w-16 h-14 bg-gradient-to-r from-[#ec2227] to-[#d11f24] text-white rounded-xl hover:from-[#d11f24] hover:to-[#b01a1f] transition-all duration-300 font-bold shadow-lg hover:shadow-xl">
                 <Search />
               </div>
             </div>
           </div>
 
           <div className={showRest ? "contents" : "hidden lg:contents"}>
-            <hr className="border-t border-gray-300 flex lg:hidden my-3" />
+            <hr className="flex my-3 border-t border-gray-300 lg:hidden" />
             {/* Date (custom popover) */}
-            <div className="relative flex flex-col w-full lg:flex-1 lg:border-r border-gray-300 pt-1 px-3 hover:bg-gray-100/50">
+            <div className="relative flex flex-col w-full px-3 pt-1 border-gray-300 lg:flex-1 lg:border-r hover:bg-gray-100/50">
               <label className="text-xs font-bold" htmlFor="date">
-                Date
+                Date{days > 1 ? " Range" : ""}
               </label>
               <div className="relative">
                 {/* left icon */}
-                <IoCalendarClear className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                <IoCalendarClear className="absolute text-gray-600 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
 
                 <CalendarPicker
                   value={selectedDate}
-                  onChange={(v) => setSelectedDate(v)}
+                  initialDays={days}
+                  onChange={(v) => {
+                    setSelectedDate(v);
+                    if (days > 1) setDays(1); // Reset to single day
+                  }}
+                  onRangeChange={(range) => {
+                    const calculatedDays = calculateDays(
+                      range.startDate,
+                      range.endDate
+                    );
+                    setSelectedDate(range.startDate);
+                    setDays(calculatedDays);
+                  }}
                   className="w-full"
                   buttonClassName="px-9 text-left text-sm border-0 outline-none focus:ring-0 shadow-none bg-transparent w-full"
+                  enableModeToggle={true}
+                  mode="single"
                 />
 
                 {/* right chevron */}
-                <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                <IoChevronDown className="absolute text-gray-600 -translate-y-1/2 pointer-events-none right-3 top-1/2" />
               </div>
+              {days > 1 && (
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  {days} days selected
+                </p>
+              )}
             </div>
 
-            <hr className="border-t border-gray-300 flex lg:hidden my-3" />
+            <hr className="flex my-3 border-t border-gray-300 lg:hidden" />
 
             {/* Guests */}
-            <div className="relative flex flex-col w-full lg:flex-1 pt-1 px-3 rounded hover:bg-gray-100/50">
+            <div className="relative flex flex-col w-full px-3 pt-1 rounded lg:flex-1 hover:bg-gray-100/50">
               <span className="text-xs font-bold">No Of Guest</span>
               <div className="relative">
                 {/* left icon */}
-                <IoPerson className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                <IoPerson className="absolute text-gray-600 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
 
                 <button
                   type="button"
-                  className="w-full text-left text-sm bg-transparent py-2 px-8"
+                  className="w-full px-8 py-2 text-sm text-left bg-transparent"
                   onClick={() => setGuestsOpen((v) => !v)}
                   aria-haspopup="listbox"
                   aria-expanded={guestsOpen}
@@ -315,29 +371,29 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
 
                 {/* right chevron */}
                 {guestsOpen ? (
-                  <IoChevronUp className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                  <IoChevronUp className="absolute text-gray-600 -translate-y-1/2 pointer-events-none right-3 top-1/2" />
                 ) : (
-                  <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                  <IoChevronDown className="absolute text-gray-600 -translate-y-1/2 pointer-events-none right-3 top-1/2" />
                 )}
               </div>
 
               {guestsOpen && (
-                <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-md border border-gray-200 bg-white p-3 shadow-lg">
+                <div className="absolute left-0 z-20 p-3 mt-2 bg-white border border-gray-200 rounded-md shadow-lg top-full w-72">
                   <div className="flex items-center justify-between py-2">
                     <span className="text-sm">Adults</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="size-7 grid place-items-center rounded border border-gray-300 hover:bg-gray-100"
+                        className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setAdults((a) => Math.max(1, a - 1))}
                         aria-label="Decrease adults"
                       >
                         <IoRemove />
                       </button>
-                      <span className="w-6 text-center text-sm">{adults}</span>
+                      <span className="w-6 text-sm text-center">{adults}</span>
                       <button
                         type="button"
-                        className="size-7 grid place-items-center rounded border border-gray-300 hover:bg-gray-100"
+                        className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setAdults((a) => a + 1)}
                         aria-label="Increase adults"
                       >
@@ -351,18 +407,18 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="size-7 grid place-items-center rounded border border-gray-300 hover:bg-gray-100"
+                        className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setChildren((c) => Math.max(0, c - 1))}
                         aria-label="Decrease children"
                       >
                         <IoRemove />
                       </button>
-                      <span className="w-6 text-center text-sm">
+                      <span className="w-6 text-sm text-center">
                         {children}
                       </span>
                       <button
                         type="button"
-                        className="size-7 grid place-items-center rounded border border-gray-300 hover:bg-gray-100"
+                        className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setChildren((c) => c + 1)}
                         aria-label="Increase children"
                       >
@@ -371,10 +427,10 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex justify-end">
+                  <div className="flex justify-end mt-3">
                     <button
                       type="button"
-                      className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+                      className="rounded-lg bg-gradient-to-r from-[#ec2227] to-[#d11f24] px-4 py-2 text-sm font-bold text-white hover:from-[#d11f24] hover:to-[#b01a1f] transition-all duration-200 shadow-md hover:shadow-lg"
                       onClick={() => setGuestsOpen(false)}
                     >
                       Done
@@ -385,7 +441,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
             </div>
 
             {/* Submit */}
-            <button className="flex mt-4 lg:mt-0 justify-center items-center w-full lg:w-14 py-3 gap-2 bg-red-600 text-white rounded-sm hover:bg-red-700 transition font-bold">
+            <button className="flex mt-4 lg:mt-0 justify-center items-center w-full lg:w-14 py-3 gap-2 bg-gradient-to-r from-[#ec2227] to-[#d11f24] text-white rounded-xl hover:from-[#d11f24] hover:to-[#b01a1f] transition-all duration-300 font-bold shadow-lg hover:shadow-xl hover:scale-101">
               <Search />
               <span className="contents lg:hidden">Search</span>
             </button>

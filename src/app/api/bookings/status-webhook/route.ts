@@ -1,11 +1,15 @@
 import { prisma } from "@/lib/database/prisma";
-import { renderStatusEmail, sendMail } from "@/lib/helpers/email";
+import {
+  sendBookingApprovedEmail,
+  sendBookingRejectedEmail,
+} from "@/lib/services/email-service";
+import { getTripById } from "@/lib/services/trip-service";
 import { NextResponse } from "next/server";
 
 // Captain app will call this to update booking status to APPROVED or REJECTED
-// Security: requires header x-captain-secret === CAPTAIN_WEBHOOK_SECRET
+// Security: requires header x-captain-secret === CAPTAIN_API_SECRET
 export async function POST(req: Request) {
-  const secret = process.env.CAPTAIN_WEBHOOK_SECRET;
+  const secret = process.env.CAPTAIN_API_SECRET;
   if (!secret) {
     return NextResponse.json(
       { error: "Server not configured" },
@@ -54,30 +58,43 @@ export async function POST(req: Request) {
         where: { id: updated.userId },
       });
       if (user?.email) {
-        const base =
-          process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(
-          updated.id
-        )}`;
-        const isApproved = status === "APPROVED";
-        const paymentUrl = isApproved
-          ? `${base}/book/payment/${encodeURIComponent(updated.id)}`
-          : undefined;
-        const html = renderStatusEmail({
-          toName: user.name ?? undefined,
-          charterName: updated.charterName,
-          status: status as any,
-          paymentUrl,
-          confirmationUrl,
-        });
-        await sendMail({
-          to: user.email,
-          subject: `Booking ${status.toLowerCase()}`,
-          html,
-        });
+        // Get trip data for charter name
+        const trip = await getTripById(updated.tripId);
+        if (trip) {
+          const base =
+            process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
+          const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(
+            updated.id
+          )}`;
+          const isApproved = status === "APPROVED";
+
+          if (isApproved) {
+            const paymentUrl = `${base}/book/payment/${encodeURIComponent(
+              updated.id
+            )}`;
+            await sendBookingApprovedEmail({
+              to: user.email,
+              userName: user.name ?? "there",
+              charterName: trip.charter.name,
+              tripDate: updated.date.toISOString().slice(0, 10),
+              paymentUrl,
+              confirmationUrl,
+            });
+          } else {
+            const searchUrl = `${base}/search`;
+            await sendBookingRejectedEmail({
+              to: user.email,
+              userName: user.name ?? "there",
+              charterName: trip.charter.name,
+              searchUrl,
+            });
+          }
+        }
       }
     }
-  } catch {}
+  } catch (err) {
+    console.error("Failed to send booking status email:", err);
+  }
 
   return NextResponse.json({ ok: true });
 }

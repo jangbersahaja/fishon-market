@@ -12,23 +12,69 @@ enum UserRole {
   ADMIN
 }
 
+enum NotificationType {
+  // Booking lifecycle
+  BOOKING_CREATED       // Angler: Booking request submitted
+  BOOKING_APPROVED      // Angler: Captain approved booking
+  BOOKING_REJECTED      // Angler: Captain rejected booking
+  BOOKING_PAID          // Angler: Payment confirmed
+  BOOKING_CANCELLED     // Angler: Booking cancelled
+  
+  // Review system
+  REVIEW_SUBMITTED      // Angler: Review submitted for approval
+  REVIEW_APPROVED       // Angler: Review approved and published
+  REVIEW_REJECTED       // Angler: Review rejected by moderator
+  
+  // Account events
+  ACCOUNT_VERIFIED      // Angler: Email verified
+  PAYMENT_FAILED        // Angler: Payment processing failed
+  
+  // System
+  SYSTEM_ANNOUNCEMENT   // Platform updates
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  passwordHash  String?       // Optional for OAuth users
-  name          String?       // Display name (NextAuth standard)
-  phone         String?       // Phone number with country code
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String? // Optional for OAuth users
+  name          String? // Display name (NextAuth standard)
+  firstName     String? // First name
+  lastName      String? // Last name
+  phone         String? // Phone number with country code
   bio           String?
-  image         String?       // Avatar URL (NextAuth standard)
-  emailVerified DateTime?     // NextAuth standard field
-  role          UserRole      @default(ANGLER)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  blogPosts     BlogPost[]
-  comments      BlogComment[]
-  bookings      Booking[]
-  accounts      Account[]     // OAuth accounts
-  sessions      Session[]     // NextAuth sessions
+  image         String? // Avatar URL (NextAuth standard)
+  emailVerified DateTime? // NextAuth standard field
+  role          UserRole  @default(ANGLER)
+
+  // Address fields (Phase 2)
+  streetAddress String?
+  city          String?
+  state         String?
+  postcode      String?
+  country       String? @default("Malaysia")
+
+  // Emergency contact (Phase 2)
+  emergencyName     String?
+  emergencyPhone    String?
+  emergencyRelation String?
+
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  blogPosts                BlogPost[]
+  comments                 BlogComment[]
+  bookings                 Booking[]
+  favorites                Favorite[] // Phase 2: Favorites system
+  reviews                  Review[] // Phase 3: Reviews system
+  accounts                 Account[] // OAuth accounts
+  sessions                 Session[] // NextAuth sessions
+  notifications            Notification[]
+  notificationPreferences  NotificationPreferences?
 }
 
 // NextAuth OAuth Account model
@@ -168,50 +214,214 @@ model NewsletterSubscription {
 
 // Booking system
 enum BookingStatus {
-  PENDING // awaiting captain approval
-  APPROVED // captain approved, awaiting payment
-  REJECTED // captain rejected
-  EXPIRED // hold expired
-  PAID // payment completed, confirmed
+  PENDING   // awaiting captain approval
+  APPROVED  // captain approved, awaiting payment
+  REJECTED  // captain rejected
+  EXPIRED   // hold expired
+  PAID      // payment completed, confirmed
   CANCELLED // cancelled by angler
+  COMPLETED // trip completed
 }
 
 model Booking {
+  // === MAIN DETAIL ===
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime // hold expires at (e.g., now + 12h)
+
+  // === ANGLER'S DETAIL ===
+  userId String? // Optional - for signed-in users
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Guest booking fields (when userId is null)
+  guestEmail     String?
+  emailVerified  Boolean @default(false)
+  guestFirstName String?
+  guestLastName  String?
+  guestPhone     String?
+
+  // === BOOKING DETAIL ===
+  tripId    String // References Trip.id in fishon-captain DB
+  charterId String // References Charter.id in fishon-captain DB
+
+  date      DateTime
+  days      Int      // Number of days booked (not trip duration)
+  startTime String? // e.g., "07:00" when trip has multiple start times
+
+  // Guest counts stored as JSON for flexibility
+  guests Json // { "adults": 2, "children": 1 }
+
+  // === PRICING BREAKDOWN ===
+  tripPrice  Decimal @db.Decimal(10, 2) // Snapshot of trip price at booking time (normal or promo)
+  discount   Json? // { "code": "SUMMER10", "percentage": "10%", "amount": 50.00 }
+  tax        Json? // { "name": "SST", "percentage": "6%", "amount": 30.00 } (future)
+  finalPrice Decimal @db.Decimal(10, 2) // Calculated: tripPrice * days * (1 - discount) * (1 + tax)
+
+  // === BOOKING STATUS ===
+  status             BookingStatus @default(PENDING)
+  cancellationReason String?
+  rejectionReason    String?
+  captainDecisionAt  DateTime?
+  paidAt             DateTime?
+
+  // === CONVERSATION ===
+  note            String? // Angler's initial note
+  captainResponse String? // Captain's response (acceptance message, instructions, etc.)
+  chatId          String? // Future: Link to chat conversation
+  
+  // Relations
+  notifications   Notification[]
+
+  @@index([userId])
+  @@index([guestEmail])
+  @@index([tripId])
+  @@index([charterId])
+  @@index([status])
+  @@index([date])
+  @@index([createdAt])
+  // Note: Unique constraint on (charterId, date, startTime) not added because:
+  // - Would prevent rebooking after cancellation/rejection
+  // - Serializable transaction isolation provides race condition protection
+  // - Application logic handles conflict detection for PAID bookings only
+}
+
+// Reviews & Ratings system (Phase 3)
+model Review {
   id     String @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Captain backend charter identifier (cuid) or dummy numeric id string
+  bookingId String @unique // One review per booking
+
+  // Captain backend charter identifier (for aggregating reviews)
   captainCharterId String
   charterName      String
-  location         String
 
-  // Selected trip snapshot
-  tripName  String
-  unitPrice Int // RM per day
-  startTime String? // e.g., "07:00" when trips have multiple start times
+  // Overall rating (1-5 stars)
+  overallRating Int // 1-5
 
-  // Booking selections
-  date     DateTime
-  days     Int
-  adults   Int
-  children Int
+  // Review badges (instead of category ratings)
+  // Array of badge IDs from reviewBadges.ts
+  // e.g., ["crew_mvp", "safety_first", "expert_guide"]
+  badges String[] // Array of ReviewBadgeId
 
-  totalPrice        Int // computed = unitPrice * days
-  status            BookingStatus @default(PENDING)
-  expiresAt         DateTime // hold expires at (e.g., now + 12h)
-  captainDecisionAt DateTime?
-  paidAt            DateTime? // when payment was completed
+  // Review content
+  comment String? // Optional text review
 
-  note              String? // angler's note to captain
-  rejectionReason   String? // captain's rejection reason
-  cancellationReason String? // angler-provided reason for cancellation
+  // Media (photos AND videos)
+  photos String[] // Array of photo URLs (no limit on photos)
+  videos String[] // Array of video URLs (limit: 3 videos)
 
+  // Moderation
+  approved  Boolean @default(false) // Admin approval required
+  published Boolean @default(false) // Visible on charter page
+
+  // Metadata
+  tripDate  DateTime // Date of the actual trip (from booking)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([captainCharterId])
-  @@index([status])
+  @@index([approved, published])
   @@index([createdAt])
+}
+
+// Favorites system (Phase 2)
+model Favorite {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Captain backend charter identifier
+  captainCharterId String
+  charterName      String
+  location         String
+
+  // Store charter snapshot for quick display
+  charterData Json? // Full charter object for offline display
+
+  // Optional angler notes
+  notes String?
+
+  addedAt DateTime @default(now())
+
+  @@unique([userId, captainCharterId]) // Prevent duplicate favorites
+  @@index([userId])
+  @@index([addedAt])
+}
+
+// Notification system
+model Notification {
+  id          String             @id @default(cuid())
+  userId      String
+  type        NotificationType
+  status      NotificationStatus @default(UNREAD)
+  
+  title       String
+  message     String
+  actionUrl   String?
+  actionLabel String?
+  
+  // Related entities
+  bookingId   String?
+  charterId   String?
+  reviewId    String?            // For review notifications
+  
+  // Metadata
+  metadata    Json?              // Additional data specific to notification type
+  
+  // Timestamps
+  createdAt   DateTime           @default(now())
+  readAt      DateTime?
+  archivedAt  DateTime?
+  expiresAt   DateTime?          // Auto-delete old notifications
+  
+  // Relations
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking     Booking?           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("notifications")
+}
+
+model NotificationPreferences {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Email notification preferences (per type)
+  emailBookingCreated      Boolean @default(true)
+  emailBookingApproved     Boolean @default(true)
+  emailBookingRejected     Boolean @default(true)
+  emailBookingPaid         Boolean @default(true)
+  emailBookingCancelled    Boolean @default(true)
+  emailReviewSubmitted     Boolean @default(true)
+  emailReviewApproved      Boolean @default(true)
+  emailReviewRejected      Boolean @default(true)
+  emailAccountVerified     Boolean @default(true)
+  emailPaymentFailed       Boolean @default(true)
+  emailSystemAnnouncement  Boolean @default(true)
+
+  // Push/In-app notification preferences (per type)
+  pushBookingCreated      Boolean @default(true)
+  pushBookingApproved     Boolean @default(true)
+  pushBookingRejected     Boolean @default(true)
+  pushBookingPaid         Boolean @default(true)
+  pushBookingCancelled    Boolean @default(true)
+  pushReviewSubmitted     Boolean @default(true)
+  pushReviewApproved      Boolean @default(true)
+  pushReviewRejected      Boolean @default(true)
+  pushAccountVerified     Boolean @default(true)
+  pushPaymentFailed       Boolean @default(true)
+  pushSystemAnnouncement  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }

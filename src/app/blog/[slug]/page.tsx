@@ -276,15 +276,11 @@ export default async function BlogPostPage({ params }: Props) {
               </div>
             )}
 
-            {/* TODO: Reading progress bar component goes above the article header */}
-
             {/* Article Content */}
             <div
               className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-[#ec2227] prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
-
-            {/* TODO: Insert Table of Contents component here (derived from post.content) */}
 
             {/* Share Section */}
             <div className="mt-12 border-t border-gray-200 pt-8">

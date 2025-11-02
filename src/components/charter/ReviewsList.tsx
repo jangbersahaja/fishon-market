@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { type BookingReview } from "@/data/mock/receipts";
 import { resolveBadges } from "@/utils/reviewBadges";
 
-import Stars from "./Stars";
+import StarRating from "@/components/ratings/StarRating";
 
 function formatDate(iso: string): string {
   if (!iso) return "";
@@ -137,10 +137,7 @@ function ReviewCard({ review }: { review: BookingReview }) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <Stars value={score} />
-          <span className="text-xs font-semibold text-gray-500">
-            {score.toFixed(1)} / 5
-          </span>
+          <StarRating value={score} size={16} showValue />
         </div>
       </header>
 

@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/database/prisma";
 import { NextResponse } from "next/server";
 
+//TODO: Add notification emails to captain and angler when booking expires
+//TODO: Email reminder to captain X hours before booking expiry
+//TODO: Send webhook notification when booking expires
+
 // Simple expiry endpoint to be called by a scheduler (e.g., cron) with a secret header
 // Marks PENDING bookings as EXPIRED when expiresAt < now
 export async function POST(req: Request) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Clock, MapPin, Ship, Users } from "lucide-react";
+import { MapPin, Ship } from "lucide-react";
 import Image from "next/image";
 
 interface Boat {
@@ -12,6 +12,7 @@ interface Boat {
 interface Charter {
   id?: string;
   name?: string;
+  address?: string;
   location?: string;
   images?: string[];
   boat?: Boat;
@@ -27,24 +28,12 @@ interface Captain {
 interface BookingSummaryCardProps {
   charter?: Charter;
   captain?: Captain | null;
-  date?: string;
-  days: number;
-  adults: number;
-  childrenCount: number;
-  tripName?: string;
-  startTime?: string;
-  totalPrice: number;
+  totalPrice?: number | null;
 }
 
 export default function BookingSummaryCard({
   charter,
   captain,
-  date,
-  days,
-  adults,
-  childrenCount,
-  tripName,
-  startTime,
   totalPrice,
 }: BookingSummaryCardProps) {
   const images = charter?.images || [];
@@ -53,16 +42,16 @@ export default function BookingSummaryCard({
 
   const mapEmbedSrc = charter?.coordinates
     ? `https://www.google.com/maps?q=${charter.coordinates.lat},${charter.coordinates.lng}&z=13&output=embed`
-    : charter?.location
+    : charter?.address
     ? `https://www.google.com/maps?q=${encodeURIComponent(
-        charter.location
+        charter.address
       )}&z=13&output=embed`
     : null;
 
   return (
     <aside className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6 h-fit">
       <h2 className="mb-4 text-base font-semibold sm:text-lg">
-        Booking Summary
+        Charter Summary
       </h2>
 
       {/* Photo Collage */}
@@ -124,12 +113,6 @@ export default function BookingSummaryCard({
             <span className="font-medium text-gray-800">{captain.name}</span>
           </p>
         )}
-        {charter?.location && (
-          <p className="flex items-start gap-1.5 mt-1 text-sm text-gray-600">
-            <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>{charter.location}</span>
-          </p>
-        )}
       </div>
 
       {/* Boat Details */}
@@ -165,9 +148,37 @@ export default function BookingSummaryCard({
         </div>
       )}
 
+      {/* Map */}
+      {mapEmbedSrc && (
+        <div className="pb-4 mb-4 border-b border-black/10">
+          <div className="overflow-hidden rounded-lg">
+            <iframe
+              src={mapEmbedSrc}
+              width="100%"
+              height="200"
+              style={{ border: 0 }}
+              allowFullScreen={false}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Starting location"
+              className="w-full"
+            />
+          </div>
+          {charter?.address && (
+            <div className="mt-4">
+              <h4 className="mb-2 text-sm font-semibold">Starting Point</h4>
+              <div className="flex items-start gap-1.5 mt-2 text-sm text-gray-600">
+                <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+                <p className="capitalize">{charter.address}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Amenities */}
       {charter?.includes && charter.includes.length > 0 && (
-        <div className="pb-4 mb-4 border-b border-black/10">
+        <div className="">
           <h4 className="mb-2 text-sm font-semibold">Included</h4>
           <div className="flex flex-wrap gap-1.5">
             {charter.includes.slice(0, 4).map((item) => (
@@ -187,94 +198,31 @@ export default function BookingSummaryCard({
         </div>
       )}
 
-      <div className="pb-4 mb-4 border-b border-black/10">
-        {tripName && (
-          <p className="mb-2 text-sm">
-            <span className="text-gray-600">Trip:</span>{" "}
-            <span className="font-medium text-gray-900">{tripName}</span>
-          </p>
-        )}
-
-        {/* Trip Details */}
-        <div className="flex items-center gap-2 border-black/10">
-          {date && (
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
-              <span className="text-gray-700">
-                {(() => {
-                  try {
-                    const dt = new Date(`${date}T00:00:00`);
-                    return new Intl.DateTimeFormat(undefined, {
-                      weekday: "short",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    }).format(dt);
-                  } catch {
-                    return date;
-                  }
-                })()}
-              </span>
+      {totalPrice && (
+        <>
+          {/* Pricing */}
+          <div className="pt-4 mt-4 mb-4 border-t border-black/10">
+            <div className="flex items-center justify-between text-base font-semibold">
+              <span>Total (est.)</span>
+              <span className="text-[#ec2227]">RM{totalPrice}</span>
             </div>
-          )}
-
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4 text-gray-500 shrink-0" />
-            <span className="text-gray-700">
-              {days} day{days > 1 ? "s" : ""}
-              {startTime && ` • Starts ${startTime}`}
-            </span>
+            <p className="mt-2 text-xs text-gray-500">
+              Final price confirmed by captain. No payment required now.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="w-4 h-4 text-gray-500 shrink-0" />
-            <span className="text-gray-700">
-              {adults} adult{adults > 1 ? "s" : ""}
-              {childrenCount > 0 &&
-                `, ${childrenCount} child${childrenCount > 1 ? "ren" : ""}`}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Pricing */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-base font-semibold">
-          <span>Total (est.)</span>
-          <span className="text-[#ec2227]">RM{totalPrice}</span>
-        </div>
-        <p className="mt-2 text-xs text-gray-500">
-          Final price confirmed by captain. No payment required now.
-        </p>
-      </div>
-
-      {/* Map */}
-      {mapEmbedSrc && (
-        <div className="overflow-hidden rounded-lg">
-          <iframe
-            src={mapEmbedSrc}
-            width="100%"
-            height="200"
-            style={{ border: 0 }}
-            allowFullScreen={false}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Starting location"
-            className="w-full"
-          />
-        </div>
+          {/* Payment Info */}
+          <details className="mt-4 text-xs text-gray-600">
+            <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
+              Payment information
+            </summary>
+            <p className="mt-2 leading-relaxed">
+              No payment is required now. Once your booking is confirmed, the
+              captain will send you a secure payment link.
+            </p>
+          </details>
+        </>
       )}
-
-      {/* Payment Info */}
-      <details className="mt-4 text-xs text-gray-600">
-        <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
-          Payment information
-        </summary>
-        <p className="mt-2 leading-relaxed">
-          No payment is required now. Once your booking is confirmed, the
-          captain will send you a secure payment link.
-        </p>
-      </details>
     </aside>
   );
 }

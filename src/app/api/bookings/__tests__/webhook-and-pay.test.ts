@@ -28,7 +28,7 @@ beforeEach(() => vi.resetAllMocks());
 
 describe("status webhook", () => {
   beforeEach(() => {
-    process.env.CAPTAIN_WEBHOOK_SECRET = "cap-secret";
+    process.env.CAPTAIN_API_SECRET = "cap-secret";
   });
 
   it("rejects invalid secret", async () => {

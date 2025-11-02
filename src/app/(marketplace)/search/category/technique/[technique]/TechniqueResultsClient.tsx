@@ -2,8 +2,8 @@ import Breadcrumbs from "@/components/search/Breadcrumbs";
 import ResultsGrid from "@/components/search/ResultsGrid";
 import ResultsMap from "@/components/search/ResultsMap";
 import SearchResultsHeader from "@/components/search/SearchResultsHeader";
-import { Charter } from "@/data/mock/charter";
 import { buildMapItems } from "@/utils/mapItems";
+import type { Charter } from "@fishon/ui";
 
 type Props = {
   rawTechnique: string;

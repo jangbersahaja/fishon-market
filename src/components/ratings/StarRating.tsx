@@ -1,50 +1,90 @@
 // components/ratings/StarRating.tsx
-type Props = { value?: number; size?: number };
+/**
+ * Unified StarRating component
+ * @param value - Rating value (0-5)
+ * @param size - Star size in pixels (default: 16)
+ * @param reviewCount - Number of reviews (optional)
+ * @param showValue - Show numeric rating value (default: false)
+ * @param textSize - Text size class for review count/value (default: 'text-xs')
+ */
+type Props = {
+  value?: number;
+  size?: number;
+  reviewCount?: number;
+  showValue?: boolean;
+  textSize?: string;
+  variant?: "default" | "chrome";
+};
 
-export default function StarRating({ value = 0, size = 20 }: Props) {
+export default function StarRating({
+  value = 0,
+  size = 16,
+  reviewCount,
+  showValue = false,
+  textSize = "text-xs",
+  variant = "default",
+}: Props) {
   const full = Math.floor(value);
-  const half = value - full >= 0.5 ? 1 : 0;
-  const empty = 5 - full - half;
+  const half = value - full >= 0.5;
+  const total = 5;
+
+  // If no rating, show "Just Listed"
+  if (value === 0) {
+    return (
+      <span
+        className={`${textSize} ${variant === "chrome" ? "text-gray-100" : "text-gray-500"}`}
+      >
+        Just Listed
+      </span>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1">
-      {Array.from({ length: full }).map((_, i) => (
-        <svg
-          key={`f-${i}`}
-          width={size}
-          height={size}
-          fill="gold"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.401 8.173L12 18.896l-7.335 3.85 1.401-8.173L.132 9.211l8.2-1.193z" />
-        </svg>
-      ))}
-      {half === 1 && (
-        <svg width={size} height={size} viewBox="0 0 24 24">
-          <defs>
-            <linearGradient id="half">
-              <stop offset="50%" stopColor="gold" />
-              <stop offset="50%" stopColor="lightgray" />
-            </linearGradient>
-          </defs>
-          <path
-            fill="url(#half)"
-            d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.401 8.173L12 18.896l-7.335 3.85 1.401-8.173L.132 9.211l8.2-1.193z"
-          />
-        </svg>
+      <span
+        className="inline-flex items-center align-middle"
+        aria-label={`Rating ${value.toFixed(1)} out of 5`}
+      >
+        {Array.from({ length: total }, (_, i) => {
+          const filled = i < full;
+          const showHalf = !filled && i === full && half;
+          return (
+            <svg
+              key={i}
+              width={size}
+              height={size}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="inline-block"
+            >
+              <defs>
+                <linearGradient id={`half-${i}`} x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="50%" stopColor="#f59e0b" />
+                  <stop offset="50%" stopColor="transparent" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                fill={
+                  filled ? "#f59e0b" : showHalf ? `url(#half-${i})` : "none"
+                }
+                stroke="#f59e0b"
+                strokeWidth="1"
+              />
+            </svg>
+          );
+        })}
+      </span>
+
+      {/* Show review count or rating value */}
+      {reviewCount !== undefined && reviewCount > 0 && (
+        <span className={`${textSize} text-gray-600`}>
+          {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
+        </span>
       )}
-      {Array.from({ length: empty }).map((_, i) => (
-        <svg
-          key={`e-${i}`}
-          width={size}
-          height={size}
-          fill="lightgray"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.401 8.173L12 18.896l-7.335 3.85 1.401-8.173L.132 9.211l8.2-1.193z" />
-        </svg>
-      ))}
-      <span className={`text-xs text-gray-500`}>{value.toFixed(1)} / 5</span>
+      {showValue && (
+        <span className={`${textSize} text-gray-600`}>{value.toFixed(1)}</span>
+      )}
     </div>
   );
 }

@@ -1,10 +1,16 @@
 "use client";
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
+import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import { calculateDays } from "@/lib/helpers/date-range-helpers";
+import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
 import { ChevronDown, Minus, Plus, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function DateGuestsCard({
+  schedule,
+  unavailability,
+  charterId,
   date,
   onDateChange,
   days,
@@ -14,7 +20,12 @@ export default function DateGuestsCard({
   childrenCount,
   onChildrenChange,
   maxGuests,
+  blockedDatesSet,
+  dateError,
 }: {
+  schedule?: CharterSchedule;
+  unavailability?: UnavailabilityPeriod[];
+  charterId?: string;
   date: string;
   onDateChange: (v: string) => void;
   days: number;
@@ -24,8 +35,97 @@ export default function DateGuestsCard({
   childrenCount: number;
   onChildrenChange: (v: number) => void;
   maxGuests?: number;
+  blockedDatesSet?: Set<string>;
+  dateError?: string;
 }) {
   const [open, setOpen] = useState<null | "days" | "guests">(null);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+
+  // If blockedDatesSet is not provided, fetch and calculate it locally
+  const shouldFetchLocally = !blockedDatesSet;
+
+  // Fetch booked dates from API (only if not provided by parent)
+  useEffect(() => {
+    if (!shouldFetchLocally) return;
+
+    async function fetchBookedDates() {
+      if (!charterId) return;
+
+      try {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 3);
+
+        // Format dates in local time (YYYY-MM-DD) to avoid UTC conversion issues
+        const formatLocalYMD = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
+
+        const response = await fetch(
+          `/api/charters/${charterId}/booked-dates?startDate=${formatLocalYMD(startDate)}&endDate=${formatLocalYMD(endDate)}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setBookedDates(data.bookedDates || []);
+        }
+      } catch (error) {
+        console.error("[DateGuestsCard] Failed to fetch booked dates:", error);
+      }
+    }
+
+    fetchBookedDates();
+  }, [charterId, shouldFetchLocally]);
+
+  // Calculate all blocked dates (schedule + unavailability + bookings)
+  // Only calculate if not provided by parent
+  const localBlockedDates = useMemo(() => {
+    if (!shouldFetchLocally) return new Set<string>();
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+
+    return calculateBlockedDates(
+      schedule,
+      unavailability,
+      bookedDates,
+      startDate,
+      endDate
+    );
+  }, [schedule, unavailability, bookedDates, shouldFetchLocally]);
+
+  // Use provided blockedDatesSet or fallback to local calculation
+  const blockedDates = useMemo(() => {
+    // Always ensure Set<string>
+    if (blockedDatesSet) {
+      return blockedDatesSet instanceof Set
+        ? new Set(
+            Array.from(blockedDatesSet).filter(
+              (v): v is string => typeof v === "string"
+            )
+          )
+        : new Set(
+            (blockedDatesSet as any[]).filter(
+              (v): v is string => typeof v === "string"
+            )
+          );
+    }
+    return localBlockedDates instanceof Set
+      ? new Set(
+          Array.from(localBlockedDates).filter(
+            (v): v is string => typeof v === "string"
+          )
+        )
+      : new Set(
+          (localBlockedDates as any[]).filter(
+            (v): v is string => typeof v === "string"
+          )
+        );
+  }, [blockedDatesSet, localBlockedDates]);
 
   const totalGuests = adults + childrenCount;
   const overMax = typeof maxGuests === "number" && totalGuests > maxGuests;
@@ -40,23 +140,52 @@ export default function DateGuestsCard({
   }
 
   return (
-    <section className="relative p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="relative pb-5 border-b border-black/10">
       <h2 className="mb-4 text-base font-semibold sm:text-lg">
         Trip Date & Guests
       </h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-9">
         {/* Date field (uses shared CalendarPicker with built-in dropdown) */}
-        <div className="relative sm:col-span-3">
+        <div className="relative sm:col-span-5">
           <CalendarPicker
             value={date}
-            onChange={onDateChange}
-            buttonClassName="hover:border-gray-400"
+            initialDays={days}
+            onChange={(v) => {
+              onDateChange(v);
+              // Reset to single day when selecting in single mode
+              if (days > 1) onDaysChange(1);
+            }}
+            onRangeChange={(range) => {
+              // Handle range selection
+              const calculatedDays = calculateDays(
+                range.startDate,
+                range.endDate
+              );
+              onDateChange(range.startDate);
+              onDaysChange(calculatedDays);
+            }}
+            enableModeToggle={true}
+            mode="single"
+            blockedDates={blockedDates}
+            buttonClassName={
+              dateError
+                ? "border-red-500 hover:border-red-600"
+                : "hover:border-gray-400"
+            }
           />
+          {dateError && (
+            <p className="mt-1 text-xs text-red-500">{dateError}</p>
+          )}
+          {!dateError && days > 1 && (
+            <p className="mt-1 text-[10px] text-gray-500">
+              {days} consecutive days selected
+            </p>
+          )}
         </div>
 
         {/* Days field */}
-        <div className="relative sm:col-span-2">
+        <div className="relative hidden sm:col-span-2">
           <button
             type="button"
             onClick={() => setOpen(open === "days" ? null : "days")}

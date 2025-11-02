@@ -1,6 +1,6 @@
 /**
  * API client for Fishon Captain Backend (read-only access)
- * 
+ *
  * This module provides functions to fetch charter and captain data
  * from the Fishon Captain backend API.
  */
@@ -56,6 +56,11 @@ export type BackendPolicies = {
   smokingAllowed: boolean;
 };
 
+export type BackendSchedule = {
+  type: "EVERYDAY" | "WEEKDAYS" | "WEEKENDS" | "CUSTOM";
+  operationalDays: number[]; // 0-6 (Sunday-Saturday)
+};
+
 export type BackendCharter = {
   id: string;
   name: string;
@@ -77,27 +82,42 @@ export type BackendCharter = {
     kind: string;
     url: string;
     sortOrder: number;
+    thumbnailUrl?: string | null;
+    name?: string;
+  }>;
+  videos?: Array<{
+    kind: string;
+    url: string;
+    sortOrder: number;
+    thumbnailUrl?: string | null;
+    name?: string | null;
   }>;
   pickup: BackendPickup | null;
   policies: BackendPolicies | null;
+  schedule: BackendSchedule | null;
+  unavailability: Array<{
+    startDate: string;
+    endDate: string;
+    reason: string | null;
+  }> | null;
 };
 
 // Configuration
-const API_BASE_URL = process.env.FISHON_CAPTAIN_API_URL || '';
-const API_KEY = process.env.FISHON_CAPTAIN_API_KEY || '';
+const API_BASE_URL = process.env.FISHON_CAPTAIN_API_URL || "";
+const API_KEY = process.env.FISHON_CAPTAIN_API_KEY || "";
 
 /**
  * Fetch headers with authentication
  */
 function getHeaders(): HeadersInit {
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
-  
+
   if (API_KEY) {
-    headers['Authorization'] = `Bearer ${API_KEY}`;
+    headers["Authorization"] = `Bearer ${API_KEY}`;
   }
-  
+
   return headers;
 }
 
@@ -106,7 +126,9 @@ function getHeaders(): HeadersInit {
  */
 export async function fetchCharters(): Promise<BackendCharter[]> {
   if (!API_BASE_URL) {
-    console.warn('FISHON_CAPTAIN_API_URL not configured, returning empty array');
+    console.warn(
+      "FISHON_CAPTAIN_API_URL not configured, returning empty array"
+    );
     return [];
   }
 
@@ -123,7 +145,7 @@ export async function fetchCharters(): Promise<BackendCharter[]> {
     const data = await response.json();
     return data.charters || [];
   } catch (error) {
-    console.error('Error fetching charters from backend:', error);
+    console.error("Error fetching charters from backend:", error);
     return [];
   }
 }
@@ -131,9 +153,11 @@ export async function fetchCharters(): Promise<BackendCharter[]> {
 /**
  * Fetch a single charter by ID from the backend
  */
-export async function fetchCharterById(id: string): Promise<BackendCharter | null> {
+export async function fetchCharterById(
+  id: string
+): Promise<BackendCharter | null> {
   if (!API_BASE_URL) {
-    console.warn('FISHON_CAPTAIN_API_URL not configured, returning null');
+    console.warn("FISHON_CAPTAIN_API_URL not configured, returning null");
     return null;
   }
 
@@ -169,7 +193,9 @@ export async function searchCharters(params: {
   maxPrice?: number;
 }): Promise<BackendCharter[]> {
   if (!API_BASE_URL) {
-    console.warn('FISHON_CAPTAIN_API_URL not configured, returning empty array');
+    console.warn(
+      "FISHON_CAPTAIN_API_URL not configured, returning empty array"
+    );
     return [];
   }
 
@@ -196,7 +222,7 @@ export async function searchCharters(params: {
     const data = await response.json();
     return data.charters || [];
   } catch (error) {
-    console.error('Error searching charters from backend:', error);
+    console.error("Error searching charters from backend:", error);
     return [];
   }
 }

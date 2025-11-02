@@ -16,7 +16,7 @@ version-introduced: TBD
 This document outlines the complete implementation plan for integrating Senang Pay, a Malaysian payment gateway, into the fishon-market booking system. Senang Pay will replace the current mock payment implementation, enabling real payment processing for charter bookings.
 
 **Integration Type:** Redirect-based payment flow with server-side hash verification  
-**Payment Provider:** Senang Pay (https://app.senangpay.my)  
+**Payment Provider:** Senang Pay (<https://app.senangpay.my>)  
 **Security:** HMAC-SHA256 hash verification for request/response validation  
 **Booking Flow:** Book Charter → Payment → Confirmation (with callbacks)
 
@@ -51,7 +51,7 @@ Before integrating Senang Pay, we need proper credentials and environment config
 
 **Not yet started** - Prerequisites to complete:
 
-- Register for Senang Pay merchant account at https://app.senangpay.my
+- Register for Senang Pay merchant account at <https://app.senangpay.my>
 - Obtain sandbox credentials for testing
 - Configure environment variables
 
@@ -764,6 +764,7 @@ Update the booking confirmation page to:
 2. Display transaction ID for paid bookings
 3. Add receipt download button for paid bookings
 4. Show payment error message if payment failed
+5. Booking transaction - status change refresh related pages i.e fishon-market: /book/confirm and /account/bookings, fishon-captain: /captain/bookings and /captain/bookings/[id]
 
 ### Completed Job Summary
 
@@ -772,12 +773,14 @@ Update the booking confirmation page to:
 - Basic confirmation page at `/book/confirm`
 - Shows booking status
 - Has download receipt button for PAID status
+- Need to reload page to see status change
 
 **Enhancements Needed:**
 
 - Display transaction ID
 - Show payment method
 - Better error messaging
+- Revalidate pages when status change
 
 ### Implementation Code
 
