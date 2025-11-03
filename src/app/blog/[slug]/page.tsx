@@ -3,6 +3,7 @@ import BlogPostCard from "@/components/blog/BlogPostCard";
 import NewsletterWidget from "@/components/blog/NewsletterWidget";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import TableOfContents from "@/components/blog/TableOfContents";
+import { novelToHTML } from "@/lib/helpers/novel-to-html";
 import {
   getBlogPostBySlug,
   getRelatedPosts,
@@ -85,6 +86,9 @@ export default async function BlogPostPage({ params }: Props) {
   // Fetch comments for this post
   const comments = post.comments || [];
 
+  // Convert Novel JSON to HTML
+  const htmlContent = novelToHTML(post.content);
+
   // JSON-LD structured data for the blog post
   const articleSchema = {
     "@context": "https://schema.org",
@@ -158,10 +162,10 @@ export default async function BlogPostPage({ params }: Props) {
 
       {/* Breadcrumbs */}
       <nav
-        className=" border-b border-gray-200 bg-gray-50"
+        className="border-b border-gray-200 bg-gray-50"
         aria-label="Breadcrumb"
       >
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+        <div className="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <ol className="flex items-center gap-2 text-sm text-gray-600">
             <li>
               <Link href="/" className="hover:text-[#ec2227]">
@@ -175,12 +179,12 @@ export default async function BlogPostPage({ params }: Props) {
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900 font-medium truncate">{post.title}</li>
+            <li className="font-medium text-gray-900 truncate">{post.title}</li>
           </ol>
         </div>
       </nav>
 
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Main Content */}
           <article className="lg:col-span-8">
@@ -188,7 +192,7 @@ export default async function BlogPostPage({ params }: Props) {
             <header className="mb-8">
               {/* Categories */}
               {post.categories.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {post.categories.map((category) => (
                     <Link
                       key={category.id}
@@ -210,14 +214,15 @@ export default async function BlogPostPage({ params }: Props) {
               )}
 
               {/* Meta info */}
-              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+              <div className="flex flex-wrap items-center gap-4 mt-6 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   {post.author.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={post.author.image}
                       alt={post.author.name || post.author.email}
-                      className="h-6 w-6 rounded-full object-cover"
+                      className="rounded-full"
+                      width={24}
+                      height={24}
                     />
                   ) : (
                     <User size={16} />
@@ -248,7 +253,7 @@ export default async function BlogPostPage({ params }: Props) {
 
               {/* Tags */}
               {post.tags.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-4">
                   {post.tags.map((tag) => (
                     <Link
                       key={tag.id}
@@ -264,7 +269,7 @@ export default async function BlogPostPage({ params }: Props) {
 
             {/* Cover Image */}
             {post.coverImage && (
-              <div className="mb-12 aspect-video relative overflow-hidden rounded-lg">
+              <div className="relative mb-12 overflow-hidden rounded-lg aspect-video">
                 <Image
                   src={post.coverImage}
                   alt={post.coverImageAlt || post.title}
@@ -278,14 +283,14 @@ export default async function BlogPostPage({ params }: Props) {
 
             {/* Article Content */}
             <div
-              className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-[#ec2227] prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-[#ec2227] prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg prose-ul:list-disc prose-ol:list-decimal prose-li:my-2 prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100"
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
 
             {/* Share Section */}
-            <div className="mt-12 border-t border-gray-200 pt-8">
+            <div className="pt-8 mt-12 border-t border-gray-200">
               <h3 className="text-lg font-semibold">Share this article</h3>
-              <div className="mt-4 flex gap-3">
+              <div className="flex gap-3 mt-4">
                 <a
                   href={`https://www.facebook.com/sharer/sharer.php?u=https://www.fishon.my/blog/${slug}`}
                   target="_blank"
@@ -319,7 +324,7 @@ export default async function BlogPostPage({ params }: Props) {
 
             {/* Author Bio */}
             {post.author.bio && (
-              <div className="mt-12 border-t border-gray-200 pt-8">
+              <div className="pt-8 mt-12 border-t border-gray-200">
                 <h3 className="mb-4 text-lg font-semibold">About the Author</h3>
                 <div className="flex gap-4">
                   {post.author.image ? (
@@ -327,10 +332,10 @@ export default async function BlogPostPage({ params }: Props) {
                     <img
                       src={post.author.image}
                       alt={post.author.name || post.author.email}
-                      className="h-16 w-16 rounded-full object-cover"
+                      className="object-cover w-16 h-16 rounded-full"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
+                    <div className="flex items-center justify-center w-16 h-16 bg-gray-200 rounded-full">
                       <User size={32} className="text-gray-500" />
                     </div>
                   )}
@@ -352,7 +357,7 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Sidebar */}
           <aside className="lg:col-span-4">
-            <div className="sticky top-24 space-y-6">
+            <div className="sticky space-y-6 top-24">
               {/* Table of Contents */}
               <TableOfContents />
 
@@ -366,7 +371,7 @@ export default async function BlogPostPage({ params }: Props) {
       {/* Related Posts */}
       {relatedPosts.length > 0 && (
         <section className="border-t border-gray-200 bg-gray-50">
-          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
             <h2 className="mb-6 text-2xl font-bold">Related Articles</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {relatedPosts.map((relatedPost) => (

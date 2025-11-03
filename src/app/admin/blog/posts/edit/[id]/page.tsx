@@ -52,7 +52,6 @@ export default async function EditBlogPostPage({
         post={post}
         allCategories={categories}
         allTags={tags}
-        authorId={post.authorId}
         onSubmit={handleUpdate}
       />
     </div>

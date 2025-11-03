@@ -1,15 +1,24 @@
-import Link from "next/link";
 import { prisma } from "@/lib/database/prisma";
+import Link from "next/link";
 
 async function getDashboardStats() {
-  const [totalPosts, publishedPosts, totalComments, pendingComments, totalSubscribers] =
-    await Promise.all([
-      prisma.blogPost.count(),
-      prisma.blogPost.count({ where: { published: true } }),
-      prisma.blogComment.count(),
-      prisma.blogComment.count({ where: { approved: false } }),
-      prisma.newsletterSubscription.count({ where: { active: true } }),
-    ]);
+  const [
+    totalPosts,
+    publishedPosts,
+    totalComments,
+    pendingComments,
+    totalSubscribers,
+    totalCategories,
+    totalTags,
+  ] = await Promise.all([
+    prisma.blogPost.count(),
+    prisma.blogPost.count({ where: { published: true } }),
+    prisma.blogComment.count(),
+    prisma.blogComment.count({ where: { approved: false } }),
+    prisma.newsletterSubscription.count({ where: { active: true } }),
+    prisma.blogCategory.count(),
+    prisma.blogTag.count(),
+  ]);
 
   return {
     totalPosts,
@@ -18,6 +27,8 @@ async function getDashboardStats() {
     totalComments,
     pendingComments,
     totalSubscribers,
+    totalCategories,
+    totalTags,
   };
 }
 
@@ -101,11 +112,28 @@ export default async function AdminBlogDashboard() {
 
         <div className="rounded-lg bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Recent Activity
+            Organization
           </h2>
-          <p className="text-sm text-gray-600">
-            Activity tracking coming soon...
-          </p>
+          <div className="space-y-3">
+            <Link
+              href="/admin/blog/categories"
+              className="flex items-center justify-between rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+            >
+              <span>Categories</span>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                {stats.totalCategories}
+              </span>
+            </Link>
+            <Link
+              href="/admin/blog/tags"
+              className="flex items-center justify-between rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+            >
+              <span>Tags</span>
+              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800">
+                {stats.totalTags}
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
