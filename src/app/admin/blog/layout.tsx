@@ -35,6 +35,18 @@ export default function AdminBlogLayout({
                   Posts
                 </Link>
                 <Link
+                  href="/admin/blog/categories"
+                  className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
+                >
+                  Categories
+                </Link>
+                <Link
+                  href="/admin/blog/tags"
+                  className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
+                >
+                  Tags
+                </Link>
+                <Link
                   href="/admin/blog/comments"
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >

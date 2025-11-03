@@ -1,20 +1,136 @@
-import BlogPostActions from "@/components/admin/BlogPostActions";
-import { prisma } from "@/lib/database/prisma";
-import Link from "next/link";
+"use client";
 
-async function getAllPosts() {
-  return prisma.blogPost.findMany({
-    include: {
-      author: { select: { email: true, name: true } },
-      categories: true,
-      tags: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+import BlogPostActions from "@/components/admin/BlogPostActions";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+
+interface Author {
+  email: string;
+  name: string | null;
 }
 
-export default async function BlogPostsListPage() {
-  const posts = await getAllPosts();
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  published: boolean;
+  viewCount: number;
+  createdAt: string;
+  author: Author;
+  categories: Category[];
+  tags: Tag[];
+}
+
+interface PostsResponse {
+  posts: BlogPost[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+
+export default function BlogPostsListPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+  
+  // Available categories and tags for filters
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchTags();
+  }, []);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [page, searchQuery, statusFilter, categoryFilter, tagFilter]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/admin/blog/categories");
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch("/api/admin/blog/tags");
+      const data = await response.json();
+      setTags(data);
+    } catch (error) {
+      console.error("Failed to fetch tags:", error);
+    }
+  };
+
+  const fetchPosts = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        perPage: "12",
+        ...(searchQuery && { q: searchQuery }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(categoryFilter && { category: categoryFilter }),
+        ...(tagFilter && { tag: tagFilter }),
+      });
+
+      const response = await fetch(`/api/admin/blog/posts?${params}`);
+      const data: PostsResponse = await response.json();
+      
+      setPosts(data.posts);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1); // Reset to first page on new search
+    fetchPosts();
+  };
+
+  const handleFilterChange = () => {
+    setPage(1); // Reset to first page on filter change
+  };
+
+  const publishedCount = posts.filter((p) => p.published).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-600">Loading posts...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -23,8 +139,8 @@ export default async function BlogPostsListPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Blog Posts</h1>
           <p className="text-sm text-gray-600">
-            {posts.length} total post{posts.length !== 1 ? "s" : ""} •{" "}
-            {posts.filter((p) => p.published).length} published
+            {total} total post{total !== 1 ? "s" : ""} •{" "}
+            {posts.filter((p) => p.published).length} published on this page
           </p>
         </div>
         <Link
@@ -48,6 +164,111 @@ export default async function BlogPostsListPage() {
         </Link>
       </div>
 
+      {/* Search and Filters */}
+      <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+        <form onSubmit={handleSearch} className="space-y-4">
+          {/* Search Bar */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search posts by title, content..."
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-[#ec2227] focus:outline-none focus:ring-2 focus:ring-[#ec2227]/20"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-[#EC2227] px-6 py-2 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as "all" | "published" | "draft");
+                  handleFilterChange();
+                }}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#ec2227] focus:outline-none focus:ring-2 focus:ring-[#ec2227]/20"
+              >
+                <option value="all">All Posts</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  handleFilterChange();
+                }}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#ec2227] focus:outline-none focus:ring-2 focus:ring-[#ec2227]/20"
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tag Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tag
+              </label>
+              <select
+                value={tagFilter}
+                onChange={(e) => {
+                  setTagFilter(e.target.value);
+                  handleFilterChange();
+                }}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#ec2227] focus:outline-none focus:ring-2 focus:ring-[#ec2227]/20"
+              >
+                <option value="">All Tags</option>
+                {tags.map((tag) => (
+                  <option key={tag.id} value={tag.slug}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          {(searchQuery || statusFilter !== "all" || categoryFilter || tagFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+                setCategoryFilter("");
+                setTagFilter("");
+                setPage(1);
+              }}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Clear all filters
+            </button>
+          )}
+        </form>
+      </div>
+
       {/* Desktop Table View */}
       <div className="hidden lg:block rounded-lg bg-white shadow-sm">
         <div className="overflow-x-auto">
@@ -59,6 +280,12 @@ export default async function BlogPostsListPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
                   Author
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                  Categories
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                  Tags
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
                   Status
@@ -89,6 +316,43 @@ export default async function BlogPostsListPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {post.author.name || post.author.email}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {post.categories.length > 0 ? (
+                        post.categories.map((category) => (
+                          <span
+                            key={category.id}
+                            className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+                          >
+                            {category.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-400">None</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {post.tags.length > 0 ? (
+                        post.tags.slice(0, 2).map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+                          >
+                            #{tag.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-400">None</span>
+                      )}
+                      {post.tags.length > 2 && (
+                        <span className="text-xs text-gray-500">
+                          +{post.tags.length - 2}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -211,6 +475,39 @@ export default async function BlogPostsListPage() {
               </div>
             </div>
 
+            {/* Categories and Tags */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {post.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {post.categories.map((category) => (
+                    <span
+                      key={category.id}
+                      className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+                    >
+                      {category.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {post.tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+                    >
+                      #{tag.name}
+                    </span>
+                  ))}
+                  {post.tags.length > 3 && (
+                    <span className="text-xs text-gray-500 self-center">
+                      +{post.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Actions */}
             <div className="flex justify-end pt-3 border-t border-gray-100">
               <BlogPostActions
@@ -222,6 +519,56 @@ export default async function BlogPostsListPage() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          
+          <div className="flex gap-1">
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 7) {
+                pageNum = i + 1;
+              } else if (page <= 4) {
+                pageNum = i + 1;
+              } else if (page >= totalPages - 3) {
+                pageNum = totalPages - 6 + i;
+              } else {
+                pageNum = page - 3 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  className={`rounded-md border px-4 py-2 text-sm font-medium ${
+                    pageNum === page
+                      ? "border-[#ec2227] bg-[#ec2227] text-white"
+                      : "border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Empty State */}
       {posts.length === 0 && (
@@ -240,30 +587,27 @@ export default async function BlogPostsListPage() {
             />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">
-            No blog posts yet
+            No blog posts found
           </h3>
           <p className="mt-2 text-sm text-gray-600">
-            Get started by creating your first blog post.
+            {searchQuery || statusFilter !== "all" || categoryFilter || tagFilter
+              ? "Try adjusting your search or filters."
+              : "Get started by creating your first blog post."}
           </p>
-          <Link
-            href="/admin/blog/posts/new"
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {(searchQuery || statusFilter !== "all" || categoryFilter || tagFilter) && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+                setCategoryFilter("");
+                setTagFilter("");
+                setPage(1);
+              }}
+              className="mt-4 text-sm text-[#ec2227] hover:underline"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Create New Post
-          </Link>
+              Clear filters
+            </button>
+          )}
         </div>
       )}
     </div>

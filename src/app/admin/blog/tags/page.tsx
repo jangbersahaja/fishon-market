@@ -1,20 +1,52 @@
-import TagActions from "@/components/admin/TagActions";
-import { prisma } from "@/lib/database/prisma";
-import Link from "next/link";
+"use client";
 
-async function getAllTags() {
-  return prisma.blogTag.findMany({
-    include: {
-      _count: {
-        select: { posts: true },
-      },
-    },
-    orderBy: { name: "asc" },
-  });
+import TagActions from "@/components/admin/TagActions";
+import CreateTagModal from "@/components/admin/CreateTagModal";
+import { useState, useEffect } from "react";
+
+interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  _count: {
+    posts: number;
+  };
 }
 
-export default async function TagsPage() {
-  const tags = await getAllTags();
+export default function TagsPage() {
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTags();
+  }, []);
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch("/api/admin/blog/tags");
+      const data = await response.json();
+      setTags(data);
+    } catch (error) {
+      console.error("Failed to fetch tags:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    fetchTags(); // Refresh tags after modal closes
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-600">Loading tags...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -26,8 +58,8 @@ export default async function TagsPage() {
             {tags.length} tag{tags.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Link
-          href="/admin/blog/tags/new"
+        <button
+          onClick={() => setIsModalOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
         >
           <svg
@@ -44,7 +76,7 @@ export default async function TagsPage() {
             />
           </svg>
           Create New Tag
-        </Link>
+        </button>
       </div>
 
       {/* Desktop Table View */}
@@ -175,8 +207,8 @@ export default async function TagsPage() {
           <p className="mt-2 text-sm text-gray-600">
             Create tags to help categorize your blog posts.
           </p>
-          <Link
-            href="/admin/blog/tags/new"
+          <button
+            onClick={() => setIsModalOpen(true)}
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
           >
             <svg
@@ -193,9 +225,12 @@ export default async function TagsPage() {
               />
             </svg>
             Create New Tag
-          </Link>
+          </button>
         </div>
       )}
+
+      {/* Modal */}
+      <CreateTagModal isOpen={isModalOpen} onClose={handleModalClose} />
     </div>
   );
 }
