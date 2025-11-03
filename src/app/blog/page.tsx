@@ -2,6 +2,7 @@ import BlogPostCard from "@/components/blog/BlogPostCard";
 import FeaturedPostCard from "@/components/blog/FeaturedPostCard";
 import SearchBar from "@/components/blog/SearchBar";
 import { getBlogPosts, getFeaturedPosts } from "@/lib/services/blog-service";
+import { prisma } from "@/lib/database/prisma";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -65,6 +66,12 @@ export default async function BlogPage({
   const featuredPosts = await getFeaturedPosts(3);
   const totalPages = Math.ceil(total / perPage);
 
+  // Fetch real categories
+  const categories = await prisma.blogCategory.findMany({
+    orderBy: { name: "asc" },
+    take: 6, // Show top 6 categories
+  });
+
   return (
     <main className="min-h-screen bg-white">
       {/* JSON-LD */}
@@ -91,41 +98,22 @@ export default async function BlogPage({
           </div>
 
           {/* Categories */}
-          <nav
-            className="mt-8 flex flex-wrap gap-2"
-            aria-label="Blog categories"
-          >
-            <Link
-              href="/blog/category/tips"
-              className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
+          {categories.length > 0 && (
+            <nav
+              className="mt-8 flex flex-wrap gap-2"
+              aria-label="Blog categories"
             >
-              Fishing Tips
-            </Link>
-            <Link
-              href="/blog/category/destinations"
-              className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
-            >
-              Destinations
-            </Link>
-            <Link
-              href="/blog/category/techniques"
-              className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
-            >
-              Techniques
-            </Link>
-            <Link
-              href="/blog/category/gear"
-              className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
-            >
-              Gear & Equipment
-            </Link>
-            <Link
-              href="/blog/category/charters"
-              className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
-            >
-              Charter Guides
-            </Link>
-          </nav>
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/blog/category/${category.slug}`}
+                  className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
       </section>
 

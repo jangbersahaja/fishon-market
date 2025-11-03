@@ -1,20 +1,52 @@
-import CategoryActions from "@/components/admin/CategoryActions";
-import { prisma } from "@/lib/database/prisma";
-import Link from "next/link";
+"use client";
 
-async function getAllCategories() {
-  return prisma.blogCategory.findMany({
-    include: {
-      _count: {
-        select: { posts: true },
-      },
-    },
-    orderBy: { name: "asc" },
-  });
+import CategoryActions from "@/components/admin/CategoryActions";
+import CreateCategoryModal from "@/components/admin/CreateCategoryModal";
+import { useState, useEffect } from "react";
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  _count: {
+    posts: number;
+  };
 }
 
-export default async function CategoriesPage() {
-  const categories = await getAllCategories();
+export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/admin/blog/categories");
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    fetchCategories(); // Refresh categories after modal closes
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-600">Loading categories...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -26,8 +58,8 @@ export default async function CategoriesPage() {
             {categories.length} categor{categories.length !== 1 ? "ies" : "y"}
           </p>
         </div>
-        <Link
-          href="/admin/blog/categories/new"
+        <button
+          onClick={() => setIsModalOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
         >
           <svg
@@ -44,7 +76,7 @@ export default async function CategoriesPage() {
             />
           </svg>
           Create New Category
-        </Link>
+        </button>
       </div>
 
       {/* Desktop Table View */}
@@ -181,8 +213,8 @@ export default async function CategoriesPage() {
           <p className="mt-2 text-sm text-gray-600">
             Create categories to organize your blog posts.
           </p>
-          <Link
-            href="/admin/blog/categories/new"
+          <button
+            onClick={() => setIsModalOpen(true)}
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
           >
             <svg
@@ -199,9 +231,12 @@ export default async function CategoriesPage() {
               />
             </svg>
             Create New Category
-          </Link>
+          </button>
         </div>
       )}
+
+      {/* Modal */}
+      <CreateCategoryModal isOpen={isModalOpen} onClose={handleModalClose} />
     </div>
   );
 }
