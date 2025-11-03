@@ -3,13 +3,15 @@
 import type { BlogCategory, BlogPost, BlogTag } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import RichTextEditor from "./RichTextEditor";
+import CreateCategoryModal from "./CreateCategoryModal";
+import CreateTagModal from "./CreateTagModal";
+import ImageUpload from "./ImageUpload";
+import NovelEditor from "./NovelEditor";
 
 interface BlogPostFormProps {
   post?: BlogPost & { categories: BlogCategory[]; tags: BlogTag[] };
   allCategories: BlogCategory[];
   allTags: BlogTag[];
-  authorId: string;
   onSubmit: (formData: FormData) => Promise<void>;
 }
 
@@ -17,11 +19,11 @@ export default function BlogPostForm({
   post,
   allCategories,
   allTags,
-  authorId,
   onSubmit,
 }: BlogPostFormProps) {
   const router = useRouter();
   const [content, setContent] = useState(post?.content || "");
+  const [coverImage, setCoverImage] = useState(post?.coverImage || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     post?.categories?.map((c) => c.id) || []
@@ -29,6 +31,8 @@ export default function BlogPostForm({
   const [selectedTags, setSelectedTags] = useState<string[]>(
     post?.tags?.map((t) => t.id) || []
   );
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
 
   const generateSlug = (title: string) => {
     return title
@@ -43,7 +47,7 @@ export default function BlogPostForm({
 
     const formData = new FormData(e.currentTarget);
     formData.set("content", content);
-    formData.set("authorId", authorId);
+    formData.set("coverImage", coverImage);
     formData.set("categoryIds", selectedCategories.join(","));
     formData.set("tagIds", selectedTags.join(","));
 
@@ -83,7 +87,7 @@ export default function BlogPostForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
+      <div className="p-6 bg-white rounded-lg shadow-sm">
         <h2 className="mb-4 text-lg font-semibold">Post Details</h2>
 
         <div className="space-y-4">
@@ -138,42 +142,35 @@ export default function BlogPostForm({
         </div>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm">
+      <div className="p-6 bg-white rounded-lg shadow-sm">
         <h2 className="mb-4 text-lg font-semibold">Content</h2>
-        <RichTextEditor value={content} onChange={setContent} />
+        <NovelEditor value={content} onChange={setContent} />
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm">
+      <div className="p-6 bg-white rounded-lg shadow-sm">
         <h2 className="mb-4 text-lg font-semibold">Cover Image</h2>
         <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="coverImage"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Image URL
-            </label>
-            <input
-              type="text"
-              id="coverImage"
-              name="coverImage"
-              defaultValue={post?.coverImage || ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#EC2227] focus:outline-none"
-            />
-          </div>
+          <ImageUpload
+            value={coverImage}
+            onChange={setCoverImage}
+            type="cover"
+            label="Upload Cover Image"
+            description="Recommended size: 1200x630px. Max 5MB."
+          />
 
           <div>
             <label
               htmlFor="coverImageAlt"
               className="block text-sm font-medium text-gray-700"
             >
-              Alt Text
+              Alt Text (for accessibility)
             </label>
             <input
               type="text"
               id="coverImageAlt"
               name="coverImageAlt"
               defaultValue={post?.coverImageAlt || ""}
+              placeholder="Describe the image for screen readers"
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#EC2227] focus:outline-none"
             />
           </div>
@@ -181,42 +178,239 @@ export default function BlogPostForm({
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">Categories</h2>
-          <div className="space-y-2">
-            {allCategories.map((category) => (
-              <label key={category.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedCategories.includes(category.id)}
-                  onChange={() => toggleCategory(category.id)}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm">{category.name}</span>
-              </label>
-            ))}
+        {/* Categories Card */}
+        <div className="p-6 bg-white rounded-lg shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Categories</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(true)}
+                className="inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
+                title="Create new category"
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                New
+              </button>
+              <span className="text-gray-300">|</span>
+              <a
+                href="/admin/blog/categories"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Manage
+              </a>
+            </div>
           </div>
+
+          {allCategories.length === 0 ? (
+            <div className="p-6 text-center border-2 border-gray-300 border-dashed rounded-lg">
+              <svg
+                className="w-10 h-10 mx-auto text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+              <p className="mt-2 text-sm text-gray-600">No categories yet</p>
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(true)}
+                className="mt-2 inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
+              >
+                Create your first category
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2 overflow-y-auto max-h-64">
+              {allCategories.map((category) => (
+                <label
+                  key={category.id}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-colors ${
+                    selectedCategories.includes(category.id)
+                      ? "border-[#EC2227] bg-red-50"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category.id)}
+                    onChange={() => toggleCategory(category.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#EC2227] focus:ring-[#EC2227]"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-gray-900 truncate">
+                      {category.name}
+                    </span>
+                    {category.description && (
+                      <span className="block text-xs text-gray-500 truncate">
+                        {category.description}
+                      </span>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-3 text-xs text-gray-500">
+            {selectedCategories.length} categor
+            {selectedCategories.length !== 1 ? "ies" : "y"} selected
+          </p>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">Tags</h2>
-          <div className="space-y-2">
-            {allTags.map((tag) => (
-              <label key={tag.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedTags.includes(tag.id)}
-                  onChange={() => toggleTag(tag.id)}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm">{tag.name}</span>
-              </label>
-            ))}
+        {/* Tags Card */}
+        <div className="p-6 bg-white rounded-lg shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Tags</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTagModal(true)}
+                className="inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
+                title="Create new tag"
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                New
+              </button>
+              <span className="text-gray-300">|</span>
+              <a
+                href="/admin/blog/tags"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Manage
+              </a>
+            </div>
           </div>
+
+          {allTags.length === 0 ? (
+            <div className="p-6 text-center border-2 border-gray-300 border-dashed rounded-lg">
+              <svg
+                className="w-10 h-10 mx-auto text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+              <p className="mt-2 text-sm text-gray-600">No tags yet</p>
+              <button
+                type="button"
+                onClick={() => setShowTagModal(true)}
+                className="mt-2 inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
+              >
+                Create your first tag
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-y-auto max-h-64">
+              <div className="flex flex-wrap gap-2">
+                {allTags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className={`inline-flex cursor-pointer items-center gap-2 rounded-full border-2 px-3 py-1.5 text-sm transition-colors ${
+                      selectedTags.includes(tag.id)
+                        ? "border-[#EC2227] bg-red-50 text-[#EC2227]"
+                        : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTags.includes(tag.id)}
+                      onChange={() => toggleTag(tag.id)}
+                      className="h-3.5 w-3.5 rounded border-gray-300 text-[#EC2227] focus:ring-[#EC2227]"
+                    />
+                    <span className="font-medium">#{tag.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className="mt-3 text-xs text-gray-500">
+            {selectedTags.length} tag{selectedTags.length !== 1 ? "s" : ""}{" "}
+            selected
+          </p>
         </div>
       </div>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm">
+      <div className="p-6 bg-white rounded-lg shadow-sm">
         <h2 className="mb-4 text-lg font-semibold">Publishing</h2>
         <label className="flex items-center gap-2">
           <input
@@ -224,7 +418,7 @@ export default function BlogPostForm({
             name="published"
             value="true"
             defaultChecked={post?.published}
-            className="rounded border-gray-300"
+            className="border-gray-300 rounded"
           />
           <span className="text-sm font-medium">Publish immediately</span>
         </label>
@@ -234,7 +428,7 @@ export default function BlogPostForm({
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-md border border-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-50"
+          className="px-6 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
           disabled={isSubmitting}
         >
           Cancel
@@ -247,6 +441,16 @@ export default function BlogPostForm({
           {isSubmitting ? "Saving..." : post ? "Update Post" : "Create Post"}
         </button>
       </div>
+
+      {/* Modals */}
+      <CreateCategoryModal
+        isOpen={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+      />
+      <CreateTagModal
+        isOpen={showTagModal}
+        onClose={() => setShowTagModal(false)}
+      />
     </form>
   );
 }

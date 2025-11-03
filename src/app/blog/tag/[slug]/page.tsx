@@ -47,7 +47,7 @@ export default async function BlogTagPage({ params, searchParams }: Props) {
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <nav className="mb-4 text-sm text-white/80" aria-label="Breadcrumb">
             <Link href="/blog" className="hover:text-white">
               Blog
@@ -63,9 +63,9 @@ export default async function BlogTagPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {posts.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
+          <div className="p-12 text-center border border-gray-200 rounded-lg bg-gray-50">
             <p className="text-gray-600">
               No articles with this tag yet. Check back soon!
             </p>
@@ -87,13 +87,13 @@ export default async function BlogTagPage({ params, searchParams }: Props) {
             {/* Pagination */}
             {totalPages > 1 && (
               <nav
-                className="mt-12 flex justify-center gap-2"
+                className="flex justify-center gap-2 mt-12"
                 aria-label="Pagination"
               >
                 {page > 1 && (
                   <Link
                     href={`/blog/tag/${slug}?page=${page - 1}`}
-                    className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                    className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                   >
                     Previous
                   </Link>
@@ -117,7 +117,7 @@ export default async function BlogTagPage({ params, searchParams }: Props) {
                 {page < totalPages && (
                   <Link
                     href={`/blog/tag/${slug}?page=${page + 1}`}
-                    className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                    className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                   >
                     Next
                   </Link>

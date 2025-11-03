@@ -1,10 +1,18 @@
 "use server";
 
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createBlogPost(formData: FormData) {
+  // Get authenticated user
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized: You must be logged in to create posts");
+  }
+  const authorId = session.user.id;
+
   const title = formData.get("title") as string;
   const slug = formData.get("slug") as string;
   const excerpt = formData.get("excerpt") as string;
@@ -12,7 +20,6 @@ export async function createBlogPost(formData: FormData) {
   const coverImage = formData.get("coverImage") as string;
   const coverImageAlt = formData.get("coverImageAlt") as string;
   const published = formData.get("published") === "true";
-  const authorId = formData.get("authorId") as string;
   const categoryIds = formData.get("categoryIds") as string;
   const tagIds = formData.get("tagIds") as string;
 
@@ -105,6 +112,12 @@ export async function updateBlogPost(postId: string, formData: FormData) {
 }
 
 export async function deleteBlogPost(postId: string) {
+  // Get authenticated user
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized: You must be logged in to delete posts");
+  }
+
   await prisma.blogPost.delete({
     where: { id: postId },
   });
@@ -113,4 +126,40 @@ export async function deleteBlogPost(postId: string) {
   revalidatePath("/admin/blog/posts");
 
   return { success: true };
+}
+
+export async function togglePublishBlogPost(postId: string) {
+  // Get authenticated user
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized: You must be logged in to publish posts");
+  }
+
+  // Get current post
+  const currentPost = await prisma.blogPost.findUnique({
+    where: { id: postId },
+    select: { published: true, publishedAt: true, slug: true },
+  });
+
+  if (!currentPost) {
+    throw new Error("Post not found");
+  }
+
+  // Toggle published status
+  const post = await prisma.blogPost.update({
+    where: { id: postId },
+    data: {
+      published: !currentPost.published,
+      publishedAt:
+        !currentPost.published && !currentPost.publishedAt
+          ? new Date()
+          : currentPost.publishedAt,
+    },
+  });
+
+  revalidatePath("/blog");
+  revalidatePath(`/blog/${post.slug}`);
+  revalidatePath("/admin/blog/posts");
+
+  return { success: true, published: post.published };
 }

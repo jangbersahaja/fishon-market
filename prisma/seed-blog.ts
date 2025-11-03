@@ -13,14 +13,17 @@ async function seedBlog() {
   // Create a default admin user for blog posts
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@fishon.my" },
-    update: {},
+    update: { role: "ADMIN" }, // Ensure role is ADMIN
     create: {
       email: "admin@fishon.my",
+      role: "ADMIN",
       passwordHash:
         "$2a$10$K7L.H8LqG8S5h9GQXZ5gWuZr1Zi8ZLr7HNrxH3GV7vFZKpw8P4q0W", // placeholder hash
     },
   });
-  console.log(`✓ Created admin user: ${adminUser.email}`);
+  console.log(
+    `✓ Created admin user: ${adminUser.email} (role: ${adminUser.role})`
+  );
 
   // Seed categories
   console.log("\n📁 Seeding categories...");

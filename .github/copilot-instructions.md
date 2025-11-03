@@ -1,6 +1,25 @@
 ````instructions
 # Fishon.my Development Guide
 
+## Documentation
+
+**DO NOT CREATE DOCUMENTATION UNLESS EXPLICITLY REQUESTED**: The user will tell you when to create .md files. Do not create documentation proactively as it causes confusion and date/timeline issues. Only create documentation when the user specifically asks for it.
+
+**CRITICAL**: Before creating ANY .md file in `/docs`:
+1. Ask user if documentation are needed.
+2. Check if `.github/documentation.instructions.md` exists
+3. Follow the naming convention: `{fix|feature|plan|design}-{area}-{topic}.md`
+4. Include required YAML frontmatter (type, status, updated, feature, author)
+5. ONE file per issue - no duplicate summaries/updates/final docs
+
+**Example of what NOT to do**:
+- ❌ Creating `FEATURE.md`, `FEATURE_SUMMARY.md`, `FEATURE_UPDATE.md`, `FEATURE_FINAL.md`
+- ✅ Creating ONE file: `fix-location-image-mapping.md` with proper frontmatter.
+
+**SUPER CRITICAL**: DO NOT create multiple files for a single issue. DO NOT create separate summary, update, and final documentation files. Create ONE file per issue with the appropriate type in the frontmatter.
+
+**IMPORTANT**: Do not make mistake. Do not repeat mistakes.
+
 ## Purpose & App Structure
 
 Fishon.my is the **customer-facing marketplace** where anglers discover, browse, and book fishing charters across Malaysia. This is one of three interconnected Fishon applications:
@@ -288,9 +307,7 @@ npm run dev  # Uses --turbopack for faster builds
 
 ### Malaysia-Specific Context
 
-- **Locations**: Focus on Selangor fishing spots (Klang, Port Klang, Kuala Selangor)
 - **Pricing**: All prices in Malaysian Ringgit (RM)
-- **Species**: Local fish species in dummy data (e.g., Siakap, Ikan Merah)
 - **Geographic**: Coordinates for Malaysian waters, state/district structure
 
 ### Integration Points
@@ -349,26 +366,6 @@ Plan to consolidate `@fishon/ui` and `@fishon/schemas` into a single `@fishon/pa
    ```bash
    npm install git+https://github.com/jangbersahaja/fishon-ui#main
    ```
-
-## Documentation
-
-You must always follow the documentation instructions in `.github/documentation.instructions.md` when generating, reviewing, or updating documentation in this repository.
-
-**CRITICAL**: Before creating ANY .md file in `/docs`:
-1. Check if `.github/documentation.instructions.md` exists
-2. Follow the naming convention: `{fix|feature|plan|design}-{area}-{topic}.md`
-3. Include required YAML frontmatter (type, status, updated, feature, author)
-4. ONE file per issue - no duplicate summaries/updates/final docs
-
-**Example of what NOT to do**:
-- ❌ Creating `FEATURE.md`, `FEATURE_SUMMARY.md`, `FEATURE_UPDATE.md`, `FEATURE_FINAL.md`
-- ✅ Creating ONE file: `fix-location-image-mapping.md` with proper frontmatter.
-
-**SUPER CRITICAL**: DO NOT create multiple files for a single issue. DO NOT create separate summary, update, and final documentation files. Create ONE file per issue with the appropriate type in the frontmatter.
-
-**IMPORTANT**: Do not make mistake. Do not repeat mistakes.
-
-**DO NOT CREATE DOCUMENTATION UNLESS EXPLICITLY REQUESTED**: The user will tell you when to create .md files. Do not create documentation proactively as it causes confusion and date/timeline issues. Only create documentation when the user specifically asks for it.
 
 ## Terminal
 

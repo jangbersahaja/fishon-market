@@ -5,13 +5,20 @@ import { NextResponse } from "next/server";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Protect /admin routes (custom cookie-based auth)
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    const isAuthed = request.cookies.get("admin_auth")?.value === "1";
-    if (!isAuthed) {
+  // 1. Protect /admin routes (NextAuth with ADMIN role check)
+  if (pathname.startsWith("/admin")) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: "next-auth.session-token.market",
+    });
+
+    // Check if user is authenticated and has ADMIN role
+    if (!token || (token as any).role !== "ADMIN") {
       const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
-      url.searchParams.set("next", pathname);
+      url.pathname = "/login";
+      url.searchParams.set("callbackUrl", pathname);
+      url.searchParams.set("error", "admin_only");
       return NextResponse.redirect(url);
     }
   }

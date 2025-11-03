@@ -15,11 +15,11 @@ export default function AdminBlogLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <Link href="/" className="text-xl font-bold text-[#EC2227]">
-                Fishon.my Admin
+              <Link href="" className="text-xl font-bold text-[#EC2227]">
+                Admin
               </Link>
               <nav className="flex gap-6">
                 <Link
@@ -57,7 +57,7 @@ export default function AdminBlogLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

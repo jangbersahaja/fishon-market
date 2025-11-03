@@ -1,20 +1,18 @@
-import { prisma } from "@/lib/database/prisma";
 import BlogPostForm from "@/components/admin/BlogPostForm";
+import { prisma } from "@/lib/database/prisma";
 import { createBlogPost } from "../actions";
 
 async function getFormData() {
-  const [categories, tags, users] = await Promise.all([
+  const [categories, tags] = await Promise.all([
     prisma.blogCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.blogTag.findMany({ orderBy: { name: "asc" } }),
-    prisma.user.findMany({ select: { id: true, email: true } }),
   ]);
 
-  return { categories, tags, users };
+  return { categories, tags };
 }
 
 export default async function NewBlogPostPage() {
-  const { categories, tags, users } = await getFormData();
-  const defaultAuthor = users[0]?.id || "";
+  const { categories, tags } = await getFormData();
 
   return (
     <div>
@@ -28,7 +26,6 @@ export default async function NewBlogPostPage() {
       <BlogPostForm
         allCategories={categories}
         allTags={tags}
-        authorId={defaultAuthor}
         onSubmit={createBlogPost}
       />
     </div>
