@@ -126,28 +126,25 @@ function getHeaders(): HeadersInit {
  */
 export async function fetchCharters(): Promise<BackendCharter[]> {
   if (!API_BASE_URL) {
-    console.warn(
-      "FISHON_CAPTAIN_API_URL not configured, returning empty array"
+    throw new Error("FISHON_CAPTAIN_API_URL not configured");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/public/v1/charters`, {
+    headers: getHeaders(),
+    next: { revalidate: 300 }, // Cache for 5 minutes
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch charters: ${response.status} ${response.statusText}`
     );
-    return [];
   }
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/charters`, {
-      headers: getHeaders(),
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch charters: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.charters || [];
-  } catch (error) {
-    console.error("Error fetching charters from backend:", error);
-    return [];
+  const data = await response.json();
+  if (!data.charters) {
+    throw new Error("API response missing 'charters' array");
   }
+  return data.charters;
 }
 
 /**
@@ -161,25 +158,23 @@ export async function fetchCharterById(
     return null;
   }
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/charters/${id}`, {
-      headers: getHeaders(),
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    });
+  // Use the new v1 public API endpoint
+  const response = await fetch(`${API_BASE_URL}/api/public/v1/charters/${id}`, {
+    headers: getHeaders(),
+    next: { revalidate: 300 }, // Cache for 5 minutes
+  });
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`Failed to fetch charter: ${response.statusText}`);
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
     }
-
-    const data = await response.json();
-    return data.charter || null;
-  } catch (error) {
-    console.error(`Error fetching charter ${id} from backend:`, error);
-    return null;
+    throw new Error(
+      `Failed to fetch charter: ${response.status} ${response.statusText}`
+    );
   }
+
+  const data = await response.json();
+  return data.charter || null;
 }
 
 /**

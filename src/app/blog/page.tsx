@@ -1,8 +1,8 @@
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import FeaturedPostCard from "@/components/blog/FeaturedPostCard";
 import SearchBar from "@/components/blog/SearchBar";
-import { getBlogPosts, getFeaturedPosts } from "@/lib/services/blog-service";
 import { prisma } from "@/lib/database/prisma";
+import { getBlogPosts, getFeaturedPosts } from "@/lib/services/blog-service";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -122,10 +122,27 @@ export default async function BlogPage({
         {featuredPosts.length > 0 && (
           <section className="mb-12">
             <h2 className="mb-6 text-2xl font-bold">Featured Articles</h2>
-            <div className="grid gap-6 md:grid-cols-3">
-              {featuredPosts.map((post) => (
-                <FeaturedPostCard key={post.id} post={post} />
-              ))}
+
+            {/* Desktop: Large card on left, small cards on right */}
+            {/* Mobile: Stacked - large card first, then small cards */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* First featured post - Large card */}
+              <div className="lg:col-span-1">
+                <FeaturedPostCard post={featuredPosts[0]} variant="large" />
+              </div>
+
+              {/* Other featured posts - Small cards in vertical list */}
+              {featuredPosts.length > 1 && (
+                <div className="flex flex-col gap-4 lg:col-span-1">
+                  {featuredPosts.slice(1).map((post) => (
+                    <FeaturedPostCard
+                      key={post.id}
+                      post={post}
+                      variant="small"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}

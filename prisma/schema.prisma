@@ -150,6 +150,11 @@ model BlogPost {
   metaKeywords    String?
   readingTime     Int?
   viewCount       Int       @default(0)
+  
+  // Featured posts system
+  featured        Boolean   @default(false)
+  featuredOrder   Int?      // Optional: for controlling order of featured posts
+  featuredAt      DateTime? // Track when post was featured
 
   author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categories BlogCategory[] @relation("BlogPostToCategory")
@@ -159,6 +164,7 @@ model BlogPost {
   @@index([slug])
   @@index([published, publishedAt])
   @@index([authorId])
+  @@index([featured, featuredAt])
 }
 
 model BlogCategory {

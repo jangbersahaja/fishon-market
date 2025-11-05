@@ -35,6 +35,7 @@ function mapFishingType(charterType: string): FishingType {
  * Map backend pricing plan to tier
  */
 function mapTier(pricingPlan: string): Tier {
+  if (typeof pricingPlan !== "string" || !pricingPlan) return "basic";
   const plan = pricingPlan.toLowerCase();
   if (plan === "silver") return "silver";
   if (plan === "gold") return "gold";

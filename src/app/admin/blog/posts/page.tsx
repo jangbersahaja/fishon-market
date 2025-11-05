@@ -2,7 +2,7 @@
 
 import BlogPostActions from "@/components/admin/BlogPostActions";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface Author {
   email: string;
@@ -26,6 +26,7 @@ interface BlogPost {
   title: string;
   slug: string;
   published: boolean;
+  featured: boolean;
   viewCount: number;
   createdAt: string;
   author: Author;
@@ -47,13 +48,15 @@ export default function BlogPostsListPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft"
+  >("all");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [tagFilter, setTagFilter] = useState("");
-  
+
   // Available categories and tags for filters
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -65,6 +68,7 @@ export default function BlogPostsListPage() {
 
   useEffect(() => {
     fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchQuery, statusFilter, categoryFilter, tagFilter]);
 
   const fetchCategories = async () => {
@@ -101,7 +105,7 @@ export default function BlogPostsListPage() {
 
       const response = await fetch(`/api/admin/blog/posts?${params}`);
       const data: PostsResponse = await response.json();
-      
+
       setPosts(data.posts);
       setTotal(data.total);
       setTotalPages(data.totalPages);
@@ -122,8 +126,6 @@ export default function BlogPostsListPage() {
     setPage(1); // Reset to first page on filter change
   };
 
-  const publishedCount = posts.filter((p) => p.published).length;
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -135,7 +137,7 @@ export default function BlogPostsListPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Blog Posts</h1>
           <p className="text-sm text-gray-600">
@@ -148,7 +150,7 @@ export default function BlogPostsListPage() {
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
         >
           <svg
-            className="h-4 w-4"
+            className="w-4 h-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -165,7 +167,7 @@ export default function BlogPostsListPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+      <div className="p-4 mb-6 bg-white rounded-lg shadow-sm">
         <form onSubmit={handleSearch} className="space-y-4">
           {/* Search Bar */}
           <div className="flex gap-2">
@@ -188,13 +190,15 @@ export default function BlogPostsListPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             {/* Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => {
-                  setStatusFilter(e.target.value as "all" | "published" | "draft");
+                  setStatusFilter(
+                    e.target.value as "all" | "published" | "draft"
+                  );
                   handleFilterChange();
                 }}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#ec2227] focus:outline-none focus:ring-2 focus:ring-[#ec2227]/20"
@@ -207,7 +211,7 @@ export default function BlogPostsListPage() {
 
             {/* Category Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Category
               </label>
               <select
@@ -229,7 +233,7 @@ export default function BlogPostsListPage() {
 
             {/* Tag Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Tag
               </label>
               <select
@@ -251,7 +255,10 @@ export default function BlogPostsListPage() {
           </div>
 
           {/* Clear Filters */}
-          {(searchQuery || statusFilter !== "all" || categoryFilter || tagFilter) && (
+          {(searchQuery ||
+            statusFilter !== "all" ||
+            categoryFilter ||
+            tagFilter) && (
             <button
               type="button"
               onClick={() => {
@@ -270,33 +277,33 @@ export default function BlogPostsListPage() {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden lg:block rounded-lg bg-white shadow-sm">
+      <div className="hidden bg-white rounded-lg shadow-sm lg:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Title
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Author
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Categories
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Tags
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Views
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">
                   Created
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700">
+                <th className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-700 uppercase">
                   Actions
                 </th>
               </tr>
@@ -306,9 +313,22 @@ export default function BlogPostsListPage() {
                 <tr key={post.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">
-                        {post.title}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">
+                          {post.title}
+                        </span>
+                        {post.featured && (
+                          <svg
+                            className="w-4 h-4 text-yellow-500"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-label="Featured post"
+                          >
+                            <title>Featured</title>
+                            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
+                        )}
+                      </div>
                       <span className="text-xs text-gray-500">
                         /{post.slug}
                       </span>
@@ -323,7 +343,7 @@ export default function BlogPostsListPage() {
                         post.categories.map((category) => (
                           <span
                             key={category.id}
-                            className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+                            className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 rounded-md bg-blue-50"
                           >
                             {category.name}
                           </span>
@@ -339,7 +359,7 @@ export default function BlogPostsListPage() {
                         post.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag.id}
-                            className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+                            className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md"
                           >
                             #{tag.name}
                           </span>
@@ -377,6 +397,7 @@ export default function BlogPostsListPage() {
                         postId={post.id}
                         postSlug={post.slug}
                         published={post.published}
+                        featured={post.featured}
                       />
                     </div>
                   </td>
@@ -388,18 +409,31 @@ export default function BlogPostsListPage() {
       </div>
 
       {/* Mobile Card View */}
-      <div className="lg:hidden space-y-4">
+      <div className="space-y-4 lg:hidden">
         {posts.map((post) => (
           <div
             key={post.id}
-            className="rounded-lg bg-white p-4 shadow-sm border border-gray-200"
+            className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm"
           >
             {/* Title and Status */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 truncate">
-                  {post.title}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-gray-900 truncate">
+                    {post.title}
+                  </h3>
+                  {post.featured && (
+                    <svg
+                      className="flex-shrink-0 w-4 h-4 text-yellow-500"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-label="Featured post"
+                    >
+                      <title>Featured</title>
+                      <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500 truncate mt-0.5">
                   /{post.slug}
                 </p>
@@ -416,7 +450,7 @@ export default function BlogPostsListPage() {
             </div>
 
             {/* Meta Info */}
-            <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
+            <div className="flex items-center gap-4 mb-3 text-xs text-gray-600">
               <div className="flex items-center gap-1">
                 <svg
                   className="h-3.5 w-3.5"
@@ -482,7 +516,7 @@ export default function BlogPostsListPage() {
                   {post.categories.map((category) => (
                     <span
                       key={category.id}
-                      className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 rounded-md bg-blue-50"
                     >
                       {category.name}
                     </span>
@@ -494,13 +528,13 @@ export default function BlogPostsListPage() {
                   {post.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag.id}
-                      className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md"
                     >
                       #{tag.name}
                     </span>
                   ))}
                   {post.tags.length > 3 && (
-                    <span className="text-xs text-gray-500 self-center">
+                    <span className="self-center text-xs text-gray-500">
                       +{post.tags.length - 3}
                     </span>
                   )}
@@ -514,6 +548,7 @@ export default function BlogPostsListPage() {
                 postId={post.id}
                 postSlug={post.slug}
                 published={post.published}
+                featured={post.featured}
               />
             </div>
           </div>
@@ -522,15 +557,15 @@ export default function BlogPostsListPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 mt-6">
           <button
             onClick={() => setPage(page - 1)}
             disabled={page === 1}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
-          
+
           <div className="flex gap-1">
             {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
               let pageNum;
@@ -563,7 +598,7 @@ export default function BlogPostsListPage() {
           <button
             onClick={() => setPage(page + 1)}
             disabled={page === totalPages}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>
@@ -572,9 +607,9 @@ export default function BlogPostsListPage() {
 
       {/* Empty State */}
       {posts.length === 0 && (
-        <div className="rounded-lg bg-white p-12 text-center shadow-sm">
+        <div className="p-12 text-center bg-white rounded-lg shadow-sm">
           <svg
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="w-12 h-12 mx-auto text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -590,11 +625,17 @@ export default function BlogPostsListPage() {
             No blog posts found
           </h3>
           <p className="mt-2 text-sm text-gray-600">
-            {searchQuery || statusFilter !== "all" || categoryFilter || tagFilter
+            {searchQuery ||
+            statusFilter !== "all" ||
+            categoryFilter ||
+            tagFilter
               ? "Try adjusting your search or filters."
               : "Get started by creating your first blog post."}
           </p>
-          {(searchQuery || statusFilter !== "all" || categoryFilter || tagFilter) && (
+          {(searchQuery ||
+            statusFilter !== "all" ||
+            categoryFilter ||
+            tagFilter) && (
             <button
               onClick={() => {
                 setSearchQuery("");

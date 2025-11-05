@@ -100,6 +100,7 @@ export default async function CheckoutPage({
   const charterData = {
     id: charterId,
     name: charter.name,
+    charterType: charter.fishingType,
     address: charter.address,
     location: charter.location,
     species: charter.species,

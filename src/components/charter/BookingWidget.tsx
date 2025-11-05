@@ -1,14 +1,18 @@
 "use client";
 import CalendarPicker from "@/components/shared/CalendarPicker";
-import { convert24to12Hour } from "@/lib/helpers/booking-helpers";
+import {
+  convert24to12Hour,
+  getMinimumBookableDate,
+} from "@/lib/helpers/booking-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { Trip } from "@fishon/ui";
 import { ArrowRight } from "lucide-react";
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface BookingWidgetProps {
   trips: Trip[];
   charterId: string;
+  charterType?: string;
   personsMax?: number;
   childFriendly?: boolean;
   blockedDates?: Set<string>;
@@ -16,15 +20,16 @@ interface BookingWidgetProps {
   defaultPersons?: number;
 }
 
-const BookingWidget: React.FC<BookingWidgetProps> = ({
+function BookingWidget({
   trips,
   charterId,
+  charterType,
   personsMax,
   childFriendly = true,
   blockedDates = new Set(),
   className = "",
   defaultPersons = 2,
-}) => {
+}: BookingWidgetProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   // Format in local time (Malaysia GMT+8), not UTC
@@ -38,6 +43,12 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({
   const [childrenCount, setChildrenCount] = useState<number>(0);
   const [selectedTripIndex, setSelectedTripIndex] = useState<number>(0);
   const [days, setDays] = useState<number>(1);
+
+  // Calculate minimum bookable date based on charter type
+  const minBookableDate = useMemo(
+    () => getMinimumBookableDate(charterType),
+    [charterType]
+  );
 
   const totalGuests = adults + childrenCount;
   const overMax = personsMax !== undefined && totalGuests > (personsMax ?? 0);
@@ -75,7 +86,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({
               setDate(range.startDate);
               setDays(calculatedDays);
             }}
-            disablePast={true}
+            minDate={minBookableDate}
             blockedDates={blockedDates}
             buttonClassName="h-10 rounded-lg border border-gray-300 px-3 text-sm"
             enableModeToggle={true}
@@ -87,6 +98,11 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({
             {days} consecutive days selected
           </p>
         )}
+        <p className="mt-1 text-[10px] text-gray-600">
+          {charterType?.toUpperCase() === "OFFSHORE"
+            ? "Offshore trips require 36 hours advance booking"
+            : "Bookings must be made 24 hours in advance"}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 mt-3 sm:grid-cols-2">
@@ -292,6 +308,6 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default BookingWidget;

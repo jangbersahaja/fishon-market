@@ -44,6 +44,7 @@ export default function CalendarPicker({
   onChange,
   onRangeChange,
   disablePast = true,
+  minDate,
   blockedDates = new Set(),
   className = "",
   buttonClassName = "",
@@ -55,6 +56,7 @@ export default function CalendarPicker({
   onChange?: (v: string) => void; // For single mode
   onRangeChange?: (range: RangeValue) => void; // For range mode
   disablePast?: boolean;
+  minDate?: Date; // Minimum selectable date (overrides disablePast)
   blockedDates?: Set<string>; // Set of YYYY-MM-DD date strings to block
   className?: string;
   buttonClassName?: string; // style the trigger if needed
@@ -144,9 +146,18 @@ export default function CalendarPicker({
   }
 
   const isPast = (y: number, m: number, d: number) => {
-    if (!disablePast) return false;
     const cand = new Date(y, m, d);
     cand.setHours(0, 0, 0, 0);
+
+    // If minDate is provided, use it as the cutoff
+    if (minDate) {
+      const minDateTime = new Date(minDate);
+      minDateTime.setHours(0, 0, 0, 0);
+      return cand.getTime() < minDateTime.getTime();
+    }
+
+    // Otherwise, use disablePast with today
+    if (!disablePast) return false;
     return cand.getTime() < today.getTime();
   };
 

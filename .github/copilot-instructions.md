@@ -32,7 +32,7 @@ Fishon.my is the **customer-facing marketplace** where anglers discover, browse,
 
 ### ✅ Complete
 - Direct database connection to fishon-captain via PostgreSQL view (`v_public_charters`)
-- Fallback to fishon-captain Public API (`/api/public/charters`)
+- Fallback to fishon-captain Public v1 API (`/api/public/v1/charters`)
 - **No dummy data** - all charter data comes from real backend
 - Type definitions imported from `@fishon/ui` shared package
 - Charter browsing, search, and detail pages
@@ -207,9 +207,10 @@ import { mockCharters } from '@/data/mock/charter'
    - View returns: `id` (text) and `charter` (jsonb)
    - Filters only active charters (`isActive = true`)
 
-2. **fishon-captain Public API** (fallback)
+2. **fishon-captain Public v1 API** (fallback)
    - Base URL: `FISHON_CAPTAIN_API_URL`
-   - Endpoints: `/api/public/charters`, `/api/public/charters/:id`
+   - Endpoints: `/api/public/v1/charters`, `/api/public/v1/charters/:id`, `/api/public/v1/charters/:id/availability`
+   - Legacy endpoints removed: All `/api/public/charters/*` endpoints (replaced by v1)
 
 3. **Error** - No dummy data fallbacks
 
