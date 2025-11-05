@@ -2,6 +2,7 @@
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
 import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import { getMinimumBookableDate } from "@/lib/helpers/booking-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
 import { ChevronDown, Minus, Plus, Users } from "lucide-react";
@@ -11,6 +12,7 @@ export default function DateGuestsCard({
   schedule,
   unavailability,
   charterId,
+  charterType,
   date,
   onDateChange,
   days,
@@ -26,6 +28,7 @@ export default function DateGuestsCard({
   schedule?: CharterSchedule;
   unavailability?: UnavailabilityPeriod[];
   charterId?: string;
+  charterType?: string;
   date: string;
   onDateChange: (v: string) => void;
   days: number;
@@ -40,6 +43,12 @@ export default function DateGuestsCard({
 }) {
   const [open, setOpen] = useState<null | "days" | "guests">(null);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
+
+  // Calculate minimum bookable date based on charter type
+  const minBookableDate = useMemo(
+    () => getMinimumBookableDate(charterType),
+    [charterType]
+  );
 
   // If blockedDatesSet is not provided, fetch and calculate it locally
   const shouldFetchLocally = !blockedDatesSet;
@@ -165,6 +174,7 @@ export default function DateGuestsCard({
               onDateChange(range.startDate);
               onDaysChange(calculatedDays);
             }}
+            minDate={minBookableDate}
             enableModeToggle={true}
             mode="single"
             blockedDates={blockedDates}
@@ -180,6 +190,13 @@ export default function DateGuestsCard({
           {!dateError && days > 1 && (
             <p className="mt-1 text-[10px] text-gray-500">
               {days} consecutive days selected
+            </p>
+          )}
+          {!dateError && (
+            <p className="mt-1 text-[10px] text-gray-600">
+              {charterType?.toUpperCase() === "OFFSHORE"
+                ? "Offshore trips require 36 hours advance booking"
+                : "Bookings must be made 24 hours in advance"}
             </p>
           )}
         </div>

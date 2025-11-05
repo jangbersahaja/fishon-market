@@ -548,6 +548,7 @@
  * Normalize a city name to match the mapping keys
  */
 export function normalizeCityName(cityName: string): string {
+  if (typeof cityName !== "string" || !cityName) return "";
   return cityName.toLowerCase().trim();
 }
 

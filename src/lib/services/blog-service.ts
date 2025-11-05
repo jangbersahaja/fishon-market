@@ -90,11 +90,14 @@ export async function getBlogPosts({
 }
 
 /**
- * Get featured blog posts (most recent published posts)
+ * Get featured blog posts with explicit featured flag
  */
 export async function getFeaturedPosts(limit = 3) {
   return prisma.blogPost.findMany({
-    where: { published: true },
+    where: {
+      published: true,
+      featured: true, // Only get explicitly featured posts
+    },
     include: {
       author: {
         select: {
@@ -108,8 +111,35 @@ export async function getFeaturedPosts(limit = 3) {
       categories: true,
       tags: true,
     },
-    orderBy: [{ viewCount: "desc" }, { publishedAt: "desc" }],
+    orderBy: [
+      { featuredOrder: "asc" }, // Custom order first
+      { featuredAt: "desc" }, // Then by when featured
+      { viewCount: "desc" }, // Fallback to view count
+    ],
     take: limit,
+  });
+}
+
+/**
+ * Toggle featured status of a blog post
+ */
+export async function togglePostFeatured(postId: string, featured: boolean) {
+  return prisma.blogPost.update({
+    where: { id: postId },
+    data: {
+      featured,
+      featuredAt: featured ? new Date() : null,
+    },
+  });
+}
+
+/**
+ * Update featured post order
+ */
+export async function updateFeaturedPostOrder(postId: string, order: number) {
+  return prisma.blogPost.update({
+    where: { id: postId },
+    data: { featuredOrder: order },
   });
 }
 

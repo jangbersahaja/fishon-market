@@ -414,3 +414,62 @@ export function getExpiresIn(expiresAt: Date): number {
   const diff = expiresAt.getTime() - now.getTime();
   return Math.max(0, diff);
 }
+
+/**
+ * Calculate minimum bookable date based on charter type and current time
+ *
+ * Rules:
+ * - All fishing types: 24 hours advance booking required
+ * - Offshore trips: Additional 12 hours (36 hours total)
+ *
+ * @param charterType - Type of fishing charter (e.g., "INSHORE", "OFFSHORE", "DEEP_SEA")
+ * @returns Date object representing the earliest bookable date
+ */
+export function getMinimumBookableDate(charterType?: string): Date {
+  const now = new Date();
+
+  // Base requirement: 24 hours for all trip types
+  let hoursRequired = 24;
+
+  // Offshore requires additional 12 hours (36 hours total)
+  if (charterType?.toUpperCase() === "OFFSHORE") {
+    hoursRequired = 36;
+  }
+
+  // Calculate minimum date
+  const minDate = new Date(now.getTime() + hoursRequired * 60 * 60 * 1000);
+  minDate.setHours(0, 0, 0, 0); // Set to midnight of that day
+
+  return minDate;
+}
+
+/**
+ * Check if a date meets the advance booking requirement
+ *
+ * @param date - Date to check (YYYY-MM-DD string)
+ * @param charterType - Type of fishing charter
+ * @returns True if date is bookable, false otherwise
+ */
+export function isDateBookable(date: string, charterType?: string): boolean {
+  const minDate = getMinimumBookableDate(charterType);
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+
+  return checkDate >= minDate;
+}
+
+/**
+ * Get user-friendly message about advance booking requirements
+ *
+ * @param charterType - Type of fishing charter
+ * @returns Message explaining advance booking requirement
+ */
+export function getAdvanceBookingMessage(charterType?: string): string {
+  const isOffshore = charterType?.toUpperCase() === "OFFSHORE";
+
+  if (isOffshore) {
+    return "Offshore trips require booking at least 36 hours in advance to allow proper preparation.";
+  }
+
+  return "Bookings must be made at least 24 hours in advance to allow captain preparation time.";
+}

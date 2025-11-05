@@ -72,6 +72,7 @@ interface Captain {
 type CharterData = {
   id?: string;
   name?: string;
+  charterType?: string;
   address?: string;
   location?: string;
   images?: string[];
@@ -614,6 +615,7 @@ export default function CheckoutForm({
             schedule={charter?.schedule}
             unavailability={charter?.unavailability}
             charterId={charterId || undefined}
+            charterType={charter?.charterType}
             date={date}
             onDateChange={(d) => updateSearchParam("date", d)}
             days={days}

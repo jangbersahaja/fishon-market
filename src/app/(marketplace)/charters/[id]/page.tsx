@@ -408,6 +408,7 @@ export default async function CharterViewPage({
               <BookingWidget
                 trips={trips}
                 charterId={charterIdParam}
+                charterType={charter?.fishingType}
                 personsMax={personsMax}
                 childFriendly={!!charter?.policies?.childFriendly}
                 blockedDates={blockedDates}
