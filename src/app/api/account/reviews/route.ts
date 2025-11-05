@@ -1,5 +1,6 @@
 // app/api/account/reviews/route.ts
 import { authOptions } from "@/lib/auth/auth-options";
+import { notifyCaptainOfNewReview } from "@/lib/services/captain-notification-service";
 import {
   canReviewBooking,
   createReview,
@@ -75,12 +76,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
-    // Create review
+    // Create review (auto-approved)
     const review = await createReview({
       userId: session.user.id,
       bookingId,
-      captainCharterId: check.booking.charterId, // Updated field name
-      charterName: "", // Will need to fetch from charter data
+      captainCharterId: check.booking.charterId,
+      charterName: "", // Will be enriched with charter data
       overallRating,
       badges,
       comment,
@@ -89,9 +90,21 @@ export async function POST(request: NextRequest) {
       tripDate: check.booking.date,
     });
 
+    // Send notification to captain (async, don't wait)
+    notifyCaptainOfNewReview({
+      charterId: check.booking.charterId,
+      charterName: review.charterName || "Your charter",
+      anglerName: session.user.name || "An angler",
+      rating: review.overallRating,
+      reviewId: review.id,
+    }).catch((error) => {
+      console.error("Failed to notify captain of review:", error);
+      // Don't fail the review creation if notification fails
+    });
+
     return NextResponse.json(
       {
-        message: "Review submitted successfully. Pending admin approval.",
+        message: "Review submitted successfully and published!",
         review,
       },
       { status: 201 }

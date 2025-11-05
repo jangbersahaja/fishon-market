@@ -1,4 +1,5 @@
 import { authOptions } from "@/lib/auth/auth-options";
+import { processImageFile } from "@/lib/heicConverter";
 import { put } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -71,8 +72,11 @@ export async function POST(req: Request) {
       );
     }
 
+    // Convert HEIC to JPEG if needed
+    const processedFile = await processImageFile(file, 0.92);
+
     // Sanitize filename
-    const originalName = file.name || "image";
+    const originalName = processedFile.name || "image";
     const sanitized = originalName.replace(/[^\w\d.-]/g, "_").slice(0, 100);
     const timestamp = Date.now();
     const type =
@@ -83,7 +87,7 @@ export async function POST(req: Request) {
     const key = `blog/${userId}/${type}/${timestamp}-${sanitized}`;
 
     // Upload to Vercel Blob
-    const { url } = await put(key, file, {
+    const { url } = await put(key, processedFile, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,

@@ -1,5 +1,6 @@
 // app/api/account/reviews/upload-media/route.ts
 import { auth } from "@/lib/auth/auth";
+import { processImageFile } from "@/lib/heicConverter";
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
@@ -61,8 +62,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // Convert HEIC to JPEG if it's a photo
+    let processedFile = file;
+    if (!isVideo) {
+      processedFile = await processImageFile(file, 0.92);
+    }
+
     // Sanitize filename
-    const originalName = file.name || "file";
+    const originalName = processedFile.name || "file";
     const sanitized = originalName.replace(/[^\w\d.-]/g, "_").slice(0, 200);
     const timestamp = Date.now();
 
@@ -71,7 +78,7 @@ export async function POST(req: Request) {
     const key = `${mediaFolder}/${session.user.id}/${timestamp}-${sanitized}`;
 
     // Upload to blob storage
-    const { url } = await put(key, file, {
+    const { url } = await put(key, processedFile, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,
@@ -86,8 +93,8 @@ export async function POST(req: Request) {
       url,
       key,
       mediaType,
-      size: file.size,
-      mimeType: file.type,
+      size: processedFile.size,
+      mimeType: processedFile.type,
     });
   } catch (error) {
     console.error("Review media upload error:", error);

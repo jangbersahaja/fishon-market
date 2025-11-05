@@ -143,7 +143,7 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
     throw new Error(check.reason || "Cannot review this booking");
   }
 
-  // Create review
+  // Create review (auto-approved and published)
   const review = await prisma.review.create({
     data: {
       userId: input.userId,
@@ -156,8 +156,17 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
       photos: input.photos || [],
       videos: input.videos || [],
       tripDate: input.tripDate,
-      approved: false, // Requires admin approval
-      published: false,
+      approved: true, // Auto-approved
+      published: true, // Auto-published
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      },
     },
   });
 
