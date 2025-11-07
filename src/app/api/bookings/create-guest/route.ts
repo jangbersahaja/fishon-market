@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics-service";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import {
@@ -443,6 +444,38 @@ export async function POST(req: Request) {
         });
       } catch (emailErr) {
         console.error("Failed to send captain booking email:", emailErr);
+      }
+    })();
+
+    // Track guest booking submission (non-blocking)
+    (async () => {
+      try {
+        const guests = booking.guests as { adults: number; children: number };
+
+        // Fetch charter to get ownerId
+        const { getCharterById } = await import(
+          "@/lib/services/charter-service"
+        );
+        const charter = await getCharterById(trip.charter.id);
+
+        await trackEvent({
+          eventType: "BOOKING_SUBMITTED",
+          charterId: trip.charter.id,
+          ownerId: charter?.ownerId,
+          metadata: {
+            tripId: trip.id,
+            tripName: trip.name,
+            date: booking.date.toISOString().slice(0, 10),
+            days: booking.days,
+            adults: guests.adults,
+            children: guests.children,
+            finalPrice: Number(booking.finalPrice),
+            isGuest: true,
+          },
+        });
+      } catch (err) {
+        // Silent fail - analytics shouldn't block booking
+        console.error("Failed to track guest booking submitted:", err);
       }
     })();
 

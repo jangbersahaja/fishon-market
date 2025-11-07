@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics-tracking";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -37,9 +38,15 @@ function clsx(...classes: (string | false | null | undefined)[]) {
 export function PhotoGallery({
   images,
   title,
+  charterId,
+  ownerId,
+  userId,
 }: {
   images?: Media[];
   title: string;
+  charterId?: string;
+  ownerId?: string;
+  userId?: string;
 }) {
   const safeImages =
     Array.isArray(images) && images.length > 0 ? images : undefined;
@@ -50,10 +57,24 @@ export function PhotoGallery({
   const [activeIdx, setActiveIdx] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  const openAt = useCallback((idx: number) => {
-    setActiveIdx(idx);
-    setIsOpen(true);
-  }, []);
+  const openAt = useCallback(
+    (idx: number) => {
+      setActiveIdx(idx);
+      setIsOpen(true);
+
+      // Track photo view when gallery is opened
+      if (charterId) {
+        trackEvent({
+          eventType: "PHOTO_VIEW",
+          charterId,
+          ownerId,
+          userId,
+          metadata: { photoIndex: idx },
+        });
+      }
+    },
+    [charterId, ownerId, userId]
+  );
 
   // scroll lock when modal open
   useEffect(() => {

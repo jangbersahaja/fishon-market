@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics-service";
 import { auth } from "@/lib/auth/auth";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
@@ -5,6 +6,11 @@ import {
   sendBookingCreatedEmail,
   sendBookingReceivedCaptainEmail,
 } from "@/lib/services/email-service";
+import {
+  createConversation,
+  sendMessage,
+} from "@/lib/services/message-service";
+import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { calculateFinalPrice, getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
@@ -391,6 +397,61 @@ async function createAuthenticatedBooking(session: any, body: any) {
       );
     }
 
+    // Auto-create conversation for booking (Phase 2.1) (non-blocking best-effort)
+    (async () => {
+      try {
+        // Only create conversation if captain exists
+        if (!trip.charter.captain) {
+          console.warn("⚠️ Skipping conversation creation - captain not found");
+          return;
+        }
+
+        console.log("💬 Creating conversation for booking:", booking.id);
+        const conversation = await createConversation(
+          booking.id,
+          dbUserId, // anglerId
+          trip.charter.id, // charterId
+          trip.charter.captain.id // ownerId
+        );
+
+        // Send initial booking card message
+        const bookingCardData = {
+          bookingId: booking.id,
+          charterName: trip.charter.name,
+          tripName: trip.name,
+          tripDate: booking.date.toISOString().slice(0, 10),
+          tripDays: booking.days,
+          adults: ad,
+          children: ch,
+          startTime: booking.startTime ?? undefined,
+          totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
+          meetingPoint: trip.charter.startingPoint ?? undefined,
+        };
+
+        const templateMessage = bookingCreatedMessage(bookingCardData);
+
+        await sendMessage(
+          conversation.id,
+          "system", // senderId
+          templateMessage.content, // content
+          "system", // senderType
+          {
+            contentType: "booking_card",
+            systemType: templateMessage.systemType,
+            bookingSnapshot: bookingCardData,
+          }
+        );
+
+        console.log(
+          "✅ Conversation and initial message created:",
+          conversation.id
+        );
+      } catch (err) {
+        console.error("❌ Failed to create conversation:", err);
+        // Non-critical error - booking is created, just missing chat
+      }
+    })();
+
     // Outbound webhook to captain app (non-blocking)
     try {
       const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
@@ -514,6 +575,36 @@ async function createAuthenticatedBooking(session: any, body: any) {
         });
       } catch (err) {
         console.error("Failed to send captain booking email:", err);
+      }
+    })();
+
+    // Track booking submission (non-blocking)
+    (async () => {
+      try {
+        // Fetch charter to get ownerId
+        const { getCharterById } = await import(
+          "@/lib/services/charter-service"
+        );
+        const charter = await getCharterById(trip.charter.id);
+
+        await trackEvent({
+          eventType: "BOOKING_SUBMITTED",
+          charterId: trip.charter.id,
+          ownerId: charter?.ownerId,
+          userId: dbUserId,
+          metadata: {
+            tripId: trip.id,
+            tripName: trip.name,
+            date: booking.date.toISOString().slice(0, 10),
+            days: booking.days,
+            adults: ad,
+            children: ch,
+            finalPrice: Number(booking.finalPrice),
+          },
+        });
+      } catch (err) {
+        // Silent fail - analytics shouldn't block booking
+        console.error("Failed to track booking submitted:", err);
       }
     })();
 

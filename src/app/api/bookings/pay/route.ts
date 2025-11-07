@@ -4,6 +4,11 @@ import {
   sendBookingConfirmedAnglerEmail,
   sendBookingConfirmedCaptainEmail,
 } from "@/lib/services/email-service";
+import {
+  sendMessage,
+  unlockConversation,
+} from "@/lib/services/message-service";
+import { paymentConfirmedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
@@ -42,6 +47,58 @@ export async function POST(req: Request) {
           .findUnique({ where: { id } })
           .catch(() => null)
       : null;
+
+  // CRITICAL: Unlock conversation for payment (Phase 2.2) (non-blocking best-effort)
+  // This transitions conversation from LOCKED -> ACTIVE, enabling full chat
+  (async () => {
+    try {
+      if (!updated) return;
+
+      const conversation = await prisma.conversation.findUnique({
+        where: { bookingId: updated.id },
+      });
+
+      if (conversation) {
+        // Unlock the conversation (LOCKED -> ACTIVE)
+        await unlockConversation(conversation.id);
+
+        // Send payment confirmed system message
+        const trip = await getTripById(updated.tripId);
+        const bookingCardData = {
+          bookingId: updated.id,
+          charterName: trip?.charter.name || "",
+          tripName: trip?.name || "",
+          tripDate: updated.date.toISOString().slice(0, 10),
+          tripDays: updated.days,
+          adults: 0,
+          children: 0,
+          totalPrice: `RM ${Number(updated.finalPrice).toFixed(2)}`,
+          meetingPoint: trip?.charter.startingPoint ?? undefined,
+        };
+
+        const templateMessage = paymentConfirmedMessage(bookingCardData);
+
+        await sendMessage(
+          conversation.id,
+          "system",
+          templateMessage.content,
+          "system",
+          {
+            contentType: "system",
+            systemType: templateMessage.systemType,
+          }
+        );
+
+        console.log(
+          "✅ Conversation unlocked and payment message sent:",
+          conversation.id
+        );
+      }
+    } catch (err) {
+      console.error("❌ Failed to unlock conversation:", err);
+      // Non-critical - booking is still paid, chat will be accessible next reload
+    }
+  })();
 
   // Notify angler (non-blocking best-effort)
   (async () => {

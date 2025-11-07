@@ -4,6 +4,7 @@
  */
 
 import { auth } from "@/lib/auth/auth";
+import { prisma } from "@/lib/database/prisma";
 import { getPusherServer } from "@/lib/pusher/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -26,26 +27,55 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // Verify user can access this channel
-    // Private channels are prefixed with "private-user-{userId}"
-    if (channelName !== `private-user-${userId}`) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // Handle private user notifications channel
+    if (channelName === `private-user-${userId}`) {
+      const pusherServer = getPusherServer();
+      if (!pusherServer) {
+        return NextResponse.json(
+          { error: "Pusher not configured" },
+          { status: 503 }
+        );
+      }
+      const authResponse = pusherServer.authorizeChannel(socketId, channelName);
+      return NextResponse.json(authResponse);
     }
 
-    // Get Pusher instance
-    const pusherServer = getPusherServer();
+    // Handle conversation channels: private-conversation.{conversationId}
+    if (channelName.startsWith("private-conversation.")) {
+      const conversationId = channelName.replace("private-conversation.", "");
 
-    if (!pusherServer) {
-      return NextResponse.json(
-        { error: "Pusher not configured" },
-        { status: 503 }
-      );
+      // Verify user is a participant in this conversation
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: { anglerId: true, ownerId: true },
+      });
+
+      if (!conversation) {
+        return NextResponse.json(
+          { error: "Conversation not found" },
+          { status: 404 }
+        );
+      }
+
+      // Check if user is either the angler or captain owner
+      if (conversation.anglerId !== userId && conversation.ownerId !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const pusherServer = getPusherServer();
+      if (!pusherServer) {
+        return NextResponse.json(
+          { error: "Pusher not configured" },
+          { status: 503 }
+        );
+      }
+
+      const authResponse = pusherServer.authorizeChannel(socketId, channelName);
+      return NextResponse.json(authResponse);
     }
 
-    // Authenticate the user for this channel
-    const authResponse = pusherServer.authorizeChannel(socketId, channelName);
-
-    return NextResponse.json(authResponse);
+    // Unknown channel type
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   } catch (error) {
     console.error("[pusher/auth] Error:", error);
     return NextResponse.json(

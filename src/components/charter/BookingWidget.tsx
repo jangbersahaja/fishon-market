@@ -1,5 +1,6 @@
 "use client";
 import CalendarPicker from "@/components/shared/CalendarPicker";
+import { trackEvent } from "@/lib/analytics-tracking";
 import {
   convert24to12Hour,
   getMinimumBookableDate,
@@ -12,6 +13,8 @@ import { useMemo, useState } from "react";
 interface BookingWidgetProps {
   trips: Trip[];
   charterId: string;
+  ownerId?: string;
+  userId?: string;
   charterType?: string;
   personsMax?: number;
   childFriendly?: boolean;
@@ -23,6 +26,8 @@ interface BookingWidgetProps {
 function BookingWidget({
   trips,
   charterId,
+  ownerId,
+  userId,
   charterType,
   personsMax,
   childFriendly = true,
@@ -293,6 +298,22 @@ function BookingWidget({
           className="w-full rounded-xl bg-[#ec2227] px-4 py-2 text-sm font-semibold text-white hover:translate-y-px transition disabled:opacity-50"
           disabled={!date || adults < 1 || overMax}
           onClick={() => {
+            // Track booking started
+            trackEvent({
+              eventType: "BOOKING_STARTED",
+              charterId,
+              ownerId,
+              userId,
+              metadata: {
+                tripIndex: selectedTripIndex,
+                tripName: trips[selectedTripIndex]?.name,
+                date,
+                days,
+                adults,
+                children: childrenCount,
+              },
+            });
+
             const params = new URLSearchParams();
             params.set("trip_index", String(selectedTripIndex));
             params.set("date", date);

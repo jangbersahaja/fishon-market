@@ -278,6 +278,7 @@ model Booking {
   
   // Relations
   notifications   Notification[]
+  conversation    Conversation? // 1:1 relationship
 
   @@index([userId])
   @@index([guestEmail])
@@ -290,6 +291,108 @@ model Booking {
   // - Would prevent rebooking after cancellation/rejection
   // - Serializable transaction isolation provides race condition protection
   // - Application logic handles conflict detection for PAID bookings only
+}
+
+// Chat & Messaging system
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum ConversationStatus {
+  LOCKED       // Booking PENDING/APPROVED (before payment)
+  ACTIVE       // Booking PAID (full chat access)
+  RESTRICTED   // Trip in progress, limited chat
+  CLOSING_SOON // 24h review period
+  CLOSED       // After review period
+  ARCHIVED     // Manually archived by user
+}
+
+model Conversation {
+  id         String   @id @default(cuid())
+
+  // Booking relationship (1:1)
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Participants
+  anglerId   String           // fishon-market User.id
+  charterId  String           // fishon-captain Charter.id (for captain lookup)
+  ownerId    String           // fishon-captain User.id (charter owner)
+
+  // Status (starts LOCKED, unlocks on payment)
+  status     ConversationStatus @default(LOCKED)
+
+  // Last activity tracking
+  lastMessageAt      DateTime?
+  lastMessagePreview String?   @db.VarChar(200)
+  lastMessageBy      String?   // userId
+
+  // Unread counts (separate for each participant)
+  anglerUnreadCount  Int @default(0)
+  captainUnreadCount Int @default(0)
+
+  // Closure tracking
+  closedAt   DateTime?
+  closedBy   String?   // "system" | userId
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  messages   Message[]
+
+  @@index([anglerId, lastMessageAt])
+  @@index([ownerId, lastMessageAt])
+  @@index([charterId])
+  @@index([status, lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Sender identification
+  senderId   String   // User.id from either app
+  senderType String   // "angler" | "captain" | "system"
+  senderName String   // Snapshot of display name
+
+  // Content
+  content     String   @db.Text
+  contentType String   @default("text") // "text" | "system" | "booking_card"
+
+  // System messages metadata
+  systemType  String?  // "booking_created" | "booking_approved" | "payment_confirmed" | etc.
+
+  // Booking card data (when contentType = "booking_card")
+  bookingSnapshot Json? // Snapshot of booking details at message time
+
+  // Quick reply indicator
+  isQuickReply Boolean @default(false)
+
+  // Read receipts
+  status      MessageStatus @default(SENT)
+  deliveredAt DateTime?
+  readAt      DateTime?
+
+  // Metadata
+  metadata    Json?    // For future: reactions, edits, attachments
+
+  // Soft delete (for moderation)
+  deletedAt   DateTime?
+  deletedBy   String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([senderType])
+  @@map("messages")
 }
 
 // Reviews & Ratings system (Phase 3)
@@ -430,4 +533,51 @@ model NotificationPreferences {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+// Analytics & Tracking system
+enum AnalyticsEventType {
+  PROFILE_VIEW      // Captain profile page view
+  CHARTER_VIEW      // Charter detail page view
+  CHARTER_SEARCH    // Charter appeared in search results
+  PHOTO_VIEW        // Photo clicked/viewed in gallery
+  VIDEO_VIEW        // Video played
+  CONTACT_CLICK     // Contact/inquiry button clicked
+  BOOKING_STARTED   // Booking form opened
+  BOOKING_SUBMITTED // Booking request submitted
+  REVIEW_VIEW       // Review section viewed
+  SHARE_CLICKED     // Share button clicked
+}
+
+model AnalyticsEvent {
+  id         String               @id @default(cuid())
+  eventType  AnalyticsEventType
+  
+  // Captain backend references (stored as strings since data is in different DB)
+  charterId  String? // References Charter.id in fishon-captain DB
+  ownerId    String? // References User.id in fishon-captain DB (charter owner)
+  
+  // User context
+  userId     String? // fishon-market User.id for authenticated users
+  sessionId  String? // Browser session for anonymous tracking
+  
+  // Event metadata
+  metadata   Json? // Flexible storage for event-specific data
+  
+  // Referral tracking
+  referrer   String? // HTTP referrer
+  source     String? // Traffic source: 'search', 'direct', 'social', etc.
+  
+  // Technical details
+  userAgent  String? // Browser user agent
+  ipAddress  String? // Hashed IP for privacy
+  
+  createdAt  DateTime @default(now())
+  
+  @@index([charterId, createdAt])
+  @@index([ownerId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("analytics_events")
 }

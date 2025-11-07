@@ -16,7 +16,10 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate-deploy": "prisma migrate deploy",
-    "seed:blog": "tsx prisma/seed-blog.ts"
+    "seed:blog": "tsx prisma/seed-blog.ts",
+    "db:backup": "./scripts/backup-db.sh",
+    "db:restore": "./scripts/restore-db.sh",
+    "db:migrate:safe": "./scripts/safe-migrate.sh"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.6",
