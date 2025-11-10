@@ -165,7 +165,8 @@ export default function TermsPage() {
 
             <h2 id="contact">12. Contact</h2>
             <p>
-              Questions? <a href="mailto:hello@fishon.my">hello@fishon.my</a> or{" "}
+              Questions?{" "}
+              <a href="mailto:support@fishon.my">support@fishon.my</a> or{" "}
               <a href="/contact">Contact page</a>.
             </p>
           </article>

@@ -15,7 +15,7 @@ const orgSchema = {
     {
       "@type": "ContactPoint",
       contactType: "customer support",
-      email: "hello@fishon.my",
+      email: "support@fishon.my",
       availableLanguage: ["en", "ms"],
     },
   ],
@@ -69,7 +69,7 @@ export default function ContactPage() {
 
     const body = encodeURIComponent(lines.join("\n"));
 
-    window.location.href = `mailto:hello@fishon.my?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:support@fishon.my?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -96,12 +96,12 @@ export default function ContactPage() {
         <InfoCard
           title="Customer Support"
           desc="For booking help, refunds, or account issues."
-          email="hello@fishon.my"
+          email="support@fishon.my"
         />
         <InfoCard
           title="Captain Onboarding"
           desc="List your charter and grow with us."
-          email="hello@fishon.my"
+          email="support@fishon.my"
           cta={{ href: "/captains/apply", label: "Apply to List" }}
         />
       </section>
@@ -226,8 +226,11 @@ export default function ContactPage() {
         <Card title="Prefer email?">
           <p>
             You can email us directly at{" "}
-            <a className="font-medium underline" href="mailto:hello@fishon.my">
-              hello@fishon.my
+            <a
+              className="font-medium underline"
+              href="mailto:support@fishon.my"
+            >
+              support@fishon.my
             </a>
             .
           </p>

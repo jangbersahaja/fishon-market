@@ -45,7 +45,7 @@ const orgSchema = {
     {
       "@type": "ContactPoint",
       contactType: "customer support",
-      email: "hello@fishon.my",
+      email: "support@fishon.my",
       availableLanguage: ["en", "ms"],
     },
   ],
@@ -338,7 +338,7 @@ export default function AboutPage() {
             List Your Charter
           </Link>
           <Link
-            href="mailto:hello@fishon.my"
+            href="mailto:support@fishon.my"
             className="inline-flex items-center px-4 py-2 border rounded-md border-neutral-300 text-neutral-900 hover:bg-neutral-50"
           >
             Contact Us

@@ -92,11 +92,9 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       transactionId: booking.paymentTransactionId,
     });
 
-    // Revalidate to ensure fresh data
-    revalidatePath("/book/confirm", "page");
-    revalidatePath("/account/bookings", "page");
-
-    redirect(`/book/confirm?id=${order_id}`);
+    // Callback already processed payment and triggered revalidation
+    // Just redirect to confirmation page
+    redirect(`/book/confirm?id=${order_id}&payment=success`);
   }
 
   // Process payment update (if callback hasn't processed it yet)
