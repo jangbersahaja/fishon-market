@@ -56,6 +56,11 @@ import("dotenv")
       "FISHON_CAPTAIN_API_KEY", // API key for captain public endpoints
       "CAPTAIN_API_SECRET", // Shared secret for bidirectional auth
       "CAPTAIN_WEBHOOK_URL", // Webhook URL for captain notifications
+      // Senang Pay Payment Gateway
+      "SENANGPAY_MERCHANT_ID", // Senang Pay merchant ID
+      "SENANGPAY_SECRET_KEY", // Senang Pay secret key for hash generation
+      "SENANGPAY_MODE", // sandbox | production
+      "SENANGPAY_FORCE_MOCK", // Force mock payment for testing
     ];
 
     const missing = REQUIRED.filter(

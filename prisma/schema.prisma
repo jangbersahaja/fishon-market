@@ -271,6 +271,11 @@ model Booking {
   captainDecisionAt  DateTime?
   paidAt             DateTime?
 
+  // === PAYMENT TRACKING ===
+  paymentTransactionId String? @db.VarChar(255) // Senang Pay transaction ID
+  paymentMethod        String? @db.VarChar(50)  // Payment method used (e.g., "SENANGPAY", "MOCK")
+  paymentNote          String? @db.Text         // Payment status/error messages
+
   // === CONVERSATION ===
   note            String? // Angler's initial note
   captainResponse String? // Captain's response (acceptance message, instructions, etc.)

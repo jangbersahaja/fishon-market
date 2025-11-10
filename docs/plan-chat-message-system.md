@@ -1,7 +1,7 @@
 ---
 type: plan
 status: in-progress
-updated: 2025-11-07
+updated: 2025-11-11
 feature: Chat/Message System for Booking Communication
 author: GitHub Copilot
 tags:
@@ -16,7 +16,9 @@ progress:
   phase2: complete
   phase3: complete
   phase4: complete
-  overall: 50%
+  phase5: complete
+  phase5.5: complete
+  overall: 55%
 ---
 
 # Chat/Message System Implementation Plan
@@ -1066,7 +1068,7 @@ const isChatLocked =
 
 **Objective**: Ensure Server Component data stays fresh when new messages arrive
 
-**Status**: ✅ **COMPLETE** (Completed Nov 10, 2025)
+**Status**: ✅ **COMPLETE** (Completed Nov 11, 2025)
 
 **Problem Statement**:
 Currently, the chat messages update in real-time via Pusher, but the Server Component data (conversation list, unread counts, last message preview) remains stale until manual page refresh. This creates UX inconsistency where users see new messages in the chat but the sidebar doesn't update.
@@ -1252,7 +1254,81 @@ export default function ConversationsClient({ conversations, userId }) {
    - Updated render to use `localConversations`
 
 **Total Code Added**: ~100 lines across 3 files
-**Estimated Effort**: 2 hours (actual: TBD)
+**Estimated Effort**: 2 hours (actual: 1.5 hours)
+
+---
+
+### ✅ Phase 5.6: Trip Duration Data Fetching (Nov 11, 2025) - COMPLETE
+
+**Objective**: Replace manually constructed trip names with real Trip model data, add duration display to ChatHeader
+
+**Status**: ✅ **COMPLETE** (Completed Nov 11, 2025)
+
+**Problem Statement**:
+Trip names were manually constructed using booking.days ("Full-Day Trip", "2-Day Trip") instead of fetching actual Trip.name from the database. Trip duration (durationHours) was not available in chat context, preventing accurate trip information display.
+
+**Solution Implemented**:
+
+1. **Database Query Updates** (message-service.ts - Both Apps):
+   - Added `tripId: true` to booking select in enrichment functions
+   - Query Trip table for real `name` and `durationHours` via SQL:
+     ```sql
+     SELECT t.name, t."durationHours"
+     FROM "Trip" t
+     WHERE t.id = ${conversation.booking.tripId}
+     ```
+   - Return `tripDurationHours` in conversation/booking data
+   - Fixed variable scoping issues (declared at function top, not inside if blocks)
+
+2. **TypeScript Interface Updates**:
+   - Added `tripDurationHours: number` to ConversationData booking interface
+   - Removed legacy `durationHour?: number` field
+   - Updated component props to pass tripDurationHours through chain
+
+3. **ChatHeader UI Updates**:
+   - Changed Time/Duration column title to "Duration"
+   - Display format: `{tripDurationHours} hours - Starting at {startTime}`
+   - Always show duration, append start time if available
+   - Removed conditional rendering logic
+
+**Files Modified**:
+
+**fishon-market**:
+
+- `/src/lib/services/message-service.ts`:
+  - `getAnglerConversationsEnriched()`: Added tripId select + Trip query
+  - `getConversationEnriched()`: Added tripId select + Trip query
+  - Fixed variable scoping: declared `tripDurationHours = 0` at function top
+- `/src/app/(account)/account/messages/[conversationId]/chat-detail.tsx`:
+  - Updated ConversationData interface with `tripDurationHours: number`
+  - Pass tripDurationHours to ChatHeader
+- `/src/components/chat/ChatHeader.tsx`:
+  - Updated booking interface with `tripDurationHours: number`
+  - Changed display logic to always show duration with optional start time
+
+**Benefits**:
+
+- ✅ Accurate trip data from source of truth (Trip model)
+- ✅ Consistent trip names (e.g., "Full-Day Jigging", "2-Day Offshore Adventure")
+- ✅ Duration always visible in chat context
+- ✅ Better UX with complete trip information
+- ✅ Reduced manual string construction (fewer bugs)
+
+**Bug Fixes**:
+
+- Fixed `tripDurationHours is not defined` error in `getConversationEnriched()`
+- Fixed `tripDurationHours is not defined` error in `getAnglerConversationsEnriched()`
+- Proper variable scoping prevents undefined reference errors
+
+**Testing**:
+
+- ✅ TypeScript compilation passes (0 errors)
+- ✅ Runtime errors resolved
+- ✅ Real trip data displays correctly in chat
+- ✅ Duration formatting works with/without start time
+
+**Total Code Changes**: ~50 lines across 3 files
+**Estimated Effort**: 1 hour (actual: 45 minutes)
 
 ---
 
@@ -2015,6 +2091,7 @@ MARKET_DATABASE_URL=             # fishon-captain reads market data (messages)
 - [ ] Search conversations
 - [ ] Accessibility improvements (keyboard nav, ARIA)
 - [ ] Error handling refinement
+- [ ] Remove debug logs from production code
 
 ### Migration Path to @fishon/ui (Future)
 
@@ -2074,7 +2151,8 @@ MARKET_DATABASE_URL=             # fishon-captain reads market data (messages)
 5. **Mobile Scrolling**: Use h-screen + flex layout, not fixed heights or absolute positioning
 6. **Lock State**: Calculate client-side from conversation + booking status for immediate UI updates
 7. **Component Reuse**: Some duplication is OK during rapid development; consolidate after pattern proves stable
+8. **Variable Scoping**: Declare variables at function top level when used in return statements, not inside conditional blocks
 
-**Status**: Phases 1-5 Complete (50% overall) | Next: Phase 6 (Review Integration)  
-**Last Updated**: Nov 10, 2025  
+**Status**: Phases 1-5.6 Complete (55% overall) | Next: Phase 6 (Review Integration)  
+**Last Updated**: Nov 11, 2025  
 **Contributors**: GitHub Copilot + User Feedback
