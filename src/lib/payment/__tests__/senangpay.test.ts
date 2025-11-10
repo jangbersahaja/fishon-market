@@ -120,14 +120,17 @@ describe("senangpay utilities", () => {
       expect(hash1).not.toBe(hash2);
     });
 
-    it("should generate different hashes for different merchant IDs", () => {
+    it("should NOT change hash for different merchant IDs (per Senang Pay docs)", () => {
+      // Per Senang Pay documentation, merchantId is NOT part of the payment hash
+      // Hash formula: HMAC-SHA256(secretkey + detail + amount + order_id)
       const hash1 = generatePaymentHash(testConfig);
       const hash2 = generatePaymentHash({
         ...testConfig,
         merchantId: "DIFFERENT",
       });
 
-      expect(hash1).not.toBe(hash2);
+      // Should be the same since merchantId doesn't affect payment hash
+      expect(hash1).toBe(hash2);
     });
 
     it("should generate different hashes for different secret keys", () => {
@@ -166,11 +169,11 @@ describe("senangpay utilities", () => {
         hash: "", // Will be computed
       };
 
-      // Compute the expected hash
+      // Compute the expected hash per Senang Pay format: secretkey + status_id + order_id + transaction_id + msg
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
-          `${testConfig.merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+          `${testConfig.secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
         )
         .digest("hex");
 
@@ -214,7 +217,7 @@ describe("senangpay utilities", () => {
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
-          `${testConfig.merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+          `${testConfig.secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
         )
         .digest("hex");
 
@@ -242,7 +245,7 @@ describe("senangpay utilities", () => {
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
-          `${testConfig.merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+          `${testConfig.secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
         )
         .digest("hex");
 
@@ -267,7 +270,7 @@ describe("senangpay utilities", () => {
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
-          `${testConfig.merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+          `${testConfig.secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
         )
         .digest("hex");
 
@@ -631,7 +634,7 @@ describe("senangpay utilities", () => {
       response.hash = crypto
         .createHmac("sha256", secretKey)
         .update(
-          `${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+          `${secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
         )
         .digest("hex");
 
