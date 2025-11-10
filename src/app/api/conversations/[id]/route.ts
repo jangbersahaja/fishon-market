@@ -1,13 +1,13 @@
 import { auth } from "@/lib/auth/auth";
-import { getConversation } from "@/lib/services/message-service";
+import { getConversationEnriched } from "@/lib/services/message-service";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/conversations/:id
  *
- * Get a single conversation with permission check
+ * Get a single conversation with enriched data (captain, charter, booking details)
  *
- * Returns: Conversation object with participants
+ * Returns: Enriched conversation object
  */
 export async function GET(
   request: NextRequest,
@@ -29,7 +29,7 @@ export async function GET(
       );
     }
 
-    const conversation = await getConversation(id, session.user.id);
+    const conversation = await getConversationEnriched(id, session.user.id);
 
     if (!conversation) {
       return NextResponse.json(

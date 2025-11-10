@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Smile } from "lucide-react";
+import { Send } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 interface ChatInputProps {
@@ -114,31 +114,16 @@ export function ChatInput({
   // Show locked state
   if (isLocked) {
     return (
-      <div className="px-4 py-3 bg-gray-100 border-t text-center">
-        <p className="text-sm text-gray-600">
-          🔒 Chat will be available after payment
-        </p>
+      <div className="px-4 py-2 bg-gray-100 text-center">
+        <p className="text-sm text-gray-600">🔒 {placeholder}</p>
       </div>
     );
   }
 
   return (
-    <div className="border-t bg-white">
-      {/* Character counter */}
-      <div className="px-4 pt-2 text-right">
-        <span
-          className={`text-xs ${
-            message.length > MAX_MESSAGE_LENGTH * 0.9
-              ? "text-red-500"
-              : "text-gray-400"
-          }`}
-        >
-          {message.length} / {MAX_MESSAGE_LENGTH}
-        </span>
-      </div>
-
-      {/* Input area */}
-      <div className="px-4 py-3 flex gap-2">
+    <div className="bg-white">
+      {/* Input area - Compact like fishon-captain */}
+      <div className="px-4 py-2 flex gap-2 items-center">
         <Input
           value={message}
           onChange={handleInputChange}
@@ -148,28 +133,31 @@ export function ChatInput({
           className="flex-1"
         />
 
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={isDisabled}
-            className="flex-shrink-0"
-            aria-label="Emoji picker"
-          >
-            <Smile className="w-5 h-5" />
-          </Button>
-
-          <Button
-            onClick={handleSend}
-            disabled={!message.trim() || isSending || isDisabled}
-            className="flex-shrink-0"
-            size="icon"
-            aria-label="Send message"
-          >
-            <Send className="w-5 h-5" />
-          </Button>
-        </div>
+        <Button
+          onClick={handleSend}
+          disabled={!message.trim() || isSending || isDisabled}
+          className="flex-shrink-0"
+          size="icon"
+          aria-label="Send message"
+        >
+          <Send className="w-5 h-5" />
+        </Button>
       </div>
+
+      {/* Character counter - Show only when approaching limit */}
+      {message.length > MAX_MESSAGE_LENGTH * 0.8 && (
+        <div className="px-4 pb-2 text-right">
+          <span
+            className={`text-xs ${
+              message.length > MAX_MESSAGE_LENGTH * 0.9
+                ? "text-red-500"
+                : "text-gray-400"
+            }`}
+          >
+            {message.length} / {MAX_MESSAGE_LENGTH}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

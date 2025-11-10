@@ -39,9 +39,26 @@ export function getPusherClient(): PusherClient | null {
     },
   });
 
-  // Handle connection errors
+  // Handle connection events
+  pusherClientInstance.connection.bind("connected", () => {
+    console.log("[Pusher] Connected successfully");
+  });
+
   pusherClientInstance.connection.bind("error", (error: any) => {
-    console.error("[Pusher] Connection error:", error);
+    console.error("[Pusher] Connection error:", {
+      error,
+      type: error?.type,
+      data: error?.data,
+      message: error?.error?.message || error?.message,
+    });
+  });
+
+  pusherClientInstance.connection.bind("disconnected", () => {
+    console.log("[Pusher] Disconnected");
+  });
+
+  pusherClientInstance.connection.bind("failed", () => {
+    console.error("[Pusher] Connection failed");
   });
 
   return pusherClientInstance;

@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // Handle private user notifications channel
-    if (channelName === `private-user-${userId}`) {
+    // Handle private user notifications channel (with dot separator)
+    if (channelName === `private-user.${userId}`) {
       const pusherServer = getPusherServer();
       if (!pusherServer) {
         return NextResponse.json(

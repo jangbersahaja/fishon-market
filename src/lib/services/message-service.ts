@@ -169,9 +169,16 @@ export async function sendMessage(
     isQuickReply?: boolean;
   }
 ) {
-  // Get conversation and check status
+  // Get conversation with booking data to check status
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
+    include: {
+      booking: {
+        select: {
+          status: true,
+        },
+      },
+    },
   });
 
   if (!conversation) {
@@ -187,12 +194,29 @@ export async function sendMessage(
     throw new Error("Unauthorized: not a participant");
   }
 
-  // Check if conversation is locked (user messages only - system can always send)
-  if (senderType !== "system" && conversation.status === "LOCKED") {
-    throw new Error("Chat is locked until payment is received");
+  // Check if chat is locked based on booking status (system messages bypass this)
+  if (senderType !== "system" && conversation.booking) {
+    const bookingStatus = conversation.booking.status;
+
+    // Chat is LOCKED for PENDING and APPROVED bookings (before payment)
+    if (bookingStatus === "PENDING" || bookingStatus === "APPROVED") {
+      throw new Error("Chat is locked until payment is received");
+    }
+
+    // Chat is CLOSED for CANCELLED, REJECTED, EXPIRED bookings
+    if (
+      bookingStatus === "CANCELLED" ||
+      bookingStatus === "REJECTED" ||
+      bookingStatus === "EXPIRED"
+    ) {
+      throw new Error("Conversation is closed");
+    }
+
+    // Chat is ACTIVE for PAID and COMPLETED bookings
+    // Allow sending messages
   }
 
-  // Check if conversation is closed
+  // Also check conversation status for manually closed conversations
   if (senderType !== "system" && conversation.status === "CLOSED") {
     throw new Error("Conversation is closed");
   }
@@ -436,4 +460,376 @@ export async function sendTypingIndicator(
 
   // Trigger typing event via Pusher
   return triggerTyping(conversationId, userId, isTyping);
+}
+
+// ============================================================================
+// ANGLER-SIDE ENRICHMENT FUNCTIONS
+// ============================================================================
+
+/**
+ * Get enriched conversations with captain names, charter names, and trip details
+ * Used for angler conversations list page
+ */
+export async function getAnglerConversationsEnriched(userId: string) {
+  // Get conversations for this angler
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      anglerId: userId,
+    },
+    include: {
+      booking: {
+        select: {
+          id: true,
+          status: true,
+          charterId: true,
+          tripId: true,
+          date: true,
+          days: true,
+          startTime: true,
+          guests: true,
+          finalPrice: true,
+        },
+      },
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          senderType: true,
+        },
+      },
+    },
+    orderBy: { lastMessageAt: "desc" },
+    take: 50,
+  });
+
+  // Enrich with captain and charter data from captain DB
+  const { prismaCaptain } = await import("@/lib/database/prisma-captain");
+
+  const enrichedConversations = await Promise.all(
+    conversations.map(async (conversation: (typeof conversations)[number]) => {
+      let captainName = "Captain";
+      let captainAvatar: string | null = null;
+      let charterName = "Charter";
+      let tripName = "Trip";
+      let tripDurationHours = 0;
+
+      if (conversation.booking && conversation.charterId) {
+        // Get charter data from captain DB
+        const charterData = await prismaCaptain.$queryRaw<
+          Array<{
+            name: string;
+            ownerId: string;
+          }>
+        >`
+          SELECT c.name, c."ownerId"
+          FROM "Charter" c
+          WHERE c.id = ${conversation.charterId}
+          LIMIT 1
+        `;
+
+        if (charterData && charterData.length > 0) {
+          charterName = charterData[0].name;
+
+          // Get captain profile and user data from captain DB
+          const captainProfile = await prismaCaptain.$queryRaw<
+            Array<{
+              displayName: string;
+            }>
+          >`
+            SELECT cp."displayName"
+            FROM "CaptainProfile" cp
+            WHERE cp."userId" = ${charterData[0].ownerId}
+            LIMIT 1
+          `;
+
+          // Always get user data for avatar
+          const userData = await prismaCaptain.$queryRaw<
+            Array<{
+              name: string;
+              image: string | null;
+            }>
+          >`
+            SELECT u.name, u.image
+            FROM "User" u
+            WHERE u.id = ${charterData[0].ownerId}
+            LIMIT 1
+          `;
+
+          if (userData && userData.length > 0) {
+            captainAvatar = userData[0].image;
+
+            // Use CaptainProfile displayName if available, otherwise fallback to User.name
+            if (captainProfile && captainProfile.length > 0) {
+              captainName = captainProfile[0].displayName;
+            } else {
+              captainName = userData[0].name || "Captain";
+            }
+          } else if (captainProfile && captainProfile.length > 0) {
+            // CaptainProfile exists but no User data (unlikely)
+            captainName = captainProfile[0].displayName;
+          }
+        }
+
+        // Get trip data from captain DB using tripId
+        if (conversation.booking.tripId) {
+          const tripData = await prismaCaptain.$queryRaw<
+            Array<{
+              name: string;
+              durationHours: number;
+            }>
+          >`
+            SELECT t.name, t."durationHours"
+            FROM "Trip" t
+            WHERE t.id = ${conversation.booking.tripId}
+            LIMIT 1
+          `;
+
+          if (tripData && tripData.length > 0) {
+            tripName = tripData[0].name;
+            tripDurationHours = tripData[0].durationHours;
+          }
+        }
+      }
+
+      // Parse guests
+      let adults = 0;
+      let children = 0;
+      if (conversation.booking?.guests) {
+        try {
+          const guestsData =
+            typeof conversation.booking.guests === "string"
+              ? JSON.parse(conversation.booking.guests)
+              : conversation.booking.guests;
+          adults = guestsData?.adults || 0;
+          children = guestsData?.children || 0;
+        } catch (error) {
+          console.error("Error parsing guests JSON:", error);
+        }
+      }
+
+      return {
+        ...conversation,
+        captainName,
+        captainAvatar,
+        charterName,
+        tripName,
+        tripDurationHours,
+        displayName: `${tripName} · ${charterName}`, // e.g., "Full-Day Trip · Port Dickson Charter"
+        booking: conversation.booking
+          ? {
+              ...conversation.booking,
+              adults,
+              children,
+            }
+          : null,
+      };
+    })
+  );
+
+  return enrichedConversations;
+}
+
+/**
+ * Get enriched conversation with captain details, charter info, and messages
+ * Used for angler conversation detail page
+ */
+export async function getConversationEnriched(
+  conversationId: string,
+  userId: string
+) {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: {
+      booking: {
+        select: {
+          id: true,
+          status: true,
+          charterId: true,
+          tripId: true,
+          date: true,
+          days: true,
+          finalPrice: true,
+          note: true,
+          startTime: true,
+          guests: true,
+        },
+      },
+      messages: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          senderId: true,
+          senderType: true,
+          senderName: true,
+          content: true,
+          contentType: true,
+          systemType: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  if (!conversation) {
+    return null;
+  }
+
+  // Access control
+  if (conversation.anglerId !== userId && conversation.ownerId !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get charter and captain data from captain DB
+  const { prismaCaptain } = await import("@/lib/database/prisma-captain");
+
+  let captainName = "Captain";
+  let captainEmail = "";
+  let captainPhone = "";
+  let captainAvatar: string | null = null;
+  let charterName = "Charter";
+  let tripName = "Trip";
+  let tripDurationHours = 0;
+
+  if (conversation.charterId) {
+    // Get charter data
+    const charterData = await prismaCaptain.$queryRaw<
+      Array<{
+        name: string;
+        ownerId: string;
+      }>
+    >`
+      SELECT c.name, c."ownerId"
+      FROM "Charter" c
+      WHERE c.id = ${conversation.charterId}
+      LIMIT 1
+    `;
+
+    if (charterData && charterData.length > 0) {
+      charterName = charterData[0].name;
+
+      // Get captain profile
+      const captainProfile = await prismaCaptain.$queryRaw<
+        Array<{
+          displayName: string;
+          phone: string | null;
+        }>
+      >`
+        SELECT cp."displayName", cp.phone
+        FROM "CaptainProfile" cp
+        WHERE cp."userId" = ${charterData[0].ownerId}
+        LIMIT 1
+      `;
+
+      if (captainProfile && captainProfile.length > 0) {
+        captainName = captainProfile[0].displayName;
+        captainPhone = captainProfile[0].phone || "";
+      }
+
+      // Get captain user data (email, avatar)
+      const userData = await prismaCaptain.$queryRaw<
+        Array<{
+          email: string;
+          name: string;
+          image: string | null;
+        }>
+      >`
+        SELECT u.email, u.name, u.image
+        FROM "User" u
+        WHERE u.id = ${charterData[0].ownerId}
+        LIMIT 1
+      `;
+
+      if (userData && userData.length > 0) {
+        captainEmail = userData[0].email || "";
+        captainAvatar = userData[0].image;
+        // Use User.name as fallback if CaptainProfile not found
+        if (captainName === "Captain") {
+          captainName = userData[0].name || "Captain";
+        }
+      }
+    }
+
+    // Get trip data from captain DB using tripId
+    if (conversation.booking && conversation.booking.tripId) {
+      const tripData = await prismaCaptain.$queryRaw<
+        Array<{
+          name: string;
+          durationHours: number;
+        }>
+      >`
+        SELECT t.name, t."durationHours"
+        FROM "Trip" t
+        WHERE t.id = ${conversation.booking.tripId}
+        LIMIT 1
+      `;
+
+      if (tripData && tripData.length > 0) {
+        tripName = tripData[0].name;
+        tripDurationHours = tripData[0].durationHours;
+      }
+    }
+  }
+
+  // Parse guests JSON
+  let adults = 0;
+  let children = 0;
+  if (conversation.booking?.guests) {
+    try {
+      const guestsData =
+        typeof conversation.booking.guests === "string"
+          ? JSON.parse(conversation.booking.guests)
+          : conversation.booking.guests;
+      adults = guestsData?.adults || 0;
+      children = guestsData?.children || 0;
+    } catch (error) {
+      console.error("Error parsing guests JSON:", error);
+    }
+  }
+
+  return {
+    id: conversation.id,
+    anglerId: conversation.anglerId,
+    charterId: conversation.charterId,
+    ownerId: conversation.ownerId,
+    status: conversation.status,
+    captain: {
+      name: captainName,
+      email: captainEmail,
+      phone: captainPhone,
+      avatar: captainAvatar,
+    },
+    booking: conversation.booking
+      ? {
+          id: conversation.booking.id,
+          status: conversation.booking.status,
+          charterName,
+          tripName,
+          tripDurationHours,
+          note: conversation.booking.note || undefined,
+          date: conversation.booking.date.toISOString(),
+          days: conversation.booking.days,
+          adults,
+          children,
+          totalPrice: Number(conversation.booking.finalPrice),
+          startTime: conversation.booking.startTime || undefined,
+        }
+      : null,
+    messages: conversation.messages.map(
+      (msg: (typeof conversation.messages)[number]) => ({
+        id: msg.id,
+        senderId: msg.senderId,
+        senderType: msg.senderType,
+        senderName: msg.senderName || "User",
+        content: msg.content,
+        contentType: msg.contentType,
+        systemType: msg.systemType || undefined,
+        status: (msg.status || "SENT") as "SENT" | "DELIVERED" | "READ",
+        createdAt: msg.createdAt.toISOString(),
+      })
+    ),
+  };
 }

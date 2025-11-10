@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, CheckCheck } from "lucide-react";
+import Image from "next/image";
 
 export interface MessageBubbleProps {
   content: string;
@@ -10,6 +11,7 @@ export interface MessageBubbleProps {
   isOwn: boolean;
   status?: "SENT" | "DELIVERED" | "READ";
   createdAt: string;
+  senderAvatar?: string | null;
   /**
    * Optional: show system message styling
    */
@@ -30,6 +32,7 @@ export function MessageBubble({
   isOwn,
   status = "SENT",
   createdAt,
+  senderAvatar,
   showSystemStyling = true,
 }: MessageBubbleProps) {
   // Format time
@@ -43,10 +46,10 @@ export function MessageBubble({
   if (senderType === "system" && showSystemStyling) {
     return (
       <div className="flex justify-center my-4">
-        <div className="bg-gray-100 text-gray-700 text-sm px-3 py-2 rounded-lg max-w-xs text-center">
+        <div className="max-w-xs px-3 py-2 text-sm text-center text-gray-700 bg-gray-100 rounded-lg">
           {content}
           {systemType && (
-            <div className="text-xs text-gray-600 mt-1">({systemType})</div>
+            <div className="mt-1 text-xs text-gray-600">({systemType})</div>
           )}
         </div>
       </div>
@@ -58,17 +61,27 @@ export function MessageBubble({
     <div
       className={`flex gap-2 mb-3 ${isOwn ? "justify-end" : "justify-start"}`}
     >
-      {!isOwn && (
-        <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center text-sm font-semibold text-gray-600">
-          {senderName[0]?.toUpperCase()}
-        </div>
-      )}
+      {!isOwn &&
+        (senderAvatar ? (
+          <div className="relative flex items-center justify-center flex-shrink-0 w-8 h-8 overflow-hidden text-sm font-semibold text-gray-600 bg-gray-300 rounded-full">
+            <Image
+              src={senderAvatar}
+              alt={`${senderName}'s avatar`}
+              fill
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div className="relative flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-semibold text-gray-600 bg-gray-300 rounded-full">
+            {senderName[0]?.toUpperCase()}
+          </div>
+        ))}
 
       <div
         className={`flex flex-col gap-1 max-w-xs ${isOwn ? "items-end" : "items-start"}`}
       >
         {!isOwn && (
-          <span className="text-xs font-semibold text-gray-700 px-2">
+          <span className="px-2 text-xs font-semibold text-gray-700">
             {senderName}
           </span>
         )}
@@ -83,7 +96,7 @@ export function MessageBubble({
           <p className="text-sm">{content}</p>
         </div>
 
-        <div className="flex items-center gap-1 text-xs text-gray-500 px-2">
+        <div className="flex items-center gap-1 px-2 text-xs text-gray-500">
           <span>{time}</span>
           {isOwn && (
             <>

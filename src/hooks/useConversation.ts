@@ -36,17 +36,22 @@ export interface Conversation {
  *
  * @param conversationId - ID of the conversation to manage
  * @param userId - Current user ID (for permission checks)
+ * @param initialMessages - Initial messages from Server Component (optional)
  * @returns Object with messages, conversation data, and control functions
  */
-export function useConversation(conversationId: string, userId: string) {
-  // Message state
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+export function useConversation(
+  conversationId: string,
+  userId: string,
+  initialMessages?: Message[]
+) {
+  // Message state - initialize with server data if provided
+  const [messages, setMessages] = useState<Message[]>(initialMessages || []);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(!initialMessages);
   const [messagesError, setMessagesError] = useState<string | null>(null);
 
-  // Conversation state
+  // Conversation state - no longer needed since data comes from Server Component
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [isLoadingConversation, setIsLoadingConversation] = useState(true);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
 
   // Real-time state
   const [typingUsers, setTypingUsers] = useState<Map<string, boolean>>(
@@ -74,6 +79,15 @@ export function useConversation(conversationId: string, userId: string) {
         `/api/conversations/${conversationId}/messages?limit=50`
       );
 
+      // Handle 404 - conversation doesn't exist yet
+      if (response.status === 404) {
+        setMessages([]);
+        setMessagesError(
+          "Conversation not found. Please check if you have access to this conversation."
+        );
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`Failed to fetch messages: ${response.statusText}`);
       }
@@ -99,6 +113,16 @@ export function useConversation(conversationId: string, userId: string) {
 
       const response = await fetch(`/api/conversations/${conversationId}`);
 
+      // Handle 404 - conversation doesn't exist yet
+      if (response.status === 404) {
+        console.warn(
+          "[useConversation] Conversation not found:",
+          conversationId
+        );
+        setConversation(null);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`Failed to fetch conversation: ${response.statusText}`);
       }
@@ -107,6 +131,7 @@ export function useConversation(conversationId: string, userId: string) {
       setConversation(data);
     } catch (error) {
       console.error("[useConversation] Error fetching conversation:", error);
+      setConversation(null);
     } finally {
       setIsLoadingConversation(false);
     }
@@ -140,8 +165,18 @@ export function useConversation(conversationId: string, userId: string) {
           }
         );
 
+        // Handle 404 - conversation doesn't exist
+        if (response.status === 404) {
+          throw new Error(
+            "This conversation is not available. Please check if you have an active booking."
+          );
+        }
+
         if (!response.ok) {
-          throw new Error(`Failed to send message: ${response.statusText}`);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Failed to send message: ${response.statusText}`
+          );
         }
 
         const message = await response.json();
@@ -172,6 +207,14 @@ export function useConversation(conversationId: string, userId: string) {
           method: "PATCH",
         }
       );
+
+      // Handle 404 - conversation doesn't exist yet (non-critical)
+      if (response.status === 404) {
+        console.warn(
+          "[useConversation] Cannot mark as read - conversation not found"
+        );
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to mark as read: ${response.statusText}`);
@@ -296,9 +339,11 @@ export function useConversation(conversationId: string, userId: string) {
    * Initialize: fetch data and subscribe to real-time events
    */
   useEffect(() => {
-    // Fetch initial data
-    fetchMessages();
-    fetchConversation();
+    // Fetch initial data only if not provided
+    if (!initialMessages) {
+      fetchMessages();
+    }
+    // No longer need to fetch conversation - comes from Server Component
     markAsRead();
 
     // Subscribe to real-time events
@@ -327,11 +372,11 @@ export function useConversation(conversationId: string, userId: string) {
   }, [
     conversationId,
     fetchMessages,
-    fetchConversation,
     markAsRead,
     handleMessageNew,
     handleMessageRead,
     handleTyping,
+    initialMessages,
   ]);
 
   // ============================================================================
@@ -344,7 +389,7 @@ export function useConversation(conversationId: string, userId: string) {
     isLoadingMessages,
     messagesError,
 
-    // Conversation data
+    // Conversation data (deprecated - use Server Component data instead)
     conversation,
     isLoadingConversation,
 
@@ -357,10 +402,11 @@ export function useConversation(conversationId: string, userId: string) {
     markAsRead,
     sendTypingIndicator,
 
-    // Refresh functions
+    // Refresh functions (now only refreshes messages)
     refetch: () => {
-      fetchMessages();
-      fetchConversation();
+      if (!initialMessages) {
+        fetchMessages();
+      }
     },
   };
 }

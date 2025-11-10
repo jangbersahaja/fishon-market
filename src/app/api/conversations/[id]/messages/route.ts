@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth/auth";
-import { sendMessage } from "@/lib/services/message-service";
+import { getPusherServer } from "@/lib/pusher/server";
+import { getConversation, sendMessage } from "@/lib/services/message-service";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -130,6 +132,28 @@ export async function POST(
       contentType,
       isQuickReply,
     });
+
+    // Get updated conversation for metadata
+    const conversation = await getConversation(id, session.user.id);
+
+    // Trigger conversation.updated event for sidebar updates
+    const pusher = getPusherServer();
+    if (pusher && conversation.ownerId) {
+      await pusher.trigger(
+        `private-user.${conversation.ownerId}`,
+        "conversation.updated",
+        {
+          conversationId: id,
+          lastMessageAt: conversation.lastMessageAt,
+          lastMessagePreview: conversation.lastMessagePreview,
+          captainUnreadCount: conversation.captainUnreadCount,
+        }
+      );
+    }
+
+    // Revalidate messages page for Server Component refresh
+    revalidatePath("/account/messages");
+    revalidatePath(`/account/messages/${id}`);
 
     console.log("send_message", {
       userId: session.user.id,

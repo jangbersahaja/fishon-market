@@ -1,15 +1,17 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import Link from "next/link";
 
 export interface ConversationListItemProps {
   conversationId: string;
   otherUserName: string;
+  otherUserAvatar?: string | null;
   charterName: string;
   lastMessagePreview?: string | null;
   lastMessageTime?: string | null;
   unreadCount: number;
+  bookingStatus?: string;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
 }
@@ -23,10 +25,12 @@ export interface ConversationListItemProps {
 export function ConversationListItem({
   conversationId,
   otherUserName,
+  otherUserAvatar,
   charterName,
   lastMessagePreview,
   lastMessageTime,
   unreadCount,
+  bookingStatus,
   isSelected = false,
   onSelect,
 }: ConversationListItemProps) {
@@ -63,17 +67,49 @@ export function ConversationListItem({
             : "hover:bg-gray-50"
         }`}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-3">
+          {/* Avatar */}
+          {otherUserAvatar ? (
+            <Image
+              src={otherUserAvatar}
+              alt={`${otherUserName}'s avatar`}
+              width={48}
+              height={48}
+              className="rounded-full flex-shrink-0"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center text-lg font-semibold text-gray-600">
+              {otherUserName[0]?.toUpperCase()}
+            </div>
+          )}
+
           {/* Left: User and Charter Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-gray-900 truncate">
                 {otherUserName}
               </h3>
+              {bookingStatus && (
+                <span
+                  className={`text-xs px-2 py-0.5 rounded ${
+                    bookingStatus === "PAID" || bookingStatus === "COMPLETED"
+                      ? "bg-green-100 text-green-800"
+                      : bookingStatus === "PENDING" ||
+                          bookingStatus === "APPROVED"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {bookingStatus}
+                </span>
+              )}
               {unreadCount > 0 && (
-                <Badge variant="default" className="text-xs">
+                <span
+                  className="text-xs font-semibold text-white px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: "#ec2227" }}
+                >
                   {unreadCount}
-                </Badge>
+                </span>
               )}
             </div>
 

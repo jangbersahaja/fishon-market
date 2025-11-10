@@ -9,6 +9,7 @@ interface MessageListProps {
   messages: Message[];
   typingUsers: string[];
   currentUserId: string;
+  captainAvatar?: string | null;
   isLoading?: boolean;
   onEndReached?: () => void;
 }
@@ -24,6 +25,7 @@ export function MessageList({
   messages,
   typingUsers,
   currentUserId,
+  captainAvatar,
   isLoading = false,
   onEndReached,
 }: MessageListProps) {
@@ -78,6 +80,9 @@ export function MessageList({
           isOwn={message.senderId === currentUserId}
           status={message.status}
           createdAt={message.createdAt}
+          senderAvatar={
+            message.senderId !== currentUserId ? captainAvatar : undefined
+          }
         />
       ))}
 

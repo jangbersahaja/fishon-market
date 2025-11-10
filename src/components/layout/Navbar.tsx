@@ -65,6 +65,19 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               <NotificationBell />
 
               <Link
+                href="/account/messages"
+                aria-current={
+                  isActive("/account/messages") ? "page" : undefined
+                }
+                className={`text-sm font-medium underline-offset-4 decoration-white/40 ${
+                  isActive("/account/messages")
+                    ? "underline"
+                    : "hover:underline hover:decoration-white"
+                }`}
+              >
+                Messages
+              </Link>
+              <Link
                 href="/account"
                 aria-current={isActive("/account") ? "page" : undefined}
                 className={`text-sm font-medium underline-offset-4 decoration-white/40 ${
@@ -146,6 +159,20 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
         >
           {isAuthed ? (
             <>
+              <Link
+                href="/account/messages"
+                aria-current={
+                  isActive("/account/messages") ? "page" : undefined
+                }
+                className={`rounded-md px-3 py-2 text-sm font-medium ${
+                  isActive("/account/messages")
+                    ? "bg-white/15"
+                    : "hover:bg-white/10"
+                }`}
+                onClick={() => setOpen(false)}
+              >
+                Messages
+              </Link>
               <Link
                 href="/account"
                 aria-current={isActive("/account") ? "page" : undefined}
