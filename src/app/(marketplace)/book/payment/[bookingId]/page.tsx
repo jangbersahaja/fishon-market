@@ -1,18 +1,30 @@
 import { BookingExpiredScreen } from "@/components/booking/BookingExpiredScreen";
 import { DateNoLongerAvailableScreen } from "@/components/booking/DateNoLongerAvailableScreen";
+import { PaymentConfigurationError } from "@/components/payment/PaymentConfigurationError";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import {
   checkDateAvailability,
   getNextAvailableDates,
 } from "@/lib/helpers/availability-helpers";
+import {
+  formatAmount,
+  generatePaymentHash,
+  getMerchantId,
+  getSecretKey,
+  getSenangPayUrl,
+  isForceMockMode,
+  validateSenangPayConfig,
+} from "@/lib/payment/senangpay";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
-import { CreditCard, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { MockPaymentForm } from "./MockPaymentForm";
+import { PaymentForm } from "./PaymentForm";
 
 export default async function PaymentPage({
   params,
@@ -111,6 +123,80 @@ export default async function PaymentPage({
   // All checks passed - proceed with payment
   const enrichedBooking = await enrichBookingWithTripData(booking);
 
+  // ========================================
+  // SENANG PAY INTEGRATION
+  // ========================================
+
+  // Check payment gateway configuration
+  const configValidation = validateSenangPayConfig();
+  const forceMock = isForceMockMode();
+
+  // SECURITY: If not configured and NOT in force mock mode, show error
+  if (!configValidation.isConfigured && !forceMock) {
+    return (
+      <PaymentConfigurationError errors={configValidation.errors || []} />
+    );
+  }
+
+  // Prepare payment data for Senang Pay
+  let paymentData = null;
+  let paymentUrl = null;
+
+  if (!forceMock) {
+    // Real Senang Pay integration
+    const merchantId = getMerchantId();
+    const secretKey = getSecretKey();
+
+    if (!merchantId || !secretKey) {
+      return (
+        <PaymentConfigurationError
+          errors={["Merchant ID or Secret Key not configured"]}
+        />
+      );
+    }
+
+    const amount = formatAmount(enrichedBooking.totalPrice);
+    const orderId = booking.id;
+    const detail = `Charter Booking: ${enrichedBooking.charterName} - ${enrichedBooking.tripName}`;
+
+    // Generate payment hash
+    const hash = generatePaymentHash({
+      merchantId,
+      secretKey,
+      detail,
+      amount,
+      orderId,
+    });
+
+    // Get user details for payment
+    const userName =
+      booking.guestFirstName && booking.guestLastName
+        ? `${booking.guestFirstName} ${booking.guestLastName}`
+        : session?.user?.name || "Guest";
+
+    const userEmail = booking.guestEmail || session?.user?.email || "";
+    const userPhone = booking.guestPhone || "";
+
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    paymentData = {
+      merchantId,
+      detail,
+      amount,
+      orderId,
+      hash,
+      name: userName,
+      email: userEmail,
+      phone: userPhone,
+      returnUrl: `${appUrl}/book/payment/return`,
+      callbackUrl: `${appUrl}/api/payment/senangpay-callback`,
+    };
+
+    paymentUrl = getSenangPayUrl();
+  }
+
+  // Mock payment handler (development only)
   async function handlePayment() {
     "use server";
     console.log("🚀 [PAYMENT] handlePayment called for bookingId:", bookingId);
@@ -376,36 +462,44 @@ export default async function PaymentPage({
             </div>
           </div>
 
-          {/* Mock Payment Notice */}
-          <div className="p-4 mb-6 border border-yellow-200 rounded-lg bg-yellow-50">
-            <div className="flex items-start gap-3">
-              <Shield className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
-              <div className="text-sm text-yellow-800">
-                <p className="font-medium">Development Mode</p>
-                <p className="mt-1">
-                  This is a mock payment gateway. In production, this will
-                  integrate with Senang Pay. Click the button below to simulate
-                  a successful payment.
+          {/* Payment Method */}
+          {forceMock ? (
+            // Development: Mock Payment
+            <MockPaymentForm
+              bookingId={booking.id}
+              amount={enrichedBooking.totalPrice.toFixed(2)}
+              onSubmit={handlePayment}
+            />
+          ) : paymentData && paymentUrl ? (
+            // Production: Real Senang Pay Integration
+            <>
+              {/* Security Notice */}
+              <div className="p-4 mb-6 border border-blue-200 rounded-lg bg-blue-50">
+                <div className="flex items-start gap-3">
+                  <Shield className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium">Secure Payment via Senang Pay</p>
+                    <p className="mt-1">
+                      You will be redirected to Senang Pay&apos;s secure
+                      payment page. After completing payment, you will be
+                      redirected back to view your booking confirmation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Senang Pay Payment Form */}
+              <PaymentForm paymentUrl={paymentUrl} paymentData={paymentData} />
+
+              {/* Security Notice */}
+              <div className="mt-6 text-xs text-center text-gray-500">
+                <p>
+                  🔒 Your payment information is secure and encrypted by Senang
+                  Pay
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Payment Button */}
-          <form action={handlePayment}>
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#ec2227] px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-[#d01f23] focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:ring-offset-2"
-            >
-              <CreditCard className="w-5 h-5" />
-              Confirm Payment - RM {enrichedBooking.totalPrice.toFixed(2)}
-            </button>
-          </form>
-
-          {/* Security Notice */}
-          <div className="mt-6 text-xs text-center text-gray-500">
-            <p>🔒 Your payment information is secure and encrypted</p>
-          </div>
+            </>
+          ) : null}
         </div>
 
         {/* Back Link */}

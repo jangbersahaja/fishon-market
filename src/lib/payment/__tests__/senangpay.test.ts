@@ -400,49 +400,49 @@ describe("senangpay utilities", () => {
 
   describe("isForceMockMode", () => {
     it("should return true when SENANGPAY_FORCE_MOCK is 'true' in development", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_FORCE_MOCK = "true";
       expect(isForceMockMode()).toBe(true);
     });
 
     it("should return true when SENANGPAY_FORCE_MOCK is '1' in development", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_FORCE_MOCK = "1";
       expect(isForceMockMode()).toBe(true);
     });
 
     it("should return false when SENANGPAY_FORCE_MOCK is 'false'", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_FORCE_MOCK = "false";
       expect(isForceMockMode()).toBe(false);
     });
 
     it("should return false when SENANGPAY_FORCE_MOCK is not set", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       delete process.env.SENANGPAY_FORCE_MOCK;
       expect(isForceMockMode()).toBe(false);
     });
 
     it("should return false when SENANGPAY_FORCE_MOCK is '0'", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_FORCE_MOCK = "0";
       expect(isForceMockMode()).toBe(false);
     });
 
     it("should return false for other string values", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_FORCE_MOCK = "yes";
       expect(isForceMockMode()).toBe(false);
     });
 
     it("should ALWAYS return false in production, even when SENANGPAY_FORCE_MOCK is true", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as any).NODE_ENV = "production";
       process.env.SENANGPAY_FORCE_MOCK = "true";
       expect(isForceMockMode()).toBe(false);
     });
 
     it("should return false in test environment", () => {
-      process.env.NODE_ENV = "test";
+      (process.env as any).NODE_ENV = "test";
       process.env.SENANGPAY_FORCE_MOCK = "true";
       expect(isForceMockMode()).toBe(false);
     });
@@ -500,7 +500,7 @@ describe("senangpay utilities", () => {
     });
 
     it("should detect force mock mode", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_MERCHANT_ID = "123456";
       process.env.SENANGPAY_SECRET_KEY = "secret";
       process.env.SENANGPAY_FORCE_MOCK = "true";
@@ -522,7 +522,7 @@ describe("senangpay utilities", () => {
 
   describe("isProductionReady", () => {
     it("should return ready when properly configured", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as any).NODE_ENV = "production";
       process.env.SENANGPAY_MERCHANT_ID = "123456";
       process.env.SENANGPAY_SECRET_KEY = "secret";
       delete process.env.SENANGPAY_FORCE_MOCK;
@@ -534,7 +534,7 @@ describe("senangpay utilities", () => {
     });
 
     it("should return not ready when merchant ID missing", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as any).NODE_ENV = "production";
       delete process.env.SENANGPAY_MERCHANT_ID;
       process.env.SENANGPAY_SECRET_KEY = "secret";
 
@@ -545,7 +545,7 @@ describe("senangpay utilities", () => {
     });
 
     it("should return not ready when secret key missing", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as any).NODE_ENV = "production";
       process.env.SENANGPAY_MERCHANT_ID = "123456";
       delete process.env.SENANGPAY_SECRET_KEY;
 
@@ -556,7 +556,7 @@ describe("senangpay utilities", () => {
     });
 
     it("should warn when force mock is set in production", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as any).NODE_ENV = "production";
       process.env.SENANGPAY_MERCHANT_ID = "123456";
       process.env.SENANGPAY_SECRET_KEY = "secret";
       process.env.SENANGPAY_FORCE_MOCK = "true";
@@ -570,7 +570,7 @@ describe("senangpay utilities", () => {
     });
 
     it("should allow force mock in development", () => {
-      process.env.NODE_ENV = "development";
+      (process.env as any).NODE_ENV = "development";
       process.env.SENANGPAY_MERCHANT_ID = "123456";
       process.env.SENANGPAY_SECRET_KEY = "secret";
       process.env.SENANGPAY_FORCE_MOCK = "true";
@@ -582,7 +582,7 @@ describe("senangpay utilities", () => {
     });
 
     it("should return multiple issues when multiple problems exist", () => {
-      process.env.NODE_ENV = "production";
+      (process.env as any).NODE_ENV = "production";
       delete process.env.SENANGPAY_MERCHANT_ID;
       delete process.env.SENANGPAY_SECRET_KEY;
       process.env.SENANGPAY_FORCE_MOCK = "true";
