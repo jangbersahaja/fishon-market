@@ -3,16 +3,18 @@
 Successfully deployed Senang Pay integration to production and completed first real payment test!
 
 **Files modified:**
+
 - src/lib/payment/senangpay.ts (hash fix + sanitization)
 - src/app/(marketplace)/book/payment/return/page.tsx (revalidatePath fix)
 - src/app/(marketplace)/book/payment/[bookingId]/page.tsx (sanitization)
-- src/lib/payment/__tests__/senangpay.test.ts (65 tests passing)
+- src/lib/payment/**tests**/senangpay.test.ts (65 tests passing)
 
 ---
 
 ## Production Testing Results ✅
 
 ### Test Payment Details
+
 - **Booking ID**: `cmhtln4r40003i504bliv8sex`
 - **Transaction ID**: `1762806991001231724`
 - **Status**: SUCCESS (status_id=1)
@@ -65,6 +67,7 @@ Successfully deployed Senang Pay integration to production and completed first r
 **Root Cause**: Hash generation used `merchantId` in message instead of `secretKey`
 
 **Fix**: Updated hash formula to match Senang Pay documentation:
+
 ```typescript
 // ❌ WRONG
 const message = `${merchantId}${detail}${amount}${orderId}`;
@@ -74,6 +77,7 @@ const message = `${secretKey}${detail}${amount}${orderId}`;
 ```
 
 **Files Changed**:
+
 - `src/lib/payment/senangpay.ts` - Fixed `generatePaymentHash()` and `verifyReturnHash()`
 - `src/lib/payment/__tests__/senangpay.test.ts` - Updated all test cases
 
@@ -88,17 +92,20 @@ const message = `${secretKey}${detail}${amount}${orderId}`;
 **Error**: "Your name contain invalid character, only letters, numbers and space is allowed"
 
 **Requirements from Senang Pay**:
+
 - Name: Only alphabet and spaces (no &, -, ', ., etc.)
 - Phone: Numbers only (format: 0128888888)
 
 **Fix**: Added sanitization functions:
+
 ```typescript
-sanitizeName("John-Paul O'Brien") // "JohnPaul OBrien"
-sanitizePhone("012-888-8888") // "0128888888"
-sanitizePhone("+60 12 888 8888") // "0128888888"
+sanitizeName("John-Paul O'Brien"); // "JohnPaul OBrien"
+sanitizePhone("012-888-8888"); // "0128888888"
+sanitizePhone("+60 12 888 8888"); // "0128888888"
 ```
 
 **Files Changed**:
+
 - `src/lib/payment/senangpay.ts` - Added `sanitizeName()` and `sanitizePhone()`
 - `src/app/(marketplace)/book/payment/[bookingId]/page.tsx` - Applied sanitization
 - `src/lib/payment/__tests__/senangpay.test.ts` - Added 11 new tests
@@ -111,7 +118,8 @@ sanitizePhone("+60 12 888 8888") // "0128888888"
 
 **Problem**: Next.js 15 error when calling `revalidatePath()` during server component render
 
-**Error**: 
+**Error**:
+
 ```
 Route /book/payment/return used "revalidatePath /book/confirm" during render which is unsupported
 ```
@@ -119,6 +127,7 @@ Route /book/payment/return used "revalidatePath /book/confirm" during render whi
 **Root Cause**: Return handler called `revalidatePath()` when detecting idempotency
 
 **Fix**: Removed revalidation call since callback webhook already revalidated pages
+
 ```typescript
 // ❌ WRONG - Cannot call during render
 revalidatePath("/book/confirm", "page");
@@ -129,6 +138,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 ```
 
 **Files Changed**:
+
 - `src/app/(marketplace)/book/payment/return/page.tsx` - Removed revalidatePath calls
 
 **Result**: ✅ No more Next.js errors, idempotency works correctly
@@ -138,6 +148,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 ## Security Verification ✅
 
 ### Hash Security
+
 - ✅ Payment hash verified before submission
 - ✅ Return hash verified before processing
 - ✅ Callback hash verified before processing
@@ -145,18 +156,21 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - ✅ All hash attempts logged for audit
 
 ### Idempotency
+
 - ✅ Callback webhook processed payment first
 - ✅ Return handler detected existing payment
 - ✅ No duplicate side effects (webhook, notification)
 - ✅ Database updated exactly once
 
 ### Authorization
+
 - ✅ User owns booking or is guest booking
 - ✅ Booking status checked (must be APPROVED)
 - ✅ Availability re-checked before payment
 - ✅ No bypass mechanisms exist
 
 ### Data Integrity
+
 - ✅ Transaction ID recorded correctly
 - ✅ Payment method set to SENANGPAY
 - ✅ Timestamps accurate (paidAt)
@@ -167,6 +181,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 ## Configuration Verified
 
 ### Senang Pay Dashboard
+
 - ✅ Merchant ID: Configured
 - ✅ Secret Key: Configured
 - ✅ Hash Type: SHA256
@@ -175,6 +190,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - ✅ Parameters: Empty (using Senang Pay defaults)
 
 ### Vercel Environment Variables
+
 - ✅ SENANGPAY_MERCHANT_ID: Set
 - ✅ SENANGPAY_SECRET_KEY: Set
 - ✅ SENANGPAY_MODE: production
@@ -187,6 +203,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 ## Test Results Summary
 
 ### Payment Gateway Integration
+
 - ✅ Payment form displays correctly
 - ✅ Hash generation correct
 - ✅ Redirect to Senang Pay successful
@@ -195,6 +212,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - ✅ Callback webhook working
 
 ### Database Operations
+
 - ✅ Booking status updated to PAID
 - ✅ paidAt timestamp recorded
 - ✅ Transaction ID stored
@@ -202,6 +220,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - ✅ Payment note captured
 
 ### Side Effects
+
 - ✅ Captain webhook sent
 - ✅ Captain app received notification
 - ✅ Angler notification created
@@ -209,6 +228,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - ✅ Confirmation page shows success
 
 ### Error Handling
+
 - ✅ Invalid hash rejected
 - ✅ Missing parameters caught
 - ✅ Booking not found handled
@@ -220,12 +240,14 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 ## Testing Metrics
 
 ### Test Coverage
+
 - **Unit Tests**: 65/65 passing (payment utilities)
 - **Integration Test**: 1 real payment successful
 - **Hash Security**: Verified with tampering test
 - **Idempotency**: Verified with callback + return flow
 
 ### Performance
+
 - **Payment Page Load**: < 1s
 - **Callback Webhook**: ~1-2s after payment
 - **Return Redirect**: ~500ms after payment
@@ -233,6 +255,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - **Side Effects**: < 500ms
 
 ### Success Rates
+
 - **Hash Verification**: 100% (3/3 attempts)
 - **Payment Submission**: 100% (1/1)
 - **Callback Receipt**: 100% (1/1)
@@ -244,6 +267,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 ## Production Readiness Checklist
 
 ### Code Quality
+
 - [x] All 65 tests passing
 - [x] TypeScript compilation successful
 - [x] No ESLint errors
@@ -251,6 +275,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - [x] Proper error handling throughout
 
 ### Security
+
 - [x] Hash verification on all payment responses
 - [x] No mock payment bypass in production
 - [x] Authorization checks on payment page
@@ -258,6 +283,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - [x] All sensitive data logged securely
 
 ### Monitoring
+
 - [x] Vercel logs accessible
 - [x] Payment attempts logged
 - [x] Hash verification logged
@@ -265,6 +291,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 - [x] Errors logged with context
 
 ### Documentation
+
 - [x] Testing guides created
 - [x] API documentation complete
 - [x] Configuration documented
@@ -305,6 +332,7 @@ redirect(`/book/confirm?id=${order_id}&payment=success`);
 **Review Status:** ✅ APPROVED - Production ready, first payment successful
 
 **Git Commit Message:**
+
 ```
 feat: complete Senang Pay payment gateway integration
 

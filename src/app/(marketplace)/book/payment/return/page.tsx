@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/database/prisma";
 import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 interface PageProps {
