@@ -59,7 +59,9 @@ export function generatePaymentHash({
   amount,
   orderId,
 }: PaymentDetails): string {
-  const message = `${merchantId}${detail}${amount}${orderId}`;
+  // Per Senang Pay documentation: hash = HMAC-SHA256(secretkey + detail + amount + order_id)
+  // Note: merchantId is NOT included in payment hash, but secretKey is prepended to message
+  const message = `${secretKey}${detail}${amount}${orderId}`;
   return crypto.createHmac("sha256", secretKey).update(message).digest("hex");
 }
 
@@ -98,10 +100,12 @@ export function verifyReturnHash(
   secretKey: string,
   merchantId: string
 ): boolean {
+  // Per Senang Pay documentation: hash = HMAC-SHA256(secretkey + status_id + order_id + transaction_id + msg)
+  // Note: merchantId is NOT used, but secretKey is prepended to message
   const expectedHash = crypto
     .createHmac("sha256", secretKey)
     .update(
-      `${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+      `${secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
     )
     .digest("hex");
 

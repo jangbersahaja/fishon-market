@@ -173,7 +173,7 @@ export default async function PaymentPage({
     const userEmail = booking.guestEmail || session?.user?.email || "";
     const userPhone = booking.guestPhone || "";
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
 
     paymentData = {
       merchantId,
