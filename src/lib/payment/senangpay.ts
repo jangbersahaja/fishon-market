@@ -11,6 +11,67 @@
 
 import crypto from "crypto";
 
+/**
+ * Sanitize name for Senang Pay requirements
+ *
+ * Senang Pay requirements:
+ * - Only alphabet and spaces allowed
+ * - No special characters (no &, -, /, etc.)
+ * - No numbers
+ *
+ * @param name - Raw name input
+ * @returns Sanitized name with only letters and spaces
+ *
+ * @example
+ * ```typescript
+ * sanitizeName("John Doe") // "John Doe"
+ * sanitizeName("John-Paul O'Brien") // "JohnPaul OBrien"
+ * sanitizeName("Ahmad bin Ali") // "Ahmad bin Ali"
+ * ```
+ */
+export function sanitizeName(name: string): string {
+  if (!name) return "";
+
+  // Remove all characters except letters and spaces
+  // This removes: numbers, special characters (&, -, /, @, etc.)
+  return name
+    .replace(/[^a-zA-Z\s]/g, "") // Keep only letters and spaces
+    .replace(/\s+/g, " ") // Replace multiple spaces with single space
+    .trim();
+}
+
+/**
+ * Sanitize phone number for Senang Pay requirements
+ *
+ * Senang Pay requirements:
+ * - Numbers only
+ * - Format: 0128888888 (starts with 0, 10-11 digits)
+ * - No spaces, dashes, or parentheses
+ *
+ * @param phone - Raw phone input
+ * @returns Sanitized phone with only digits
+ *
+ * @example
+ * ```typescript
+ * sanitizePhone("012-888-8888") // "0128888888"
+ * sanitizePhone("+60 12 888 8888") // "60128888888"
+ * sanitizePhone("(012) 888-8888") // "0128888888"
+ * ```
+ */
+export function sanitizePhone(phone: string): string {
+  if (!phone) return "";
+
+  // Remove all non-digit characters
+  let cleaned = phone.replace(/\D/g, "");
+
+  // If starts with country code +60, remove it and add 0
+  if (cleaned.startsWith("60")) {
+    cleaned = "0" + cleaned.substring(2);
+  }
+
+  return cleaned;
+}
+
 export interface PaymentDetails {
   merchantId: string;
   secretKey: string;

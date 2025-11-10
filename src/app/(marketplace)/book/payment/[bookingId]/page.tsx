@@ -15,6 +15,8 @@ import {
   getSecretKey,
   getSenangPayUrl,
   isForceMockMode,
+  sanitizeName,
+  sanitizePhone,
   validateSenangPayConfig,
 } from "@/lib/payment/senangpay";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
@@ -165,13 +167,19 @@ export default async function PaymentPage({
     });
 
     // Get user details for payment
-    const userName =
+    const rawName =
       booking.guestFirstName && booking.guestLastName
         ? `${booking.guestFirstName} ${booking.guestLastName}`
         : session?.user?.name || "Guest";
 
+    const rawPhone = booking.guestPhone || "";
+
+    // Sanitize name and phone to meet Senang Pay requirements
+    // Name: only letters and spaces (no special characters)
+    // Phone: only digits (no spaces, dashes, parentheses)
+    const userName = sanitizeName(rawName);
+    const userPhone = sanitizePhone(rawPhone);
     const userEmail = booking.guestEmail || session?.user?.email || "";
-    const userPhone = booking.guestPhone || "";
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
 

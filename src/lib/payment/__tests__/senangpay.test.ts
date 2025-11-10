@@ -643,4 +643,79 @@ describe("senangpay utilities", () => {
       expect(isValid).toBe(true);
     });
   });
+
+  describe("sanitizeName", () => {
+    it("should keep valid names unchanged", async () => {
+      const { sanitizeName } = await import("../senangpay");
+      expect(sanitizeName("John Doe")).toBe("John Doe");
+      expect(sanitizeName("Ahmad bin Ali")).toBe("Ahmad bin Ali");
+      expect(sanitizeName("Mary Jane")).toBe("Mary Jane");
+    });
+
+    it("should remove special characters", async () => {
+      const { sanitizeName } = await import("../senangpay");
+      expect(sanitizeName("John-Paul")).toBe("JohnPaul");
+      expect(sanitizeName("O'Brien")).toBe("OBrien");
+      expect(sanitizeName("John & Jane")).toBe("John Jane"); // & is removed, double space becomes single
+      expect(sanitizeName("Dr. Smith")).toBe("Dr Smith");
+    });
+
+    it("should remove numbers", async () => {
+      const { sanitizeName } = await import("../senangpay");
+      expect(sanitizeName("John123")).toBe("John");
+      expect(sanitizeName("Agent007")).toBe("Agent");
+    });
+
+    it("should handle multiple spaces", async () => {
+      const { sanitizeName } = await import("../senangpay");
+      expect(sanitizeName("John    Doe")).toBe("John Doe");
+      expect(sanitizeName("  Ahmad  bin  Ali  ")).toBe("Ahmad bin Ali");
+    });
+
+    it("should handle empty or invalid input", async () => {
+      const { sanitizeName } = await import("../senangpay");
+      expect(sanitizeName("")).toBe("");
+      expect(sanitizeName("123")).toBe("");
+      expect(sanitizeName("@#$")).toBe("");
+    });
+  });
+
+  describe("sanitizePhone", () => {
+    it("should keep valid phone numbers unchanged", async () => {
+      const { sanitizePhone } = await import("../senangpay");
+      expect(sanitizePhone("0128888888")).toBe("0128888888");
+      expect(sanitizePhone("0123456789")).toBe("0123456789");
+    });
+
+    it("should remove spaces and dashes", async () => {
+      const { sanitizePhone } = await import("../senangpay");
+      expect(sanitizePhone("012-888-8888")).toBe("0128888888");
+      expect(sanitizePhone("012 888 8888")).toBe("0128888888");
+      expect(sanitizePhone("012 - 888 - 8888")).toBe("0128888888");
+    });
+
+    it("should remove parentheses", async () => {
+      const { sanitizePhone } = await import("../senangpay");
+      expect(sanitizePhone("(012) 888-8888")).toBe("0128888888");
+      expect(sanitizePhone("(012)8888888")).toBe("0128888888");
+    });
+
+    it("should handle international format", async () => {
+      const { sanitizePhone } = await import("../senangpay");
+      expect(sanitizePhone("+60128888888")).toBe("0128888888");
+      expect(sanitizePhone("+60 12 888 8888")).toBe("0128888888");
+      expect(sanitizePhone("60128888888")).toBe("0128888888");
+    });
+
+    it("should handle empty input", async () => {
+      const { sanitizePhone } = await import("../senangpay");
+      expect(sanitizePhone("")).toBe("");
+    });
+
+    it("should remove all non-digit characters", async () => {
+      const { sanitizePhone } = await import("../senangpay");
+      expect(sanitizePhone("tel:0128888888")).toBe("0128888888");
+      expect(sanitizePhone("Phone: 012-888-8888")).toBe("0128888888");
+    });
+  });
 });
