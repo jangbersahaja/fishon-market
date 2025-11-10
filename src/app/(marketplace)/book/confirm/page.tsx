@@ -22,12 +22,73 @@ import { BookingStatusRefresh } from "./BookingStatusRefresh";
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string | string[] }>;
+  searchParams: Promise<{
+    id?: string | string[];
+    payment?: string;
+    reason?: string;
+    error?: string;
+  }>;
 }) {
   const sp = await searchParams;
   // Handle case where id might be an array (multiple query params)
   const id = Array.isArray(sp.id) ? sp.id[0] : sp.id;
+  const paymentStatus = sp.payment;
+  const paymentReason = sp.reason;
+  const errorType = sp.error;
   const session = await auth();
+
+  // Handle error-only pages (no booking ID required)
+  if (!id && errorType) {
+    return (
+      <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="p-4 border border-yellow-200 rounded-lg bg-yellow-50">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg
+                  className="w-5 h-5 text-yellow-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-yellow-900">
+                  Payment Error
+                </h3>
+                <p className="mt-1 text-sm text-yellow-700">
+                  {errorType === "invalid_payment_response"
+                    ? "Invalid payment response received. Please contact support."
+                    : errorType === "invalid_payment_hash"
+                      ? "Payment verification failed. Please contact support."
+                      : errorType === "booking_not_found"
+                        ? "Booking not found. Please contact support."
+                        : errorType === "payment_gateway_error"
+                          ? "Payment gateway error. Please contact support."
+                          : errorType === "payment_processing_error"
+                            ? "Payment processing error. Please try again."
+                            : "An error occurred during payment processing."}
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href="/"
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Return Home
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (!id) {
     return (
@@ -132,6 +193,113 @@ export default async function ConfirmationPage({
 
   return (
     <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
+      {/* Payment Status Notifications */}
+      {paymentStatus === "success" && (
+        <div className="p-4 mb-6 border border-green-200 rounded-lg bg-green-50">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg
+                className="w-5 h-5 text-green-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-green-900">
+                Payment Successful!
+              </h3>
+              <p className="mt-1 text-sm text-green-700">
+                Your payment has been processed successfully. Your booking is
+                now confirmed.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {paymentStatus === "failed" && (
+        <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg
+                className="w-5 h-5 text-red-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-red-900">
+                Payment Failed
+              </h3>
+              <p className="mt-1 text-sm text-red-700">
+                {paymentReason ||
+                  "Your payment could not be processed. Please try again."}
+              </p>
+              {booking.status === "APPROVED" && (
+                <div className="mt-3">
+                  <Link
+                    href={`/book/payment/${booking.id}`}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    Try Payment Again
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {errorType && (
+        <div className="p-4 mb-6 border border-yellow-200 rounded-lg bg-yellow-50">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg
+                className="w-5 h-5 text-yellow-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-yellow-900">
+                Payment Error
+              </h3>
+              <p className="mt-1 text-sm text-yellow-700">
+                {errorType === "invalid_payment_response"
+                  ? "Invalid payment response received. Please contact support."
+                  : errorType === "invalid_payment_hash"
+                    ? "Payment verification failed. Please contact support."
+                    : errorType === "booking_not_found"
+                      ? "Booking not found. Please contact support."
+                      : errorType === "payment_gateway_error"
+                        ? "Payment gateway error. Please contact support."
+                        : errorType === "payment_processing_error"
+                          ? "Payment processing error. Please try again."
+                          : "An error occurred during payment processing."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section with Progress Timeline */}
       <div className="pb-10 space-y-6">
         <div className="flex flex-col gap-3">

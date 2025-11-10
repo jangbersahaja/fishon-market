@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
 
 interface PaymentConfigurationErrorProps {
   errors: string[];
@@ -40,18 +41,18 @@ export function PaymentConfigurationError({
               )}
 
               <div className="flex gap-3 mt-6">
-                <a
+                <Link
                   href="/contact"
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 >
                   Contact Support
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/"
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                 >
                   Return Home
-                </a>
+                </Link>
               </div>
             </div>
           </div>

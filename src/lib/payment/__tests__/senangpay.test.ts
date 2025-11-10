@@ -10,6 +10,7 @@
  * - Force mock mode detection
  */
 
+import crypto from "crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   formatAmount,
@@ -166,7 +167,6 @@ describe("senangpay utilities", () => {
       };
 
       // Compute the expected hash
-      const crypto = require("crypto");
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
@@ -211,7 +211,6 @@ describe("senangpay utilities", () => {
       };
 
       // Generate hash for correct order_id
-      const crypto = require("crypto");
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
@@ -240,7 +239,6 @@ describe("senangpay utilities", () => {
         hash: "",
       };
 
-      const crypto = require("crypto");
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
@@ -266,7 +264,6 @@ describe("senangpay utilities", () => {
         hash: "",
       };
 
-      const crypto = require("crypto");
       response.hash = crypto
         .createHmac("sha256", testConfig.secretKey)
         .update(
@@ -631,7 +628,6 @@ describe("senangpay utilities", () => {
       };
 
       // Generate the expected hash
-      const crypto = require("crypto");
       response.hash = crypto
         .createHmac("sha256", secretKey)
         .update(
