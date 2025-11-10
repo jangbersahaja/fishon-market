@@ -7,6 +7,7 @@ import {
   checkDateAvailability,
   getNextAvailableDates,
 } from "@/lib/helpers/availability-helpers";
+import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import {
   formatAmount,
   generatePaymentHash,
@@ -17,9 +18,6 @@ import {
   validateSenangPayConfig,
 } from "@/lib/payment/senangpay";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
-import { createNotification } from "@/lib/services/notification-service";
-import { getTripById } from "@/lib/services/trip-service";
-import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Shield } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -285,96 +283,11 @@ export default async function PaymentPage({
 
     console.log("✅ Payment completed for booking:", bookingId);
 
-    // Notify captain app via webhook (non-blocking)
-    (async () => {
-      try {
-        const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-        const hookSecret = process.env.CAPTAIN_API_SECRET;
-        console.log("📤 [WEBHOOK] Preparing to send booking.paid webhook", {
-          hookUrl,
-          hasSecret: !!hookSecret,
-          bookingId: updated.id,
-          charterId: updated.charterId,
-        });
-
-        if (hookUrl && hookSecret) {
-          // Fetch trip data for webhook payload
-          const trip = await getTripById(updated.tripId);
-          const user = updated.userId
-            ? await prisma.user.findUnique({ where: { id: updated.userId } })
-            : null;
-
-          const anglerName =
-            user?.name ||
-            (updated.guestFirstName
-              ? `${updated.guestFirstName} ${updated.guestLastName}`
-              : "Angler");
-
-          const payload = {
-            type: "booking.paid",
-            booking: {
-              id: updated.id,
-              tripId: updated.tripId,
-              charterId: updated.charterId,
-              status: updated.status,
-              date: updated.date.toISOString(),
-              anglerName,
-              charterName: trip?.charter?.name || "Your charter",
-            },
-          };
-
-          console.log("🚀 [WEBHOOK] Sending payment webhook to captain app...");
-          sendWithRetry(hookUrl, payload, {
-            headers: { "x-captain-secret": hookSecret },
-            attempts: 3,
-            baseDelayMs: 300,
-          });
-        } else {
-          console.warn("⚠️ [WEBHOOK] Skipping webhook - missing URL or secret");
-        }
-      } catch (webhookError) {
-        console.error(
-          "❌ [WEBHOOK] Failed to send payment webhook:",
-          webhookError
-        );
-      }
-    })();
-
-    // Notify angler (non-blocking)
-    (async () => {
-      try {
-        const recipientUserId = updated.userId;
-        if (!recipientUserId) return;
-
-        const trip = await getTripById(updated.tripId);
-        if (!trip) return;
-
-        await createNotification({
-          userId: recipientUserId,
-          type: "BOOKING_PAID",
-          title: "Payment Confirmed! ✅",
-          message: `Your payment for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed. See you on the water!`,
-          actionUrl: `/book/confirm?id=${updated.id}`,
-          actionLabel: "View Confirmation",
-          bookingId: updated.id,
-          charterId: updated.charterId,
-          metadata: {
-            charterName: trip.charter.name,
-            tripDate: updated.date.toISOString().slice(0, 10),
-          },
-        });
-      } catch (err) {
-        console.error("Failed to create payment notification:", err);
-      }
-    })();
-
-    // Revalidate pages
-    try {
-      revalidatePath("/book/confirm", "page");
-      revalidatePath("/account/bookings", "page");
-    } catch (error) {
-      console.error("Revalidation failed:", error);
-    }
+    // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
+    await triggerPaymentSideEffects({
+      bookingId: updated.id,
+      source: "mock",
+    });
 
     redirect(`/book/confirm?id=${bookingId}`);
   }

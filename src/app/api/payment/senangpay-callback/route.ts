@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/database/prisma";
+import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
-import { createNotification } from "@/lib/services/notification-service";
-import { getTripById } from "@/lib/services/trip-service";
-import { sendWithRetry } from "@/lib/webhooks/webhook";
-import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -149,102 +146,11 @@ export async function POST(request: NextRequest) {
         transactionId: transaction_id,
       });
 
-      // Trigger side effects (non-blocking)
-      // These run asynchronously to not delay the callback response
-
-      // 1. Notify captain via webhook
-      (async () => {
-        try {
-          const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
-          const hookSecret = process.env.CAPTAIN_API_SECRET;
-
-          if (hookUrl && hookSecret) {
-            const trip = await getTripById(updated.tripId);
-            const user = updated.userId
-              ? await prisma.user.findUnique({ where: { id: updated.userId } })
-              : null;
-
-            const anglerName =
-              user?.name ||
-              (updated.guestFirstName
-                ? `${updated.guestFirstName} ${updated.guestLastName}`
-                : "Angler");
-
-            const payload = {
-              type: "booking.paid",
-              booking: {
-                id: updated.id,
-                tripId: updated.tripId,
-                charterId: updated.charterId,
-                status: updated.status,
-                date: updated.date.toISOString(),
-                anglerName,
-                charterName: trip?.charter?.name || "Your charter",
-              },
-            };
-
-            console.log("📤 [WEBHOOK] Sending payment webhook to captain app");
-            await sendWithRetry(hookUrl, payload, {
-              headers: { "x-captain-secret": hookSecret },
-              attempts: 3,
-              baseDelayMs: 300,
-            });
-            console.log("✅ [WEBHOOK] Payment webhook sent successfully");
-          } else {
-            console.warn(
-              "⚠️ [WEBHOOK] Skipping webhook - URL or secret not configured"
-            );
-          }
-        } catch (webhookError) {
-          console.error(
-            "❌ [WEBHOOK] Failed to send payment webhook:",
-            webhookError
-          );
-        }
-      })();
-
-      // 2. Notify angler
-      (async () => {
-        try {
-          if (!updated.userId) return;
-
-          const trip = await getTripById(updated.tripId);
-          if (!trip) return;
-
-          await createNotification({
-            userId: updated.userId,
-            type: "BOOKING_PAID",
-            title: "Payment Confirmed! ✅",
-            message: `Your payment for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed. See you on the water!`,
-            actionUrl: `/book/confirm?id=${updated.id}`,
-            actionLabel: "View Confirmation",
-            bookingId: updated.id,
-            charterId: updated.charterId,
-            metadata: {
-              charterName: trip.charter.name,
-              tripDate: updated.date.toISOString().slice(0, 10),
-            },
-          });
-
-          console.log("✅ [NOTIFICATION] Payment notification sent to angler");
-        } catch (notificationError) {
-          console.error(
-            "❌ [NOTIFICATION] Failed to create payment notification:",
-            notificationError
-          );
-        }
-      })();
-
-      // Revalidate pages for fresh data
-      try {
-        revalidatePath("/book/confirm", "page");
-        revalidatePath("/account/bookings", "page");
-      } catch (revalidateError) {
-        console.error(
-          "❌ [REVALIDATE] Failed to revalidate paths:",
-          revalidateError
-        );
-      }
+      // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
+      await triggerPaymentSideEffects({
+        bookingId: order_id,
+        source: "callback",
+      });
     } else {
       // Payment failed
       console.log("❌ [SENANGPAY CALLBACK] Payment failed", {

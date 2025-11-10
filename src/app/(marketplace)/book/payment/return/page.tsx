@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/database/prisma";
+import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -49,7 +50,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
   const isValid = verifyReturnHash(
     { status_id, order_id, transaction_id, msg, hash },
     secretKey,
-    merchantId,
+    merchantId
   );
 
   if (!isValid) {
@@ -58,7 +59,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       {
         orderId: order_id,
         receivedHash: hash.substring(0, 16) + "...",
-      },
+      }
     );
     redirect("/book/confirm?error=invalid_payment_hash");
   }
@@ -124,13 +125,12 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
         transactionId: transaction_id,
       });
 
-      // NOTE: Side effects (webhook, notification, chat unlock) will be handled by callback webhook
-      // This return handler is primarily for user experience (immediate redirect)
-      // The callback webhook is the authoritative payment confirmation
-
-      // Revalidate pages
-      revalidatePath("/book/confirm", "page");
-      revalidatePath("/account/bookings", "page");
+      // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
+      // Note: This may run before callback webhook, but both are idempotent
+      await triggerPaymentSideEffects({
+        bookingId: order_id,
+        source: "return",
+      });
 
       redirect(`/book/confirm?id=${order_id}&payment=success`);
     } catch (error) {
@@ -160,7 +160,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       });
 
       redirect(
-        `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`,
+        `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`
       );
     } catch (error) {
       console.error("❌ [PAYMENT RETURN] Failed to record payment failure", {
