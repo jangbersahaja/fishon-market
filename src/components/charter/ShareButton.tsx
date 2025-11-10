@@ -8,11 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { trackEvent } from "@/lib/analytics-tracking";
 import { Check, Copy, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface ShareButtonProps {
   charterId: string;
+  ownerId?: string;
+  userId?: string;
   title: string;
   description?: string;
   className?: string;
@@ -20,6 +23,8 @@ interface ShareButtonProps {
 
 export function ShareButton({
   charterId,
+  ownerId,
+  userId,
   title,
   description,
   className = "",
@@ -75,6 +80,15 @@ export function ShareButton({
     }
 
     if (shareUrl) {
+      // Track share click
+      trackEvent({
+        eventType: "SHARE_CLICKED",
+        charterId,
+        ownerId,
+        userId,
+        metadata: { platform },
+      });
+
       window.open(shareUrl, "_blank", "noopener,noreferrer");
     }
   };

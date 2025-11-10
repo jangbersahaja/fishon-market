@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { sendBookingRejectedEmail } from "@/lib/services/email-service";
+import { sendMessage } from "@/lib/services/message-service";
+import { bookingRejectedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
@@ -86,6 +88,40 @@ export async function POST(req: Request) {
         });
       }
     } catch {}
+
+    // Send system message to conversation (Phase 2.2) (non-blocking best-effort)
+    (async () => {
+      try {
+        const conversation = await prisma.conversation.findUnique({
+          where: { bookingId: updated.id },
+        });
+
+        if (conversation) {
+          const templateMessage = bookingRejectedMessage(
+            updated.rejectionReason ?? undefined
+          );
+
+          await sendMessage(
+            conversation.id,
+            "system",
+            templateMessage.content,
+            "system",
+            {
+              contentType: "system",
+              systemType: templateMessage.systemType,
+            }
+          );
+
+          console.log(
+            "✅ Booking rejected system message sent:",
+            conversation.id
+          );
+        }
+      } catch (err) {
+        console.error("❌ Failed to send rejection message:", err);
+        // Non-critical - booking is still rejected
+      }
+    })();
 
     // Notify angler (non-blocking best-effort)
     (async () => {

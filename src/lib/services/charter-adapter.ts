@@ -267,6 +267,9 @@ export function convertBackendCharterToFrontend(
     // Preserve backend string ID for stable keys/links across sources
     // Note: Charter type doesn't include this field; consumers can access via (charter as any).backendId
     ...(backendCharter.id ? { backendId: backendCharter.id } : {}),
+    // Analytics tracking IDs (now properly typed in Charter)
+    captainId: backendCharter.captainId,
+    ownerId: backendCharter.ownerId || undefined,
     name: backendCharter.name,
     location,
     address,

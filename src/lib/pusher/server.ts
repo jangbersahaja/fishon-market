@@ -123,3 +123,127 @@ export async function triggerNotificationCount(userId: string, count: number) {
     return { success: false, error };
   }
 }
+
+/**
+ * Trigger new message event in a conversation
+ * @param conversationId - Conversation ID
+ * @param message - Message data
+ */
+export async function triggerMessageNew(
+  conversationId: string,
+  message: {
+    id: string;
+    senderId: string;
+    senderType: string;
+    senderName: string;
+    content: string;
+    contentType: string;
+    systemType?: string | null;
+    createdAt: Date;
+  }
+) {
+  const pusher = getPusherServer();
+
+  if (!pusher) {
+    console.log(`[Pusher] Skipping message event (Pusher not configured)`);
+    return { success: true, skipped: true };
+  }
+
+  try {
+    await pusher.trigger(
+      `private-conversation.${conversationId}`,
+      "message.new",
+      {
+        ...message,
+        createdAt: message.createdAt.toISOString(),
+      }
+    );
+
+    console.log(
+      `[Pusher] Message sent to conversation ${conversationId}: ${message.id}`
+    );
+    return { success: true };
+  } catch (error) {
+    console.error(
+      `[Pusher] Failed to send message to conversation ${conversationId}:`,
+      error
+    );
+    return { success: false, error };
+  }
+}
+
+/**
+ * Trigger read receipt event in a conversation
+ * @param conversationId - Conversation ID
+ * @param userId - User ID who read
+ * @param readAt - Read timestamp
+ */
+export async function triggerMessageRead(
+  conversationId: string,
+  userId: string,
+  readAt: Date
+) {
+  const pusher = getPusherServer();
+
+  if (!pusher) {
+    console.log(`[Pusher] Skipping read event (Pusher not configured)`);
+    return { success: true, skipped: true };
+  }
+
+  try {
+    await pusher.trigger(
+      `private-conversation.${conversationId}`,
+      "message.read",
+      {
+        userId,
+        readAt: readAt.toISOString(),
+      }
+    );
+
+    console.log(`[Pusher] Read receipt sent to conversation ${conversationId}`);
+    return { success: true };
+  } catch (error) {
+    console.error(
+      `[Pusher] Failed to send read receipt to conversation ${conversationId}:`,
+      error
+    );
+    return { success: false, error };
+  }
+}
+
+/**
+ * Trigger typing indicator in a conversation
+ * @param conversationId - Conversation ID
+ * @param userId - User who is typing
+ * @param isTyping - Whether user is typing
+ */
+export async function triggerTyping(
+  conversationId: string,
+  userId: string,
+  isTyping: boolean
+) {
+  const pusher = getPusherServer();
+
+  if (!pusher) {
+    console.log(`[Pusher] Skipping typing event (Pusher not configured)`);
+    return { success: true, skipped: true };
+  }
+
+  try {
+    await pusher.trigger(`private-conversation.${conversationId}`, "typing", {
+      userId,
+      isTyping,
+    });
+
+    console.log(
+      `[Pusher] Typing indicator sent to conversation ${conversationId}`
+    );
+    return { success: true };
+  } catch (error) {
+    console.error(
+      `[Pusher] Failed to send typing indicator to conversation ${conversationId}:`,
+      error
+    );
+    return { success: false, error };
+  }
+}

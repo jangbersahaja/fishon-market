@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics-tracking";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface VideoGalleryItem {
@@ -11,6 +12,9 @@ export interface VideoGalleryItem {
 interface VideoGalleryProps {
   videos: VideoGalleryItem[];
   className?: string;
+  charterId?: string;
+  ownerId?: string;
+  userId?: string;
 }
 
 function cx(...parts: Array<string | undefined | null | false>) {
@@ -43,7 +47,13 @@ function IframePlayer({ src }: { src: string }) {
   );
 }
 
-export function VideoGallery({ videos, className }: VideoGalleryProps) {
+export function VideoGallery({
+  videos,
+  className,
+  charterId,
+  ownerId,
+  userId,
+}: VideoGalleryProps) {
   const items = useMemo(() => {
     const filtered = videos.filter((v) => !!v.url);
     return filtered;
@@ -52,9 +62,23 @@ export function VideoGallery({ videos, className }: VideoGalleryProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
-  const open = useCallback((idx: number) => {
-    setOpenIndex(idx);
-  }, []);
+  const open = useCallback(
+    (idx: number) => {
+      setOpenIndex(idx);
+
+      // Track video view when video is opened
+      if (charterId) {
+        trackEvent({
+          eventType: "VIDEO_VIEW",
+          charterId,
+          ownerId,
+          userId,
+          metadata: { videoIndex: idx },
+        });
+      }
+    },
+    [charterId, ownerId, userId]
+  );
   const close = useCallback(() => setOpenIndex(null), []);
 
   if (!items.length) return null;

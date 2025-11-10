@@ -6,6 +6,8 @@ import {
   getRateLimitResetTime,
 } from "@/lib/rateLimit";
 import { sendBookingCancelledEmail } from "@/lib/services/email-service";
+import { sendMessage } from "@/lib/services/message-service";
+import { bookingCancelledMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
@@ -184,6 +186,42 @@ export async function POST(req: Request) {
       webhookError
     );
   }
+
+  // Send system message to conversation (Phase 2.2) (non-blocking best-effort)
+  (async () => {
+    try {
+      const conversation = await prisma.conversation.findUnique({
+        where: { bookingId: updated.id },
+      });
+
+      if (conversation) {
+        const cancelledBy = booking.userId ? "angler" : undefined;
+        const templateMessage = bookingCancelledMessage(
+          cancelledBy,
+          updated.cancellationReason ?? undefined
+        );
+
+        await sendMessage(
+          conversation.id,
+          "system",
+          templateMessage.content,
+          "system",
+          {
+            contentType: "system",
+            systemType: templateMessage.systemType,
+          }
+        );
+
+        console.log(
+          "✅ Booking cancelled system message sent:",
+          conversation.id
+        );
+      }
+    } catch (err) {
+      console.error("❌ Failed to send cancellation message:", err);
+      // Non-critical - booking is still cancelled
+    }
+  })();
 
   // Notify angler (non-blocking best-effort)
   (async () => {

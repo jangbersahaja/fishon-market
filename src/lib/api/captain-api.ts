@@ -73,6 +73,8 @@ export type BackendCharter = {
   longitude: number | null;
   description: string;
   pricingPlan: "BASIC" | "SILVER" | "GOLD";
+  captainId: string; // ID of the captain profile (operator)
+  ownerId?: string | null; // ID of the user who owns this charter
   captain: BackendCaptainProfile;
   boat: BackendBoat | null;
   trips: BackendTrip[];

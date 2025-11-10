@@ -1,5 +1,6 @@
 import { FavoriteButton } from "@/components/account";
 import BookingWidget from "@/components/charter/BookingWidget";
+import { CharterViewTracker } from "@/components/charter/CharterViewTracker";
 import EnhancedReviewsList from "@/components/charter/EnhancedReviewsList";
 import { PhotoGallery } from "@/components/charter/PhotoGallery";
 import { ShareButton } from "@/components/charter/ShareButton";
@@ -269,6 +270,13 @@ export default async function CharterViewPage({
 
   return (
     <main className="bg-white min-h-dvh">
+      {/* Track charter view */}
+      <CharterViewTracker
+        charterId={id}
+        ownerId={charter.ownerId}
+        userId={session?.user?.id}
+      />
+
       <section className="bg-gradient-to-br from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
         <div className="w-full px-3 py-3 mx-auto max-w-7xl">
           <SearchBox />
@@ -303,6 +311,8 @@ export default async function CharterViewPage({
               <div className="flex items-center gap-2 shrink-0">
                 <ShareButton
                   charterId={id}
+                  ownerId={charter.ownerId}
+                  userId={session?.user?.id}
                   title={charter.name}
                   description={charter.description}
                   className="w-8 h-8 md:w-12 md:h-12"
@@ -340,7 +350,13 @@ export default async function CharterViewPage({
           </header>
           {/* Gallery */}
           <div className="p-3 pb-0 mt-3 -mx-3 bg-white rounded-t-2xl">
-            <PhotoGallery images={images} title={title} />
+            <PhotoGallery
+              images={images}
+              title={title}
+              charterId={id}
+              ownerId={charter.ownerId}
+              userId={session?.user?.id}
+            />
           </div>
         </div>
       </section>
@@ -351,7 +367,12 @@ export default async function CharterViewPage({
           <div className="md:col-span-3">
             {/* Video Gallery */}
             {charter?.videos && charter.videos.length > 0 && (
-              <VideoGallery videos={charter.videos} />
+              <VideoGallery
+                videos={charter.videos}
+                charterId={id}
+                ownerId={charter.ownerId}
+                userId={session?.user?.id}
+              />
             )}
 
             <AboutSection description={desc} />
@@ -408,6 +429,8 @@ export default async function CharterViewPage({
               <BookingWidget
                 trips={trips}
                 charterId={charterIdParam}
+                ownerId={charter.ownerId}
+                userId={session?.user?.id}
                 charterType={charter?.fishingType}
                 personsMax={personsMax}
                 childFriendly={!!charter?.policies?.childFriendly}

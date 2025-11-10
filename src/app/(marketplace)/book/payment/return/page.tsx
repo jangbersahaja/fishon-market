@@ -1,0 +1,173 @@
+import { prisma } from "@/lib/database/prisma";
+import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
+import { verifyReturnHash } from "@/lib/payment/senangpay";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+interface PageProps {
+  searchParams: Promise<{
+    status_id?: string;
+    order_id?: string;
+    transaction_id?: string;
+    msg?: string;
+    hash?: string;
+  }>;
+}
+
+export default async function PaymentReturnPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const { status_id, order_id, transaction_id, msg, hash } = params;
+
+  console.log("🔙 [PAYMENT RETURN] User returned from Senang Pay", {
+    status_id,
+    order_id,
+    transaction_id,
+    msg: msg?.substring(0, 50),
+    hash: hash?.substring(0, 16) + "...",
+  });
+
+  // Validate required parameters
+  if (!status_id || !order_id || !transaction_id || !msg || !hash) {
+    console.error("❌ [PAYMENT RETURN] Missing required parameters", {
+      has_status_id: !!status_id,
+      has_order_id: !!order_id,
+      has_transaction_id: !!transaction_id,
+      has_msg: !!msg,
+      has_hash: !!hash,
+    });
+    redirect("/book/confirm?error=invalid_payment_response");
+  }
+
+  // Verify hash to prevent tampering
+  const merchantId = process.env.SENANGPAY_MERCHANT_ID;
+  const secretKey = process.env.SENANGPAY_SECRET_KEY;
+
+  if (!merchantId || !secretKey) {
+    console.error("❌ [PAYMENT RETURN] Senang Pay not configured");
+    redirect("/book/confirm?error=payment_gateway_error");
+  }
+
+  const isValid = verifyReturnHash(
+    { status_id, order_id, transaction_id, msg, hash },
+    secretKey,
+    merchantId
+  );
+
+  if (!isValid) {
+    console.error(
+      "❌ [PAYMENT RETURN] Invalid hash detected - possible tampering",
+      {
+        orderId: order_id,
+        receivedHash: hash.substring(0, 16) + "...",
+      }
+    );
+    redirect("/book/confirm?error=invalid_payment_hash");
+  }
+
+  console.log("✅ [PAYMENT RETURN] Hash verified successfully");
+
+  // Check if booking exists
+  const booking = await prisma.booking.findUnique({
+    where: { id: order_id },
+    select: {
+      id: true,
+      status: true,
+      paidAt: true,
+      paymentTransactionId: true,
+    },
+  });
+
+  if (!booking) {
+    console.error("❌ [PAYMENT RETURN] Booking not found", {
+      orderId: order_id,
+    });
+    redirect("/book/confirm?error=booking_not_found");
+  }
+
+  // IDEMPOTENCY: Check if already processed by callback webhook
+  // The callback webhook is the authoritative source; this is just for UX
+  if (booking.status === "PAID" && booking.paidAt) {
+    console.log("✅ [PAYMENT RETURN] Already processed by callback webhook", {
+      bookingId: order_id,
+      transactionId: booking.paymentTransactionId,
+    });
+
+    // Revalidate to ensure fresh data
+    revalidatePath("/book/confirm", "page");
+    revalidatePath("/account/bookings", "page");
+
+    redirect(`/book/confirm?id=${order_id}`);
+  }
+
+  // Process payment update (if callback hasn't processed it yet)
+  if (status_id === "1") {
+    // Payment successful
+    console.log("✅ [PAYMENT RETURN] Processing successful payment", {
+      orderId: order_id,
+      transactionId: transaction_id,
+      msg,
+    });
+
+    try {
+      await prisma.booking.update({
+        where: { id: order_id },
+        data: {
+          status: "PAID",
+          paidAt: new Date(),
+          paymentTransactionId: transaction_id,
+          paymentMethod: "SENANGPAY",
+          paymentNote: msg,
+        },
+      });
+
+      console.log("✅ [PAYMENT RETURN] Booking updated to PAID", {
+        bookingId: order_id,
+        transactionId: transaction_id,
+      });
+
+      // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
+      // Note: This may run before callback webhook, but both are idempotent
+      await triggerPaymentSideEffects({
+        bookingId: order_id,
+        source: "return",
+      });
+
+      redirect(`/book/confirm?id=${order_id}&payment=success`);
+    } catch (error) {
+      console.error("❌ [PAYMENT RETURN] Failed to update booking", {
+        orderId: order_id,
+        error,
+      });
+      redirect("/book/confirm?error=payment_processing_error");
+    }
+  } else {
+    // Payment failed
+    console.log("❌ [PAYMENT RETURN] Payment failed", {
+      orderId: order_id,
+      reason: msg,
+    });
+
+    try {
+      await prisma.booking.update({
+        where: { id: order_id },
+        data: {
+          paymentNote: `Payment Failed: ${msg}`,
+        },
+      });
+
+      console.log("📝 [PAYMENT RETURN] Payment failure note recorded", {
+        bookingId: order_id,
+      });
+
+      redirect(
+        `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`
+      );
+    } catch (error) {
+      console.error("❌ [PAYMENT RETURN] Failed to record payment failure", {
+        orderId: order_id,
+        error,
+      });
+      redirect(`/book/confirm?id=${order_id}&payment=failed`);
+    }
+  }
+}

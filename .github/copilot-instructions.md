@@ -1,24 +1,6 @@
-````instructions
+# Copilot Instructions
+
 # Fishon.my Development Guide
-
-## Documentation
-
-**DO NOT CREATE DOCUMENTATION UNLESS EXPLICITLY REQUESTED**: The user will tell you when to create .md files. Do not create documentation proactively as it causes confusion and date/timeline issues. Only create documentation when the user specifically asks for it.
-
-**CRITICAL**: Before creating ANY .md file in `/docs`:
-1. Ask user if documentation are needed.
-2. Check if `.github/documentation.instructions.md` exists
-3. Follow the naming convention: `{fix|feature|plan|design}-{area}-{topic}.md`
-4. Include required YAML frontmatter (type, status, updated, feature, author)
-5. ONE file per issue - no duplicate summaries/updates/final docs
-
-**Example of what NOT to do**:
-- ❌ Creating `FEATURE.md`, `FEATURE_SUMMARY.md`, `FEATURE_UPDATE.md`, `FEATURE_FINAL.md`
-- ✅ Creating ONE file: `fix-location-image-mapping.md` with proper frontmatter.
-
-**SUPER CRITICAL**: DO NOT create multiple files for a single issue. DO NOT create separate summary, update, and final documentation files. Create ONE file per issue with the appropriate type in the frontmatter.
-
-**IMPORTANT**: Do not make mistake. Do not repeat mistakes.
 
 ## Purpose & App Structure
 
@@ -28,24 +10,31 @@ Fishon.my is the **customer-facing marketplace** where anglers discover, browse,
 - **Fishon Captain**: Management dashboard for captains/charter operators (registration, editing, analytics)
 - **Fishon Video Worker**: External video normalization service
 
-## Current Implementation Status
+### Current Implementation Status
 
 ### ✅ Complete
+
 - Direct database connection to fishon-captain via PostgreSQL view (`v_public_charters`)
 - Fallback to fishon-captain Public v1 API (`/api/public/v1/charters`)
 - **No dummy data** - all charter data comes from real backend
 - Type definitions imported from `@fishon/ui` shared package
 - Charter browsing, search, and detail pages
+- Angler registration and authentication (NextAuth with Google OAuth)
+- Booking flow with guest and authenticated booking
+- Analytics tracking (owner-based, removed captainId redundancy)
+- Database backup and migration safety system
 
 ### 🚧 In Progress
-- Angler registration and authentication
-- Booking flow and payment integration
+
+- Reviews and ratings system
+- Payment integration
 - Captain profile pages on marketplace
 
 ### 📋 Planned
-- Reviews and ratings system
+
 - Favorites/wishlist functionality
 - Advanced filtering and sorting
+- Automated booking confirmation workflow
 
 ## Architecture & Patterns
 
@@ -54,17 +43,20 @@ Built with Next.js 15 App Router using **route groups** for logical organization
 ### Core Stack
 
 - **Framework**: Next.js 15 (App Router with Route Groups)
-- **Database**: PostgreSQL (via fishon-captain database)
-- **ORM**: Prisma (read-only connection to shared DB)
+- **Database**: PostgreSQL (Neon-hosted, shared with fishon-captain)
+- **ORM**: Prisma
+- **Authentication**: NextAuth v4 with Google OAuth
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Type Safety**: TypeScript with strict mode
+- **Email**: Resend via `@fishon/email` package
 - **Shared Packages**:
   - `@fishon/ui` - Shared UI components and types (git package)
   - `@fishon/schemas` - Shared validation schemas (git package)
+  - `@fishon/email` - Email templates with React Email (git package)
 
 ### Folder Architecture
 
-**CRITICAL**: Always follow this structure when creating new files. See [feature-app-structure-refactor.md](../docs/feature-app-structure-refactor.md) for complete details.
+**CRITICAL**: Always follow this structure when creating new files.
 
 #### App Router Structure (Route Groups)
 
@@ -74,7 +66,7 @@ src/app/
 │   ├── login/
 │   ├── register/
 │   └── forgot-password/
-├── (dashboard)/         # 👤 User dashboard (shared sidebar layout)
+├── (account)/           # 👤 User dashboard (shared sidebar layout)
 │   ├── layout.tsx       # Dashboard shell
 │   └── account/
 │       ├── overview/
@@ -97,6 +89,7 @@ src/app/
 ```
 
 **Route Group Rules:**
+
 1. Parentheses `()` in folder names indicate route groups
 2. Route groups don't affect URL structure
 3. Each group can have its own `layout.tsx`
@@ -118,6 +111,7 @@ src/components/
 ```
 
 **Component Rules:**
+
 1. Organize by feature, not by type
 2. Collocate related components
 3. Use barrel exports (`index.ts`) for clean imports
@@ -137,6 +131,7 @@ src/lib/
 ```
 
 **Lib Rules:**
+
 1. Group by service domain
 2. Keep business logic separate from API clients
 3. Database clients in `database/`
@@ -172,40 +167,42 @@ src/
 
 ```typescript
 // ✅ CORRECT - Feature-based organization
-components/charter/CharterGallery.tsx
-components/booking/BookingForm.tsx
-lib/services/charter-service.ts
-lib/helpers/image-helpers.ts
+components / charter / CharterGallery.tsx;
+components / booking / BookingForm.tsx;
+lib / services / charter - service.ts;
+lib / helpers / image - helpers.ts;
 
 // ❌ WRONG - Root-level or type-based
-components/CharterGallery.tsx
-components/forms/BookingForm.tsx
-lib/charter-service.ts
-lib/image.ts
+components / CharterGallery.tsx;
+components / forms / BookingForm.tsx;
+lib / charter - service.ts;
+lib / image.ts;
 ```
 
 **Import Path Examples:**
 
 ```typescript
 // Component imports
-import { CharterGallery } from '@/components/charter/CharterGallery'
-import { Navbar } from '@/components/layout/Navbar'
+import { CharterGallery } from "@/components/charter/CharterGallery";
+import { Navbar } from "@/components/layout/Navbar";
 
 // Service imports
-import { getCharters } from '@/lib/services/charter-service'
-import { auth } from '@/lib/auth/auth'
+import { getCharters } from "@/lib/services/charter-service";
+import { auth } from "@/lib/auth/auth";
 
 // Data imports
-import { mockCharters } from '@/data/mock/charter'
+import { mockCharters } from "@/data/mock/charter";
 ```
 
 ### Data Architecture
 
 #### Data Sources (Priority Order)
+
 1. **Direct DB Connection** (if `USE_CAPTAIN_DB=1` + `CAPTAIN_DATABASE_URL` set)
-   - Reads from `v_public_charters` PostgreSQL view
+   - Reads from `v_public_charters` PostgreSQL view in fishon-captain database
    - View returns: `id` (text) and `charter` (jsonb)
    - Filters only active charters (`isActive = true`)
+   - **Note**: This connects fishon-market to fishon-captain's database for read-only charter data
 
 2. **fishon-captain Public v1 API** (fallback)
    - Base URL: `FISHON_CAPTAIN_API_URL`
@@ -214,7 +211,15 @@ import { mockCharters } from '@/data/mock/charter'
 
 3. **Error** - No dummy data fallbacks
 
+**Database Architecture:**
+
+- **fishon-market DB**: User accounts, bookings, reviews, favorites, analytics, blog posts, notifications
+- **fishon-captain DB**: Charter data, captain profiles, boats, trips, policies
+- **Cross-DB Access**: fishon-market reads charter data via PostgreSQL view or API (read-only)
+- **Reverse Access**: fishon-captain reads booking/analytics from fishon-market DB via `MARKET_DATABASE_URL` (read-only)
+
 #### Charter Data Service (`src/lib/charter-service.ts`)
+
 ```typescript
 // Priority: DB → API → Error
 getCharters()                    // Fetch all active charters
@@ -225,6 +230,7 @@ getChartersByTechnique(tech)    // Filter by technique
 ```
 
 #### Type Imports
+
 ```typescript
 // Use shared package types
 import type { Charter, Captain, Trip, Policies } from "@fishon/ui";
@@ -235,11 +241,12 @@ import type { Charter, Captain, Trip, Policies } from "@fishon/ui";
 
 ### Key Conventions
 
-**CRITICAL**: Follow the route groups architecture defined above. See [Complete Architecture Guide](../docs/feature-app-structure-refactor.md).
+**CRITICAL**: Follow the route groups architecture defined above.
 
 #### Directory Structure Rules
 
 **App Router (Route Groups):**
+
 - Use `(auth)` for authentication pages
 - Use `(dashboard)` for user account pages
 - Use `(marketplace)` for public charter browsing
@@ -248,6 +255,7 @@ import type { Charter, Captain, Trip, Policies } from "@fishon/ui";
 - Each group can have its own `layout.tsx`
 
 **Components:**
+
 - Organize by feature, not by type
 - Example: `components/charter/` not `components/cards/`
 - Use barrel exports for clean imports
@@ -255,22 +263,26 @@ import type { Charter, Captain, Trip, Policies } from "@fishon/ui";
 - Use shadcn/ui for base components: `Button`, `Card`, `Dialog`, etc.
 
 **Lib (Services & Utilities):**
+
 - Group by service domain: `lib/auth/`, `lib/booking/`, `lib/services/`
 - Database clients in `lib/database/`
 - API clients in `lib/api/`
 - Helpers in `lib/helpers/`
 
 **Data & Assets:**
+
 - Mock data in `src/data/mock/`
 - Static data in `src/data/`
 - Images in `src/assets/images/`
 - Location data normalized via `destinationAliases.ts`
 
 **Google Maps:**
+
 - Integration with `MapScriptLoader` component
 - API key in `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
 
 #### Component Patterns
+
 - React Hook Form + Zod validation
 - Server actions with `"use server"` directive
 - Include `revalidatePath()` after mutations
@@ -305,6 +317,9 @@ npm run dev  # Uses --turbopack for faster builds
 - `npm run typecheck` - TypeScript type checking
 - `npm run prisma:migrate` - Run database migrations
 - `npm run prisma:generate` - Generate Prisma client
+- `npm run db:backup` - Create database backup
+- `npm run db:restore` - Restore from backup
+- `npm run db:migrate:safe` - Safe migration with auto-backup
 
 ### Malaysia-Specific Context
 
@@ -320,11 +335,14 @@ npm run dev  # Uses --turbopack for faster builds
 
 ### Critical Files
 
-- `src/lib/charter-service.ts` - Unified charter data fetching service
+- `src/lib/services/charter-service.ts` - Unified charter data fetching service
 - `src/lib/charter-adapter.ts` - Backend to frontend data conversion
-- `src/lib/captain-api.ts` - fishon-captain API client
-- `src/lib/captain-db.ts` - Direct database access via PostgreSQL view
-- `src/lib/prisma.ts` - Database client singleton
+- `src/lib/api/captain-api.ts` - fishon-captain API client
+- `src/lib/api/captain-db.ts` - Direct database access via PostgreSQL view
+- `src/lib/database/prisma.ts` - Database client singleton
+- `src/lib/analytics-service.ts` - Analytics event tracking service
+- `src/lib/analytics-tracking.ts` - Client-side analytics utility
+- `src/lib/auth/auth-options.ts` - NextAuth configuration with Google OAuth
 - `prisma/schema.prisma` - Database schema and relationships
 - `src/app/layout.tsx` - Global layout with SEO metadata
 - `src/utils/destinationAliases.ts` - Location search normalization
@@ -337,14 +355,154 @@ npm run dev  # Uses --turbopack for faster builds
 - **Type Definitions**: Import from `@fishon/ui` or `@fishon/schemas`, mark shared code with `// TODO(@fishon/packages)`
 - **Database Changes**: Always run migrations, never edit migration files directly
 
+## Database Backup & Migration Safety
+
+**CRITICAL**: Always backup before database migrations. We learned this lesson the hard way after a data loss incident.
+
+### Backup Strategy
+
+The project includes automated backup scripts to prevent data loss during migrations:
+
+#### Quick Reference
+
+```bash
+# Safe migration (RECOMMENDED - auto-backup + review + apply)
+npm run db:migrate:safe migration-name
+
+# Manual backup
+npm run db:backup backup-name
+
+# Restore from backup
+npm run db:restore ./backups/backup-file.sql.gz
+```
+
+#### Migration Workflow (ALWAYS USE THIS)
+
+1. **Before any schema change**: Create a backup
+
+   ```bash
+   npm run db:backup pre-migration
+   ```
+
+2. **Make schema changes**: Edit `prisma/schema.prisma`
+
+3. **Run safe migration**: Auto-backup, review SQL, confirm, apply
+
+   ```bash
+   npm run db:migrate:safe add_user_field
+   ```
+
+4. **Verify migration**: Check database and run tests
+   ```bash
+   npm run typecheck
+   npm run test
+   ```
+
+#### Backup Scripts Location
+
+All scripts are in `scripts/` directory:
+
+- **`backup-db.sh`** - Creates timestamped, compressed backups
+  - Stores in `./backups/` directory
+  - Auto-cleanup: keeps last 10 backups
+  - Compression: gzip for space efficiency
+
+- **`restore-db.sh`** - Restores from backup file
+  - Lists available backups if none specified
+  - Creates safety backup before restore
+  - Requires "yes" confirmation to prevent accidents
+
+- **`safe-migrate.sh`** - Complete migration workflow
+  - Step 1: Auto-backup (pre-{migration}\_{timestamp})
+  - Step 2: Create migration (--create-only)
+  - Step 3: Show SQL for review
+  - Step 4: Apply after user confirmation
+  - Provides rollback instructions on failure
+
+#### Critical Rules
+
+**NEVER DO THIS:**
+
+- ❌ `npx prisma migrate reset` on databases with important data
+- ❌ Run migrations without reviewing the SQL first
+- ❌ Skip backups "just this once"
+- ❌ Edit migration files directly after creation
+
+**ALWAYS DO THIS:**
+
+- ✅ Use `npm run db:migrate:safe` for all migrations
+- ✅ Review migration SQL before applying
+- ✅ Keep backups in `./backups/` (gitignored)
+- ✅ Test migrations on development/staging first
+- ✅ Check Neon dashboard for point-in-time restore options
+
+#### Emergency Rollback
+
+If a migration fails or causes issues:
+
+```bash
+# 1. List available backups
+ls -lh ./backups/
+
+# 2. Restore from pre-migration backup
+npm run db:restore ./backups/pre-migration_TIMESTAMP.sql.gz
+
+# 3. Regenerate Prisma client
+npm run prisma:generate
+
+# 4. Fix the schema issue
+# Edit prisma/schema.prisma
+
+# 5. Try migration again
+npm run db:migrate:safe fixed-migration-name
+```
+
+#### Neon-Specific Features
+
+Neon PostgreSQL provides additional safety:
+
+- **Point-in-Time Restore**: Available in Neon dashboard (last 7 days, varies by plan)
+- **Branching**: Create test branch for migration testing
+
+  ```bash
+  # Install Neon CLI
+  npm install -g neonctl
+
+  # Create test branch
+  neonctl branches create --name test-migration
+
+  # Test migration on branch, then apply to main if successful
+  ```
+
+- **Automatic Snapshots**: Check Neon dashboard for available restore points
+
+#### Backup Schedule Recommendations
+
+- **Development**: Before each migration (automated with `safe-migrate.sh`)
+- **Staging**: Daily automated backups + before deployments
+- **Production**: Use Neon's built-in backups + daily S3 backups for compliance
+
+#### Documentation
+
+For complete documentation, see: `scripts/README.md`
+
+- Usage examples for all scripts
+- Troubleshooting guide
+- Neon-specific features
+- Advanced backup strategies
+
 ## Shared Package Strategy
 
 ### Current Packages
-- **@fishon/ui**: Shared UI components and types (Charter, Captain, Trip, etc.)
-- **@fishon/schemas**: Shared validation schemas (will be consolidated)
+
+- **@fishon/ui**: Shared UI components and types (Charter, Captain, Trip, etc.) - git package
+- **@fishon/schemas**: Shared validation schemas - git package
+- **@fishon/email**: Email templates with React Email - git package
 
 ### Future: @fishon/packages
+
 Plan to consolidate `@fishon/ui` and `@fishon/schemas` into a single `@fishon/packages` monorepo containing:
+
 - Components (React UI components)
 - Types (TypeScript definitions)
 - Schemas (Zod validation)
@@ -352,7 +510,9 @@ Plan to consolidate `@fishon/ui` and `@fishon/schemas` into a single `@fishon/pa
 - Data (Static data like amenities, species)
 
 ### Implementation Guidelines
+
 1. **When Encountering Shared Code**: Add a TODO comment to mark for consolidation
+
    ```typescript
    // TODO(@fishon/packages): Move this to shared package
    ```
@@ -367,8 +527,3 @@ Plan to consolidate `@fishon/ui` and `@fishon/schemas` into a single `@fishon/pa
    ```bash
    npm install git+https://github.com/jangbersahaja/fishon-ui#main
    ```
-
-## Terminal
-
-You have access to a terminal where you can run commands. Follow instructions in `.github/terminal.instructions.md` when using the terminal.
-````

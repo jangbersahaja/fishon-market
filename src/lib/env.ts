@@ -58,6 +58,11 @@ interface ServerEnvShape extends PublicEnvShape {
   FISHON_CAPTAIN_API_KEY?: string;
   CAPTAIN_API_SECRET?: string;
   CAPTAIN_WEBHOOK_URL?: string;
+  // Senang Pay payment gateway
+  SENANGPAY_MERCHANT_ID?: string;
+  SENANGPAY_SECRET_KEY?: string;
+  SENANGPAY_MODE?: string;
+  SENANGPAY_FORCE_MOCK?: string;
   NODE_ENV: string;
 }
 
@@ -130,6 +135,10 @@ export function loadEnv(): ServerEnvShape {
       FISHON_CAPTAIN_API_KEY: w.FISHON_CAPTAIN_API_KEY,
       CAPTAIN_API_SECRET: w.CAPTAIN_API_SECRET,
       CAPTAIN_WEBHOOK_URL: w.CAPTAIN_WEBHOOK_URL,
+      SENANGPAY_MERCHANT_ID: w.SENANGPAY_MERCHANT_ID,
+      SENANGPAY_SECRET_KEY: w.SENANGPAY_SECRET_KEY,
+      SENANGPAY_MODE: w.SENANGPAY_MODE,
+      SENANGPAY_FORCE_MOCK: w.SENANGPAY_FORCE_MOCK,
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: w.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
       NEXT_PUBLIC_BASE_URL: w.NEXT_PUBLIC_BASE_URL,
       NEXT_PUBLIC_CAPTAIN_URL: w.NEXT_PUBLIC_CAPTAIN_URL,
@@ -215,6 +224,29 @@ export function loadEnv(): ServerEnvShape {
     );
   }
 
+  // Warn if Senang Pay payment gateway is not configured (optional)
+  if (!w.SENANGPAY_MERCHANT_ID || !w.SENANGPAY_SECRET_KEY) {
+    console.warn(
+      "[env] Senang Pay not configured (SENANGPAY_MERCHANT_ID or SENANGPAY_SECRET_KEY missing); payment gateway will use mock payment fallback."
+    );
+  } else {
+    // Validate Senang Pay secret key entropy if present
+    if (w.SENANGPAY_SECRET_KEY && !entropyCheck(w.SENANGPAY_SECRET_KEY)) {
+      console.warn(
+        "[env] SENANGPAY_SECRET_KEY appears weak (length < 32 or low entropy); this may indicate a test/placeholder value."
+      );
+    }
+    // Validate mode is either sandbox or production
+    if (
+      w.SENANGPAY_MODE &&
+      !["sandbox", "production"].includes(w.SENANGPAY_MODE)
+    ) {
+      console.warn(
+        `[env] SENANGPAY_MODE should be 'sandbox' or 'production', got: ${w.SENANGPAY_MODE}`
+      );
+    }
+  }
+
   // Secret leakage guard: disallow server secrets accidentally prefixed with NEXT_PUBLIC_
   for (const key of Object.keys(w)) {
     if (key.startsWith(PUBLIC_PREFIX) && REQUIRED_SERVER.includes(key)) {
@@ -261,6 +293,10 @@ export function loadEnv(): ServerEnvShape {
     FISHON_CAPTAIN_API_KEY: w.FISHON_CAPTAIN_API_KEY,
     CAPTAIN_API_SECRET: w.CAPTAIN_API_SECRET,
     CAPTAIN_WEBHOOK_URL: w.CAPTAIN_WEBHOOK_URL,
+    SENANGPAY_MERCHANT_ID: w.SENANGPAY_MERCHANT_ID,
+    SENANGPAY_SECRET_KEY: w.SENANGPAY_SECRET_KEY,
+    SENANGPAY_MODE: w.SENANGPAY_MODE,
+    SENANGPAY_FORCE_MOCK: w.SENANGPAY_FORCE_MOCK,
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: publicVars.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     NEXT_PUBLIC_BASE_URL: publicVars.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_CAPTAIN_URL: publicVars.NEXT_PUBLIC_CAPTAIN_URL,
