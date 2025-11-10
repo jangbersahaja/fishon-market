@@ -27,8 +27,8 @@ export function MockPaymentForm({
             </p>
             <p className="mt-2 text-xs">
               To use real Senang Pay: Set <code>SENANGPAY_MERCHANT_ID</code>,{" "}
-              <code>SENANGPAY_SECRET_KEY</code>, and{" "}
-              <code>SENANGPAY_MODE</code> in your environment variables.
+              <code>SENANGPAY_SECRET_KEY</code>, and <code>SENANGPAY_MODE</code>{" "}
+              in your environment variables.
             </p>
           </div>
         </div>

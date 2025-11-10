@@ -3,13 +3,15 @@
 Successfully integrated Senang Pay payment gateway with security-first approach. Payment page now supports real Senang Pay integration with proper configuration validation and development mode fallback.
 
 **Files created/changed:**
+
 - src/app/(marketplace)/book/payment/[bookingId]/page.tsx (modified - 380 lines)
 - src/app/(marketplace)/book/payment/[bookingId]/PaymentForm.tsx (new - 73 lines)
 - src/app/(marketplace)/book/payment/[bookingId]/MockPaymentForm.tsx (new - 52 lines)
 - src/components/payment/PaymentConfigurationError.tsx (new - 72 lines)
-- src/lib/payment/__tests__/senangpay.test.ts (modified - fixed NODE_ENV type errors)
+- src/lib/payment/**tests**/senangpay.test.ts (modified - fixed NODE_ENV type errors)
 
 **Functions created/changed:**
+
 - Payment page now validates Senang Pay configuration before rendering
 - Generates payment hash for real transactions
 - Conditionally renders based on configuration:
@@ -20,10 +22,12 @@ Successfully integrated Senang Pay payment gateway with security-first approach.
 - All existing checks maintained: authorization, expiration, availability
 
 **Tests created/changed:**
+
 - Fixed 15 NODE_ENV type errors using type assertion
 - All 54 tests passing
 
 **Security Implementation:**
+
 - ✅ Configuration validation with proper error messages
 - ✅ Force mock ONLY works in development (NODE_ENV check)
 - ✅ No way to bypass payment in production

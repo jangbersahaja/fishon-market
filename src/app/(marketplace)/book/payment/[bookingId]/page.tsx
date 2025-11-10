@@ -133,9 +133,7 @@ export default async function PaymentPage({
 
   // SECURITY: If not configured and NOT in force mock mode, show error
   if (!configValidation.isConfigured && !forceMock) {
-    return (
-      <PaymentConfigurationError errors={configValidation.errors || []} />
-    );
+    return <PaymentConfigurationError errors={configValidation.errors || []} />;
   }
 
   // Prepare payment data for Senang Pay
@@ -177,8 +175,7 @@ export default async function PaymentPage({
     const userEmail = booking.guestEmail || session?.user?.email || "";
     const userPhone = booking.guestPhone || "";
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     paymentData = {
       merchantId,
@@ -480,9 +477,9 @@ export default async function PaymentPage({
                   <div className="text-sm text-blue-800">
                     <p className="font-medium">Secure Payment via Senang Pay</p>
                     <p className="mt-1">
-                      You will be redirected to Senang Pay&apos;s secure
-                      payment page. After completing payment, you will be
-                      redirected back to view your booking confirmation.
+                      You will be redirected to Senang Pay&apos;s secure payment
+                      page. After completing payment, you will be redirected
+                      back to view your booking confirmation.
                     </p>
                   </div>
                 </div>
