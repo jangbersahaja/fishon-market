@@ -180,8 +180,8 @@ export default function PrivacyPage() {
 
             <h2 id="contact">12. Contact Us</h2>
             <p>
-              Email <a href="mailto:hello@fishon.my">hello@fishon.my</a> or use
-              our <a href="/contact">Contact page</a>.
+              Email <a href="mailto:support@fishon.my">support@fishon.my</a> or
+              use our <a href="/contact">Contact page</a>.
             </p>
           </article>
         </div>

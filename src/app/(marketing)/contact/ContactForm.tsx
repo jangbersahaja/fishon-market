@@ -34,7 +34,7 @@
 //     {
 //       "@type": "ContactPoint",
 //       contactType: "customer support",
-//       email: "hello@fishon.my",
+//       email: "support@fishon.my",
 //       availableLanguage: ["en", "ms"],
 //     },
 //   ],
@@ -134,12 +134,12 @@
 //           <InfoCard
 //             title="Customer Support"
 //             desc="For booking help, refunds, or account issues."
-//             email="hello@fishon.my"
+//             email="support@fishon.my"
 //           />
 //           <InfoCard
 //             title="Captain Onboarding"
 //             desc="List your charter and grow with us."
-//             email="hello@fishon.my"
+//             email="support@fishon.my"
 //             cta={{ href: "/captains/apply", label: "Apply to List" }}
 //           />
 //         </section>

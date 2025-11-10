@@ -185,7 +185,7 @@ export default function HelpCenterPage() {
               <h3 id="report-issue">Report an issue</h3>
               <p>
                 Share your booking reference at{" "}
-                <a href="mailto:hello@fishon.my">hello@fishon.my</a> or{" "}
+                <a href="mailto:support@fishon.my">support@fishon.my</a> or{" "}
                 <a href="/contact">Contact</a>.
               </p>
             </Section>
@@ -216,7 +216,7 @@ export default function HelpCenterPage() {
             {/* CTA */}
             {/* Contact Options Grid */}
             <div className="grid grid-cols-1 gap-6 mt-14 md:grid-cols-3 not-prose">
-              <div className="p-6 bg-white border border-neutral-200 rounded-lg">
+              <div className="p-6 bg-white border rounded-lg border-neutral-200">
                 <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-blue-50">
                   <svg
                     className="w-6 h-6 text-blue-600"
@@ -239,14 +239,14 @@ export default function HelpCenterPage() {
                   Send us an email and we&apos;ll respond within 24 hours.
                 </p>
                 <a
-                  href="mailto:hello@fishon.my"
-                  className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-neutral-300 rounded-md shadow-sm hover:bg-gray-50"
+                  href="mailto:support@fishon.my"
+                  className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md shadow-sm border-neutral-300 hover:bg-gray-50"
                 >
-                  hello@fishon.my
+                  support@fishon.my
                 </a>
               </div>
 
-              <div className="p-6 bg-white border border-neutral-200 rounded-lg">
+              <div className="p-6 bg-white border rounded-lg border-neutral-200">
                 <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-green-50">
                   <svg
                     className="w-6 h-6 text-green-600"
@@ -269,7 +269,7 @@ export default function HelpCenterPage() {
                   Chat with our support team on WhatsApp.
                 </p>
                 <a
-                  href="https://wa.me/60123456789"
+                  href="https://wa.me/60165304304"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700"
@@ -278,7 +278,7 @@ export default function HelpCenterPage() {
                 </a>
               </div>
 
-              <div className="p-6 bg-white border border-neutral-200 rounded-lg">
+              <div className="p-6 bg-white border rounded-lg border-neutral-200">
                 <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-purple-50">
                   <svg
                     className="w-6 h-6 text-purple-600"
@@ -302,7 +302,7 @@ export default function HelpCenterPage() {
                 </p>
                 <button
                   disabled
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-neutral-200 rounded-md cursor-not-allowed"
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border rounded-md cursor-not-allowed border-neutral-200"
                 >
                   Coming Soon
                 </button>
