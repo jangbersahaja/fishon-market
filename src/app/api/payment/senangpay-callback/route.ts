@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
         tripId: true,
         charterId: true,
         date: true,
+        finalPrice: true,
         paymentTransactionId: true,
         guestFirstName: true,
         guestLastName: true,
@@ -129,7 +130,26 @@ export async function POST(request: NextRequest) {
         msg,
       });
 
-      // Update booking status
+      // Calculate financial breakdown
+      const { prismaCaptain } = await import("@/lib/database/prisma-captain");
+
+      const charter = await (prismaCaptain as any).charter.findUnique({
+        where: { id: booking.charterId },
+        select: { pricingPlan: true },
+      });
+
+      const commissionRate =
+        charter?.pricingPlan === "GOLD"
+          ? 0.05
+          : charter?.pricingPlan === "SILVER"
+            ? 0.08
+            : 0.1; // BASIC
+
+      const finalPrice = Number(booking.finalPrice);
+      const platformFee = Math.round(finalPrice * commissionRate * 100) / 100;
+      const captainEarnings = finalPrice - platformFee;
+
+      // Update booking status with financial data
       const updated = await prisma.booking.update({
         where: { id: order_id },
         data: {
@@ -138,12 +158,18 @@ export async function POST(request: NextRequest) {
           paymentTransactionId: transaction_id,
           paymentMethod: "SENANGPAY",
           paymentNote: msg,
+          platformFee,
+          captainEarnings,
+          payoutStatus: "PENDING",
         },
       });
 
       console.log("✅ [SENANGPAY CALLBACK] Booking updated to PAID", {
         bookingId: order_id,
         transactionId: transaction_id,
+        finalPrice,
+        platformFee,
+        captainEarnings,
       });
 
       // Trigger all payment side effects (captain webhook, angler notification, page revalidation)

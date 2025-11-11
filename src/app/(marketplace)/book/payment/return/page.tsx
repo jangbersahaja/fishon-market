@@ -73,6 +73,8 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       status: true,
       paidAt: true,
       paymentTransactionId: true,
+      charterId: true,
+      finalPrice: true,
     },
   });
 
@@ -106,6 +108,25 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
     });
 
     try {
+      // Calculate financial breakdown
+      const { prismaCaptain } = await import("@/lib/database/prisma-captain");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const charter = await (prismaCaptain as any).charter.findUnique({
+        where: { id: booking.charterId },
+        select: { pricingPlan: true },
+      });
+
+      const commissionRate =
+        charter?.pricingPlan === "GOLD"
+          ? 0.05
+          : charter?.pricingPlan === "SILVER"
+            ? 0.08
+            : 0.1; // BASIC
+
+      const finalPrice = Number(booking.finalPrice);
+      const platformFee = Math.round(finalPrice * commissionRate * 100) / 100;
+      const captainEarnings = finalPrice - platformFee;
+
       await prisma.booking.update({
         where: { id: order_id },
         data: {
@@ -114,12 +135,17 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
           paymentTransactionId: transaction_id,
           paymentMethod: "SENANGPAY",
           paymentNote: msg,
+          platformFee,
+          captainEarnings,
+          payoutStatus: "PENDING",
         },
       });
 
       console.log("✅ [PAYMENT RETURN] Booking updated to PAID", {
         bookingId: order_id,
         transactionId: transaction_id,
+        platformFee,
+        captainEarnings,
       });
 
       // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
