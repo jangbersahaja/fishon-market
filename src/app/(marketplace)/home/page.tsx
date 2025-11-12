@@ -93,7 +93,7 @@ export default async function Home() {
                   Find customers and earn more
                 </p>
                 <Link
-                  href="https://fishon-captain.vercel.app/"
+                  href="https://fishon-captain.vercel.app/list-your-business"
                   className="mt-5 w-full rounded-md bg-[#ec2227] p-2 text-center font-bold text-white transition hover:bg-red-700"
                 >
                   List With Us

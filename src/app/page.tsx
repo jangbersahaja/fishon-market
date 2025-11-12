@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <main className="min-h-dvh bg-[#ec2227] flex items-center justify-center p-6">
       <section className="w-full max-w-3xl mx-auto">
-        <div className="rounded-3xl bg-white shadow-2xl border border-black/5 p-8 md:p-12">
+        <div className="p-8 bg-white border shadow-2xl rounded-3xl border-black/5 md:p-12">
           <header className="flex items-center gap-4">
             <Image
               src="/Fishon-logo.png"
@@ -15,10 +15,10 @@ export default function Home() {
               height={72}
               sizes="(max-width: 768px) 48px, 72px"
               alt="Fishon logo"
-              className="h-12 w-auto md:h-16 rounded-full"
+              className="w-auto h-12 rounded-full md:h-16"
               priority
             />
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+            <h1 className="text-3xl font-extrabold tracking-tight md:text-5xl">
               Fishon
               <span className="sr-only">
                 {" "}
@@ -36,7 +36,7 @@ export default function Home() {
             platform. The marketplace experience is coming soon!
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 mt-6 text-sm">
             <span
               aria-label="Status: Marketplace in development"
               className="inline-flex items-center gap-2 rounded-full border border-[#ec2227]/20 bg-[#ec2227] px-3 py-1 text-white"
@@ -47,14 +47,14 @@ export default function Home() {
             <span className="opacity-80 text-black/70">plan • book • fish</span>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-black/10 bg-gray-50 p-5">
-            <h2 className="text-base md:text-lg font-semibold text-black">
+          <div className="p-5 mt-6 border rounded-2xl border-black/10 bg-gray-50">
+            <h2 className="text-base font-semibold text-black md:text-lg">
               Are you a Captain or Charter Operator?
             </h2>
             <p className="mt-2 text-sm md:text-base text-black/80">
               Captain and charter registration is now available at{" "}
               <Link
-                href="https://fishon-captain.vercel.app"
+                href="https://fishon-captain.vercel.app/list-your-business"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[#ec2227] underline decoration-[#ec2227]/40 underline-offset-4 hover:decoration-[#ec2227]"
