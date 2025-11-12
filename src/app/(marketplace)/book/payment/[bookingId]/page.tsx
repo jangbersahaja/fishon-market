@@ -280,16 +280,44 @@ export default async function PaymentPage({
       redirect(`/book/payment/${bookingId}`);
     }
 
-    // Mock payment - just update status to PAID
+    // Calculate financial breakdown for mock payment
+    const { prismaCaptain } = await import("@/lib/database/prisma-captain");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const charter = await (prismaCaptain as any).charter.findUnique({
+      where: { id: booking.charterId },
+      select: { pricingPlan: true },
+    });
+
+    const commissionRate =
+      charter?.pricingPlan === "GOLD"
+        ? 0.05
+        : charter?.pricingPlan === "SILVER"
+          ? 0.08
+          : 0.1; // BASIC
+
+    const finalPrice = Number(booking.finalPrice);
+    const platformFee = Math.round(finalPrice * commissionRate * 100) / 100;
+    const captainEarnings = finalPrice - platformFee;
+
+    // Mock payment - update status to PAID with financial data
     const updated = await prisma.booking.update({
       where: { id: bookingId },
       data: {
         status: "PAID",
         paidAt: new Date(),
+        paymentMethod: "MOCK",
+        paymentTransactionId: `MOCK-${Date.now()}`,
+        platformFee,
+        captainEarnings,
+        payoutStatus: "PENDING",
       },
     });
 
-    console.log("✅ Payment completed for booking:", bookingId);
+    console.log("✅ Payment completed for booking:", bookingId, {
+      finalPrice,
+      platformFee,
+      captainEarnings,
+    });
 
     // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
     await triggerPaymentSideEffects({

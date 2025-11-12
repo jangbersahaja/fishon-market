@@ -229,6 +229,15 @@ enum BookingStatus {
   COMPLETED // trip completed
 }
 
+enum PayoutStatus {
+  PENDING      // Payment received, payout not scheduled
+  SCHEDULED    // Included in payout batch
+  PROCESSING   // Bank transfer initiated
+  COMPLETED    // Funds transferred
+  FAILED       // Transfer failed
+  ON_HOLD      // Flagged for review
+}
+
 model Booking {
   // === MAIN DETAIL ===
   id        String   @id @default(cuid())
@@ -275,6 +284,18 @@ model Booking {
   paymentTransactionId String? @db.VarChar(255) // Senang Pay transaction ID
   paymentMethod        String? @db.VarChar(50)  // Payment method used (e.g., "SENANGPAY", "MOCK")
   paymentNote          String? @db.Text         // Payment status/error messages
+
+  // === FINANCIAL TRACKING (Phase 1: Admin Finance Dashboard) ===
+  platformFee      Decimal?      @db.Decimal(10, 2) // Fishon commission (5-10% by pricing plan)
+  captainEarnings  Decimal?      @db.Decimal(10, 2) // Captain net earnings (finalPrice - platformFee)
+  payoutStatus     PayoutStatus? @default(PENDING)
+  payoutBatchId    String?                          // References Payout.batchId in fishon-captain DB
+  
+  // === REFUND TRACKING (Phase 1: Admin Finance Dashboard) ===
+  refundAmount     Decimal?  @db.Decimal(10, 2)
+  refundedAt       DateTime?
+  refundReason     String?   @db.Text
+  refundedBy       String?   // Staff user ID who processed refund
 
   // === CONVERSATION ===
   note            String? // Angler's initial note

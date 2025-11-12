@@ -120,7 +120,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
             </>
           )}
           <Link
-            href="https://fishon-captain.vercel.app"
+            href="https://fishon-captain.vercel.app/list-your-business"
             target="_blank"
             rel="noopener noreferrer"
             aria-current={isActive("/list-your-business") ? "page" : undefined}
@@ -224,7 +224,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
             </>
           )}
           <Link
-            href="https://fishon-captain.vercel.app"
+            href="https://fishon-captain.vercel.app/list-your-business"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-center hover:translate-y-px transition"
