@@ -54,7 +54,7 @@ export default function Home() {
             <p className="mt-2 text-sm md:text-base text-black/80">
               Captain and charter registration is now available at{" "}
               <Link
-                href="https://fishon-captain.vercel.app/list-your-business"
+                href="https://fishon-captain.vercel.app/my/list-your-business"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[#ec2227] underline decoration-[#ec2227]/40 underline-offset-4 hover:decoration-[#ec2227]"
