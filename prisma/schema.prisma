@@ -9,16 +9,22 @@ datasource db {
 
 enum UserRole {
   ANGLER
+  GUEST
   ADMIN
 }
 
 enum NotificationType {
-  // Booking lifecycle
-  BOOKING_CREATED       // Angler: Booking request submitted
-  BOOKING_APPROVED      // Angler: Captain approved booking
+  // Booking lifecycle (Hybrid Flow)
+  BOOKING_CREATED       // Angler: Booking request submitted (legacy - old flow)
+  PAYMENT_AUTHORIZED    // Angler: Payment pre-authorized, awaiting captain approval (NEW)
+  BOOKING_APPROVED      // Angler: Captain approved booking (legacy - old flow)
+  PAYMENT_CAPTURED      // Angler: Payment captured, booking confirmed (NEW)
+  BOOKING_CONFIRMED     // Angler: Booking confirmed (DIRECT flow)
   BOOKING_REJECTED      // Angler: Captain rejected booking
-  BOOKING_PAID          // Angler: Payment confirmed
+  PAYMENT_RELEASED      // Angler: Pre-authorized payment released (NEW)
+  BOOKING_PAID          // Angler: Payment confirmed (legacy - old flow)
   BOOKING_CANCELLED     // Angler: Booking cancelled
+  PAYMENT_REFUNDED      // Angler: Refund processed (NEW)
   
   // Review system
   REVIEW_SUBMITTED      // Angler: Review submitted for approval
@@ -220,13 +226,14 @@ model NewsletterSubscription {
 
 // Booking system
 enum BookingStatus {
-  PENDING   // awaiting captain approval
-  APPROVED  // captain approved, awaiting payment
-  REJECTED  // captain rejected
-  EXPIRED   // hold expired
-  PAID      // payment completed, confirmed
-  CANCELLED // cancelled by angler
-  COMPLETED // trip completed
+  PENDING         // OLD FLOW: awaiting captain approval (kept for historical data)
+  APPROVED        // OLD FLOW: captain approved, awaiting payment (kept for historical data)
+  PAYMENT_PENDING // NEW FLOW: payment authorized, awaiting captain approval
+  REJECTED        // captain rejected
+  EXPIRED         // hold expired
+  PAID            // payment completed, confirmed
+  CANCELLED       // cancelled by angler
+  COMPLETED       // trip completed
 }
 
 enum PayoutStatus {
@@ -238,6 +245,13 @@ enum PayoutStatus {
   ON_HOLD      // Flagged for review
 }
 
+enum RefundStatus {
+  PENDING      // Refund requested
+  PROCESSING   // Refund being processed
+  COMPLETED    // Refund completed
+  FAILED       // Refund failed (requires manual intervention)
+}
+
 model Booking {
   // === MAIN DETAIL ===
   id        String   @id @default(cuid())
@@ -246,15 +260,8 @@ model Booking {
   expiresAt DateTime // hold expires at (e.g., now + 12h)
 
   // === ANGLER'S DETAIL ===
-  userId String? // Optional - for signed-in users
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Guest booking fields (when userId is null)
-  guestEmail     String?
-  emailVerified  Boolean @default(false)
-  guestFirstName String?
-  guestLastName  String?
-  guestPhone     String?
+  userId String // Required - references User with role ANGLER or GUEST
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // === BOOKING DETAIL ===
   tripId    String // References Trip.id in fishon-captain DB
@@ -281,9 +288,16 @@ model Booking {
   paidAt             DateTime?
 
   // === PAYMENT TRACKING ===
-  paymentTransactionId String? @db.VarChar(255) // Senang Pay transaction ID
-  paymentMethod        String? @db.VarChar(50)  // Payment method used (e.g., "SENANGPAY", "MOCK")
+  paymentTransactionId String? @db.VarChar(255) // Senang Pay transaction ID (legacy) OR Stripe charge ID
+  paymentMethod        String? @db.VarChar(50)  // Payment method: "CARD", "FPX", "EWALLET", "MOCK"
+  paymentFlow          String? @db.VarChar(50)  // Payment flow: "TOKENIZED" (card), "DIRECT" (FPX/ewallet)
   paymentNote          String? @db.Text         // Payment status/error messages
+  
+  // === HYBRID PAYMENT FLOW (Dual-Flow Support) ===
+  paymentIntentId      String?   @db.VarChar(255) // Token ID (TOKENIZED) or booking ID (DIRECT)
+  paymentAuthorizedAt  DateTime? // When card token was created (TOKENIZED only)
+  paymentCapturedAt    DateTime? // When token was charged (TOKENIZED) or FPX/ewallet payment completed (DIRECT)
+  paymentReleasedAt    DateTime? // When token was released without charge (TOKENIZED only)
 
   // === FINANCIAL TRACKING (Phase 1: Admin Finance Dashboard) ===
   platformFee      Decimal?      @db.Decimal(10, 2) // Fishon commission (5-10% by pricing plan)
@@ -291,11 +305,14 @@ model Booking {
   payoutStatus     PayoutStatus? @default(PENDING)
   payoutBatchId    String?                          // References Payout.batchId in fishon-captain DB
   
-  // === REFUND TRACKING (Phase 1: Admin Finance Dashboard) ===
-  refundAmount     Decimal?  @db.Decimal(10, 2)
-  refundedAt       DateTime?
-  refundReason     String?   @db.Text
-  refundedBy       String?   // Staff user ID who processed refund
+  // === REFUND TRACKING (Enhanced for Hybrid Flow) ===
+  refundStatus         RefundStatus? // Refund processing status
+  refundAmount         Decimal?      @db.Decimal(10, 2)
+  refundedAt           DateTime?
+  refundReason         String?       @db.Text
+  refundedBy           String?       // Staff user ID who processed refund
+  refundTransactionId  String?       @db.VarChar(255) // Gateway refund transaction ID
+  cancellationPolicy   Json?         // Snapshot of policy at booking time
 
   // === CONVERSATION ===
   note            String? // Angler's initial note
@@ -307,16 +324,18 @@ model Booking {
   conversation    Conversation? // 1:1 relationship
 
   @@index([userId])
-  @@index([guestEmail])
   @@index([tripId])
   @@index([charterId])
   @@index([status])
   @@index([date])
   @@index([createdAt])
-  // Note: Unique constraint on (charterId, date, startTime) not added because:
-  // - Would prevent rebooking after cancellation/rejection
-  // - Serializable transaction isolation provides race condition protection
-  // - Application logic handles conflict detection for PAID bookings only
+  @@index([paymentIntentId])
+  @@index([charterId, date, status])
+  // Note: Partial unique constraint (only for PAID/PAYMENT_PENDING) not supported in Prisma
+  // Race condition protection relies on:
+  // 1. Serializable transaction isolation
+  // 2. Conflict detection in application logic  
+  // 3. Payment authorization acting as soft lock
 }
 
 // Chat & Messaging system
@@ -529,10 +548,14 @@ model NotificationPreferences {
 
   // Email notification preferences (per type)
   emailBookingCreated      Boolean @default(true)
+  emailPaymentAuthorized   Boolean @default(true) // NEW: Hybrid flow
   emailBookingApproved     Boolean @default(true)
+  emailPaymentCaptured     Boolean @default(true) // NEW: Hybrid flow
   emailBookingRejected     Boolean @default(true)
+  emailPaymentReleased     Boolean @default(true) // NEW: Hybrid flow
   emailBookingPaid         Boolean @default(true)
   emailBookingCancelled    Boolean @default(true)
+  emailPaymentRefunded     Boolean @default(true) // NEW: Hybrid flow
   emailReviewSubmitted     Boolean @default(true)
   emailReviewApproved      Boolean @default(true)
   emailReviewRejected      Boolean @default(true)
@@ -542,10 +565,14 @@ model NotificationPreferences {
 
   // Push/In-app notification preferences (per type)
   pushBookingCreated      Boolean @default(true)
+  pushPaymentAuthorized   Boolean @default(true) // NEW: Hybrid flow
   pushBookingApproved     Boolean @default(true)
+  pushPaymentCaptured     Boolean @default(true) // NEW: Hybrid flow
   pushBookingRejected     Boolean @default(true)
+  pushPaymentReleased     Boolean @default(true) // NEW: Hybrid flow
   pushBookingPaid         Boolean @default(true)
   pushBookingCancelled    Boolean @default(true)
+  pushPaymentRefunded     Boolean @default(true) // NEW: Hybrid flow
   pushReviewSubmitted     Boolean @default(true)
   pushReviewApproved      Boolean @default(true)
   pushReviewRejected      Boolean @default(true)
@@ -563,16 +590,20 @@ model NotificationPreferences {
 
 // Analytics & Tracking system
 enum AnalyticsEventType {
-  PROFILE_VIEW      // Captain profile page view
-  CHARTER_VIEW      // Charter detail page view
-  CHARTER_SEARCH    // Charter appeared in search results
-  PHOTO_VIEW        // Photo clicked/viewed in gallery
-  VIDEO_VIEW        // Video played
-  CONTACT_CLICK     // Contact/inquiry button clicked
-  BOOKING_STARTED   // Booking form opened
-  BOOKING_SUBMITTED // Booking request submitted
-  REVIEW_VIEW       // Review section viewed
-  SHARE_CLICKED     // Share button clicked
+  PROFILE_VIEW       // Captain profile page view
+  CHARTER_VIEW       // Charter detail page view
+  CHARTER_SEARCH     // Charter appeared in search results
+  PHOTO_VIEW         // Photo clicked/viewed in gallery
+  VIDEO_VIEW         // Video played
+  CONTACT_CLICK      // Contact/inquiry button clicked
+  BOOKING_STARTED    // Booking form opened
+  BOOKING_SUBMITTED  // Booking request submitted
+  REVIEW_VIEW        // Review section viewed
+  SHARE_CLICKED      // Share button clicked
+  PAYMENT_AUTHORIZED // Payment pre-authorized (TOKENIZED flow)
+  PAYMENT_CAPTURED   // Payment captured (TOKENIZED flow)
+  PAYMENT_RELEASED   // Payment token released without charge (TOKENIZED flow)
+  PAYMENT_REFUNDED   // Payment refunded (DIRECT flow or post-capture)
 }
 
 model AnalyticsEvent {

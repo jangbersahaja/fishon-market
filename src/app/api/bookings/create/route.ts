@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth/auth";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import {
+  createPaymentIntent,
+  getPaymentFlow,
+} from "@/lib/payment/payment-gateway";
+import {
   sendBookingCreatedEmail,
   sendBookingReceivedCaptainEmail,
 } from "@/lib/services/email-service";
@@ -12,7 +16,8 @@ import {
 } from "@/lib/services/message-service";
 import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
-import { calculateFinalPrice, getTripById } from "@/lib/services/trip-service";
+import { calculatePricing } from "@/lib/services/pricing-service";
+import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -64,6 +69,11 @@ async function createAuthenticatedBooking(session: any, body: any) {
       startTime,
       note,
       phone, // Optional: update user phone if provided
+      paymentMethod, // NEW: "CARD", "FPX", "EWALLET", "MOCK"
+      cardNumber, // Card details for TOKENIZED flow
+      cardExpMonth,
+      cardExpYear,
+      cardCvv,
     } = body as {
       tripId?: string;
       date?: string;
@@ -73,6 +83,11 @@ async function createAuthenticatedBooking(session: any, body: any) {
       startTime?: string;
       note?: string;
       phone?: string;
+      paymentMethod?: string;
+      cardNumber?: string;
+      cardExpMonth?: string;
+      cardExpYear?: string;
+      cardCvv?: string;
     };
 
     // Basic validation
@@ -96,6 +111,22 @@ async function createAuthenticatedBooking(session: any, body: any) {
 
     if (!d) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    // Validate date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today in local time
+    const bookingDate = new Date(d);
+    bookingDate.setHours(0, 0, 0, 0);
+
+    if (bookingDate <= today) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot book for today or past dates. Please select a future date.",
+        },
+        { status: 400 }
+      );
     }
 
     // Ensure local user exists (safety net for legacy OAuth tokens)
@@ -161,6 +192,48 @@ async function createAuthenticatedBooking(session: any, body: any) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // --- PAYMENT METHOD VALIDATION ---
+    // Validate payment method selection
+    const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
+    if (!paymentMethod || !validMethods.includes(paymentMethod)) {
+      return NextResponse.json(
+        { error: "Valid payment method required (CARD, FPX, or EWALLET)" },
+        { status: 400 }
+      );
+    }
+
+    // MOCK payments only in development
+    if (paymentMethod === "MOCK" && process.env.NODE_ENV !== "development") {
+      return NextResponse.json(
+        { error: "Mock payments not available in production" },
+        { status: 400 }
+      );
+    }
+
+    // Card payments require card details
+    if (paymentMethod === "CARD") {
+      if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
+        return NextResponse.json(
+          { error: "Card details required for card payments" },
+          { status: 400 }
+        );
+      }
+      // Basic validation
+      const cardNumClean = cardNumber.replace(/\s/g, "");
+      if (!/^\d{13,19}$/.test(cardNumClean)) {
+        return NextResponse.json(
+          { error: "Invalid card number format" },
+          { status: 400 }
+        );
+      }
+      if (!/^\d{3,4}$/.test(cardCvv)) {
+        return NextResponse.json(
+          { error: "Invalid CVV format" },
+          { status: 400 }
+        );
+      }
+    }
+
     // --- AVAILABILITY: Check for blocked dates (schedule/unavailability) ---
     // Fetch charter schedule and unavailability from captain DB (or API)
     let charterSchedule = null;
@@ -180,7 +253,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
     }
 
     // Calculate blocked dates for the requested range
-    if (charterSchedule) {
+    // IMPORTANT: Check both schedule AND unavailability, even if schedule is null
+    if (charterSchedule || charterUnavailability) {
       const { calculateBlockedDates, formatDateYMD } = await import(
         "@/lib/helpers/availability-helpers"
       );
@@ -232,10 +306,90 @@ async function createAuthenticatedBooking(session: any, body: any) {
 
     // IMPORTANT: Use normal price (not promo price) for booking submission
     const tripPrice = trip.price; // Always use base price, never promoPrice
-    const finalPrice = calculateFinalPrice({
+
+    // Calculate complete pricing breakdown including platform fees and payment gateway fees
+    const pricingBreakdown = calculatePricing({
       tripPrice,
       days: ds,
+      // TODO: Add promo code support in future
+      // promoCode: promoCode ? { code: promoCode, percentage: 10 } : undefined,
     });
+
+    const finalPrice = pricingBreakdown.finalPrice;
+
+    // --- PAYMENT PROCESSING ---
+    // Determine payment flow based on method
+    const paymentFlow = getPaymentFlow(
+      paymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
+    );
+    let paymentResult: any = null;
+    let initialStatus: "PAYMENT_PENDING" | "PAID" = "PAYMENT_PENDING";
+
+    // MOCK flow (development only)
+    if (paymentMethod === "MOCK") {
+      paymentResult = {
+        success: true,
+        flow: "MOCK",
+        paymentIntentId: `mock-${Date.now()}`,
+        requiresRedirect: false,
+      };
+      initialStatus = "PAYMENT_PENDING"; // Mock behaves like TOKENIZED
+    }
+    // TOKENIZED flow (Card) - create token without charging
+    else if (paymentFlow === "TOKENIZED") {
+      try {
+        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
+        if (!user) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 404 }
+          );
+        }
+
+        paymentResult = await createPaymentIntent({
+          bookingId: `temp-${Date.now()}`, // Temporary, will update after booking created
+          amount: finalPrice,
+          paymentMethod: "CARD",
+          description: `Booking for ${trip.name} on ${date}`,
+          cardDetails: {
+            number: cardNumber!.replace(/\s/g, ""),
+            cvv: cardCvv!,
+            expiryMonth: cardExpMonth!,
+            expiryYear: cardExpYear!,
+          },
+          customerName: user.name || "Guest",
+          customerEmail: user.email,
+          customerPhone: user.phone || phone || "",
+        });
+
+        if (!paymentResult.success) {
+          console.error("❌ Card tokenization failed:", paymentResult.error);
+          return NextResponse.json(
+            {
+              error:
+                paymentResult.error ||
+                "Failed to process card. Please check your card details and try again.",
+            },
+            { status: 400 }
+          );
+        }
+
+        initialStatus = "PAYMENT_PENDING"; // Token stored, awaiting captain approval
+      } catch (error: any) {
+        console.error("❌ Payment gateway error:", error);
+        return NextResponse.json(
+          { error: "Payment gateway error. Please try again." },
+          { status: 500 }
+        );
+      }
+    }
+    // DIRECT flow (FPX/E-wallet) - will redirect to gateway
+    else if (paymentFlow === "DIRECT") {
+      // For DIRECT flow, we create booking first with PENDING status,
+      // then redirect to payment gateway. Callback will update to PAID.
+      // This is different from TOKENIZED where we create token first.
+      initialStatus = "PAYMENT_PENDING"; // Will be updated by callback
+    }
 
     // Hold expires in 12 hours
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
@@ -282,7 +436,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
               throw new Error("BOOKING_CONFLICT");
             }
 
-            // Create booking atomically
+            // Create booking atomically with payment tracking
             return await tx.booking.create({
               data: {
                 userId: dbUserId,
@@ -293,9 +447,20 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 startTime:
                   trip.startTimes.length > 0 ? (startTime as string) : null,
                 guests: { adults: ad, children: ch } as Prisma.JsonObject,
-                tripPrice: tripPrice,
-                finalPrice: finalPrice,
+                tripPrice: pricingBreakdown.subtotal,
+                finalPrice: pricingBreakdown.finalPrice,
+                platformFee: pricingBreakdown.platformFee,
+                captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
+                status: initialStatus,
+                // Payment tracking fields
+                paymentMethod: paymentMethod as string,
+                paymentFlow: paymentFlow,
+                paymentIntentId: paymentResult?.paymentIntentId || null,
+                paymentAuthorizedAt:
+                  paymentFlow === "TOKENIZED" && paymentResult?.success
+                    ? new Date()
+                    : null,
                 note:
                   typeof note === "string" && note.trim()
                     ? note.trim()
@@ -473,6 +638,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
             finalPrice: Number(booking.finalPrice),
             expiresAt: booking.expiresAt.toISOString(),
             status: booking.status,
+            paymentMethod: booking.paymentMethod,
+            paymentFlow: booking.paymentFlow,
           },
         };
         // Best-effort retry
@@ -608,6 +775,61 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     })();
 
+    // Handle DIRECT flow redirect
+    if (paymentFlow === "DIRECT" && paymentMethod !== "MOCK") {
+      // Generate payment URL for FPX/E-wallet
+      try {
+        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
+        if (!user) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 404 }
+          );
+        }
+
+        const directPaymentResult = await createPaymentIntent({
+          bookingId: booking.id, // Use actual booking ID
+          amount: finalPrice,
+          paymentMethod: paymentMethod as "FPX" | "EWALLET",
+          description: `Booking for ${trip.name} on ${date}`,
+          customerName: user.name || "Guest",
+          customerEmail: user.email,
+          customerPhone: user.phone || phone || "",
+        });
+
+        if (!directPaymentResult.success || !directPaymentResult.redirectUrl) {
+          console.error(
+            "❌ Failed to generate payment URL:",
+            directPaymentResult.error
+          );
+          return NextResponse.json(
+            {
+              error:
+                directPaymentResult.error || "Failed to generate payment URL",
+            },
+            { status: 500 }
+          );
+        }
+
+        // Return redirect URL to client
+        return NextResponse.json(
+          {
+            booking,
+            requiresRedirect: true,
+            redirectUrl: directPaymentResult.redirectUrl,
+          },
+          { status: 201 }
+        );
+      } catch (error: any) {
+        console.error("❌ Direct payment redirect error:", error);
+        return NextResponse.json(
+          { error: "Failed to process payment" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // TOKENIZED or MOCK flow - return booking directly
     return NextResponse.json({ booking }, { status: 201 });
   } catch (e: any) {
     console.error("authenticated booking.create error", e);

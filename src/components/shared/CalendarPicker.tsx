@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { IoCalendarClear } from "react-icons/io5";
 
 // Local date helpers (no UTC conversion)
 // Malaysia date format: DD/MM/YYYY
@@ -252,9 +252,9 @@ export default function CalendarPicker({
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <CalendarIcon className="w-4 h-4 text-gray-500" />
+        <IoCalendarClear className="w-4 h-4 text-gray-600" />
         <span
-          className={`w-full flex justify-center ${
+          className={`w-full flex ${
             (currentMode === "single" && value) ||
             (currentMode === "range" && rangeStart && rangeEnd)
               ? ""

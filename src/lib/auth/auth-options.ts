@@ -26,6 +26,7 @@ export const authOptions: NextAuthOptions = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true, // Allow linking OAuth to existing email
     }),
     Credentials({
       name: "Credentials",
@@ -66,6 +67,36 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // On OAuth sign-in, upgrade GUEST users to ANGLER
+      if (account?.provider === "google" && user.email) {
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email.toLowerCase() },
+            select: { id: true, role: true },
+          });
+
+          if (existingUser?.role === "GUEST") {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: {
+                role: "ANGLER",
+                name: user.name || undefined,
+                image: user.image || undefined,
+                emailVerified: new Date(), // OAuth = email verified
+              },
+            });
+            console.log(
+              `✅ Upgraded GUEST user to ANGLER via OAuth: ${user.email}`
+            );
+          }
+        } catch (error) {
+          console.error("Error upgrading guest user on OAuth:", error);
+          // Don't block sign-in if upgrade fails
+        }
+      }
+      return true;
+    },
     async redirect({ url, baseUrl }) {
       // Always redirect back to the page user was on (callbackUrl)
       // If url starts with baseUrl, it's a relative redirect - use it

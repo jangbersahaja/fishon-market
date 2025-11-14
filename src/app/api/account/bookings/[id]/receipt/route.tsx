@@ -73,9 +73,8 @@ export async function GET(
       .padStart(2, "0")}-${booking.id.slice(-6).toUpperCase()}`;
 
     // Enrich booking with trip/charter data
-    const enrichedBooking: EnrichedBooking = await enrichBookingWithTripData(
-      booking
-    );
+    const enrichedBooking: EnrichedBooking =
+      await enrichBookingWithTripData(booking);
 
     // Prepare receipt data
     const receiptData = {
@@ -95,13 +94,9 @@ export async function GET(
         createdAt: enrichedBooking.createdAt,
       },
       user: {
-        name:
-          booking.user?.name ||
-          `${booking.guestFirstName || ""} ${
-            booking.guestLastName || ""
-          }`.trim(),
-        email: booking.user?.email || booking.guestEmail || "",
-        phone: booking.user?.phone || booking.guestPhone || "",
+        name: booking.user?.name || "Guest",
+        email: booking.user?.email || "",
+        phone: booking.user?.phone || "",
       },
       receiptNumber,
     };

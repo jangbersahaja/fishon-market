@@ -194,12 +194,22 @@ export default async function ConfirmationPage({
   return (
     <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
       {/* Payment Status Notifications */}
-      {paymentStatus === "success" && (
-        <div className="p-4 mb-6 border border-green-200 rounded-lg bg-green-50">
+      {paymentStatus === "success" && booking.paymentFlow && (
+        <div
+          className={`p-4 mb-6 border rounded-lg ${
+            booking.paymentFlow === "TOKENIZED"
+              ? "border-blue-200 bg-blue-50"
+              : "border-green-200 bg-green-50"
+          }`}
+        >
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <svg
-                className="w-5 h-5 text-green-600"
+                className={`w-5 h-5 ${
+                  booking.paymentFlow === "TOKENIZED"
+                    ? "text-blue-600"
+                    : "text-green-600"
+                }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -211,12 +221,41 @@ export default async function ConfirmationPage({
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-green-900">
-                Payment Successful!
+              <h3
+                className={`text-sm font-medium ${
+                  booking.paymentFlow === "TOKENIZED"
+                    ? "text-blue-900"
+                    : "text-green-900"
+                }`}
+              >
+                {booking.paymentFlow === "TOKENIZED"
+                  ? "Card Authorized!"
+                  : "Payment Received!"}
               </h3>
-              <p className="mt-1 text-sm text-green-700">
-                Your payment has been processed successfully. Your booking is
-                now confirmed.
+              <p
+                className={`mt-1 text-sm ${
+                  booking.paymentFlow === "TOKENIZED"
+                    ? "text-blue-700"
+                    : "text-green-700"
+                }`}
+              >
+                {booking.paymentFlow === "TOKENIZED" ? (
+                  <>
+                    Your card has been authorized for{" "}
+                    <strong>RM {Number(booking.finalPrice).toFixed(2)}</strong>.
+                    No charge will be made until the captain approves your
+                    booking within 12 hours. Your card will only be charged if
+                    the captain accepts your request.
+                  </>
+                ) : (
+                  <>
+                    Your payment of{" "}
+                    <strong>RM {Number(booking.finalPrice).toFixed(2)}</strong>{" "}
+                    has been received. The captain has 12 hours to approve your
+                    booking. If the captain declines or doesn&apos;t respond,
+                    you&apos;ll receive a full refund automatically.
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -333,7 +372,11 @@ export default async function ConfirmationPage({
                   : booking.status === "APPROVED"
                     ? "The captain has approved your request. Complete payment to confirm your booking."
                     : booking.status === "PENDING"
-                      ? "Your booking request has been sent to the captain for review."
+                      ? booking.paymentFlow === "TOKENIZED"
+                        ? "Your card has been authorized. Awaiting captain approval within 12 hours."
+                        : booking.paymentFlow === "DIRECT"
+                          ? "Payment received. Awaiting captain approval within 12 hours."
+                          : "Your booking request has been sent to the captain for review."
                       : booking.status === "REJECTED"
                         ? "The captain was unable to accommodate your request."
                         : booking.status === "EXPIRED"
@@ -354,6 +397,104 @@ export default async function ConfirmationPage({
                 />
               </div>
             )}
+
+          {/* Payment Flow Info for PENDING status */}
+          {booking.status === "PENDING" && booking.paymentFlow && (
+            <div className="p-4 mt-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-gray-900">
+                    What happens next?
+                  </h4>
+                  <ul className="mt-2 space-y-2 text-sm text-gray-600">
+                    {booking.paymentFlow === "TOKENIZED" ? (
+                      <>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>
+                            Your card is{" "}
+                            <strong>authorized but not charged</strong> (RM{" "}
+                            {Number(booking.finalPrice).toFixed(2)} on hold)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>
+                            Captain has <strong>12 hours</strong> to approve or
+                            decline your request
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>
+                            If approved: Your card will be charged and trip is
+                            confirmed
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>
+                            If declined or no response: Authorization is
+                            released, <strong>no charge</strong> to your card
+                          </span>
+                        </li>
+                      </>
+                    ) : (
+                      <>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600">•</span>
+                          <span>
+                            Your payment of{" "}
+                            <strong>
+                              RM {Number(booking.finalPrice).toFixed(2)}
+                            </strong>{" "}
+                            has been received
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600">•</span>
+                          <span>
+                            Captain has <strong>12 hours</strong> to approve or
+                            decline your request
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600">•</span>
+                          <span>
+                            If approved: Your trip is confirmed, no further
+                            action needed
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600">•</span>
+                          <span>
+                            If declined or no response:{" "}
+                            <strong>Full refund</strong> will be processed
+                            automatically
+                          </span>
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         {/* Progress Timeline */}
         <div className="px-10 mb-5 sm:px-15">
@@ -387,10 +528,7 @@ export default async function ConfirmationPage({
               id: enrichedBooking.id,
               charterName: enrichedBooking.charterName,
               tripName: enrichedBooking.tripName,
-              guestName:
-                booking.user?.name ||
-                `${booking.guestFirstName} ${booking.guestLastName}` ||
-                "Guest",
+              guestName: booking.user?.name || "Guest",
               location: enrichedBooking.location,
               date: enrichedBooking.date,
               durationHour: String(enrichedBooking.durationHour || ""),
@@ -446,9 +584,7 @@ export default async function ConfirmationPage({
             charterId={enrichedBooking.charterId}
             status={enrichedBooking.status as any}
             userId={session?.user?.id}
-            bookingEmail={
-              booking.user?.email || enrichedBooking.guestEmail || ""
-            }
+            bookingEmail={booking.user?.email || ""}
           />
         </div>
 

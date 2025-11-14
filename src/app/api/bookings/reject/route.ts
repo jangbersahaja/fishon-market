@@ -1,9 +1,12 @@
+import { trackEvent } from "@/lib/analytics-service";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { releasePayment } from "@/lib/payment/payment-gateway";
 import { sendBookingRejectedEmail } from "@/lib/services/email-service";
 import { sendMessage } from "@/lib/services/message-service";
 import { bookingRejectedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
+import { initiateRefund } from "@/lib/services/refund-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { revalidatePath } from "next/cache";
@@ -40,30 +43,134 @@ export async function POST(req: Request) {
     const booking = await prisma.booking.findUnique({ where: { id } });
     if (!booking)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    if (booking.status !== "PENDING") {
+
+    // Allow rejection of PENDING (legacy), PAYMENT_PENDING (new hybrid), or PAID (DIRECT flow awaiting approval)
+    const rejectableStatuses = ["PENDING", "PAYMENT_PENDING", "PAID"];
+    if (!rejectableStatuses.includes(booking.status)) {
       return NextResponse.json(
-        { error: "Only pending bookings can be rejected" },
+        { error: "Only pending or payment-pending bookings can be rejected" },
         { status: 409 }
       );
     }
 
+    // For PAID bookings, ensure it's DIRECT flow awaiting captain decision
+    if (booking.status === "PAID") {
+      if (booking.paymentFlow !== "DIRECT" || booking.captainDecisionAt) {
+        return NextResponse.json(
+          { error: "Cannot reject confirmed bookings" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // --- DUAL-FLOW PAYMENT HANDLING ---
+    let paymentReleasedAt: Date | null = null;
+    let needsRefundProcessing = false;
+
+    // Determine payment action based on flow
+    if (booking.status === "PAYMENT_PENDING" || booking.status === "PAID") {
+      const paymentFlow = booking.paymentFlow;
+      const paymentMethod = booking.paymentMethod;
+
+      // TOKENIZED flow (Card or MOCK): Release token (no charge)
+      if (paymentFlow === "TOKENIZED" || paymentFlow === "MOCK") {
+        if (paymentMethod === "MOCK") {
+          // MOCK: Simulate token release
+          console.log("🎭 MOCK: Simulating token release for booking:", id);
+          paymentReleasedAt = new Date();
+        } else {
+          // CARD: Release token without charging
+          if (!booking.paymentIntentId) {
+            console.warn("⚠️ No payment token found, skipping release");
+          } else {
+            console.log("🔓 Releasing card token:", {
+              bookingId: id,
+              tokenId: booking.paymentIntentId,
+            });
+
+            try {
+              const releaseResult = await releasePayment(
+                booking.paymentIntentId
+              );
+
+              if (releaseResult.success) {
+                console.log("✅ Token released successfully");
+                paymentReleasedAt = new Date();
+              } else {
+                console.warn("⚠️ Token release failed:", releaseResult.error);
+                // Continue with rejection anyway - token will expire
+                paymentReleasedAt = new Date();
+              }
+            } catch (error: any) {
+              console.error("❌ Token release exception:", error);
+              // Continue with rejection - token will expire
+              paymentReleasedAt = new Date();
+            }
+          }
+        }
+      }
+      // DIRECT flow (FPX/E-wallet): Must refund (angler already paid)
+      else if (paymentFlow === "DIRECT") {
+        console.log(
+          "💰 DIRECT flow: Initiating refund for rejected booking:",
+          id
+        );
+
+        // Verify payment was captured
+        if (!booking.paymentTransactionId || !booking.paymentCapturedAt) {
+          console.warn("⚠️ No payment transaction found, skipping refund");
+        } else {
+          try {
+            // Initiate FULL refund via refund service
+            await initiateRefund({
+              bookingId: id,
+              reason: "CAPTAIN_REJECTION",
+              refundType: "FULL",
+              initiatedBy: "CAPTAIN",
+            });
+
+            console.log("✅ Refund initiated");
+            needsRefundProcessing = true;
+          } catch (error: any) {
+            console.error("❌ Refund initiation failed:", error);
+            // Log error but continue with rejection
+            // Manual refund will be needed
+            return NextResponse.json(
+              {
+                error:
+                  "Payment refund failed. Please contact support for manual refund processing.",
+                refundError: true,
+              },
+              { status: 500 }
+            );
+          }
+        }
+      }
+    }
+
+    // Update booking status to REJECTED
+    const now = new Date();
     const updated = await prisma.booking.update({
       where: { id },
       data: {
+        paymentReleasedAt: paymentReleasedAt ?? undefined,
         status: "REJECTED",
-        rejectionReason: reason || null,
-        captainDecisionAt: new Date(),
+        rejectionReason: reason ?? null,
+        captainDecisionAt: now,
       },
       select: {
         id: true,
         status: true,
         userId: true,
-        guestEmail: true,
-        guestFirstName: true,
-        guestLastName: true,
         tripId: true,
         charterId: true,
         rejectionReason: true,
+        user: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -79,6 +186,10 @@ export async function POST(req: Request) {
             tripId: updated.tripId,
             charterId: updated.charterId,
             status: updated.status,
+            rejectionReason: updated.rejectionReason,
+            paymentMethod: booking.paymentMethod,
+            paymentFlow: booking.paymentFlow,
+            refundInitiated: needsRefundProcessing,
           },
         };
         sendWithRetry(hookUrl, payload, {
@@ -88,6 +199,53 @@ export async function POST(req: Request) {
         });
       }
     } catch {}
+
+    // Track payment release or refund event (non-blocking)
+    (async () => {
+      try {
+        const { getCharterById } = await import(
+          "@/lib/services/charter-service"
+        );
+        const charter = await getCharterById(updated.charterId);
+
+        if (paymentReleasedAt) {
+          // TOKENIZED flow: Token released
+          await trackEvent({
+            eventType: "PAYMENT_RELEASED",
+            charterId: updated.charterId,
+            ownerId: charter?.ownerId,
+            userId: updated.userId ?? undefined,
+            metadata: {
+              bookingId: updated.id,
+              paymentMethod: booking.paymentMethod,
+              paymentFlow: booking.paymentFlow,
+              tokenId: booking.paymentIntentId,
+              reason: "captain_rejection",
+            },
+          });
+        }
+
+        if (needsRefundProcessing) {
+          // DIRECT flow: Refund initiated
+          await trackEvent({
+            eventType: "PAYMENT_REFUNDED",
+            charterId: updated.charterId,
+            ownerId: charter?.ownerId,
+            userId: updated.userId ?? undefined,
+            metadata: {
+              bookingId: updated.id,
+              paymentMethod: booking.paymentMethod,
+              paymentFlow: booking.paymentFlow,
+              transactionId: booking.paymentTransactionId,
+              refundAmount: Number(booking.finalPrice),
+              reason: "captain_rejection",
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Failed to track payment release/refund:", err);
+      }
+    })();
 
     // Send system message to conversation (Phase 2.2) (non-blocking best-effort)
     (async () => {
@@ -134,11 +292,27 @@ export async function POST(req: Request) {
 
         const trip = await getTripById(updated.tripId);
         if (trip) {
+          // Different message based on payment flow
+          let notificationMessage = `Unfortunately, ${trip.charter.name} couldn't accommodate your booking request.`;
+
+          if (needsRefundProcessing) {
+            // DIRECT flow: Mention refund
+            notificationMessage +=
+              " Your payment will be refunded within 3-5 business days.";
+          } else if (paymentReleasedAt) {
+            // TOKENIZED flow: No charge
+            notificationMessage += " Your card was not charged.";
+          }
+
+          if (updated.rejectionReason) {
+            notificationMessage += ` Reason: ${updated.rejectionReason}`;
+          }
+
           await createNotification({
             userId: recipientUserId,
             type: "BOOKING_REJECTED",
             title: "Booking Update",
-            message: `Unfortunately, ${trip.charter.name} couldn't accommodate your booking request.${updated.rejectionReason ? ` Reason: ${updated.rejectionReason}` : ""}`,
+            message: notificationMessage,
             actionUrl: `/search`,
             actionLabel: "Find Other Charters",
             bookingId: updated.id,
@@ -146,6 +320,8 @@ export async function POST(req: Request) {
             metadata: {
               charterName: trip.charter.name,
               reason: updated.rejectionReason ?? undefined,
+              paymentFlow: booking.paymentFlow,
+              refundInitiated: needsRefundProcessing,
             },
           });
         }
@@ -156,19 +332,8 @@ export async function POST(req: Request) {
 
     // Email angler (best-effort)
     try {
-      // Handle both authenticated and guest bookings
-      const user = updated.userId
-        ? await prisma.user.findUnique({
-            where: { id: updated.userId },
-          })
-        : null;
-
-      const email = user?.email || updated.guestEmail;
-      const name =
-        user?.name ||
-        (updated.guestFirstName
-          ? `${updated.guestFirstName} ${updated.guestLastName}`
-          : null);
+      const email = updated.user?.email;
+      const name = updated.user?.name;
 
       if (email) {
         // Get trip data for email

@@ -8,7 +8,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { IoIosPin } from "react-icons/io";
 import {
   IoAdd,
-  IoCalendarClear,
   IoChevronDown,
   IoChevronUp,
   IoPerson,
@@ -311,12 +310,14 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
             {/* Date (custom popover) */}
             <div className="relative flex flex-col w-full px-3 pt-1 border-gray-300 lg:flex-1 lg:border-r hover:bg-gray-100/50">
               <label className="text-xs font-bold" htmlFor="date">
-                Date{days > 1 ? " Range" : ""}
+                Date{days > 1 ? " Range " : " "}
+                {days > 1 && (
+                  <span className="text-[10px] text-gray-500 mt-0.5">
+                    ({days} days selected)
+                  </span>
+                )}
               </label>
               <div className="relative">
-                {/* left icon */}
-                <IoCalendarClear className="absolute text-gray-600 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
-
                 <CalendarPicker
                   value={selectedDate}
                   initialDays={days}
@@ -333,7 +334,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                     setDays(calculatedDays);
                   }}
                   className="w-full"
-                  buttonClassName="px-9 text-left text-sm border-0 outline-none focus:ring-0 shadow-none bg-transparent w-full"
+                  buttonClassName="pr-3 text-left text-sm border-0 outline-none focus:ring-0 shadow-none bg-transparent w-full"
                   enableModeToggle={true}
                   mode="single"
                 />
@@ -341,11 +342,6 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                 {/* right chevron */}
                 <IoChevronDown className="absolute text-gray-600 -translate-y-1/2 pointer-events-none right-3 top-1/2" />
               </div>
-              {days > 1 && (
-                <p className="text-[10px] text-gray-500 mt-0.5">
-                  {days} days selected
-                </p>
-              )}
             </div>
 
             <hr className="flex my-3 border-t border-gray-300 lg:hidden" />

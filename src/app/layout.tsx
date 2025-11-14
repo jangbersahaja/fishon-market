@@ -36,8 +36,20 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   return (
-    <html lang="en" className="h-full">
-      <body className={`${inter.className} h-full`}>
+    <html lang="ms">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="flex flex-col font-sans">
         <SessionProvider session={session}>
           <AuthModalProvider>
             <Chrome>{children}</Chrome>

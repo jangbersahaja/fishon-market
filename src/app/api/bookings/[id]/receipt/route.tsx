@@ -59,7 +59,7 @@ export async function POST(
     }
 
     // Determine booking email
-    const bookingEmail = booking.user?.email || booking.guestEmail;
+    const bookingEmail = booking.user?.email;
     if (!bookingEmail) {
       return NextResponse.json(
         { error: "No email associated with this booking" },
@@ -120,9 +120,8 @@ export async function POST(
       .padStart(2, "0")}-${booking.id.slice(-6).toUpperCase()}`;
 
     // Enrich booking with trip/charter data
-    const enrichedBooking: EnrichedBooking = await enrichBookingWithTripData(
-      booking
-    );
+    const enrichedBooking: EnrichedBooking =
+      await enrichBookingWithTripData(booking);
 
     // Prepare receipt data
     const receiptData = {
@@ -142,13 +141,9 @@ export async function POST(
         createdAt: enrichedBooking.createdAt,
       },
       user: {
-        name:
-          booking.user?.name ||
-          `${booking.guestFirstName || ""} ${
-            booking.guestLastName || ""
-          }`.trim(),
-        email: booking.user?.email || booking.guestEmail || "",
-        phone: booking.user?.phone || booking.guestPhone || "",
+        name: booking.user?.name || "Guest",
+        email: booking.user?.email || "",
+        phone: booking.user?.phone || "",
       },
       receiptNumber,
     };

@@ -13,27 +13,94 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import BookingSummaryCard from "./BookingSummaryCard";
+import CardDetailsInput from "./CardDetailsInput";
 import DateGuestsCard from "./DateGuestsCard";
+import PaymentMethodSelector, {
+  type PaymentMethod,
+} from "./PaymentMethodSelector";
 import StartConversationCard from "./StartConversationCard";
 import StartTimeSelection from "./StartTimeSelection";
 import TripSelectionCard from "./TripSelectionCard";
 import YourDetailsCard from "./YourDetailsCard";
 
 // Zod validation schema for booking form
-const bookingSchema = z.object({
-  charterId: z.string().min(1, "Charter ID is required"),
-  tripId: z.string().min(1, "Trip ID is required"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-  days: z.number().int().min(1).max(14, "Days must be between 1 and 14"),
-  adults: z.number().int().min(1, "At least one adult is required"),
-  children: z.number().int().min(0),
-  startTime: z.string().optional(),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  note: z.string().optional(),
-});
+const bookingSchema = z
+  .object({
+    charterId: z.string().min(1, "Charter ID is required"),
+    tripId: z.string().min(1, "Trip ID is required"),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+    days: z.number().int().min(1).max(14, "Days must be between 1 and 14"),
+    adults: z.number().int().min(1, "At least one adult is required"),
+    children: z.number().int().min(0),
+    startTime: z.string().optional(),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().optional(),
+    note: z.string().optional(),
+    paymentMethod: z.enum(["CARD", "FPX", "EWALLET"], {
+      required_error: "Please select a payment method",
+    }),
+    // Card details (required only when paymentMethod is CARD)
+    cardNumber: z.string().optional(),
+    cardExpMonth: z.string().optional(),
+    cardExpYear: z.string().optional(),
+    cardCvv: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // If payment method is CARD, card details are required
+      if (data.paymentMethod === "CARD") {
+        const cardNumberClean = (data.cardNumber || "").replace(/\s/g, "");
+        return (
+          cardNumberClean.length >= 13 &&
+          cardNumberClean.length <= 19 &&
+          /^\d+$/.test(cardNumberClean)
+        );
+      }
+      return true;
+    },
+    {
+      message: "Valid card number required (13-19 digits)",
+      path: ["cardNumber"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.paymentMethod === "CARD") {
+        return Boolean(data.cardExpMonth);
+      }
+      return true;
+    },
+    {
+      message: "Expiry month required",
+      path: ["cardExpMonth"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.paymentMethod === "CARD") {
+        return Boolean(data.cardExpYear);
+      }
+      return true;
+    },
+    {
+      message: "Expiry year required",
+      path: ["cardExpYear"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.paymentMethod === "CARD") {
+        return /^\d{3,4}$/.test(data.cardCvv || "");
+      }
+      return true;
+    },
+    {
+      message: "Valid CVV required (3-4 digits)",
+      path: ["cardCvv"],
+    }
+  );
 
 type BookingFormData = z.infer<typeof bookingSchema>;
 
@@ -255,6 +322,7 @@ export default function CheckoutForm({
       email: defaultUser?.email || "",
       phone: defaultUser?.phone || "",
       note: "",
+      paymentMethod: "CARD" as PaymentMethod, // Default to card payment
     },
   });
 
@@ -266,6 +334,7 @@ export default function CheckoutForm({
   const startTime = watch("startTime");
   const selectedDate = watch("date");
   const selectedDays = watch("days");
+  const paymentMethod = watch("paymentMethod");
 
   // Normalize URL params on mount: support both date+days and startDate+endDate formats
   useEffect(() => {
@@ -305,6 +374,12 @@ export default function CheckoutForm({
     return startTimes;
   }, [trips, tripIndex, startTimes]);
 
+  // Watch card details
+  const cardNumber = watch("cardNumber");
+  const cardExpMonth = watch("cardExpMonth");
+  const cardExpYear = watch("cardExpYear");
+  const cardCvv = watch("cardCvv");
+
   const canSubmit = useMemo(() => {
     const startTimeOk =
       Array.isArray(effectiveStartTimes) && effectiveStartTimes.length > 0
@@ -318,6 +393,19 @@ export default function CheckoutForm({
           isDateRangeValid(selectedDate, selectedDays)
         : false;
 
+    // Check card details if CARD payment selected
+    const cardDetailsOk =
+      paymentMethod === "CARD"
+        ? Boolean(
+            cardNumber &&
+              cardNumber.replace(/\s/g, "").length >= 13 &&
+              cardExpMonth &&
+              cardExpYear &&
+              cardCvv &&
+              /^\d{3,4}$/.test(cardCvv)
+          )
+        : true;
+
     return Boolean(
       charterId &&
         date &&
@@ -327,7 +415,8 @@ export default function CheckoutForm({
         lastName &&
         email &&
         startTimeOk &&
-        dateIsValid
+        dateIsValid &&
+        cardDetailsOk
     );
   }, [
     charterId,
@@ -343,6 +432,11 @@ export default function CheckoutForm({
     selectedDays,
     isDateBlocked,
     isDateRangeValid,
+    paymentMethod,
+    cardNumber,
+    cardExpMonth,
+    cardExpYear,
+    cardCvv,
   ]);
 
   function handleTripSelect(idx: number) {
@@ -458,7 +552,14 @@ export default function CheckoutForm({
             status: "PENDING",
           });
 
-          router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+          // Check if payment requires redirect (FPX/E-wallet DIRECT flow)
+          if (data.requiresRedirect && data.redirectUrl) {
+            console.log("🏦 Redirecting to payment gateway:", data.redirectUrl);
+            window.location.href = data.redirectUrl;
+          } else {
+            // TOKENIZED flow (Card) or MOCK - go to confirmation
+            router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+          }
         } else {
           setFormError("root", {
             type: "manual",
@@ -531,7 +632,14 @@ export default function CheckoutForm({
           status: "PENDING",
         });
 
-        router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+        // Check if payment requires redirect (FPX/E-wallet DIRECT flow)
+        if (data.requiresRedirect && data.redirectUrl) {
+          console.log("🏦 Redirecting to payment gateway:", data.redirectUrl);
+          window.location.href = data.redirectUrl;
+        } else {
+          // TOKENIZED flow (Card) or MOCK - go to confirmation
+          router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+        }
       } else {
         setFormError("root", {
           type: "manual",
@@ -573,9 +681,34 @@ export default function CheckoutForm({
       updateSearchParam("adults", String(newAdults));
     }
   }, [maxGuests, adults, children, updateSearchParam]);
-  const estTotal = useMemo(() => {
-    const p = chosenTrip?.price ?? 0;
-    return p * Math.max(1, days);
+  // Calculate complete pricing breakdown
+  const pricingBreakdown = useMemo(() => {
+    const tripPrice = chosenTrip?.price ?? 0;
+    if (tripPrice === 0) return null;
+
+    // Import and use the same pricing calculation as backend
+    const subtotal = tripPrice * Math.max(1, days);
+    const platformFee = Math.round(subtotal * 0.1 * 100) / 100;
+    const discount = 0; // TODO: Promo code support
+    const amountBeforeGateway = subtotal + platformFee - discount;
+    const paymentGatewayFee =
+      Math.round(amountBeforeGateway * 0.015 * 100) / 100;
+    const sst = 0; // Future
+    const finalPrice =
+      Math.round((amountBeforeGateway + paymentGatewayFee + sst) * 100) / 100;
+    const captainEarnings = Math.round((subtotal - platformFee) * 100) / 100;
+
+    return {
+      tripPrice,
+      days: Math.max(1, days),
+      subtotal,
+      platformFee,
+      discount,
+      paymentGatewayFee,
+      sst,
+      finalPrice,
+      captainEarnings,
+    };
   }, [chosenTrip?.price, days]);
 
   return (
@@ -592,7 +725,7 @@ export default function CheckoutForm({
         <BookingSummaryCard
           charter={charter}
           captain={charter?.captain}
-          totalPrice={estTotal}
+          pricingBreakdown={pricingBreakdown}
         />
       </div>
 
@@ -673,6 +806,18 @@ export default function CheckoutForm({
             errors={errors}
           />
 
+          {/* Payment Method */}
+          <PaymentMethodSelector
+            value={paymentMethod}
+            onChange={(method) => setValue("paymentMethod", method)}
+            error={errors.paymentMethod?.message}
+          />
+
+          {/* Card Details (show only for CARD payment) */}
+          {paymentMethod === "CARD" && (
+            <CardDetailsInput register={register} errors={errors} />
+          )}
+
           {/* Submit Button */}
           <div className="flex flex-col gap-3">
             <button
@@ -742,7 +887,7 @@ export default function CheckoutForm({
             <BookingSummaryCard
               charter={charter}
               captain={charter?.captain}
-              totalPrice={estTotal}
+              pricingBreakdown={pricingBreakdown}
             />
           </div>
         </div>

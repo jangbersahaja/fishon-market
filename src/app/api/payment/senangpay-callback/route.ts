@@ -96,8 +96,11 @@ export async function POST(request: NextRequest) {
         date: true,
         finalPrice: true,
         paymentTransactionId: true,
-        guestFirstName: true,
-        guestLastName: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 

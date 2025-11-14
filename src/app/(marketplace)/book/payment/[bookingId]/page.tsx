@@ -36,6 +36,15 @@ export default async function PaymentPage({
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
   });
 
   if (!booking) {
@@ -43,12 +52,11 @@ export default async function PaymentPage({
   }
 
   // Check authorization: User must be logged in and own the booking
-  // OR booking must be a guest booking (userId is null)
   const isAuthenticatedOwner =
     session?.user?.id && booking.userId === session.user.id;
-  const isGuestBooking = !booking.userId && booking.guestEmail;
 
-  if (!isAuthenticatedOwner && !isGuestBooking) {
+  // Note: All bookings now have userId (including GUEST role)
+  if (!isAuthenticatedOwner) {
     redirect(`/login?next=${encodeURIComponent(`/book/payment/${bookingId}`)}`);
   }
 
@@ -167,19 +175,15 @@ export default async function PaymentPage({
     });
 
     // Get user details for payment
-    const rawName =
-      booking.guestFirstName && booking.guestLastName
-        ? `${booking.guestFirstName} ${booking.guestLastName}`
-        : session?.user?.name || "Guest";
-
-    const rawPhone = booking.guestPhone || "";
+    const rawName = booking.user?.name || session?.user?.name || "Guest";
+    const rawPhone = booking.user?.phone || "";
 
     // Sanitize name and phone to meet Senang Pay requirements
     // Name: only letters and spaces (no special characters)
     // Phone: only digits (no spaces, dashes, parentheses)
     const userName = sanitizeName(rawName);
     const userPhone = sanitizePhone(rawPhone);
-    const userEmail = booking.guestEmail || session?.user?.email || "";
+    const userEmail = booking.user?.email || session?.user?.email || "";
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
 
@@ -219,12 +223,12 @@ export default async function PaymentPage({
 
     if (!booking) return;
 
-    // Check authorization: must be authenticated owner OR guest booking
+    // Check authorization: must be authenticated owner
     const isAuthenticatedOwner =
       session?.user?.id && booking.userId === session.user.id;
-    const isGuestBooking = !booking.userId && booking.guestEmail;
 
-    if (!isAuthenticatedOwner && !isGuestBooking) {
+    // Note: All bookings now have userId (including GUEST role)
+    if (!isAuthenticatedOwner) {
       console.log("❌ [PAYMENT] Authorization failed");
       return;
     }

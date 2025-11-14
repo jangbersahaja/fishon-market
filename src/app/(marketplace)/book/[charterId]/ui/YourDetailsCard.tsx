@@ -17,6 +17,7 @@ interface BookingFormData {
   email: string;
   phone?: string;
   note?: string;
+  paymentMethod: "CARD" | "FPX" | "EWALLET";
 }
 
 interface YourDetailsCardProps {

@@ -10,14 +10,19 @@ export default async function BookingTestsPage() {
     redirect("/");
   }
 
-  // Fetch all test bookings (guest bookings with email containing "test" or "dev")
+  // Fetch all test bookings (GUEST users with email containing "test" or "dev")
   const testBookings = await prisma.booking.findMany({
     where: {
-      OR: [
-        { guestEmail: { contains: "test", mode: "insensitive" } },
-        { guestEmail: { contains: "dev", mode: "insensitive" } },
-        { guestEmail: { contains: "angler", mode: "insensitive" } },
-      ],
+      user: {
+        email: { contains: "test", mode: "insensitive" },
+      },
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 20,
@@ -28,6 +33,8 @@ export default async function BookingTestsPage() {
 
     const status = formData.get("status") as string;
     const hoursToExpire = parseInt(formData.get("hoursToExpire") as string);
+    const paymentFlow = formData.get("paymentFlow") as string | null;
+    const paymentMethod = formData.get("paymentMethod") as string | null;
 
     // Use specific charter and trip IDs for testing
     const TEST_CHARTER_ID = "cmgbtc2cz0009uyrk10sbsuko";
@@ -45,15 +52,23 @@ export default async function BookingTestsPage() {
       )
     );
 
+    // Create test GUEST user first
+    const testUser = await prisma.user.create({
+      data: {
+        email: `test-${Date.now()}@example.com`,
+        name: "Test User",
+        firstName: "Test",
+        lastName: "User",
+        role: "GUEST",
+        emailVerified: new Date(),
+      },
+    });
+
     await prisma.booking.create({
       data: {
         charterId: TEST_CHARTER_ID,
         tripId: TEST_TRIP_ID,
-        userId: null,
-        guestEmail: `test-${Date.now()}@example.com`,
-        guestFirstName: "Test",
-        guestLastName: "User",
-        emailVerified: true,
+        userId: testUser.id,
         date: normalizedDate, // 7 days from now, normalized to UTC midnight
         startTime: "08:00",
         days: 1,
@@ -63,6 +78,14 @@ export default async function BookingTestsPage() {
         status: status as any,
         expiresAt,
         captainDecisionAt: status === "APPROVED" ? new Date() : null,
+        // Hybrid flow fields
+        paymentFlow: paymentFlow || null,
+        paymentMethod: paymentMethod || null,
+        paymentIntentId: paymentFlow ? `test-${Date.now()}` : null,
+        paymentAuthorizedAt:
+          paymentFlow === "TOKENIZED" || status === "PAYMENT_PENDING"
+            ? new Date()
+            : null,
       },
     });
 
@@ -153,13 +176,20 @@ export default async function BookingTestsPage() {
   async function deleteAllTestBookings() {
     "use server";
 
+    // Delete bookings with test users
     await prisma.booking.deleteMany({
       where: {
-        OR: [
-          { guestEmail: { contains: "test", mode: "insensitive" } },
-          { guestEmail: { contains: "dev", mode: "insensitive" } },
-          { guestEmail: { contains: "angler", mode: "insensitive" } },
-        ],
+        user: {
+          email: { contains: "test", mode: "insensitive" },
+        },
+      },
+    });
+
+    // Delete test GUEST users
+    await prisma.user.deleteMany({
+      where: {
+        email: { contains: "test", mode: "insensitive" },
+        role: "GUEST",
       },
     });
 
@@ -240,7 +270,53 @@ export default async function BookingTestsPage() {
 
         {/* Quick Actions */}
         <div className="grid gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* Create PENDING Booking (Near Expiry) */}
+          {/* Create PAYMENT_PENDING Booking (TOKENIZED) */}
+          <form
+            action={createTestBooking}
+            className="p-6 bg-white border border-blue-200 rounded-lg shadow-sm"
+          >
+            <input type="hidden" name="status" value="PAYMENT_PENDING" />
+            <input type="hidden" name="hoursToExpire" value="12" />
+            <input type="hidden" name="paymentFlow" value="TOKENIZED" />
+            <input type="hidden" name="paymentMethod" value="CARD" />
+            <h3 className="mb-2 text-sm font-semibold text-blue-900">
+              🆕 PAYMENT_PENDING (Card)
+            </h3>
+            <p className="mb-4 text-xs text-blue-800">
+              Test hybrid flow - TOKENIZED (card held)
+            </p>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Create Booking
+            </button>
+          </form>
+
+          {/* Create PAYMENT_PENDING Booking (DIRECT) */}
+          <form
+            action={createTestBooking}
+            className="p-6 bg-white border border-green-200 rounded-lg shadow-sm"
+          >
+            <input type="hidden" name="status" value="PAYMENT_PENDING" />
+            <input type="hidden" name="hoursToExpire" value="12" />
+            <input type="hidden" name="paymentFlow" value="DIRECT" />
+            <input type="hidden" name="paymentMethod" value="FPX" />
+            <h3 className="mb-2 text-sm font-semibold text-green-900">
+              🆕 PAYMENT_PENDING (FPX)
+            </h3>
+            <p className="mb-4 text-xs text-green-800">
+              Test hybrid flow - DIRECT (already paid)
+            </p>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+            >
+              Create Booking
+            </button>
+          </form>
+
+          {/* Create PENDING Booking (Legacy) */}
           <form
             action={createTestBooking}
             className="p-6 bg-white border rounded-lg shadow-sm"
@@ -248,35 +324,14 @@ export default async function BookingTestsPage() {
             <input type="hidden" name="status" value="PENDING" />
             <input type="hidden" name="hoursToExpire" value="0.5" />
             <h3 className="mb-2 text-sm font-semibold text-gray-900">
-              Create PENDING (30m)
+              Legacy PENDING (30m)
             </h3>
             <p className="mb-4 text-xs text-gray-600">
-              Test PENDING expiration at 12h threshold
+              Test legacy flow expiration
             </p>
             <button
               type="submit"
               className="w-full px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700"
-            >
-              Create Booking
-            </button>
-          </form>
-
-          {/* Create APPROVED Booking (Near Expiry) */}
-          <form
-            action={createTestBooking}
-            className="p-6 bg-white border rounded-lg shadow-sm"
-          >
-            <input type="hidden" name="status" value="APPROVED" />
-            <input type="hidden" name="hoursToExpire" value="1" />
-            <h3 className="mb-2 text-sm font-semibold text-gray-900">
-              Create APPROVED (1h)
-            </h3>
-            <p className="mb-4 text-xs text-gray-600">
-              Test APPROVED expiration at 48h threshold
-            </p>
-            <button
-              type="submit"
-              className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
               Create Booking
             </button>
@@ -290,7 +345,7 @@ export default async function BookingTestsPage() {
             <input type="hidden" name="status" value="APPROVED" />
             <input type="hidden" name="hoursToExpire" value="5" />
             <h3 className="mb-2 text-sm font-semibold text-gray-900">
-              Create APPROVED (5h)
+              APPROVED (5h)
             </h3>
             <p className="mb-4 text-xs text-gray-600">
               Test urgent reminder threshold (&lt;6h)
@@ -437,7 +492,7 @@ export default async function BookingTestsPage() {
                               {booking.id.slice(0, 8)}...
                             </div>
                             <div className="text-xs text-gray-500">
-                              {booking.guestEmail}
+                              {booking.user?.email || "No email"}
                             </div>
                           </div>
                         </td>

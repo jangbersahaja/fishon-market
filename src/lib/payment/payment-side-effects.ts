@@ -41,12 +41,17 @@ export async function triggerPaymentSideEffects({
     select: {
       id: true,
       userId: true,
+      user: {
+        select: {
+          name: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
       tripId: true,
       charterId: true,
       date: true,
       status: true,
-      guestFirstName: true,
-      guestLastName: true,
     },
   });
 
@@ -74,13 +79,16 @@ export async function triggerPaymentSideEffects({
 async function notifyCaptain(
   booking: {
     id: string;
-    userId: string | null;
+    userId: string;
+    user: {
+      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
+    };
     tripId: string;
     charterId: string;
     date: Date;
     status: string;
-    guestFirstName: string | null;
-    guestLastName: string | null;
   },
   source: string
 ): Promise<void> {
@@ -97,14 +105,11 @@ async function notifyCaptain(
 
     // Fetch trip data for webhook payload
     const trip = await getTripById(booking.tripId);
-    const user = booking.userId
-      ? await prisma.user.findUnique({ where: { id: booking.userId } })
-      : null;
 
     const anglerName =
-      user?.name ||
-      (booking.guestFirstName
-        ? `${booking.guestFirstName} ${booking.guestLastName}`
+      booking.user.name ||
+      (booking.user.firstName && booking.user.lastName
+        ? `${booking.user.firstName} ${booking.user.lastName}`
         : "Angler");
 
     const payload = {

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const recentAttempts = await prisma.verificationCode.count({
       where: {
         email,
-        type: "GUEST_BOOKING",
+        type: "TAC",
         createdAt: { gte: fifteenMinutesAgo },
       },
     });
@@ -58,12 +58,12 @@ export async function POST(request: Request) {
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Store verification code in database
+    // Store verification code in database (use TAC type for consistency)
     await prisma.verificationCode.create({
       data: {
         email,
         code,
-        type: "GUEST_BOOKING",
+        type: "TAC",
         expiresAt,
       },
     });
