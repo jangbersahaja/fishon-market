@@ -73,13 +73,28 @@ export default async function CheckoutPage({
 
   // Prefill user details if available
   let defaultUser:
-    | { firstName?: string; lastName?: string; email?: string; phone?: string }
+    | {
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        phone?: string;
+        emergencyName?: string;
+        emergencyPhone?: string;
+        emergencyRelation?: string;
+      }
     | undefined;
   if (session?.user?.id) {
     try {
       const user = await prisma.user.findUnique({
         where: { id: String((session.user as any).id) },
-        select: { name: true, email: true, phone: true },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          emergencyName: true,
+          emergencyPhone: true,
+          emergencyRelation: true,
+        },
       });
       if (user) {
         const name = user.name || "";
@@ -90,6 +105,9 @@ export default async function CheckoutPage({
           lastName,
           email: user.email || undefined,
           phone: user.phone || undefined,
+          emergencyName: user.emergencyName || undefined,
+          emergencyPhone: user.emergencyPhone || undefined,
+          emergencyRelation: user.emergencyRelation || undefined,
         };
       }
     } catch {}

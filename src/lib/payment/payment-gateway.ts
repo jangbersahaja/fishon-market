@@ -234,7 +234,7 @@ export async function createPaymentIntent(params: {
         process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
       paymentUrl.searchParams.append(
         "return_url",
-        `${baseUrl}/api/payment/senangpay-return`
+        `${baseUrl}/book/payment/return`
       );
       paymentUrl.searchParams.append(
         "callback_url",

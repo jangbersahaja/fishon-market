@@ -115,12 +115,13 @@ export async function sendGuestVerificationCode(
 
 /**
  * Verify guest email with TAC code
- * Returns user data if verified successfully
+ * Returns verification result if code is valid
+ * User creation happens separately after verification
  */
 export async function verifyGuestEmail(
   email: string,
   code: string
-): Promise<{ id: string; email: string; verified: boolean } | null> {
+): Promise<{ email: string; verified: boolean } | null> {
   const normalizedEmail = email.toLowerCase().trim();
 
   // Find valid, unused verification code
@@ -144,26 +145,21 @@ export async function verifyGuestEmail(
     data: { usedAt: new Date() },
   });
 
-  // Find user and mark email as verified
+  // Check if user exists and mark email as verified if they do
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
 
-  if (!user) {
-    return null;
-  }
-
-  // Mark email as verified
-  if (!user.emailVerified) {
+  if (user && !user.emailVerified) {
     await prisma.user.update({
       where: { id: user.id },
       data: { emailVerified: new Date() },
     });
   }
 
+  // Return success even if user doesn't exist yet (they'll be created after)
   return {
-    id: user.id,
-    email: user.email,
+    email: normalizedEmail,
     verified: true,
   };
 }

@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/database/prisma";
 import {
   findOrCreateGuestUser,
   verifyGuestEmail,
@@ -54,13 +55,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find or create GUEST user
+    // Find or create GUEST user (after successful verification)
     const guestUser = await findOrCreateGuestUser({
       email,
       firstName,
       lastName,
       phone,
     });
+
+    // If user was just created, mark email as verified
+    if (guestUser) {
+      await prisma.user.update({
+        where: { id: guestUser.id },
+        data: { emailVerified: new Date() },
+      });
+    }
 
     if (!guestUser) {
       // User exists but is not a GUEST (ANGLER/ADMIN)

@@ -24,6 +24,18 @@ interface BookingFormData {
   phone?: string;
   note?: string;
   paymentMethod: "CARD" | "FPX" | "EWALLET";
+  emergencyName?: string;
+  emergencyPhone?: string;
+  emergencyRelation?: string;
+  participants: Array<{
+    name: string;
+    phone: string;
+    isBooker?: boolean;
+  }>;
+  // Payment fields
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardCvv?: string;
 }
 
 interface StartConversationCardProps {

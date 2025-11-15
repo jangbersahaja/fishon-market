@@ -16,9 +16,11 @@ import { useEffect, useState } from "react";
 interface GuestBookingVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onVerified: (token: string) => void;
+  onVerified: (data: { userId: string; email: string }) => void;
   email: string;
   firstName: string;
+  lastName: string;
+  phone: string;
 }
 
 export function GuestBookingVerificationModal({
@@ -27,6 +29,8 @@ export function GuestBookingVerificationModal({
   onVerified,
   email,
   firstName,
+  lastName,
+  phone,
 }: GuestBookingVerificationModalProps) {
   const [step, setStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState("");
@@ -93,7 +97,7 @@ export function GuestBookingVerificationModal({
       const res = await fetch("/api/bookings/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, code, firstName, lastName, phone }),
       });
 
       const data = await res.json();
@@ -102,8 +106,8 @@ export function GuestBookingVerificationModal({
         throw new Error(data.error || "Invalid verification code");
       }
 
-      // Success! Pass token to parent
-      onVerified(data.token);
+      // Success! Pass verification data to parent
+      onVerified({ userId: data.userId, email: data.email });
       onClose();
     } catch (err: any) {
       setError(err.message || "Failed to verify code");

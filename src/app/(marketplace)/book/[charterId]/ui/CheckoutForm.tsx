@@ -15,6 +15,8 @@ import { z } from "zod";
 import BookingSummaryCard from "./BookingSummaryCard";
 import CardDetailsInput from "./CardDetailsInput";
 import DateGuestsCard from "./DateGuestsCard";
+import EmergencyContactCard from "./EmergencyContactCard";
+import ParticipantListCard from "./ParticipantListCard";
 import PaymentMethodSelector, {
   type PaymentMethod,
 } from "./PaymentMethodSelector";
@@ -38,6 +40,20 @@ const bookingSchema = z
     email: z.string().email("Invalid email address"),
     phone: z.string().optional(),
     note: z.string().optional(),
+    // Emergency contact fields
+    emergencyName: z.string().optional(),
+    emergencyPhone: z.string().optional(),
+    emergencyRelation: z.string().optional(),
+    // Participants list
+    participants: z
+      .array(
+        z.object({
+          name: z.string().min(1, "Name is required"),
+          phone: z.string().min(1, "Phone is required"),
+          isBooker: z.boolean().optional(),
+        })
+      )
+      .min(1, "At least one participant is required"),
     paymentMethod: z.enum(["CARD", "FPX", "EWALLET"], {
       required_error: "Please select a payment method",
     }),
@@ -99,6 +115,16 @@ const bookingSchema = z
     {
       message: "Valid CVV required (3-4 digits)",
       path: ["cardCvv"],
+    }
+  )
+  .refine(
+    (data) => {
+      const totalGuests = data.adults + data.children;
+      return data.participants.length <= totalGuests;
+    },
+    {
+      message: "Number of participants cannot exceed total guests",
+      path: ["participants"],
     }
   );
 
@@ -178,6 +204,9 @@ export default function CheckoutForm({
     lastName?: string;
     email?: string;
     phone?: string;
+    emergencyName?: string;
+    emergencyPhone?: string;
+    emergencyRelation?: string;
   };
 }) {
   const sp = useSearchParams();
@@ -322,6 +351,16 @@ export default function CheckoutForm({
       email: defaultUser?.email || "",
       phone: defaultUser?.phone || "",
       note: "",
+      emergencyName: "",
+      emergencyPhone: "",
+      emergencyRelation: "",
+      participants: [
+        {
+          name: "",
+          phone: "",
+          isBooker: false,
+        },
+      ],
       paymentMethod: "CARD" as PaymentMethod, // Default to card payment
     },
   });
@@ -365,7 +404,14 @@ export default function CheckoutForm({
       const ln = rest.join(" ").trim();
       if (!lastName && ln) setValue("lastName", ln);
     }
-  }, [session?.user, email, firstName, lastName, setValue]);
+    // Pre-fill emergency contact from defaultUser (fetched from User model)
+    if (defaultUser?.emergencyName)
+      setValue("emergencyName", defaultUser.emergencyName);
+    if (defaultUser?.emergencyPhone)
+      setValue("emergencyPhone", defaultUser.emergencyPhone);
+    if (defaultUser?.emergencyRelation)
+      setValue("emergencyRelation", defaultUser.emergencyRelation);
+  }, [session?.user, email, firstName, lastName, defaultUser, setValue]);
 
   const effectiveStartTimes = useMemo(() => {
     const t = trips?.[tripIndex];
@@ -580,7 +626,10 @@ export default function CheckoutForm({
   });
 
   // Handle guest booking after email verification
-  async function handleGuestVerified(token: string) {
+  async function handleGuestVerified(verificationData: {
+    userId: string;
+    email: string;
+  }) {
     setShowVerificationModal(false);
 
     // Trigger validation and get form values
@@ -602,12 +651,9 @@ export default function CheckoutForm({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          verificationToken: token,
+          verifiedEmail: verificationData.email,
+          verifiedUserId: verificationData.userId,
           ...formData,
-          guestFirstName: formData.firstName,
-          guestLastName: formData.lastName,
-          guestEmail: formData.email,
-          guestPhone: formData.phone,
         }),
       });
 
@@ -741,6 +787,24 @@ export default function CheckoutForm({
             lastName={lastName}
             email={email}
             phone={phone || ""}
+          />
+
+          {/* Emergency Contact */}
+          <EmergencyContactCard
+            register={register}
+            errors={errors}
+            emergencyName={watch("emergencyName")}
+            emergencyPhone={watch("emergencyPhone")}
+            emergencyRelation={watch("emergencyRelation")}
+          />
+
+          {/* Participant List */}
+          <ParticipantListCard
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+            guests={adults + (children || 0)}
           />
 
           {/* Date + Guests (Search box style) */}
@@ -900,6 +964,8 @@ export default function CheckoutForm({
         onVerified={handleGuestVerified}
         email={email}
         firstName={firstName}
+        lastName={lastName}
+        phone={phone || ""}
       />
     </form>
   );

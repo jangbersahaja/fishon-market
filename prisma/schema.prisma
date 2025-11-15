@@ -270,9 +270,23 @@ model Booking {
   date      DateTime
   days      Int      // Number of days booked (not trip duration)
   startTime String? // e.g., "07:00" when trip has multiple start times
-
+  
+  // Time-based scheduling (Phase 2: Multi-trip support)
+  // Stores array of individual trip instances with their exact time ranges
+  // Example: 3-day booking of 4-hour trip starting at 8AM:
+  // [
+  //   { day: 1, date: "2025-11-13", startDateTime: "2025-11-13T08:00:00Z", endDateTime: "2025-11-13T12:00:00Z" },
+  //   { day: 2, date: "2025-11-14", startDateTime: "2025-11-14T08:00:00Z", endDateTime: "2025-11-14T12:00:00Z" },
+  //   { day: 3, date: "2025-11-15", startDateTime: "2025-11-15T08:00:00Z", endDateTime: "2025-11-15T12:00:00Z" }
+  // ]
+  // This allows:
+  // - Accurate overlap detection (only blocks 8AM-12PM, not full days)
+  // - Clear UI display of each trip slot
+  // - Support for multi-day trips that span multiple calendar days (e.g., 48h trip)
+  timeSlots Json? // Array of { day: number, date: string, startDateTime: string, endDateTime: string }
+  
   // Guest counts stored as JSON for flexibility
-  guests Json // { "adults": 2, "children": 1 }
+  guests Json // { "adults": 2, "children": 1, "participants": [{name, phone, isBooker}] }
 
   // === PRICING BREAKDOWN ===
   tripPrice  Decimal @db.Decimal(10, 2) // Snapshot of trip price at booking time (normal or promo)

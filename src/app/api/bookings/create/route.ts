@@ -1,5 +1,6 @@
 import { trackEvent } from "@/lib/analytics-service";
 import { auth } from "@/lib/auth/auth";
+import { calculateTimeSlots } from "@/lib/booking/booking-time";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import {
@@ -69,6 +70,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
       startTime,
       note,
       phone, // Optional: update user phone if provided
+      emergencyName, // Emergency contact fields
+      emergencyPhone,
+      emergencyRelation,
+      participants, // Participant list
       paymentMethod, // NEW: "CARD", "FPX", "EWALLET", "MOCK"
       cardNumber, // Card details for TOKENIZED flow
       cardExpMonth,
@@ -83,6 +88,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
       startTime?: string;
       note?: string;
       phone?: string;
+      emergencyName?: string;
+      emergencyPhone?: string;
+      emergencyRelation?: string;
+      participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
       paymentMethod?: string;
       cardNumber?: string;
       cardExpMonth?: string;
@@ -162,15 +171,41 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     } catch {}
 
-    // Update user phone if provided
+    // Update user phone and emergency contact if provided
+    const userUpdates: any = {};
     if (phone && typeof phone === "string" && phone.trim()) {
+      userUpdates.phone = phone.trim();
+    }
+    if (
+      emergencyName &&
+      typeof emergencyName === "string" &&
+      emergencyName.trim()
+    ) {
+      userUpdates.emergencyName = emergencyName.trim();
+    }
+    if (
+      emergencyPhone &&
+      typeof emergencyPhone === "string" &&
+      emergencyPhone.trim()
+    ) {
+      userUpdates.emergencyPhone = emergencyPhone.trim();
+    }
+    if (
+      emergencyRelation &&
+      typeof emergencyRelation === "string" &&
+      emergencyRelation.trim()
+    ) {
+      userUpdates.emergencyRelation = emergencyRelation.trim();
+    }
+
+    if (Object.keys(userUpdates).length > 0) {
       try {
         await prisma.user.update({
           where: { id: dbUserId },
-          data: { phone: phone.trim() },
+          data: userUpdates,
         });
       } catch (err) {
-        console.error("Failed to update user phone:", err);
+        console.error("Failed to update user details:", err);
         // Non-critical, continue with booking
       }
     }
@@ -413,6 +448,15 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Retry loop with transaction to prevent double bookings
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
+        // Calculate timeSlots for new booking
+        const newTimeSlots = calculateTimeSlots({
+          date: d,
+          startTime:
+            trip.startTimes.length > 0 ? (startTime as string) : "08:00",
+          durationHours: trip.durationHours,
+          days: ds,
+        });
+
         // Use transaction with serializable isolation to prevent race conditions
         booking = await prisma.$transaction(
           async (tx) => {
@@ -423,13 +467,20 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 status: { in: blockingStatuses as any },
                 date: { lte: newEnd, gte: addDaysUTC(newStart, -31) },
               },
-              select: { id: true, date: true, days: true, startTime: true },
+              select: {
+                id: true,
+                date: true,
+                days: true,
+                startTime: true,
+                timeSlots: true,
+              },
             });
 
             const conflicts = hasConflicts(candidates, newStart, ds, {
               usesStartTimes: trip.startTimes.length > 0,
               selectedStartTime:
                 trip.startTimes.length > 0 ? (startTime as string) : null,
+              newTimeSlots: newTimeSlots,
             });
 
             if (conflicts) {
@@ -437,6 +488,21 @@ async function createAuthenticatedBooking(session: any, body: any) {
             }
 
             // Create booking atomically with payment tracking
+            // Build guests JSON with participants list
+            const guestsData: any = {
+              adults: ad,
+              children: ch,
+            };
+
+            // Add participants if provided
+            if (Array.isArray(participants) && participants.length > 0) {
+              guestsData.participants = participants.map((p: any) => ({
+                name: p.name,
+                phone: p.phone,
+                isBooker: p.isBooker || false,
+              }));
+            }
+
             return await tx.booking.create({
               data: {
                 userId: dbUserId,
@@ -446,7 +512,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 days: ds,
                 startTime:
                   trip.startTimes.length > 0 ? (startTime as string) : null,
-                guests: { adults: ad, children: ch } as Prisma.JsonObject,
+                timeSlots: newTimeSlots as unknown as Prisma.JsonArray,
+                guests: guestsData as Prisma.JsonObject,
                 tripPrice: pricingBreakdown.subtotal,
                 finalPrice: pricingBreakdown.finalPrice,
                 platformFee: pricingBreakdown.platformFee,

@@ -1,4 +1,5 @@
 import { trackEvent } from "@/lib/analytics-service";
+import { calculateTimeSlots } from "@/lib/booking/booking-time";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import {
@@ -30,6 +31,10 @@ export async function POST(req: Request) {
       firstName,
       lastName,
       phone,
+      emergencyName, // Emergency contact fields
+      emergencyPhone,
+      emergencyRelation,
+      participants, // Participant list
       tripId,
       date,
       days,
@@ -48,6 +53,10 @@ export async function POST(req: Request) {
       firstName?: string;
       lastName?: string;
       phone?: string;
+      emergencyName?: string;
+      emergencyPhone?: string;
+      emergencyRelation?: string;
+      participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
       tripId?: string;
       date?: string;
       days?: number;
@@ -103,15 +112,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update GUEST user with latest details
+    // Update GUEST user with latest details and emergency contact
+    const userUpdates: any = {
+      firstName,
+      lastName,
+      name: `${firstName} ${lastName}`,
+      phone,
+    };
+
+    if (emergencyName) userUpdates.emergencyName = emergencyName;
+    if (emergencyPhone) userUpdates.emergencyPhone = emergencyPhone;
+    if (emergencyRelation) userUpdates.emergencyRelation = emergencyRelation;
+
     await prisma.user.update({
       where: { id: verifiedUserId },
-      data: {
-        firstName,
-        lastName,
-        name: `${firstName} ${lastName}`,
-        phone,
-      },
+      data: userUpdates,
     });
 
     // Basic booking validation
@@ -308,6 +323,14 @@ export async function POST(req: Request) {
     let lastError: any;
     let booking;
 
+    // Calculate timeSlots for new booking
+    const newTimeSlots = calculateTimeSlots({
+      date: d,
+      startTime: trip.startTimes.length > 0 ? (startTime as string) : "08:00",
+      durationHours: trip.durationHours,
+      days: ds,
+    });
+
     // Retry loop with transaction to prevent double bookings
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
@@ -321,13 +344,20 @@ export async function POST(req: Request) {
                 status: { in: blockingStatuses as any },
                 date: { lte: newEnd, gte: addDaysUTC(newStart, -31) },
               },
-              select: { id: true, date: true, days: true, startTime: true },
+              select: {
+                id: true,
+                date: true,
+                days: true,
+                startTime: true,
+                timeSlots: true,
+              },
             });
 
             const conflicts = hasConflicts(candidates, newStart, ds, {
               usesStartTimes: trip.startTimes.length > 0,
               selectedStartTime:
                 trip.startTimes.length > 0 ? (startTime as string) : null,
+              newTimeSlots: newTimeSlots,
             });
 
             if (conflicts) {
@@ -335,6 +365,21 @@ export async function POST(req: Request) {
             }
 
             // Create booking with GUEST user
+            // Build guests JSON with participants list
+            const guestsData: any = {
+              adults: ad,
+              children: ch,
+            };
+
+            // Add participants if provided
+            if (Array.isArray(participants) && participants.length > 0) {
+              guestsData.participants = participants.map((p: any) => ({
+                name: p.name,
+                phone: p.phone,
+                isBooker: p.isBooker || false,
+              }));
+            }
+
             return await tx.booking.create({
               data: {
                 userId: verifiedUserId, // Links to GUEST user
@@ -344,7 +389,8 @@ export async function POST(req: Request) {
                   trip.startTimes.length > 0 ? (startTime as string) : null,
                 date: d,
                 days: ds,
-                guests: { adults: ad, children: ch } as Prisma.JsonObject,
+                timeSlots: newTimeSlots as unknown as Prisma.JsonArray,
+                guests: guestsData as Prisma.JsonObject,
                 tripPrice: pricingBreakdown.subtotal,
                 finalPrice: pricingBreakdown.finalPrice,
                 platformFee: pricingBreakdown.platformFee,
