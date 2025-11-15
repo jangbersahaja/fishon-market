@@ -9,9 +9,38 @@ import type { Booking } from "@prisma/client";
 import { getTripById, type TripData } from "./trip-service";
 
 /**
+ * Time slot structure for multi-trip bookings
+ */
+export interface TimeSlot {
+  day: number; // Day number (1, 2, 3...)
+  date: string; // ISO date string
+  startDateTime: string; // ISO datetime string
+  endDateTime: string; // ISO datetime string
+}
+
+/**
+ * Participant information
+ */
+export interface Participant {
+  name: string;
+  phone: string;
+  isBooker?: boolean; // True if this participant is the person who made the booking
+}
+
+/**
+ * Emergency contact information
+ */
+export interface EmergencyContact {
+  name: string;
+  phone: string;
+  relationship: string;
+}
+
+/**
  * Enriched booking data with trip and charter information for display
  */
-export interface EnrichedBooking extends Booking {
+export interface EnrichedBooking
+  extends Omit<Booking, "timeSlots" | "platformFee" | "captainEarnings"> {
   // Enriched fields from Trip/Charter
   charterName: string;
   location: string;
@@ -21,10 +50,15 @@ export interface EnrichedBooking extends Booking {
   // Parsed from JSON fields
   adults: number;
   children: number;
+  participants?: Participant[]; // Parsed from guests.participants
+  emergencyContact?: EmergencyContact; // Parsed from guests.emergencyContact
+  timeSlots?: TimeSlot[]; // Parsed from timeSlots JSON field (overrides Booking.timeSlots)
 
   // Converted from Decimal
   unitPrice: number;
   totalPrice: number;
+  platformFee?: number; // Converted from Decimal (overrides Booking.platformFee)
+  captainEarnings?: number; // Converted from Decimal (overrides Booking.captainEarnings)
 
   // Full trip and charter data for additional display
   trip?: TripData;
@@ -47,13 +81,29 @@ export async function enrichBookingWithTripData(
   }
 
   // Parse guests from JSON
-  const guests = booking.guests as { adults: number; children: number } | null;
+  const guests = booking.guests as {
+    adults: number;
+    children: number;
+    participants?: Participant[];
+    emergencyContact?: EmergencyContact;
+  } | null;
   const adults = guests?.adults ?? 1;
   const children = guests?.children ?? 0;
+  const participants = guests?.participants;
+  const emergencyContact = guests?.emergencyContact;
+
+  // Parse timeSlots from JSON
+  const timeSlots = booking.timeSlots as TimeSlot[] | null;
 
   // Convert Decimal to number
   const unitPrice = Number(booking.tripPrice);
   const totalPrice = Number(booking.finalPrice);
+  const platformFee = booking.platformFee
+    ? Number(booking.platformFee)
+    : undefined;
+  const captainEarnings = booking.captainEarnings
+    ? Number(booking.captainEarnings)
+    : undefined;
 
   // Build enriched booking
   return {
@@ -67,10 +117,15 @@ export async function enrichBookingWithTripData(
     // Parsed from JSON
     adults,
     children,
+    participants,
+    emergencyContact,
+    timeSlots: timeSlots || undefined,
 
     // Converted from Decimal
     unitPrice,
     totalPrice,
+    platformFee,
+    captainEarnings,
 
     // Full data for additional display
     trip,

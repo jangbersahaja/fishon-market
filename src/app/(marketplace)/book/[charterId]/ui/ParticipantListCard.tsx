@@ -31,7 +31,7 @@ interface BookingFormData {
   emergencyPhone?: string;
   emergencyRelation?: string;
   participants: Participant[];
-  paymentMethod: "CARD" | "FPX" | "EWALLET";
+  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
 }
 
 interface ParticipantListCardProps {

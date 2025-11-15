@@ -11,10 +11,12 @@ import { prismaCaptain } from "@/lib/database/prisma-captain";
 export type BookingStatus =
   | "PENDING"
   | "APPROVED"
+  | "PAYMENT_PENDING"
   | "REJECTED"
   | "EXPIRED"
   | "PAID"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "COMPLETED";
 
 export interface BookingWithDetails {
   id: string;

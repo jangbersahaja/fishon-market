@@ -54,7 +54,7 @@ const bookingSchema = z
         })
       )
       .min(1, "At least one participant is required"),
-    paymentMethod: z.enum(["CARD", "FPX", "EWALLET"], {
+    paymentMethod: z.enum(["CARD", "FPX", "EWALLET", "MOCK"], {
       required_error: "Please select a payment method",
     }),
     // Card details (required only when paymentMethod is CARD)
@@ -877,7 +877,7 @@ export default function CheckoutForm({
             error={errors.paymentMethod?.message}
           />
 
-          {/* Card Details (show only for CARD payment) */}
+          {/* Card Details (show only for CARD payment, not for MOCK) */}
           {paymentMethod === "CARD" && (
             <CardDetailsInput register={register} errors={errors} />
           )}

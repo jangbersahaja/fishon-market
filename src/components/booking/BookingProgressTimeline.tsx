@@ -5,20 +5,41 @@ interface BookingProgressTimelineProps {
   /**
    * Current step in the booking flow
    * - 'details': User is filling out booking form (/book/[id])
-   * - 'pending': Waiting for captain approval (PENDING status)
-   * - 'approved': Captain approved, waiting for payment (APPROVED status)
-   * - 'confirmed': Payment completed (PAID status)
+   * - 'PENDING': Legacy flow - Waiting for captain approval (no payment yet)
+   * - 'PAYMENT_PENDING': Hybrid flow - Payment authorized/received, awaiting captain approval
+   * - 'APPROVED': Legacy flow - Captain approved, waiting for payment
+   * - 'PAID': Payment completed (confirmed booking)
    * - 'completed': Trip finished
-   * - 'rejected': Captain rejected
-   * - 'expired': Booking hold expired
-   * - 'cancelled': Booking cancelled
+   * - 'REJECTED': Captain rejected
+   * - 'EXPIRED': Booking hold expired
+   * - 'CANCELLED': Booking cancelled
    */
   currentStep: "details" | BookingStatus | "completed";
+  /**
+   * Payment flow type (only relevant for PAYMENT_PENDING status)
+   * - 'TOKENIZED': Card authorized but not charged (charge on captain approval)
+   * - 'DIRECT': Payment received immediately (refund if captain rejects)
+   */
+  paymentFlow?: "TOKENIZED" | "DIRECT" | null;
 }
 
 export function BookingProgressTimeline({
   currentStep,
+  paymentFlow,
 }: BookingProgressTimelineProps) {
+  // Helper to check if status is error state
+  function isErrorState(
+    status: BookingStatus | "details" | "completed"
+  ): boolean {
+    return (
+      status === "REJECTED" || status === "EXPIRED" || status === "CANCELLED"
+    );
+  }
+
+  // Determine if using new hybrid flow (PAYMENT_PENDING) or legacy flow (PENDING)
+  const isHybridFlow = currentStep === "PAYMENT_PENDING";
+  const isLegacyFlow = currentStep === "PENDING" || currentStep === "APPROVED";
+
   // Define main timeline steps
   const steps = [
     {
@@ -29,28 +50,54 @@ export function BookingProgressTimeline({
       isActive: currentStep === "details",
       isComplete: currentStep !== "details",
       isError: false,
+      hidden: false,
     },
     {
       id: "reservation",
       label: "Reservation",
       icon: Clock,
       color: "yellow",
-      isActive: currentStep === "PENDING",
+      isActive: currentStep === "PENDING" && !isHybridFlow,
       isComplete:
         currentStep === "APPROVED" ||
+        currentStep === "PAYMENT_PENDING" ||
         currentStep === "PAID" ||
         currentStep === "completed",
       isError:
         currentStep === "REJECTED" ||
         currentStep === "EXPIRED" ||
         currentStep === "CANCELLED",
+      hidden: false,
+    },
+    // Hybrid flow: Payment authorization step (PAYMENT_PENDING)
+    {
+      id: "payment-authorization",
+      label:
+        paymentFlow === "TOKENIZED"
+          ? "Card Authorized"
+          : paymentFlow === "DIRECT"
+            ? "Payment Received"
+            : "Payment Processing",
+      icon: CreditCard,
+      color: paymentFlow === "TOKENIZED" ? "blue" : "green",
+      isActive: currentStep === "PAYMENT_PENDING",
+      isComplete: currentStep === "PAID" || currentStep === "completed",
+      isError:
+        currentStep === "REJECTED" ||
+        currentStep === "EXPIRED" ||
+        currentStep === "CANCELLED",
+      // Only show this step for hybrid flow
+      hidden:
+        !isHybridFlow && currentStep !== "PAID" && currentStep !== "completed",
     },
     {
       id: "captain-review",
       label: "Captain Review",
       icon: CheckCircle2,
       color: "yellow",
-      isActive: currentStep === "PENDING",
+      isActive:
+        (currentStep === "PENDING" || currentStep === "PAYMENT_PENDING") &&
+        !isErrorState(currentStep),
       isComplete:
         currentStep === "APPROVED" ||
         currentStep === "PAID" ||
@@ -59,7 +106,9 @@ export function BookingProgressTimeline({
         currentStep === "REJECTED" ||
         currentStep === "EXPIRED" ||
         currentStep === "CANCELLED",
+      hidden: false,
     },
+    // Legacy flow: Payment step (APPROVED waiting for payment)
     {
       id: "payment",
       label: "Make Payment",
@@ -68,6 +117,12 @@ export function BookingProgressTimeline({
       isActive: currentStep === "APPROVED",
       isComplete: currentStep === "PAID" || currentStep === "completed",
       isError: currentStep === "EXPIRED" || currentStep === "CANCELLED",
+      // Only show this step for legacy flow
+      hidden:
+        isHybridFlow ||
+        (currentStep !== "APPROVED" &&
+          currentStep !== "PAID" &&
+          currentStep !== "completed"),
     },
     {
       id: "confirmed",
@@ -77,16 +132,24 @@ export function BookingProgressTimeline({
       isActive: currentStep === "PAID",
       isComplete: currentStep === "PAID" || currentStep === "completed",
       isError: false,
+      hidden: false,
     },
   ];
 
-  // Filter steps based on error states
-  const visibleSteps =
-    currentStep === "REJECTED" ||
-    currentStep === "EXPIRED" ||
-    currentStep === "CANCELLED"
-      ? steps.filter((s) => s.id === "details" || s.id === "reservation")
-      : steps;
+  // Filter steps based on error states and flow type
+  const visibleSteps = steps.filter((step) => {
+    // Hide steps marked as hidden
+    if (step.hidden) return false;
+
+    // For error states, only show completed steps
+    if (isErrorState(currentStep)) {
+      return (
+        step.isComplete || step.id === "details" || step.id === "reservation"
+      );
+    }
+
+    return true;
+  });
 
   // Get color classes
   const getColorClasses = (
@@ -118,6 +181,12 @@ export function BookingProgressTimeline({
           text: "text-white",
           line: "bg-orange-300",
         },
+        blue: {
+          bg: "bg-blue-500",
+          border: "border-blue-500",
+          text: "text-white",
+          line: "bg-blue-300",
+        },
         green: {
           bg: "bg-green-500",
           border: "border-green-500",
@@ -142,6 +211,12 @@ export function BookingProgressTimeline({
           text: "text-orange-600",
           line: "bg-orange-300",
         },
+        blue: {
+          bg: "bg-blue-50",
+          border: "border-blue-500",
+          text: "text-blue-600",
+          line: "bg-blue-300",
+        },
         green: {
           bg: "bg-green-50",
           border: "border-green-500",
@@ -164,8 +239,14 @@ export function BookingProgressTimeline({
   const getGradient = (fromColor: string, toColor: string) => {
     const gradientMap: Record<string, string> = {
       "orange-yellow": "bg-gradient-to-r from-orange-500 to-yellow-500",
+      "orange-blue": "bg-gradient-to-r from-orange-500 to-blue-500",
+      "orange-green": "bg-gradient-to-r from-orange-500 to-green-500",
       "yellow-yellow": "bg-gradient-to-r from-yellow-500 to-yellow-500",
+      "yellow-blue": "bg-gradient-to-r from-yellow-500 to-blue-500",
       "yellow-green": "bg-gradient-to-r from-yellow-500 to-green-500",
+      "blue-yellow": "bg-gradient-to-r from-blue-500 to-yellow-500",
+      "blue-green": "bg-gradient-to-r from-blue-500 to-green-500",
+      "green-green": "bg-gradient-to-r from-green-500 to-green-500",
     };
     return gradientMap[`${fromColor}-${toColor}`] || "bg-gray-200";
   };

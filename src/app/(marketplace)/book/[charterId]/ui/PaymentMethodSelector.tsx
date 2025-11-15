@@ -4,8 +4,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
-export type PaymentMethod = "CARD" | "FPX" | "EWALLET";
-export type PaymentFlow = "TOKENIZED" | "DIRECT";
+export type PaymentMethod = "CARD" | "FPX" | "EWALLET" | "MOCK";
+export type PaymentFlow = "TOKENIZED" | "DIRECT" | "MOCK";
 
 interface PaymentMethodSelectorProps {
   value: PaymentMethod;
@@ -13,7 +13,7 @@ interface PaymentMethodSelectorProps {
   error?: string;
 }
 
-const paymentMethods = [
+const basePaymentMethods = [
   {
     value: "CARD" as PaymentMethod,
     label: "Credit/Debit Card",
@@ -45,6 +45,23 @@ const paymentMethods = [
     icon: "📱",
   },
 ];
+
+// Add MOCK payment in development mode
+const mockPaymentMethod = {
+  value: "MOCK" as PaymentMethod,
+  label: "Mock Payment (Dev Only)",
+  badge: "Testing Mode",
+  badgeColor: "bg-purple-100 text-purple-700",
+  flow: "MOCK" as PaymentFlow,
+  description:
+    "For development testing only. Simulates payment without real charges.",
+  icon: "🎭",
+};
+
+const paymentMethods =
+  process.env.NODE_ENV === "development"
+    ? [...basePaymentMethods, mockPaymentMethod]
+    : basePaymentMethods;
 
 export default function PaymentMethodSelector({
   value,
@@ -135,6 +152,21 @@ export default function PaymentMethodSelector({
                   If rejected or expired, the authorization is released (no
                   charge)
                 </span>
+              </li>
+            </ul>
+          ) : value === "MOCK" ? (
+            <ul className="space-y-1 text-gray-600">
+              <li className="flex items-start gap-2">
+                <span className="mt-1">•</span>
+                <span>No real payment processing - for testing only</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-1">•</span>
+                <span>Simulates TOKENIZED flow behavior</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-1">•</span>
+                <span>Only available in development environment</span>
               </li>
             </ul>
           ) : (

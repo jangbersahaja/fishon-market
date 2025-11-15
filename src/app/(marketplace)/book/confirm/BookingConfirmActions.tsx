@@ -9,6 +9,13 @@ interface BookingConfirmActionsProps {
   status: BookingStatus;
   userId?: string | null;
   bookingEmail: string;
+  captainName?: string;
+  captainPhone?: string;
+  captainEmail?: string;
+  conversationId?: string;
+  conversationStatus?: string;
+  tripDate?: Date;
+  finalPrice?: number;
 }
 
 /**
@@ -22,6 +29,13 @@ export function BookingConfirmActions({
   status,
   userId,
   bookingEmail,
+  captainName,
+  captainPhone,
+  captainEmail,
+  conversationId,
+  conversationStatus,
+  tripDate,
+  finalPrice,
 }: BookingConfirmActionsProps) {
   // Determine if current user is the logged-in owner
   const isLoggedInOwner = !!userId;
@@ -33,6 +47,13 @@ export function BookingConfirmActions({
       status={status}
       isLoggedInOwner={isLoggedInOwner}
       bookingEmail={bookingEmail}
+      captainName={captainName}
+      captainPhone={captainPhone}
+      captainEmail={captainEmail}
+      conversationId={conversationId}
+      conversationStatus={conversationStatus}
+      tripDate={tripDate}
+      finalPrice={finalPrice}
     />
   );
 }

@@ -17,7 +17,7 @@ interface BookingFormData {
   email: string;
   phone?: string;
   note?: string;
-  paymentMethod: "CARD" | "FPX" | "EWALLET";
+  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;

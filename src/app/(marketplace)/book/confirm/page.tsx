@@ -122,6 +122,15 @@ export default async function ConfirmationPage({
     );
   }
 
+  // Fetch conversation data for chat availability
+  const conversation = await prisma.conversation.findUnique({
+    where: { bookingId: booking.id },
+    select: {
+      id: true,
+      status: true,
+    },
+  });
+
   // Enrich booking with trip and charter data
   const enrichedBooking = await enrichBookingWithTripData(booking);
 
@@ -194,7 +203,8 @@ export default async function ConfirmationPage({
   return (
     <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
       {/* Payment Status Notifications */}
-      {paymentStatus === "success" && booking.paymentFlow && (
+      {/* PAYMENT_PENDING Status - Show authorization/payment details */}
+      {booking.status === "PAYMENT_PENDING" && booking.paymentFlow && (
         <div
           className={`p-4 mb-6 border rounded-lg ${
             booking.paymentFlow === "TOKENIZED"
@@ -229,8 +239,8 @@ export default async function ConfirmationPage({
                 }`}
               >
                 {booking.paymentFlow === "TOKENIZED"
-                  ? "Card Authorized!"
-                  : "Payment Received!"}
+                  ? "💳 Card Authorized!"
+                  : "✅ Payment Received!"}
               </h3>
               <p
                 className={`mt-1 text-sm ${
@@ -246,6 +256,20 @@ export default async function ConfirmationPage({
                     No charge will be made until the captain approves your
                     booking within 12 hours. Your card will only be charged if
                     the captain accepts your request.
+                    {booking.paymentAuthorizedAt && (
+                      <>
+                        <br />
+                        <span className="text-xs mt-1 block">
+                          Authorization expires:{" "}
+                          {new Date(
+                            new Date(booking.paymentAuthorizedAt).getTime() +
+                              7 * 24 * 60 * 60 * 1000
+                          ).toLocaleDateString("en-MY", {
+                            dateStyle: "medium",
+                          })}
+                        </span>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -261,6 +285,80 @@ export default async function ConfirmationPage({
           </div>
         </div>
       )}
+      {/* Success after redirect from payment gateway */}
+      {paymentStatus === "success" &&
+        booking.status !== "PAYMENT_PENDING" &&
+        booking.paymentFlow && (
+          <div
+            className={`p-4 mb-6 border rounded-lg ${
+              booking.paymentFlow === "TOKENIZED"
+                ? "border-blue-200 bg-blue-50"
+                : "border-green-200 bg-green-50"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg
+                  className={`w-5 h-5 ${
+                    booking.paymentFlow === "TOKENIZED"
+                      ? "text-blue-600"
+                      : "text-green-600"
+                  }`}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3
+                  className={`text-sm font-medium ${
+                    booking.paymentFlow === "TOKENIZED"
+                      ? "text-blue-900"
+                      : "text-green-900"
+                  }`}
+                >
+                  {booking.paymentFlow === "TOKENIZED"
+                    ? "Card Authorized!"
+                    : "Payment Received!"}
+                </h3>
+                <p
+                  className={`mt-1 text-sm ${
+                    booking.paymentFlow === "TOKENIZED"
+                      ? "text-blue-700"
+                      : "text-green-700"
+                  }`}
+                >
+                  {booking.paymentFlow === "TOKENIZED" ? (
+                    <>
+                      Your card has been authorized for{" "}
+                      <strong>
+                        RM {Number(booking.finalPrice).toFixed(2)}
+                      </strong>
+                      . No charge will be made until the captain approves your
+                      booking within 12 hours. Your card will only be charged if
+                      the captain accepts your request.
+                    </>
+                  ) : (
+                    <>
+                      Your payment of{" "}
+                      <strong>
+                        RM {Number(booking.finalPrice).toFixed(2)}
+                      </strong>{" "}
+                      has been received. The captain has 12 hours to approve
+                      your booking. If the captain declines or doesn&apos;t
+                      respond, you&apos;ll receive a full refund automatically.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
       {paymentStatus === "failed" && (
         <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
@@ -349,17 +447,21 @@ export default async function ConfirmationPage({
                 ? "Trip In Progress!"
                 : booking.status === "PAID"
                   ? "Booking Confirmed!"
-                  : booking.status === "APPROVED"
-                    ? "Approved! Complete Payment"
-                    : booking.status === "PENDING"
-                      ? "Waiting For Captain Approval"
-                      : booking.status === "REJECTED"
-                        ? "Request Declined"
-                        : booking.status === "EXPIRED"
-                          ? "Booking Expired"
-                          : booking.status === "CANCELLED"
-                            ? "Booking Cancelled"
-                            : "Booking Status"}
+                  : booking.status === "PAYMENT_PENDING"
+                    ? booking.paymentFlow === "TOKENIZED"
+                      ? "Card Authorized - Awaiting Approval"
+                      : "Payment Received - Awaiting Approval"
+                    : booking.status === "APPROVED"
+                      ? "Approved! Complete Payment"
+                      : booking.status === "PENDING"
+                        ? "Waiting For Captain Approval"
+                        : booking.status === "REJECTED"
+                          ? "Request Declined"
+                          : booking.status === "EXPIRED"
+                            ? "Booking Expired"
+                            : booking.status === "CANCELLED"
+                              ? "Booking Cancelled"
+                              : "Booking Status"}
           </h1>
 
           <p className="max-w-2xl text-gray-600">
@@ -369,25 +471,27 @@ export default async function ConfirmationPage({
                 ? "Your fishing trip is currently in progress. Have a great time and stay safe!"
                 : booking.status === "PAID"
                   ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
-                  : booking.status === "APPROVED"
-                    ? "The captain has approved your request. Complete payment to confirm your booking."
-                    : booking.status === "PENDING"
-                      ? booking.paymentFlow === "TOKENIZED"
-                        ? "Your card has been authorized. Awaiting captain approval within 12 hours."
-                        : booking.paymentFlow === "DIRECT"
-                          ? "Payment received. Awaiting captain approval within 12 hours."
-                          : "Your booking request has been sent to the captain for review."
-                      : booking.status === "REJECTED"
-                        ? "The captain was unable to accommodate your request."
-                        : booking.status === "EXPIRED"
-                          ? "This booking hold has expired."
-                          : booking.status === "CANCELLED"
-                            ? "This booking has been cancelled."
-                            : "View your booking details below."}
+                  : booking.status === "PAYMENT_PENDING"
+                    ? booking.paymentFlow === "TOKENIZED"
+                      ? "Your card has been authorized. Awaiting captain approval within 12 hours. No charge until approved."
+                      : "Your payment has been received. Awaiting captain approval within 12 hours. Full refund if declined."
+                    : booking.status === "APPROVED"
+                      ? "The captain has approved your request. Complete payment to confirm your booking."
+                      : booking.status === "PENDING"
+                        ? "Your booking request has been sent to the captain for review."
+                        : booking.status === "REJECTED"
+                          ? "The captain was unable to accommodate your request."
+                          : booking.status === "EXPIRED"
+                            ? "This booking hold has expired."
+                            : booking.status === "CANCELLED"
+                              ? "This booking has been cancelled."
+                              : "View your booking details below."}
           </p>
 
-          {/* Countdown Timer for PENDING/APPROVED bookings */}
-          {(booking.status === "PENDING" || booking.status === "APPROVED") &&
+          {/* Countdown Timer for PENDING/PAYMENT_PENDING/APPROVED bookings */}
+          {(booking.status === "PENDING" ||
+            booking.status === "PAYMENT_PENDING" ||
+            booking.status === "APPROVED") &&
             booking.expiresAt && (
               <div className="mt-4">
                 <BookingCountdown
@@ -398,8 +502,8 @@ export default async function ConfirmationPage({
               </div>
             )}
 
-          {/* Payment Flow Info for PENDING status */}
-          {booking.status === "PENDING" && booking.paymentFlow && (
+          {/* Payment Flow Info for PAYMENT_PENDING status */}
+          {booking.status === "PAYMENT_PENDING" && booking.paymentFlow && (
             <div className="p-4 mt-4 border border-gray-200 rounded-lg bg-gray-50">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
@@ -500,6 +604,7 @@ export default async function ConfirmationPage({
         <div className="px-10 mb-5 sm:px-15">
           <BookingProgressTimeline
             currentStep={tripCompleted ? "completed" : (booking.status as any)}
+            paymentFlow={booking.paymentFlow as "TOKENIZED" | "DIRECT" | null}
           />
         </div>
       </div>
@@ -512,8 +617,10 @@ export default async function ConfirmationPage({
           </code>
         </div>
 
-        {/* Smart Refresh - Auto-refreshes on tab focus, manual button for PENDING/APPROVED */}
-        {(booking.status === "PENDING" || booking.status === "APPROVED") && (
+        {/* Smart Refresh - Auto-refreshes on tab focus, manual button for PENDING/PAYMENT_PENDING/APPROVED */}
+        {(booking.status === "PENDING" ||
+          booking.status === "PAYMENT_PENDING" ||
+          booking.status === "APPROVED") && (
           <BookingStatusRefresh status={booking.status} />
         )}
       </div>
@@ -538,10 +645,15 @@ export default async function ConfirmationPage({
               children: enrichedBooking.children,
               unitPrice: enrichedBooking.unitPrice,
               totalPrice: enrichedBooking.totalPrice,
+              platformFee: enrichedBooking.platformFee,
+              captainEarnings: enrichedBooking.captainEarnings,
               status: enrichedBooking.status as any,
               note: enrichedBooking.note,
               rejectionReason: enrichedBooking.rejectionReason,
               cancellationReason: enrichedBooking.cancellationReason,
+              timeSlots: enrichedBooking.timeSlots,
+              participants: enrichedBooking.participants,
+              emergencyContact: enrichedBooking.emergencyContact,
             }}
           />
 
@@ -585,6 +697,13 @@ export default async function ConfirmationPage({
             status={enrichedBooking.status as any}
             userId={session?.user?.id}
             bookingEmail={booking.user?.email || ""}
+            captainName={enrichedBooking.charter?.captain?.displayName}
+            captainPhone={enrichedBooking.charter?.captain?.phone}
+            captainEmail={enrichedBooking.charter?.captain?.email}
+            conversationId={conversation?.id}
+            conversationStatus={conversation?.status}
+            tripDate={enrichedBooking.date}
+            finalPrice={Number(booking.finalPrice)}
           />
         </div>
 

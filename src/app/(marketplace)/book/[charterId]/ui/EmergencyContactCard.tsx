@@ -24,7 +24,7 @@ interface BookingFormData {
     phone: string;
     isBooker?: boolean;
   }>;
-  paymentMethod: "CARD" | "FPX" | "EWALLET";
+  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
 }
 
 interface EmergencyContactCardProps {
