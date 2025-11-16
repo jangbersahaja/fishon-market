@@ -175,12 +175,8 @@ export default async function PaymentPage({
 
   // Cancellation policy
   const cancellationPolicy = charter?.policies;
-  const cancellationHeadline = cancellationPolicy?.cancellationFreeHours
-    ? `Free cancellation up to ${cancellationPolicy.cancellationFreeHours} hours before departure`
-    : "Flexible cancellation before departure";
-  const cancellationAfterText = cancellationPolicy?.cancellationPolicy
-    ? `After this window: ${cancellationPolicy.cancellationPolicy}`
-    : "After this window: Refunds follow captain policy and processing fees.";
+  const cancellationHeadline = "Flexible cancellation before departure";
+  const cancellationAfterText = "After this window: Refunds follow captain policy and processing fees.";
 
   const policyHighlights: string[] = [];
   if (cancellationPolicy?.childFriendly) {
@@ -377,7 +373,7 @@ export default async function PaymentPage({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {participantList.map((p, idx) => (
+                    {participantList.map((p: any, idx: number) => (
                       <div key={idx} className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">

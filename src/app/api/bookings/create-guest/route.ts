@@ -590,7 +590,7 @@ export async function POST(req: Request) {
           booking.id,
           verifiedUserId,
           String(trip.charter.id),
-          String(trip.charter.captainId)
+          String(trip.charter.captain?.id)
         );
 
         console.log("✅ Conversation created for guest booking:", {
