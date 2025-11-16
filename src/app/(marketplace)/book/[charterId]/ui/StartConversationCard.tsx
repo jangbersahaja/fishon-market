@@ -23,7 +23,7 @@ interface BookingFormData {
   email: string;
   phone?: string;
   note?: string;
-  paymentMethod: "CARD" | "FPX" | "MOCK";
+  paymentMethod?: "CARD" | "FPX" | "MOCK";
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;

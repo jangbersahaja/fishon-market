@@ -19,12 +19,12 @@ interface BookingFormData {
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;
+  paymentMethod?: "CARD" | "FPX" | "MOCK";
   participants: Array<{
     name: string;
     phone: string;
     isBooker?: boolean;
   }>;
-  paymentMethod: "CARD" | "FPX" | "MOCK";
 }
 
 interface EmergencyContactCardProps {

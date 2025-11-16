@@ -34,8 +34,10 @@ interface PricingBreakdown {
   tripPrice: number;
   finalPrice: number;
   platformFee: number;
-  serviceFee: number;
   captainEarnings: number;
+  subtotal: number;
+  paymentGatewayFee: number;
+  days: number;
 }
 
 interface PaymentPreviewFormProps {
@@ -187,13 +189,13 @@ export function PaymentPreviewForm({
         </CardHeader>
         <CardContent className="space-y-6">
           <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-            <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer">
+            <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
               <RadioGroupItem value="CARD" id="card" />
               <Label
                 htmlFor="card"
-                className="flex items-center gap-2 cursor-pointer flex-1"
+                className="flex items-center flex-1 gap-2 cursor-pointer"
               >
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                <CreditCard className="w-5 h-5 text-muted-foreground" />
                 <div>
                   <p className="font-semibold">Credit/Debit Card</p>
                   <p className="text-sm text-muted-foreground">
@@ -203,13 +205,13 @@ export function PaymentPreviewForm({
               </Label>
             </div>
 
-            <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer">
+            <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
               <RadioGroupItem value="FPX" id="fpx" />
               <Label
                 htmlFor="fpx"
-                className="flex items-center gap-2 cursor-pointer flex-1"
+                className="flex items-center flex-1 gap-2 cursor-pointer"
               >
-                <Building2 className="h-5 w-5 text-muted-foreground" />
+                <Building2 className="w-5 h-5 text-muted-foreground" />
                 <div>
                   <p className="font-semibold">Online Banking (FPX)</p>
                   <p className="text-sm text-muted-foreground">
@@ -219,17 +221,17 @@ export function PaymentPreviewForm({
               </Label>
             </div>
 
-            <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer">
+            <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
               <RadioGroupItem value="EWALLET" id="ewallet" />
               <Label
                 htmlFor="ewallet"
-                className="flex items-center gap-2 cursor-pointer flex-1"
+                className="flex items-center flex-1 gap-2 cursor-pointer"
               >
-                <Smartphone className="h-5 w-5 text-muted-foreground" />
+                <Smartphone className="w-5 h-5 text-muted-foreground" />
                 <div>
                   <p className="font-semibold">E-Wallet</p>
                   <p className="text-sm text-muted-foreground">
-                    Touch 'n Go, GrabPay, etc.
+                    Touch &#39;n Go, GrabPay, etc.
                   </p>
                 </div>
               </Label>
@@ -238,7 +240,7 @@ export function PaymentPreviewForm({
 
           {/* Card Details (only show if Card selected) */}
           {paymentMethod === "CARD" && (
-            <div className="space-y-4 pt-4">
+            <div className="pt-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="cardNumber">Card Number</Label>
                 <Input
@@ -297,7 +299,7 @@ export function PaymentPreviewForm({
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Processing...
               </>
             ) : (

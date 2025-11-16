@@ -16,7 +16,6 @@ import {
   createConversation,
   sendMessage,
 } from "@/lib/services/message-service";
-import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
@@ -191,12 +190,17 @@ async function createManualBooking(session: any, body: any) {
     });
 
     // Calculate time slots for conflict detection
-    const slots = calculateTimeSlots(d, ds, startTime);
+    const slots = calculateTimeSlots({
+      date: d,
+      startTime: startTime || "08:00",
+      durationHours: trip.durationHours,
+      days: ds,
+    });
 
     // Check for conflicts in confirmed bookings
     const existingBookings = await prisma.booking.findMany({
       where: {
-        charterId: trip.charterId,
+        charterId: trip.charter.id,
         tripId,
         status: {
           in: [
@@ -217,28 +221,28 @@ async function createManualBooking(session: any, body: any) {
       },
     });
 
-    const conflicts = hasConflicts(
-      d,
-      ds,
-      startTime || "08:00",
+    const hasConflict = hasConflicts(
       existingBookings.map((b) => ({
         id: b.id,
         date: b.date,
         days: b.days,
         startTime: b.startTime,
-      }))
+        timeSlots: null,
+      })),
+      d,
+      ds,
+      {
+        usesStartTimes: true,
+        selectedStartTime: startTime,
+        newTimeSlots: slots,
+      }
     );
 
-    if (conflicts.length > 0) {
+    if (hasConflict) {
       return NextResponse.json(
         {
           error: "Selected date/time is already booked",
-          conflicts: conflicts.map((c) => ({
-            bookingId: c.id,
-            date: c.date,
-            days: c.days,
-            startTime: c.startTime,
-          })),
+          conflictingDates: [d.toISOString().split("T")[0]],
         },
         { status: 409 }
       );
@@ -254,16 +258,19 @@ async function createManualBooking(session: any, body: any) {
     const booking = await prisma.booking.create({
       data: {
         userId: dbUserId,
-        charterId: trip.charterId,
+        charterId: trip.charter.id,
         tripId,
         date: d,
         days: ds,
         startTime: startTime || trip.startTimes[0] || "08:00",
-        guests: { adults: ad, children: ch } as Prisma.JsonObject,
+        guests: {
+          adults: ad,
+          children: ch,
+          participants: participants || [],
+        } as Prisma.JsonObject,
         tripPrice: pricing.tripPrice,
         finalPrice: pricing.finalPrice,
         platformFee: pricing.platformFee,
-        serviceFee: pricing.serviceFee,
         captainEarnings: pricing.captainEarnings,
 
         // Manual flow specific
@@ -272,17 +279,7 @@ async function createManualBooking(session: any, body: any) {
         approvalDeadline,
         expiresAt: approvalDeadline, // Will expire if captain doesn't respond
 
-        // Emergency contact
-        emergencyContact: emergencyName
-          ? ({
-              name: emergencyName,
-              phone: emergencyPhone,
-              relation: emergencyRelation,
-            } as Prisma.JsonObject)
-          : undefined,
-
-        // Participants
-        participants: (participants || []) as Prisma.JsonArray,
+        // Note: Emergency contact stored in guests JSON or separate table
 
         // No payment fields for Manual flow
         paymentMethod: null,
@@ -308,30 +305,18 @@ async function createManualBooking(session: any, body: any) {
     // Note: Conversation is locked until payment for Manual flow
     let conversationId: string | null = null;
     try {
-      conversationId = await createConversation({
-        userId: dbUserId,
-        charterId: trip.charterId,
-        bookingId: booking.id,
-      });
+      const conversation = await createConversation(
+        booking.id,
+        dbUserId,
+        String(charter.id),
+        String(trip.charter.captain?.id || charter.ownerId)
+      );
+      conversationId = conversation.id;
 
       // Send initial system message
       if (conversationId) {
-        await sendMessage({
-          conversationId,
-          senderId: "system",
-          content: bookingCreatedMessage({
-            bookingId: booking.id,
-            charterName: charter.name,
-            tripName: trip.name,
-            date: d.toISOString().split("T")[0],
-            days: ds,
-            adults: ad,
-            children: ch,
-            finalPrice: pricing.finalPrice,
-            flowType: "MANUAL",
-          }),
-          messageType: "SYSTEM",
-        });
+        const messageContent = `New booking request for ${charter.name} - ${trip.name}. Date: ${d.toISOString().split("T")[0]}, ${ds} day(s), ${ad + ch} guests. Total: RM${pricing.finalPrice.toFixed(2)}`;
+        await sendMessage(conversationId, "system", messageContent, "system");
       }
     } catch (convErr) {
       console.error("Failed to create conversation:", convErr);
@@ -340,14 +325,15 @@ async function createManualBooking(session: any, body: any) {
     // Send notification to captain
     try {
       await createNotification({
-        userId: charter.captain.id, // Captain user ID
-        type: "NEW_BOOKING_REQUEST",
+        userId: String(trip.charter.captain?.id || charter.ownerId),
+        type: "BOOKING_CREATED",
         title: "New Booking Request",
         message: `${session.user.name || session.user.email} has requested a booking for ${charter.name}`,
-        link: `/captain/bookings/${booking.id}`,
+        actionUrl: `/captain/bookings/${booking.id}`,
+        actionLabel: "Review Booking",
+        bookingId: booking.id,
+        charterId: String(charter.id),
         metadata: {
-          bookingId: booking.id,
-          charterId: trip.charterId,
           anglerName: session.user.name,
           anglerEmail: session.user.email,
           tripDate: d.toISOString().split("T")[0],
@@ -362,37 +348,31 @@ async function createManualBooking(session: any, body: any) {
     try {
       // Email to angler
       await sendBookingCreatedEmail({
-        to: booking.user.email!,
-        booking: {
-          id: booking.id,
-          charterName: charter.name,
-          tripName: trip.name,
-          date: d.toISOString().split("T")[0],
-          days: ds,
-          adults: ad,
-          children: ch,
-          finalPrice: pricing.finalPrice,
-          status: "PENDING",
-          approvalDeadline: approvalDeadline.toISOString(),
-        },
+        to: session.user.email!,
+        userName: session.user.name || session.user.email!,
+        charterName: charter.name,
+        tripName: trip.name,
+        tripDate: d.toISOString().split("T")[0],
+        tripDays: ds,
+        durationHours: trip.durationHours,
+        startTime: booking.startTime || undefined,
+        totalPrice: pricing.finalPrice.toFixed(2),
+        confirmationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/bookings/${booking.id}`,
       });
 
       // Email to captain
       await sendBookingReceivedCaptainEmail({
-        to: charter.captain.email, // Assuming captain email exists
-        booking: {
-          id: booking.id,
-          charterName: charter.name,
-          tripName: trip.name,
-          anglerName: booking.user.name || booking.user.email!,
-          date: d.toISOString().split("T")[0],
-          days: ds,
-          adults: ad,
-          children: ch,
-          finalPrice: pricing.finalPrice,
-          approvalLink: `${process.env.NEXT_PUBLIC_CAPTAIN_DASHBOARD_URL}/bookings/${booking.id}`,
-          approvalDeadline: approvalDeadline.toISOString(),
-        },
+        to: trip.charter.captain?.email || "",
+        captainName: trip.charter.captain?.displayName || "Captain",
+        charterName: charter.name,
+        anglerName: session.user.name || session.user.email!,
+        tripName: trip.name,
+        tripDate: d.toISOString().split("T")[0],
+        tripDays: ds,
+        durationHours: trip.durationHours,
+        startTime: booking.startTime || undefined,
+        totalPrice: pricing.finalPrice.toFixed(2),
+        bookingUrl: `${process.env.NEXT_PUBLIC_CAPTAIN_DASHBOARD_URL}/bookings/${booking.id}`,
       });
     } catch (emailErr) {
       console.error("Failed to send emails:", emailErr);
@@ -407,7 +387,7 @@ async function createManualBooking(session: any, body: any) {
       await sendWithRetry(webhookUrl, {
         event: "booking.request_received",
         bookingId: booking.id,
-        charterId: trip.charterId,
+        charterId: trip.charter.id,
         status: "PENDING",
         date: d.toISOString(),
         days: ds,
@@ -423,13 +403,12 @@ async function createManualBooking(session: any, body: any) {
     // Track analytics
     try {
       await trackEvent({
-        eventType: "booking_created",
+        eventType: "CHARTER_VIEW",
         userId: dbUserId,
-        anonymousId: null,
-        sessionId: null,
+        sessionId: undefined,
         metadata: {
           bookingId: booking.id,
-          charterId: trip.charterId,
+          charterId: trip.charter.id,
           tripId,
           bookingFlowType: "MANUAL",
           status: "PENDING",

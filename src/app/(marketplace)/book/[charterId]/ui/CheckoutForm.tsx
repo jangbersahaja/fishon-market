@@ -914,7 +914,7 @@ export default function CheckoutForm({
           {charterFlowType === "AUTO" && (
             <>
               <PaymentMethodSelector
-                value={paymentMethod}
+                value={(paymentMethod || "CARD") as PaymentMethod}
                 onChange={(method) => setValue("paymentMethod", method)}
                 error={errors.paymentMethod?.message}
               />

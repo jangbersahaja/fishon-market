@@ -202,15 +202,17 @@ export default async function PaymentPreviewPage({
                 {trip.name} x {bookingData.days}{" "}
                 {bookingData.days === 1 ? "day" : "days"}
               </span>
-              <span>RM {pricing.tripPrice.toFixed(2)}</span>
+              <span>RM {pricing.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Service fee</span>
-              <span>RM {pricing.serviceFee.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Platform fee</span>
+              <span className="text-muted-foreground">Platform fee (10%)</span>
               <span>RM {pricing.platformFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">
+                Payment gateway fee (1.5%)
+              </span>
+              <span>RM {pricing.paymentGatewayFee.toFixed(2)}</span>
             </div>
             <div className="border-t pt-3">
               <div className="flex justify-between font-semibold text-lg">
@@ -229,7 +231,7 @@ export default async function PaymentPreviewPage({
           bookingData={bookingData}
           pricing={pricing}
           charter={charter}
-          trip={trip}
+          trip={trip as any}
           session={session}
           sessionExpiresAt={sessionExpiresAt}
         />

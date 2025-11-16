@@ -30,8 +30,12 @@ interface BookingFormData {
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;
-  participants: Participant[];
-  paymentMethod: "CARD" | "FPX" | "MOCK";
+  paymentMethod?: "CARD" | "FPX" | "MOCK";
+  participants: Array<{
+    name: string;
+    phone: string;
+    isBooker?: boolean;
+  }>;
 }
 
 interface ParticipantListCardProps {

@@ -111,7 +111,7 @@ export async function POST(req: Request) {
       const conversation = await prisma.conversation.findUnique({
         where: { bookingId: updated.id },
       });
-      if (conversation && conversation.isLocked) {
+      if (conversation && conversation.status === "LOCKED") {
         await unlockConversation(conversation.id);
         console.log("✅ Conversation unlocked:", conversation.id);
       }
@@ -187,56 +187,43 @@ export async function POST(req: Request) {
       if (email) {
         const trip = await getTripById(updated.tripId);
         if (trip) {
+          const anglerPhone = (updated.user as any).phone || "";
           await sendBookingConfirmedAnglerEmail({
             to: email,
-            booking: {
-              id: updated.id,
-              charterName: trip.charter.name,
-              captainName: trip.charter.captain.displayName,
-              tripName: trip.name,
-              date: updated.date.toISOString().split("T")[0],
-              startTime: updated.startTime,
-              days: updated.days,
-              adults: (updated.guests as any)?.adults || 1,
-              children: (updated.guests as any)?.children || 0,
-              finalPrice: updated.finalPrice,
-              bookingLink: `${process.env.NEXT_PUBLIC_APP_URL}/account/bookings/${updated.id}`,
-            },
+            userName: name || email,
+            charterName: trip.charter.name,
+            tripName: trip.name,
+            tripDate: updated.date.toISOString().split("T")[0],
+            tripDays: updated.days,
+            durationHours: trip.durationHours,
+            startTime: updated.startTime || undefined,
+            finalPrice: updated.finalPrice.toFixed(2),
+            captainName: trip.charter.captain?.displayName || "Captain",
+            captainEmail: trip.charter.captain?.email || "",
+            captainPhone: trip.charter.captain?.phone || "",
+            bookingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/bookings/${updated.id}`,
+          });
+
+          // Also send email to captain
+          await sendBookingConfirmedCaptainEmail({
+            to: trip.charter.captain?.email || "",
+            captainName: trip.charter.captain?.displayName || "Captain",
+            charterName: trip.charter.name,
             anglerName: name || email,
+            tripName: trip.name,
+            tripDate: updated.date.toISOString().split("T")[0],
+            tripDays: updated.days,
+            durationHours: trip.durationHours,
+            startTime: updated.startTime || undefined,
+            finalPrice: updated.finalPrice.toFixed(2),
+            anglerEmail: email,
+            anglerPhone: anglerPhone,
+            bookingUrl: `${process.env.NEXT_PUBLIC_CAPTAIN_DASHBOARD_URL}/bookings/${updated.id}`,
           });
         }
       }
-    } catch (emailErr) {
-      console.error("Failed to send angler email:", emailErr);
-    }
-
-    // Email captain (best-effort)
-    try {
-      const trip = await getTripById(updated.tripId);
-      if (trip?.charter?.captain?.email) {
-        await sendBookingConfirmedCaptainEmail({
-          to: trip.charter.captain.email,
-          booking: {
-            id: updated.id,
-            charterName: trip.charter.name,
-            anglerName:
-              updated.user.name ||
-              `${updated.user.firstName || ""} ${updated.user.lastName || ""}`.trim() ||
-              updated.user.email!,
-            anglerEmail: updated.user.email!,
-            tripName: trip.name,
-            date: updated.date.toISOString().split("T")[0],
-            startTime: updated.startTime,
-            days: updated.days,
-            adults: (updated.guests as any)?.adults || 1,
-            children: (updated.guests as any)?.children || 0,
-            captainEarnings: updated.captainEarnings,
-            bookingLink: `${process.env.NEXT_PUBLIC_CAPTAIN_DASHBOARD_URL}/bookings/${updated.id}`,
-          },
-        });
-      }
-    } catch (emailErr) {
-      console.error("Failed to send captain email:", emailErr);
+    } catch (err) {
+      console.error("Failed to send confirmation notification/email:", err);
     }
 
     // Revalidate paths
@@ -253,9 +240,9 @@ export async function POST(req: Request) {
       },
     });
   } catch (error: any) {
-    console.error("Error acknowledging booking:", error);
+    console.error("Acknowledge booking error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal error" },
+      { error: error.message || "Failed to acknowledge booking" },
       { status: 500 }
     );
   }

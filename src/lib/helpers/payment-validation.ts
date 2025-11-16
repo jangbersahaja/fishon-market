@@ -53,7 +53,6 @@ export async function validateSessionAndAvailability(
   try {
     const availability = await checkDateAvailability({
       charterId: data.charterId,
-      tripId: data.tripId,
       date: new Date(data.date),
       days: data.days,
       startTime: data.startTime,
