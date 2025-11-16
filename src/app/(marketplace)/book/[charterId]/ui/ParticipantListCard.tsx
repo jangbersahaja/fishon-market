@@ -31,7 +31,7 @@ interface BookingFormData {
   emergencyPhone?: string;
   emergencyRelation?: string;
   participants: Participant[];
-  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
+  paymentMethod: "CARD" | "FPX" | "MOCK";
 }
 
 interface ParticipantListCardProps {
@@ -81,7 +81,7 @@ export default function ParticipantListCard({
   };
 
   return (
-    <section className="pb-5 border-b border-black/10">
+    <section className="">
       <div className="mb-4">
         <h2 className="text-base font-semibold sm:text-lg">Participant List</h2>
         <p className="mt-1 text-sm text-gray-600">
@@ -94,7 +94,7 @@ export default function ParticipantListCard({
         {participants.map((participant, index) => (
           <div
             key={index}
-            className="p-4 border border-gray-200 rounded-lg bg-gray-50"
+            className="p-3 border border-gray-200 rounded-lg bg-slate-50"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export default function ParticipantListCard({
             type="button"
             onClick={addParticipant}
             disabled={!canAddMore}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#ec2227] border-2 border-[#ec2227] rounded-lg hover:bg-[#ec2227] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ec2227]"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#ec2227] border-2 border-[#ec2227] rounded-lg hover:bg-[#ec2227] hover:text-white transition-colors disabled:opacity-50 bg-slate-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ec2227]"
           >
             <Plus className="w-4 h-4" />
             Add Participant

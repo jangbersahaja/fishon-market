@@ -50,6 +50,15 @@ export interface BookingWithDetails {
   longitude?: number | null;
   // Trip details
   durationHours?: number | null;
+  // Time slots
+  timeSlots?: Array<{
+    day: number;
+    date: string;
+    startDateTime: string;
+    endDateTime: string;
+  }> | null;
+  // Conversation
+  conversationId?: string | null;
 }
 
 export interface BookingFilters {
@@ -160,6 +169,14 @@ async function enrichBookingsWithCaptainData(
       children: number;
     } | null;
 
+    // Parse timeSlots if available
+    const timeSlots = booking.timeSlots as Array<{
+      day: number;
+      date: string;
+      startDateTime: string;
+      endDateTime: string;
+    }> | null;
+
     // Convert Prisma Decimal types to numbers and map field names
     const serializedBooking = {
       ...booking,
@@ -186,6 +203,10 @@ async function enrichBookingsWithCaptainData(
       longitude: charter?.longitude || null,
       discount: booking.discount, // Already JSON
       tax: booking.tax, // Already JSON
+      // Time slots
+      timeSlots: timeSlots || null,
+      // Conversation
+      conversationId: (booking as any).conversation?.id || null,
     };
 
     return serializedBooking as BookingWithDetails;
@@ -232,6 +253,13 @@ export async function getUserBookings(
   try {
     const bookings = await prisma.booking.findMany({
       where,
+      include: {
+        conversation: {
+          select: {
+            id: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -258,6 +286,13 @@ export async function getBookingById(
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
+      include: {
+        conversation: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
 
     // Ownership check
@@ -282,6 +317,7 @@ export async function getBookingById(
 export async function getBookingStats(userId: string): Promise<{
   total: number;
   pending: number;
+  paymentPending: number;
   approved: number;
   paid: number;
   rejected: number;
@@ -289,20 +325,30 @@ export async function getBookingStats(userId: string): Promise<{
   cancelled: number;
 }> {
   try {
-    const [total, pending, approved, paid, rejected, expired, cancelled] =
-      await Promise.all([
-        prisma.booking.count({ where: { userId } }),
-        prisma.booking.count({ where: { userId, status: "PENDING" } }),
-        prisma.booking.count({ where: { userId, status: "APPROVED" } }),
-        prisma.booking.count({ where: { userId, status: "PAID" } }),
-        prisma.booking.count({ where: { userId, status: "REJECTED" } }),
-        prisma.booking.count({ where: { userId, status: "EXPIRED" } }),
-        prisma.booking.count({ where: { userId, status: "CANCELLED" } }),
-      ]);
+    const [
+      total,
+      pending,
+      paymentPending,
+      approved,
+      paid,
+      rejected,
+      expired,
+      cancelled,
+    ] = await Promise.all([
+      prisma.booking.count({ where: { userId } }),
+      prisma.booking.count({ where: { userId, status: "PENDING" } }),
+      prisma.booking.count({ where: { userId, status: "PAYMENT_PENDING" } }),
+      prisma.booking.count({ where: { userId, status: "APPROVED" } }),
+      prisma.booking.count({ where: { userId, status: "PAID" } }),
+      prisma.booking.count({ where: { userId, status: "REJECTED" } }),
+      prisma.booking.count({ where: { userId, status: "EXPIRED" } }),
+      prisma.booking.count({ where: { userId, status: "CANCELLED" } }),
+    ]);
 
     return {
       total,
       pending,
+      paymentPending,
       approved,
       paid,
       rejected,

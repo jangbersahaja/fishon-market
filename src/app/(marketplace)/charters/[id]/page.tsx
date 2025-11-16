@@ -362,9 +362,9 @@ export default async function CharterViewPage({
       </section>
       <section className="px-4 pb-10 mx-auto max-w-7xl sm:px-6">
         {/* Main grid */}
-        <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-5">
+        <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-3">
           {/* Left column */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             {/* Video Gallery */}
             {charter?.videos && charter.videos.length > 0 && (
               <VideoGallery
@@ -424,7 +424,7 @@ export default async function CharterViewPage({
           </div>
 
           {/* Right column: Booking Widget (Sticky) */}
-          <div className="h-full md:col-span-2 md:self-start">
+          <div className="h-full md:self-start">
             <div className="h-fit md:sticky md:top-6">
               <BookingWidget
                 trips={trips}

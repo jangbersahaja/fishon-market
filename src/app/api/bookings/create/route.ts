@@ -14,6 +14,7 @@ import {
 import {
   createConversation,
   sendMessage,
+  unlockConversation,
 } from "@/lib/services/message-service";
 import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
@@ -488,7 +489,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
             }
 
             // Create booking atomically with payment tracking
-            // Build guests JSON with participants list
+            // Build guests JSON with participants list and emergency contact
             const guestsData: any = {
               adults: ad,
               children: ch,
@@ -503,6 +504,27 @@ async function createAuthenticatedBooking(session: any, body: any) {
               }));
             }
 
+            // Add emergency contact if provided
+            if (
+              emergencyName &&
+              typeof emergencyName === "string" &&
+              emergencyName.trim() &&
+              emergencyPhone &&
+              typeof emergencyPhone === "string" &&
+              emergencyPhone.trim()
+            ) {
+              guestsData.emergencyContact = {
+                name: emergencyName.trim(),
+                phone: emergencyPhone.trim(),
+                relationship:
+                  emergencyRelation &&
+                  typeof emergencyRelation === "string" &&
+                  emergencyRelation.trim()
+                    ? emergencyRelation.trim()
+                    : "Not specified",
+              };
+            }
+
             return await tx.booking.create({
               data: {
                 userId: dbUserId,
@@ -514,9 +536,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
                   trip.startTimes.length > 0 ? (startTime as string) : null,
                 timeSlots: newTimeSlots as unknown as Prisma.JsonArray,
                 guests: guestsData as Prisma.JsonObject,
-                tripPrice: pricingBreakdown.subtotal,
+                tripPrice: pricingBreakdown.tripPrice, // Base price per day, not subtotal
                 finalPrice: pricingBreakdown.finalPrice,
                 platformFee: pricingBreakdown.platformFee,
+                serviceFee: pricingBreakdown.paymentGatewayFee,
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
@@ -646,6 +669,12 @@ async function createAuthenticatedBooking(session: any, body: any) {
           trip.charter.captain.id // ownerId
         );
 
+        // If booking has PAYMENT_PENDING status, unlock conversation immediately (payment already received)
+        if (booking.status === "PAYMENT_PENDING") {
+          console.log("🔓 Unlocking conversation for PAYMENT_PENDING booking");
+          await unlockConversation(conversation.id);
+        }
+
         // Send initial booking card message
         const bookingCardData = {
           bookingId: booking.id,
@@ -770,6 +799,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           confirmationUrl,
+          paymentFlow: booking.paymentFlow as
+            | "TOKENIZED"
+            | "DIRECT"
+            | undefined,
         });
       } catch (err) {
         console.error("Failed to send booking created email:", err);

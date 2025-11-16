@@ -34,8 +34,10 @@ interface BookingDetailsProps {
     adults: number;
     children: number;
     unitPrice: number;
+    subtotal: number;
     totalPrice: number;
     platformFee?: number;
+    serviceFee?: number;
     captainEarnings?: number;
     status: BookingStatus;
     note?: string | null;
@@ -53,14 +55,20 @@ const discount: number = 0;
 
 export function BookingDetails({ booking }: BookingDetailsProps) {
   return (
-    <div className="p-6 bg-white border border-gray-200 rounded-lg">
+    <div className="p-3 bg-white border border-gray-200 rounded-lg sm:p-5">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900 capitalize">
             {booking.charterName}
           </h2>
-          <p className="text-gray-600 capitalize">{booking.tripName}</p>
+          <p className="text-gray-600">
+            <span className="capitalize">{booking.tripName}</span> •{" "}
+            {booking.durationHour}{" "}
+            {Number(booking.durationHour) === 1 ? "hour" : "hours"}{" "}
+            {booking.startTime &&
+              ` • Starting at ${convert24to12Hour(booking.startTime)}`}
+          </p>
         </div>
       </div>
 
@@ -73,180 +81,181 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
 
       {/* Details Grid */}
       <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <User className="w-5 h-5 text-gray-400 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Guest Name</p>
-              <p className="text-sm text-gray-600 capitalize">
-                {booking.guestName}
-              </p>
-            </div>
+        <div className="flex items-start gap-3">
+          <User className="w-5 h-5 text-gray-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-gray-900">Guest Name</p>
+            <p className="text-sm text-gray-600 capitalize">
+              {booking.guestName}
+            </p>
           </div>
-
-          {/* Time Slots (new hybrid flow) or Date (legacy flow) */}
-          {booking.timeSlots && booking.timeSlots.length > 0 ? (
-            <div className="flex items-start gap-3">
-              <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 mb-2">
-                  Trip Schedule ({booking.timeSlots.length}{" "}
-                  {booking.timeSlots.length === 1 ? "session" : "sessions"})
-                </p>
-                <div className="space-y-2">
-                  {booking.timeSlots.map((slot, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"
-                    >
-                      <span className="font-medium text-gray-900">
-                        Day {slot.day}:
-                      </span>
-                      <span>
-                        {new Date(slot.date).toLocaleDateString("en-MY", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                      <span className="text-gray-400">•</span>
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>
-                        {new Date(slot.startDateTime).toLocaleTimeString(
-                          "en-MY",
-                          {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          }
-                        )}{" "}
-                        -{" "}
-                        {new Date(slot.endDateTime).toLocaleTimeString(
-                          "en-MY",
-                          {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          }
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Legacy: Simple date display */}
-              <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Date</p>
-                  <p className="text-sm text-gray-600">
-                    {formatBookingDate(booking.date)} • {booking.days}{" "}
-                    {booking.days === 1 ? "day" : "days"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Duration</p>
-                  <p className="text-sm text-gray-600">
-                    {booking.durationHour}{" "}
-                    {Number(booking.durationHour) === 1 ? "hour" : "hours"}{" "}
-                    {booking.startTime &&
-                      ` • Starting at ${convert24to12Hour(booking.startTime)}`}
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Users className="w-5 h-5 text-gray-400 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Total Guests</p>
-              <p className="text-sm text-gray-600">
-                {booking.adults} {booking.adults === 1 ? "adult" : "adults"}
-                {booking.children > 0 &&
-                  `, ${booking.children} ${
-                    booking.children === 1 ? "child" : "children"
-                  }`}
+        {/* Booking ID */}
+        <div className="flex items-start gap-3">
+          <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-gray-900">Booking ID</p>
+            <p className="font-mono text-sm text-gray-600">{booking.id}</p>
+          </div>
+        </div>
+
+        {/* Time Slots (new hybrid flow) or Date (legacy flow) */}
+        {booking.timeSlots && booking.timeSlots.length > 0 ? (
+          <div className="flex items-start col-span-2 gap-3">
+            <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+            <div className="flex-1">
+              <p className="mb-2 text-sm font-medium text-gray-900">
+                Trip Schedule ({booking.timeSlots.length}{" "}
+                {booking.timeSlots.length === 1 ? "session" : "sessions"})
               </p>
+              <div className="space-y-2">
+                {booking.timeSlots.map((slot, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 p-2 text-sm text-gray-600 rounded bg-gray-50"
+                  >
+                    <span className="font-medium text-gray-900">
+                      Day {slot.day}:
+                    </span>
+                    <span>
+                      {new Date(slot.date).toLocaleDateString("en-MY", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "Asia/Kuala_Lumpur",
+                      })}
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>
+                      {new Date(slot.startDateTime).toLocaleTimeString(
+                        "en-MY",
+                        {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                          timeZone: "Asia/Kuala_Lumpur",
+                        }
+                      )}{" "}
+                      -{" "}
+                      {new Date(slot.endDateTime).toLocaleTimeString("en-MY", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                        timeZone: "Asia/Kuala_Lumpur",
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-
-          {/* Participant List */}
-          {booking.participants && booking.participants.length > 0 && (
+        ) : (
+          <>
+            {/* Legacy: Simple date display */}
             <div className="flex items-start gap-3">
-              <Users className="w-5 h-5 text-gray-400 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 mb-2">
-                  Participants
+              <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Date</p>
+                <p className="text-sm text-gray-600">
+                  {formatBookingDate(booking.date)} • {booking.days}{" "}
+                  {booking.days === 1 ? "day" : "days"}
                 </p>
-                <div className="space-y-1.5">
-                  {booking.participants.map((participant, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 text-sm text-gray-600"
-                    >
-                      <span className="capitalize">{participant.name}</span>
-                      {participant.phone && (
-                        <>
-                          <span className="text-gray-400">•</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Duration</p>
+                <p className="text-sm text-gray-600">
+                  {booking.durationHour}{" "}
+                  {Number(booking.durationHour) === 1 ? "hour" : "hours"}{" "}
+                  {booking.startTime &&
+                    ` • Starting at ${convert24to12Hour(booking.startTime)}`}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="flex items-start gap-3">
+          <Users className="w-5 h-5 text-gray-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-gray-900">Total Guests</p>
+            <p className="text-sm text-gray-600">
+              {booking.adults} {booking.adults === 1 ? "adult" : "adults"}
+              {booking.children > 0 &&
+                `, ${booking.children} ${
+                  booking.children === 1 ? "child" : "children"
+                }`}
+            </p>
+          </div>
+        </div>
+
+        {/* Participant List */}
+        {booking.participants && booking.participants.length > 0 && (
+          <div className="flex items-start col-span-2 gap-3">
+            <Users className="w-5 h-5 text-gray-400 mt-0.5" />
+            <div className="flex-1">
+              <p className="mb-2 text-sm font-medium text-gray-900">
+                Participants
+              </p>
+              <div className="space-y-1.5">
+                {booking.participants.map((participant, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 text-sm text-gray-600"
+                  >
+                    <span className="capitalize">{participant.name}</span>
+                    {participant.phone && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <p className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5" />
                           <span className="font-mono text-xs">
                             {participant.phone}
                           </span>
-                        </>
-                      )}
-                      {participant.isBooker && (
-                        <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                          Booker
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        </p>
+                      </>
+                    )}
+                    {participant.isBooker && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                        Booker
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
-
-          {/* Emergency Contact */}
-          {booking.emergencyContact && (
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Emergency Contact
-                </p>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p className="capitalize">{booking.emergencyContact.name}</p>
-                  <p className="flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5" />
-                    <span className="font-mono text-xs">
-                      {booking.emergencyContact.phone}
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {booking.emergencyContact.relationship}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-start gap-3">
-            <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Booking ID</p>
-              <p className="font-mono text-sm text-gray-600">{booking.id}</p>
             </div>
           </div>
-        </div>
+        )}
+        {/* Emergency Contact */}
+        {booking.emergencyContact && (
+          <div className="flex items-start col-span-2 gap-3">
+            <AlertCircle className="w-5 h-5 text-gray-400 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                Emergency Contact
+              </p>
+              <div className="flex gap-2 text-sm text-gray-600">
+                <p className="capitalize">{booking.emergencyContact.name}</p>
+                <span className="text-gray-400">•</span>
+                <p className="text-sm text-gray-500 capitalize">
+                  {booking.emergencyContact.relationship}
+                </p>
+                <span className="text-gray-400">•</span>
+                <p className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span className="font-mono text-xs">
+                    {booking.emergencyContact.phone}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Note */}
@@ -282,19 +291,19 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
         <div className="space-y-2">
           {/* Trip Price Calculation */}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Trip Price</span>
+            <span className="text-gray-600">Trip Price (per day)</span>
             <span className="text-gray-900">
               {formatCurrency(booking.unitPrice)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Days</span>
+            <span className="text-gray-600">Number of Days</span>
             <span className="text-gray-900">× {booking.days}</span>
           </div>
           <div className="flex justify-between pt-2 text-sm border-t border-gray-100">
             <span className="text-gray-600">Subtotal</span>
             <span className="text-gray-900">
-              {formatCurrency(booking.unitPrice * booking.days)}
+              {formatCurrency(booking.subtotal)}
             </span>
           </div>
 
@@ -311,9 +320,19 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           {/* Platform Fee */}
           {booking.platformFee && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Platform Fee (10%)</span>
+              <span className="text-gray-600">Commission (10%)</span>
               <span className="text-gray-900">
                 {formatCurrency(booking.platformFee)}
+              </span>
+            </div>
+          )}
+
+          {/* Service Fee (Payment Gateway) */}
+          {booking.serviceFee && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Service Fee (1.5%)</span>
+              <span className="text-gray-900">
+                {formatCurrency(booking.serviceFee)}
               </span>
             </div>
           )}
@@ -335,18 +354,6 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
               {formatCurrency(booking.totalPrice)}
             </span>
           </div>
-
-          {/* Captain Earnings (if available) */}
-          {booking.captainEarnings && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Captain Earnings</span>
-                <span className="text-green-600 font-semibold">
-                  {formatCurrency(booking.captainEarnings)}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

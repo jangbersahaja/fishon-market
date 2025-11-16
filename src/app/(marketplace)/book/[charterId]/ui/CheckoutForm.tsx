@@ -54,7 +54,7 @@ const bookingSchema = z
         })
       )
       .min(1, "At least one participant is required"),
-    paymentMethod: z.enum(["CARD", "FPX", "EWALLET", "MOCK"], {
+    paymentMethod: z.enum(["CARD", "FPX", "MOCK"], {
       required_error: "Please select a payment method",
     }),
     // Card details (required only when paymentMethod is CARD)
@@ -758,7 +758,7 @@ export default function CheckoutForm({
   }, [chosenTrip?.price, days]);
 
   return (
-    <form onSubmit={onSubmit} className="mt-6">
+    <form onSubmit={onSubmit} className="">
       {/* Error display */}
       {errors.root && (
         <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
@@ -767,7 +767,7 @@ export default function CheckoutForm({
       )}
 
       {/* Mobile: Summary first */}
-      <div className="mb-6 lg:hidden">
+      <div className="mb-3 lg:hidden">
         <BookingSummaryCard
           charter={charter}
           captain={charter?.captain}
@@ -776,99 +776,91 @@ export default function CheckoutForm({
       </div>
 
       {/* Main grid */}
-      <section className="grid gap-6 lg:grid-cols-5 ">
+      <section className="grid gap-3 sm:gap-5 lg:grid-cols-3 ">
         {/* Left column: Form sections */}
-        <div className="p-5 space-y-6 bg-white border lg:col-span-3 rounded-2xl border-black/10 sm:p-6">
-          {/* Your Details */}
-          <YourDetailsCard
-            register={register}
-            errors={errors}
-            firstName={firstName}
-            lastName={lastName}
-            email={email}
-            phone={phone || ""}
-          />
-
-          {/* Emergency Contact */}
-          <EmergencyContactCard
-            register={register}
-            errors={errors}
-            emergencyName={watch("emergencyName")}
-            emergencyPhone={watch("emergencyPhone")}
-            emergencyRelation={watch("emergencyRelation")}
-          />
-
-          {/* Participant List */}
-          <ParticipantListCard
-            register={register}
-            errors={errors}
-            watch={watch}
-            setValue={setValue}
-            guests={adults + (children || 0)}
-          />
-
-          {/* Date + Guests (Search box style) */}
-          <DateGuestsCard
-            schedule={charter?.schedule}
-            unavailability={charter?.unavailability}
-            charterId={charterId || undefined}
-            charterType={charter?.charterType}
-            date={date}
-            onDateChange={(d) => updateSearchParam("date", d)}
-            days={days}
-            onDaysChange={(v) => updateSearchParam("days", String(v))}
-            adults={adults}
-            onAdultsChange={(nextAdults) => {
-              const max = maxGuests ?? Infinity;
-              const clampedAdults = Math.max(
-                1,
-                Math.min(nextAdults, max - children)
-              );
-              updateSearchParam("adults", String(clampedAdults));
-            }}
-            childrenCount={children}
-            onChildrenChange={(nextChildren) => {
-              const max = maxGuests ?? Infinity;
-              const clampedChildren = Math.max(
-                0,
-                Math.min(nextChildren, max - adults)
-              );
-              updateSearchParam("children", String(clampedChildren));
-            }}
-            maxGuests={maxGuests}
-            blockedDatesSet={blockedDatesSet}
-            dateError={errors.date?.message}
-          />
-
-          {/* Trip Selection */}
-          <TripSelectionCard
-            trips={trips || []}
-            selectedIndex={tripIndex}
-            days={days}
-            charterSpecies={charter?.species || []}
-            charterTechniques={charter?.techniques || []}
-            onTripSelect={handleTripSelect}
-          />
-
-          {/* Start Time Selection */}
-          {effectiveStartTimes && effectiveStartTimes.length > 0 && (
-            <StartTimeSelection
-              startTimes={effectiveStartTimes}
-              selectedTime={startTime}
-              onTimeSelect={(v) => setValue("startTime", v)}
+        <div className="space-y-3 lg:col-span-2 ">
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            {/* Your Details */}
+            <YourDetailsCard
+              register={register}
+              errors={errors}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              phone={phone || ""}
             />
-          )}
 
-          {/* Start Conversation */}
-          <StartConversationCard
-            captain={charter?.captain}
-            charterName={charter?.name}
-            location={charter?.location}
-            species={charter?.species || []}
-            techniques={charter?.techniques || []}
-            register={register}
-            errors={errors}
-          />
+            {/* Emergency Contact */}
+            <EmergencyContactCard
+              register={register}
+              errors={errors}
+              emergencyName={watch("emergencyName")}
+              emergencyPhone={watch("emergencyPhone")}
+              emergencyRelation={watch("emergencyRelation")}
+            />
+
+            {/* Participant List */}
+            <ParticipantListCard
+              register={register}
+              errors={errors}
+              watch={watch}
+              setValue={setValue}
+              guests={adults + (children || 0)}
+            />
+          </div>
+
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            {/* Trip Selection */}
+            <TripSelectionCard
+              trips={trips || []}
+              selectedIndex={tripIndex}
+              days={days}
+              charterSpecies={charter?.species || []}
+              charterTechniques={charter?.techniques || []}
+              onTripSelect={handleTripSelect}
+            />
+            {/* Date + Guests (Search box style) */}
+            <DateGuestsCard
+              schedule={charter?.schedule}
+              unavailability={charter?.unavailability}
+              charterId={charterId || undefined}
+              charterType={charter?.charterType}
+              date={date}
+              onDateChange={(d) => updateSearchParam("date", d)}
+              days={days}
+              onDaysChange={(v) => updateSearchParam("days", String(v))}
+              adults={adults}
+              onAdultsChange={(nextAdults) => {
+                const max = maxGuests ?? Infinity;
+                const clampedAdults = Math.max(
+                  1,
+                  Math.min(nextAdults, max - children)
+                );
+                updateSearchParam("adults", String(clampedAdults));
+              }}
+              childrenCount={children}
+              onChildrenChange={(nextChildren) => {
+                const max = maxGuests ?? Infinity;
+                const clampedChildren = Math.max(
+                  0,
+                  Math.min(nextChildren, max - adults)
+                );
+                updateSearchParam("children", String(clampedChildren));
+              }}
+              maxGuests={maxGuests}
+              blockedDatesSet={blockedDatesSet}
+              dateError={errors.date?.message}
+            />
+
+            {/* Start Time Selection */}
+            {effectiveStartTimes && effectiveStartTimes.length > 0 && (
+              <StartTimeSelection
+                startTimes={effectiveStartTimes}
+                selectedTime={startTime}
+                onTimeSelect={(v) => setValue("startTime", v)}
+              />
+            )}
+          </div>
 
           {/* Payment Method */}
           <PaymentMethodSelector
@@ -881,6 +873,19 @@ export default function CheckoutForm({
           {paymentMethod === "CARD" && (
             <CardDetailsInput register={register} errors={errors} />
           )}
+
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            {/* Start Conversation */}
+            <StartConversationCard
+              captain={charter?.captain}
+              charterName={charter?.name}
+              location={charter?.location}
+              species={charter?.species || []}
+              techniques={charter?.techniques || []}
+              register={register}
+              errors={errors}
+            />
+          </div>
 
           {/* Submit Button */}
           <div className="flex flex-col gap-3">
@@ -946,7 +951,7 @@ export default function CheckoutForm({
         </div>
 
         {/* Right column: Summary (desktop only) */}
-        <div className="hidden lg:block lg:col-span-2">
+        <div className="hidden lg:block ">
           <div className="">
             <BookingSummaryCard
               charter={charter}

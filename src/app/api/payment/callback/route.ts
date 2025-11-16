@@ -267,6 +267,10 @@ async function handleCallback(req: NextRequest) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           confirmationUrl,
+          paymentFlow: booking.paymentFlow as
+            | "TOKENIZED"
+            | "DIRECT"
+            | undefined,
         });
       } catch (err) {
         console.error("Failed to send payment confirmation email:", err);

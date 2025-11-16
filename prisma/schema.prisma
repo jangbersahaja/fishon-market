@@ -289,10 +289,10 @@ model Booking {
   guests Json // { "adults": 2, "children": 1, "participants": [{name, phone, isBooker}] }
 
   // === PRICING BREAKDOWN ===
-  tripPrice  Decimal @db.Decimal(10, 2) // Snapshot of trip price at booking time (normal or promo)
+  tripPrice  Decimal @db.Decimal(10, 2) // Base trip price PER DAY at booking time (normal or promo)
   discount   Json? // { "code": "SUMMER10", "percentage": "10%", "amount": 50.00 }
   tax        Json? // { "name": "SST", "percentage": "6%", "amount": 30.00 } (future)
-  finalPrice Decimal @db.Decimal(10, 2) // Calculated: tripPrice * days * (1 - discount) * (1 + tax)
+  finalPrice Decimal @db.Decimal(10, 2) // Total amount angler pays (includes platform fee, gateway fee, tax, minus discount)
 
   // === BOOKING STATUS ===
   status             BookingStatus @default(PENDING)
@@ -314,8 +314,9 @@ model Booking {
   paymentReleasedAt    DateTime? // When token was released without charge (TOKENIZED only)
 
   // === FINANCIAL TRACKING (Phase 1: Admin Finance Dashboard) ===
-  platformFee      Decimal?      @db.Decimal(10, 2) // Fishon commission (5-10% by pricing plan)
-  captainEarnings  Decimal?      @db.Decimal(10, 2) // Captain net earnings (finalPrice - platformFee)
+  platformFee      Decimal?      @db.Decimal(10, 2) // Fishon commission (10% of subtotal, where subtotal = tripPrice * days)
+  serviceFee       Decimal?      @db.Decimal(10, 2) // Payment gateway charge (1.5% of subtotal + platformFee - discount)
+  captainEarnings  Decimal?      @db.Decimal(10, 2) // Captain net earnings (subtotal - platformFee = tripPrice * days - platformFee)
   payoutStatus     PayoutStatus? @default(PENDING)
   payoutBatchId    String?                          // References Payout.batchId in fishon-captain DB
   

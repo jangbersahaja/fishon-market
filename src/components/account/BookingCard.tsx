@@ -12,9 +12,9 @@ import {
 import { CancelBookingAction } from "@/components/account/CancelBookingAction";
 import { BookingCountdown } from "@/components/booking";
 import { Button } from "@/components/ui/button";
+import { formatTimeRange } from "@/lib/booking/booking-time";
 import {
   convert24to12Hour,
-  formatBookingDate,
   formatCurrency,
   formatTripDuration,
   getTimeRemaining,
@@ -79,36 +79,68 @@ export function BookingCard({
         <h3 className="mb-1 text-lg font-semibold text-gray-900">
           {booking.charterName}
         </h3>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <MapPin className="w-4 h-4" />
-          <span className="capitalize">{booking.location}</span>
-        </div>
+        <h4 className="text-sm">
+          {booking.tripName} •{" "}
+          <span>
+            {formatTripDuration(booking.durationHours, booking.days)}
+            {booking.startTime && (
+              <span>
+                {" "}
+                • Starts at {convert24to12Hour(booking.startTime ?? "")}
+              </span>
+            )}
+          </span>
+        </h4>
       </div>
 
       {/* Details */}
       <div className="flex flex-col items-end justify-between gap-4 pt-4 mb-4 text-gray-700 border-t border-gray-200 sm:flex-row">
         <div className="flex-1 w-full">
-          <h4 className="mb-2 text-sm font-semibold">{booking.tripName}</h4>
           <div className="grid grid-cols-1 gap-2 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span>
-                {formatBookingDate(booking.date)} • {booking.days}{" "}
-                {booking.days === 1 ? "day" : "days"}
-              </span>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+              <span className="capitalize">{booking.location}</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span>
-                {formatTripDuration(booking.durationHours, booking.days)}
-                {booking.startTime && (
-                  <span>
-                    {" "}
-                    • Starts at {convert24to12Hour(booking.startTime ?? "")}
-                  </span>
-                )}
-              </span>
-            </div>
+            {/* Time Slots Display */}
+            {booking.timeSlots && booking.timeSlots.length > 0 ? (
+              <div className="flex items-start gap-2">
+                <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="flex flex-col gap-1">
+                  {booking.timeSlots.map((slot) => (
+                    <span
+                      key={slot.day}
+                      className={`text-gray-700 ${slot.day === 1 ? "font-medium" : "font-light"}`}
+                    >
+                      <span className="font-medium">
+                        {slot.day === 1 ? "" : `Day ${slot.day}: `}
+                      </span>
+                      {new Date(slot.date).toLocaleDateString("en-MY", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "Asia/Kuala_Lumpur",
+                      })}{" "}
+                      • {formatTimeRange(slot.startDateTime, slot.endDateTime)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              // Fallback to legacy time display
+              <div className="flex items-center gap-2 text-gray-700">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <span>
+                  {formatTripDuration(booking.durationHours, booking.days)}
+                  {booking.startTime && (
+                    <span>
+                      {" "}
+                      • Starts at {convert24to12Hour(booking.startTime ?? "")}
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 text-gray-700">
               <Users className="w-4 h-4 text-gray-400" />
               <span>
@@ -125,9 +157,13 @@ export function BookingCard({
           </div>
         </div>
         <div className="flex items-center justify-end gap-3 w-fit">
-          {booking.status === "PAID" ? (
+          {booking.status === "PAID" || booking.status === "COMPLETED" ? (
             <span className="px-3 text-sm text-gray-500 bg-emerald-100">
               PAID
+            </span>
+          ) : booking.status === "PAYMENT_PENDING" ? (
+            <span className="px-3 text-sm text-blue-700 bg-blue-100">
+              PAYMENT RECEIVED
             </span>
           ) : (
             <span className="text-sm text-gray-500">UNPAID</span>
@@ -138,8 +174,10 @@ export function BookingCard({
         </div>
       </div>
 
-      {/* Countdown Timer for PENDING & APPROVED status */}
-      {(booking.status === "PENDING" || booking.status === "APPROVED") &&
+      {/* Countdown Timer for PENDING, PAYMENT_PENDING & APPROVED status */}
+      {(booking.status === "PENDING" ||
+        booking.status === "PAYMENT_PENDING" ||
+        booking.status === "APPROVED") &&
         booking.expiresAt &&
         !timeRemaining.isExpired && (
           <div className="mb-4">
@@ -147,11 +185,16 @@ export function BookingCard({
               expiresAt={booking.expiresAt}
               size="md"
               showIcon={true}
-              className="w-full justify-center py-2"
+              className="justify-center w-full py-2"
             />
             {booking.status === "APPROVED" && (
               <p className="mt-2 text-xs text-center text-gray-600">
                 Complete payment to secure your booking
+              </p>
+            )}
+            {booking.status === "PAYMENT_PENDING" && (
+              <p className="mt-2 text-xs text-center text-gray-600">
+                Awaiting captain approval. Full refund if declined.
               </p>
             )}
           </div>
@@ -182,6 +225,35 @@ export function BookingCard({
             <ViewDetailsButton bookingId={booking.id} fullWidth />
             <CancelBookingAction bookingId={booking.id} fullWidth />
           </div>
+        )}
+
+        {/* PAYMENT_PENDING: View Details + Contact Captain */}
+        {booking.status === "PAYMENT_PENDING" && (
+          <>
+            <div className="flex gap-3">
+              <ViewDetailsButton bookingId={booking.id} fullWidth />
+            </div>
+            {/* Contact Actions */}
+            <div className="p-3 space-y-2 rounded-md bg-blue-50">
+              <p className="mb-2 text-xs font-medium text-blue-900">
+                Contact Captain
+              </p>
+              <div className="flex gap-2">
+                {booking.captainPhone && (
+                  <CallCaptainButton
+                    phone={booking.captainPhone}
+                    fullWidth
+                    size="sm"
+                  />
+                )}
+                <ChatCaptainButton
+                  conversationId={booking.conversationId}
+                  fullWidth
+                  size="sm"
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {/* APPROVED: Pay Now + Cancel */}
@@ -236,10 +308,10 @@ export function BookingCard({
                   />
                 )}
                 <ChatCaptainButton
-                  bookingId={booking.id}
+                  conversationId={booking.conversationId}
                   fullWidth
                   size="sm"
-                  disabled
+                  disabled={false}
                 />
               </div>
 

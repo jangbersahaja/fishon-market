@@ -20,8 +20,10 @@ describe("booking-time", () => {
       expect(slots[0]).toEqual({
         day: 1,
         date: "2025-06-01",
-        startDateTime: "2025-06-01T08:00:00.000Z",
-        endDateTime: "2025-06-01T12:00:00.000Z",
+        // 08:00 Malaysia time = 00:00 UTC
+        startDateTime: "2025-06-01T00:00:00.000Z",
+        // 12:00 Malaysia time = 04:00 UTC
+        endDateTime: "2025-06-01T04:00:00.000Z",
       });
     });
 
@@ -37,6 +39,7 @@ describe("booking-time", () => {
       expect(slots[0].day).toBe(1);
       expect(slots[1].day).toBe(2);
       expect(slots[2].day).toBe(3);
+      // Dates remain in Malaysia local time
       expect(slots[0].date).toBe("2025-06-01");
       expect(slots[1].date).toBe("2025-06-02");
       expect(slots[2].date).toBe("2025-06-03");
@@ -51,8 +54,10 @@ describe("booking-time", () => {
       });
 
       expect(slots).toHaveLength(1);
-      expect(slots[0].startDateTime).toBe("2025-06-01T18:00:00.000Z");
-      expect(slots[0].endDateTime).toBe("2025-06-02T02:00:00.000Z");
+      // 18:00 Malaysia time = 10:00 UTC
+      expect(slots[0].startDateTime).toBe("2025-06-01T10:00:00.000Z");
+      // 02:00 Malaysia time (next day) = 18:00 UTC (same day)
+      expect(slots[0].endDateTime).toBe("2025-06-01T18:00:00.000Z");
     });
 
     it("should handle full-day trip", () => {
@@ -64,8 +69,10 @@ describe("booking-time", () => {
       });
 
       expect(slots).toHaveLength(1);
-      expect(slots[0].startDateTime).toBe("2025-06-01T08:00:00.000Z");
-      expect(slots[0].endDateTime).toBe("2025-06-01T16:00:00.000Z");
+      // 08:00 Malaysia time = 00:00 UTC
+      expect(slots[0].startDateTime).toBe("2025-06-01T00:00:00.000Z");
+      // 16:00 Malaysia time = 08:00 UTC
+      expect(slots[0].endDateTime).toBe("2025-06-01T08:00:00.000Z");
     });
 
     it("should handle multi-day expedition (48 hours)", () => {
@@ -77,8 +84,10 @@ describe("booking-time", () => {
       });
 
       expect(slots).toHaveLength(1);
-      expect(slots[0].startDateTime).toBe("2025-06-01T08:00:00.000Z");
-      expect(slots[0].endDateTime).toBe("2025-06-03T08:00:00.000Z");
+      // 08:00 Malaysia time on June 1 = 00:00 UTC
+      expect(slots[0].startDateTime).toBe("2025-06-01T00:00:00.000Z");
+      // 08:00 Malaysia time on June 3 = 00:00 UTC
+      expect(slots[0].endDateTime).toBe("2025-06-03T00:00:00.000Z");
     });
   });
 
@@ -259,27 +268,32 @@ describe("booking-time", () => {
 
   describe("formatTimeRange", () => {
     it("should format same-day range", () => {
+      // Timestamps representing 08:00-12:00 Malaysia time (stored as 00:00-04:00 UTC)
       const formatted = formatTimeRange(
-        "2025-06-01T08:00:00.000Z",
-        "2025-06-01T12:00:00.000Z"
+        "2025-06-01T00:00:00.000Z", // 08:00 Malaysia
+        "2025-06-01T04:00:00.000Z" // 12:00 Malaysia
       );
 
       expect(formatted).toBe("8:00 AM - 12:00 PM");
     });
 
     it("should format overnight range (crosses midnight)", () => {
+      // Timestamps representing 18:00 Malaysia → 02:00 Malaysia next day
+      // (stored as 10:00 UTC → 18:00 UTC same day)
       const formatted = formatTimeRange(
-        "2025-06-01T18:00:00.000Z",
-        "2025-06-02T02:00:00.000Z"
+        "2025-06-01T10:00:00.000Z", // 18:00 (6 PM) Malaysia June 1
+        "2025-06-01T18:00:00.000Z" // 02:00 (2 AM) Malaysia June 2
       );
 
       expect(formatted).toBe("6:00 PM - 2:00 AM (next day)");
     });
 
     it("should format multi-day range", () => {
+      // Timestamps representing 08:00 Malaysia on June 1 → 08:00 Malaysia on June 3
+      // (stored as 00:00 UTC June 1 → 00:00 UTC June 3)
       const formatted = formatTimeRange(
-        "2025-06-01T08:00:00.000Z",
-        "2025-06-03T08:00:00.000Z"
+        "2025-06-01T00:00:00.000Z", // 08:00 Malaysia June 1
+        "2025-06-03T00:00:00.000Z" // 08:00 Malaysia June 3
       );
 
       expect(formatted).toBe("8:00 AM (Jun 1) - 8:00 AM (Jun 3)");

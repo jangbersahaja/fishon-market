@@ -37,6 +37,7 @@ interface SendBookingCreatedParams {
   startTime?: string;
   totalPrice: string;
   confirmationUrl: string;
+  paymentFlow?: "TOKENIZED" | "DIRECT"; // NEW: payment flow type
 }
 
 export async function sendBookingCreatedEmail(
@@ -52,6 +53,7 @@ export async function sendBookingCreatedEmail(
     startTime: params.startTime,
     totalPrice: params.totalPrice,
     confirmationUrl: params.confirmationUrl,
+    paymentFlow: params.paymentFlow,
   });
 
   return sendMail({
@@ -94,6 +96,8 @@ interface SendBookingRejectedParams {
   charterName: string;
   reason?: string;
   searchUrl: string;
+  paymentFlow?: "TOKENIZED" | "DIRECT"; // NEW: payment flow type
+  refundAmount?: string; // For DIRECT flow
 }
 
 export async function sendBookingRejectedEmail(
@@ -104,6 +108,8 @@ export async function sendBookingRejectedEmail(
     charterName: params.charterName,
     reason: params.reason,
     searchUrl: params.searchUrl,
+    paymentFlow: params.paymentFlow,
+    refundAmount: params.refundAmount,
   });
 
   return sendMail({

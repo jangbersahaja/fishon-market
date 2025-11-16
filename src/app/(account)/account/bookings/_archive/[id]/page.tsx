@@ -152,7 +152,7 @@ export default async function BookingDetailPage({
                         size="sm"
                       />
                       <ChatCaptainButton
-                        bookingId={booking.id}
+                        conversationId={null}
                         disabled
                         fullWidth
                         size="sm"

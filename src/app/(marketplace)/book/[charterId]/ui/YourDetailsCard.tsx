@@ -17,7 +17,7 @@ interface BookingFormData {
   email: string;
   phone?: string;
   note?: string;
-  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
+  paymentMethod: "CARD" | "FPX" | "MOCK";
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;
@@ -106,7 +106,7 @@ export default function YourDetailsCard({
               type="text"
               {...register("firstName")}
               placeholder="Your first name"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.firstName ? "border-red-500" : "border-black/10"
               }`}
             />
@@ -125,7 +125,7 @@ export default function YourDetailsCard({
               type="text"
               {...register("lastName")}
               placeholder="Your last name"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.lastName ? "border-red-500" : "border-black/10"
               }`}
             />
@@ -146,7 +146,7 @@ export default function YourDetailsCard({
               type="email"
               {...register("email")}
               placeholder="you@example.com"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.email ? "border-red-500" : "border-black/10"
               }`}
             />
@@ -165,7 +165,7 @@ export default function YourDetailsCard({
               type="tel"
               {...register("phone")}
               placeholder="+60 12-345 6789"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.phone ? "border-red-500" : "border-black/10"
               }`}
             />

@@ -138,7 +138,7 @@ export default async function CheckoutPage({
   };
 
   return (
-    <main className="w-full min-h-screen mx-auto bg-gray-50">
+    <main className="w-full min-h-screen mx-auto bg-slate-50">
       <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 ">
         <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
           Complete Your Booking

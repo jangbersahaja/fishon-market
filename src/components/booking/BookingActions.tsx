@@ -3,7 +3,6 @@
 import {
   BookAgainButton,
   CancelBookingButton,
-  PayNowButton,
 } from "@/components/account/BookingActionButtons";
 import { EmailVerificationModal } from "@/components/booking/EmailVerificationModal";
 import { Button } from "@/components/ui/button";
@@ -231,14 +230,14 @@ export function BookingActions({
 
   return (
     <>
-      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <div className="p-3 space-y-3 bg-white border border-gray-200 rounded-lg sm:p-5">
         <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
 
         {/* PAYMENT_PENDING: Contact Captain + Cancel */}
-        {status === "PAYMENT_PENDING" && (
+        {(status === "PAYMENT_PENDING" || status === "PAID") && (
           <>
             <div className="pb-3 mb-3 border-b border-gray-200">
-              <p className="text-sm font-medium text-gray-700 mb-3">
+              <p className="mb-3 text-sm font-medium text-gray-700">
                 Contact {captainName || "Captain"}
               </p>
               <div className="grid grid-cols-3 gap-2">
@@ -284,80 +283,63 @@ export function BookingActions({
                   }
                 >
                   <MessageCircle className="w-4 h-4 mb-1" />
-                  <span className="text-xs">
-                    {isChatAvailable ? "Chat" : "🔒 Chat"}
-                  </span>
+                  <span className="text-xs">Chat</span>
                 </Button>
               </div>
             </div>
+          </>
+        )}
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {/* PENDING: Cancel button */}
+          {(status === "PAID" || status === "PAYMENT_PENDING") && (
             <CancelBookingButton
               bookingId={bookingId}
               fullWidth
               onCancel={handleCancelClick}
             />
-          </>
-        )}
+          )}
 
-        {/* PENDING: Cancel button */}
-        {status === "PENDING" && (
-          <CancelBookingButton
-            bookingId={bookingId}
-            fullWidth
-            onCancel={handleCancelClick}
-          />
-        )}
-
-        {/* APPROVED: Pay Now + Cancel */}
-        {status === "APPROVED" && (
-          <>
-            <PayNowButton bookingId={bookingId} fullWidth />
-            <CancelBookingButton
-              bookingId={bookingId}
-              fullWidth
-              onCancel={handleCancelClick}
-            />
-          </>
-        )}
-
-        {/* PAID: Download Receipt + Book Again */}
-        {status === "PAID" && (
-          <>
-            <button
-              onClick={handleDownloadClick}
-              disabled={isDownloading}
-              className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              <Download className="w-4 h-4" />
-              {isDownloading ? "Downloading..." : "Download Receipt"}
-            </button>
+          {/* CANCELLED: Book Again */}
+          {status === "CANCELLED" && (
             <BookAgainButton charterId={charterId} fullWidth />
-          </>
-        )}
+          )}
 
-        {/* CANCELLED: Book Again */}
-        {status === "CANCELLED" && (
-          <BookAgainButton charterId={charterId} fullWidth />
-        )}
-
-        {/* REJECTED: Book Again */}
-        {status === "REJECTED" && (
-          <BookAgainButton charterId={charterId} fullWidth />
-        )}
-
-        {/* COMPLETED: Download Receipt + Book Again */}
-        {status === "COMPLETED" && (
-          <>
-            <button
-              onClick={handleDownloadClick}
-              disabled={isDownloading}
-              className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              <Download className="w-4 h-4" />
-              {isDownloading ? "Downloading..." : "Download Receipt"}
-            </button>
+          {/* REJECTED: Book Again */}
+          {status === "REJECTED" && (
             <BookAgainButton charterId={charterId} fullWidth />
-          </>
-        )}
+          )}
+
+          {/* COMPLETED: Download Receipt + Book Again */}
+          {status === "COMPLETED" && (
+            <>
+              <button
+                onClick={handleDownloadClick}
+                disabled={isDownloading}
+                className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                {isDownloading ? "Downloading..." : "Download Receipt"}
+              </button>
+              <BookAgainButton charterId={charterId} fullWidth />
+            </>
+          )}
+
+          {/* PAID: Download Receipt + Book Again */}
+          {status === "PAID" && (
+            <>
+              <button
+                onClick={handleDownloadClick}
+                disabled={isDownloading}
+                className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                {isDownloading ? "Downloading..." : "Download Receipt"}
+              </button>
+              <BookAgainButton charterId={charterId} fullWidth />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Email Verification Modal */}

@@ -40,7 +40,10 @@ export interface EmergencyContact {
  * Enriched booking data with trip and charter information for display
  */
 export interface EnrichedBooking
-  extends Omit<Booking, "timeSlots" | "platformFee" | "captainEarnings"> {
+  extends Omit<
+    Booking,
+    "timeSlots" | "platformFee" | "serviceFee" | "captainEarnings"
+  > {
   // Enriched fields from Trip/Charter
   charterName: string;
   location: string;
@@ -56,8 +59,10 @@ export interface EnrichedBooking
 
   // Converted from Decimal
   unitPrice: number;
+  subtotal: number; // unitPrice * days
   totalPrice: number;
   platformFee?: number; // Converted from Decimal (overrides Booking.platformFee)
+  serviceFee?: number; // Converted from Decimal (overrides Booking.serviceFee)
   captainEarnings?: number; // Converted from Decimal (overrides Booking.captainEarnings)
 
   // Full trip and charter data for additional display
@@ -97,9 +102,13 @@ export async function enrichBookingWithTripData(
 
   // Convert Decimal to number
   const unitPrice = Number(booking.tripPrice);
+  const subtotal = unitPrice * booking.days;
   const totalPrice = Number(booking.finalPrice);
   const platformFee = booking.platformFee
     ? Number(booking.platformFee)
+    : undefined;
+  const serviceFee = booking.serviceFee
+    ? Number(booking.serviceFee)
     : undefined;
   const captainEarnings = booking.captainEarnings
     ? Number(booking.captainEarnings)
@@ -123,8 +132,10 @@ export async function enrichBookingWithTripData(
 
     // Converted from Decimal
     unitPrice,
+    subtotal,
     totalPrice,
     platformFee,
+    serviceFee,
     captainEarnings,
 
     // Full data for additional display

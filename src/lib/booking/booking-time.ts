@@ -55,10 +55,10 @@ function parseTime(timeStr: string): { hours: number; minutes: number } {
  * Calculate timeSlots array for a booking
  *
  * @param date - Booking start date (YYYY-MM-DD or Date object)
- * @param startTime - Trip start time (HH:MM format, e.g., "08:00")
+ * @param startTime - Trip start time (HH:MM format in Malaysia time, e.g., "08:00")
  * @param durationHours - Trip duration in hours (from Trip model)
  * @param days - Number of days booked (for multi-day bookings of same trip)
- * @returns Array of TimeSlot objects
+ * @returns Array of TimeSlot objects with times in Malaysia timezone (UTC+8)
  */
 export function calculateTimeSlots(params: {
   date: Date | string;
@@ -68,11 +68,9 @@ export function calculateTimeSlots(params: {
 }): TimeSlot[] {
   const { date, startTime, durationHours, days } = params;
 
-  // Parse the start date to UTC
-  const startDate =
-    typeof date === "string"
-      ? new Date(date + "T00:00:00.000Z")
-      : new Date(date);
+  // Parse the start date (YYYY-MM-DD format represents Malaysia local date)
+  const dateStr =
+    typeof date === "string" ? date : date.toISOString().split("T")[0];
 
   // Parse the start time
   const { hours, minutes } = parseTime(startTime);
@@ -86,13 +84,12 @@ export function calculateTimeSlots(params: {
 
   if (spansMultipleDays) {
     // Multi-day expedition: single continuous slot
-    const tripStart = new Date(startDate);
-    tripStart.setUTCHours(hours, minutes, 0, 0);
+    // Create datetime in Malaysia timezone (UTC+8)
+    const tripStartMY = `${dateStr}T${startTime.padStart(5, "0")}:00+08:00`;
+    const tripStart = new Date(tripStartMY);
 
     const tripEnd = new Date(tripStart);
     tripEnd.setTime(tripEnd.getTime() + totalHours * 60 * 60 * 1000);
-
-    const dateStr = tripStart.toISOString().split("T")[0];
 
     timeSlots.push({
       day: 1,
@@ -103,19 +100,28 @@ export function calculateTimeSlots(params: {
   } else {
     // Generate a slot for each booking day (same trip repeated)
     for (let day = 0; day < days; day++) {
-      const tripStart = new Date(startDate);
-      tripStart.setTime(tripStart.getTime() + day * 24 * 60 * 60 * 1000);
-      tripStart.setUTCHours(hours, minutes, 0, 0);
+      // Calculate Malaysia local date for this day
+      // Parse the date parts and add days directly to avoid timezone issues
+      const [year, month, dayOfMonth] = dateStr.split("-").map(Number);
+      const currentDay = dayOfMonth + day;
+
+      // Create a proper date string by adjusting the day
+      const tempDate = new Date(year, month - 1, currentDay); // months are 0-indexed
+      const yyyy = tempDate.getFullYear();
+      const mm = String(tempDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(tempDate.getDate()).padStart(2, "0");
+      const currentDateStr = `${yyyy}-${mm}-${dd}`;
+
+      // Create datetime in Malaysia timezone (UTC+8)
+      const tripStartMY = `${currentDateStr}T${startTime.padStart(5, "0")}:00+08:00`;
+      const tripStart = new Date(tripStartMY);
 
       const tripEnd = new Date(tripStart);
       tripEnd.setTime(tripEnd.getTime() + durationHours * 60 * 60 * 1000);
 
-      // Format date as YYYY-MM-DD
-      const dateStr = tripStart.toISOString().split("T")[0];
-
       timeSlots.push({
         day: day + 1, // 1-indexed
-        date: dateStr,
+        date: currentDateStr,
         startDateTime: tripStart.toISOString(),
         endDateTime: tripEnd.toISOString(),
       });
@@ -189,6 +195,7 @@ export function formatTimeRange(
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: "Asia/Kuala_Lumpur",
     });
   };
 
@@ -196,25 +203,39 @@ export function formatTimeRange(
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
+      timeZone: "Asia/Kuala_Lumpur",
     });
   };
 
-  // Same day
+  // Helper to get Malaysia timezone date parts
+  const getMYDateParts = (date: Date) => {
+    const myDateStr = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "Asia/Kuala_Lumpur",
+    });
+    const [month, day, year] = myDateStr.split("/");
+    return { year: parseInt(year), month: parseInt(month), day: parseInt(day) };
+  };
+
+  const startMY = getMYDateParts(start);
+  const endMY = getMYDateParts(end);
+
+  // Same day (in Malaysia timezone)
   if (
-    start.getUTCFullYear() === end.getUTCFullYear() &&
-    start.getUTCMonth() === end.getUTCMonth() &&
-    start.getUTCDate() === end.getUTCDate()
+    startMY.year === endMY.year &&
+    startMY.month === endMY.month &&
+    startMY.day === endMY.day
   ) {
     return `${formatTime(start)} - ${formatTime(end)}`;
   }
 
-  // Next day (overnight trip)
-  const nextDay = new Date(start);
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  // Next day (overnight trip in Malaysia timezone)
   if (
-    nextDay.getUTCFullYear() === end.getUTCFullYear() &&
-    nextDay.getUTCMonth() === end.getUTCMonth() &&
-    nextDay.getUTCDate() === end.getUTCDate()
+    startMY.year === endMY.year &&
+    startMY.month === endMY.month &&
+    startMY.day + 1 === endMY.day
   ) {
     return `${formatTime(start)} - ${formatTime(end)} (next day)`;
   }

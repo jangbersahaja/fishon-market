@@ -23,7 +23,7 @@ interface BookingFormData {
   email: string;
   phone?: string;
   note?: string;
-  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
+  paymentMethod: "CARD" | "FPX" | "MOCK";
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;
@@ -83,7 +83,7 @@ export default function StartConversationCard({
               </p>
             )}
           </div>
-          <p className="p-4 mb-4 text-sm border rounded-b-xl rounded-tr-xl bg-gradient-to-br from-blue-50/50 to-cyan-50/50 border-black/10">
+          <p className="p-4 mb-4 text-sm border rounded-b-lg rounded-tr-lg bg-gradient-to-br from-blue-50/50 to-cyan-50/50 border-black/10">
             Hello, welcome to {charterName}. Thanks for your interest! Let me
             know who’ll be joining the trip, what fish you’re aiming to catch,
             and any special requests — I’ll make sure everything’s ready for
@@ -101,7 +101,7 @@ export default function StartConversationCard({
               displayName.split(" ")[0]
             }. Share your fishing experience, what you hope to catch, or any special requests...`}
             rows={4}
-            className={`w-full px-4 py-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+            className={`w-full bg-slate-50 px-4 py-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
               errors.note ? "border-red-500" : "border-black/10"
             }`}
           />

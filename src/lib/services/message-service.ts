@@ -199,6 +199,7 @@ export async function sendMessage(
     const bookingStatus = conversation.booking.status;
 
     // Chat is LOCKED for PENDING and APPROVED bookings (before payment)
+    // PAYMENT_PENDING has chat enabled (payment already received)
     if (bookingStatus === "PENDING" || bookingStatus === "APPROVED") {
       throw new Error("Chat is locked until payment is received");
     }

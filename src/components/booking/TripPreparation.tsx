@@ -1,8 +1,4 @@
-import {
-  CallCaptainButton,
-  ChatCaptainButton,
-  NavigateButtons,
-} from "@/components/account/BookingActionButtons";
+import { NavigateButtons } from "@/components/account/BookingActionButtons";
 
 interface TripPreparationProps {
   captainPhone?: string | null;
@@ -31,21 +27,12 @@ export function TripPreparation({
   }
 
   return (
-    <div className="p-6 bg-white border border-gray-200 rounded-lg">
-      <h3 className="mb-4 text-lg font-semibold text-gray-900">
+    <div className="p-3 bg-white border border-gray-200 rounded-lg sm:p-5">
+      <h3 className="mb-3 text-lg font-semibold text-gray-900">
         Trip Preparation
       </h3>
 
-      <div className="space-y-4">
-        {/* Contact Captain */}
-        {captainPhone && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700">Contact Captain</p>
-            <CallCaptainButton phone={captainPhone} fullWidth />
-            <ChatCaptainButton bookingId={bookingId} disabled fullWidth />
-          </div>
-        )}
-
+      <div className="space-y-3">
         {/* Navigate to Starting Point */}
         {(startingPoint || latitude) && (
           <div className="space-y-2">

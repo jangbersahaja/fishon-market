@@ -16,6 +16,8 @@ export function getBookingStatusColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "bg-amber-100 text-amber-800 border-amber-200";
+    case "PAYMENT_PENDING":
+      return "bg-blue-100 text-blue-800 border-blue-200";
     case "APPROVED":
       return "bg-green-100 text-green-800 border-green-200";
     case "PAID":
@@ -26,6 +28,8 @@ export function getBookingStatusColor(status: BookingStatus): string {
       return "bg-gray-100 text-gray-800 border-gray-200";
     case "CANCELLED":
       return "bg-gray-100 text-gray-800 border-gray-200";
+    case "COMPLETED":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -40,6 +44,8 @@ export function getBookingStatusIconColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "text-amber-600";
+    case "PAYMENT_PENDING":
+      return "text-blue-600";
     case "APPROVED":
       return "text-green-600";
     case "PAID":
@@ -50,6 +56,8 @@ export function getBookingStatusIconColor(status: BookingStatus): string {
       return "text-gray-600";
     case "CANCELLED":
       return "text-gray-600";
+    case "COMPLETED":
+      return "text-emerald-600";
     default:
       return "text-gray-600";
   }
@@ -64,6 +72,8 @@ export function getBookingStatusBgColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "bg-amber-50";
+    case "PAYMENT_PENDING":
+      return "bg-blue-50";
     case "APPROVED":
       return "bg-green-50";
     case "PAID":
@@ -74,6 +84,8 @@ export function getBookingStatusBgColor(status: BookingStatus): string {
       return "bg-gray-50";
     case "CANCELLED":
       return "bg-gray-50";
+    case "COMPLETED":
+      return "bg-emerald-50";
     default:
       return "bg-gray-50";
   }
@@ -88,6 +100,8 @@ export function getBookingStatusLabel(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "Pending Review";
+    case "PAYMENT_PENDING":
+      return "Payment Received - Pending Approval";
     case "APPROVED":
       return "Approved - Awaiting Payment";
     case "PAID":
@@ -98,6 +112,8 @@ export function getBookingStatusLabel(status: BookingStatus): string {
       return "Expired";
     case "CANCELLED":
       return "Cancelled";
+    case "COMPLETED":
+      return "Completed";
     default:
       return status;
   }
@@ -112,6 +128,8 @@ export function getBookingStatusMessage(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "Your booking request is under review by the captain. You'll be notified once it's approved.";
+    case "PAYMENT_PENDING":
+      return "Your payment has been received. Awaiting captain approval within 12 hours. Full refund if declined.";
     case "APPROVED":
       return "Your booking has been approved! Complete payment to confirm your trip.";
     case "PAID":

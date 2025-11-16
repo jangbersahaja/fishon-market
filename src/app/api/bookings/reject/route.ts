@@ -153,18 +153,17 @@ export async function POST(req: Request) {
     const updated = await prisma.booking.update({
       where: { id },
       data: {
-        paymentReleasedAt: paymentReleasedAt ?? undefined,
         status: "REJECTED",
-        rejectionReason: reason ?? null,
-        captainDecisionAt: now,
+        rejectionReason: reason || null,
       },
       select: {
         id: true,
-        status: true,
         userId: true,
         tripId: true,
         charterId: true,
+        status: true,
         rejectionReason: true,
+        refundAmount: true,
         user: {
           select: {
             email: true,
@@ -349,6 +348,13 @@ export async function POST(req: Request) {
             charterName: trip.charter.name,
             reason: updated.rejectionReason ?? undefined,
             searchUrl,
+            paymentFlow: booking.paymentFlow as
+              | "TOKENIZED"
+              | "DIRECT"
+              | undefined,
+            refundAmount: updated.refundAmount
+              ? `RM ${updated.refundAmount.toFixed(2)}`
+              : undefined,
           });
         }
       }

@@ -365,7 +365,7 @@ export async function POST(req: Request) {
             }
 
             // Create booking with GUEST user
-            // Build guests JSON with participants list
+            // Build guests JSON with participants list and emergency contact
             const guestsData: any = {
               adults: ad,
               children: ch,
@@ -380,6 +380,27 @@ export async function POST(req: Request) {
               }));
             }
 
+            // Add emergency contact if provided
+            if (
+              emergencyName &&
+              typeof emergencyName === "string" &&
+              emergencyName.trim() &&
+              emergencyPhone &&
+              typeof emergencyPhone === "string" &&
+              emergencyPhone.trim()
+            ) {
+              guestsData.emergencyContact = {
+                name: emergencyName.trim(),
+                phone: emergencyPhone.trim(),
+                relationship:
+                  emergencyRelation &&
+                  typeof emergencyRelation === "string" &&
+                  emergencyRelation.trim()
+                    ? emergencyRelation.trim()
+                    : "Not specified",
+              };
+            }
+
             return await tx.booking.create({
               data: {
                 userId: verifiedUserId, // Links to GUEST user
@@ -391,9 +412,10 @@ export async function POST(req: Request) {
                 days: ds,
                 timeSlots: newTimeSlots as unknown as Prisma.JsonArray,
                 guests: guestsData as Prisma.JsonObject,
-                tripPrice: pricingBreakdown.subtotal,
+                tripPrice: pricingBreakdown.tripPrice, // Base price per day, not subtotal
                 finalPrice: pricingBreakdown.finalPrice,
                 platformFee: pricingBreakdown.platformFee,
+                serviceFee: pricingBreakdown.paymentGatewayFee,
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
@@ -578,6 +600,10 @@ export async function POST(req: Request) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           confirmationUrl,
+          paymentFlow: booking.paymentFlow as
+            | "TOKENIZED"
+            | "DIRECT"
+            | undefined,
         });
       } catch (emailErr) {
         console.error("Failed to send guest booking email:", emailErr);

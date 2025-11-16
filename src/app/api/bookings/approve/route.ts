@@ -2,7 +2,11 @@ import { trackEvent } from "@/lib/analytics-service";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { capturePayment } from "@/lib/payment/payment-gateway";
-import { sendBookingApprovedEmail } from "@/lib/services/email-service";
+import {
+  sendBookingApprovedEmail,
+  sendBookingConfirmedAnglerEmail,
+  sendBookingConfirmedCaptainEmail,
+} from "@/lib/services/email-service";
 import { sendMessage } from "@/lib/services/message-service";
 import { bookingApprovedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
@@ -388,18 +392,57 @@ export async function POST(req: Request) {
 
           // Send different email based on payment status
           if (finalStatus === "PAID") {
-            // Payment captured - send booking confirmed email
-            // TODO: Create sendBookingConfirmedEmail() in email-service
-            // For now, use approved email with different messaging context
-            await sendBookingApprovedEmail({
+            // Payment captured - send booking confirmed emails
+            const tripDateDisplay = updated.date.toLocaleDateString("en-MY", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+
+            // Calculate days from booking data (default to 1 if not specified)
+            const tripDays = updated.days || 1;
+
+            // Get start time from trip data or booking metadata
+            const startTime = trip.startTimes?.[0] || "To be confirmed";
+
+            // Send confirmation email to angler
+            await sendBookingConfirmedAnglerEmail({
               to: email,
               userName: name ?? "there",
               charterName: trip.charter.name,
-              tripDate: updated.date.toISOString().slice(0, 10),
-              paymentUrl: bookingUrl, // Link to booking details instead
-              confirmationUrl,
+              tripName: trip.name,
+              tripDate: tripDateDisplay,
+              tripDays,
+              durationHours: trip.durationHours,
+              startTime,
+              finalPrice: `RM ${updated.finalPrice.toFixed(2)}`,
+              captainName: trip.charter.captain?.displayName || "Captain",
+              captainEmail: trip.charter.captain?.email || "",
+              captainPhone: trip.charter.captain?.phone || "",
+              bookingUrl,
             });
-            console.log("✅ Booking confirmed email sent (PAID status)");
+
+            // Send confirmation email to captain
+            if (trip.charter.captain?.email) {
+              await sendBookingConfirmedCaptainEmail({
+                to: trip.charter.captain.email,
+                captainName: trip.charter.captain.displayName || "Captain",
+                charterName: trip.charter.name,
+                tripName: trip.name,
+                tripDate: tripDateDisplay,
+                tripDays,
+                durationHours: trip.durationHours,
+                startTime,
+                finalPrice: `RM ${updated.finalPrice.toFixed(2)}`,
+                anglerName: name ?? "Angler",
+                anglerEmail: email,
+                anglerPhone: "Available in booking details",
+                bookingUrl: `${process.env.FISHON_CAPTAIN_URL}/bookings/${updated.id}`,
+              });
+            }
+
+            console.log("✅ Booking confirmed emails sent (PAID status)");
           } else {
             // Legacy APPROVED status - needs payment
             await sendBookingApprovedEmail({

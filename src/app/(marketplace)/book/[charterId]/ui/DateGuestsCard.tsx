@@ -181,7 +181,7 @@ export default function DateGuestsCard({
             buttonClassName={
               dateError
                 ? "border-red-500 hover:border-red-600"
-                : "hover:border-gray-400"
+                : "hover:border-gray-400 bg-slate-50"
             }
           />
           {dateError && (
@@ -251,7 +251,7 @@ export default function DateGuestsCard({
           <button
             type="button"
             onClick={() => setOpen(open === "guests" ? null : "guests")}
-            className="flex items-center justify-between w-full px-3 py-2 text-left border border-gray-300 rounded-lg hover:border-gray-400"
+            className="flex items-center justify-between w-full px-3 py-2 text-left border border-gray-300 rounded-lg bg-slate-50 hover:border-gray-400"
             aria-haspopup="dialog"
             aria-expanded={open === "guests"}
           >

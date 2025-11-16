@@ -24,7 +24,7 @@ interface BookingFormData {
     phone: string;
     isBooker?: boolean;
   }>;
-  paymentMethod: "CARD" | "FPX" | "EWALLET" | "MOCK";
+  paymentMethod: "CARD" | "FPX" | "MOCK";
 }
 
 interface EmergencyContactCardProps {
@@ -63,7 +63,7 @@ export default function EmergencyContactCard({
             type="text"
             {...register("emergencyName")}
             placeholder="Full name"
-            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
               errors.emergencyName ? "border-red-500" : "border-black/10"
             }`}
           />
@@ -83,7 +83,7 @@ export default function EmergencyContactCard({
               type="tel"
               {...register("emergencyPhone")}
               placeholder="+60 12-345 6789"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.emergencyPhone ? "border-red-500" : "border-black/10"
               }`}
             />
@@ -102,7 +102,7 @@ export default function EmergencyContactCard({
               type="text"
               {...register("emergencyRelation")}
               placeholder="e.g., Spouse, Parent, Sibling"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.emergencyRelation ? "border-red-500" : "border-black/10"
               }`}
             />

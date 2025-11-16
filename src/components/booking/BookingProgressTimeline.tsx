@@ -1,5 +1,5 @@
 import type { BookingStatus } from "@/lib/services/booking-service";
-import { Check, CheckCircle2, Clock, CreditCard, Edit, X } from "lucide-react";
+import { Check, CheckCircle2, CreditCard, Edit, X } from "lucide-react";
 
 interface BookingProgressTimelineProps {
   /**
@@ -52,23 +52,6 @@ export function BookingProgressTimeline({
       isError: false,
       hidden: false,
     },
-    {
-      id: "reservation",
-      label: "Reservation",
-      icon: Clock,
-      color: "yellow",
-      isActive: currentStep === "PENDING" && !isHybridFlow,
-      isComplete:
-        currentStep === "APPROVED" ||
-        currentStep === "PAYMENT_PENDING" ||
-        currentStep === "PAID" ||
-        currentStep === "completed",
-      isError:
-        currentStep === "REJECTED" ||
-        currentStep === "EXPIRED" ||
-        currentStep === "CANCELLED",
-      hidden: false,
-    },
     // Hybrid flow: Payment authorization step (PAYMENT_PENDING)
     {
       id: "payment-authorization",
@@ -81,7 +64,10 @@ export function BookingProgressTimeline({
       icon: CreditCard,
       color: paymentFlow === "TOKENIZED" ? "blue" : "green",
       isActive: currentStep === "PAYMENT_PENDING",
-      isComplete: currentStep === "PAID" || currentStep === "completed",
+      isComplete:
+        currentStep === "PAID" ||
+        currentStep === "PAYMENT_PENDING" ||
+        currentStep === "completed",
       isError:
         currentStep === "REJECTED" ||
         currentStep === "EXPIRED" ||
@@ -269,7 +255,7 @@ export function BookingProgressTimeline({
             className={`flex items-center ${isLast ? "" : "flex-1"}`}
           >
             {/* Step indicator */}
-            <div className="relative flex flex-col items-center flex-shrink-0">
+            <div className="z-10 flex items-center flex-shrink-0">
               <div
                 className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all ${colors.bg} ${colors.border}`}
               >
@@ -279,30 +265,40 @@ export function BookingProgressTimeline({
                   <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${colors.text}`} />
                 )}
               </div>
-
-              <p
-                className={`absolute inset-y-12 sm:inset-y-14 text-xs font-medium text-center ${
-                  step.isActive || step.isComplete
-                    ? "text-gray-600"
-                    : "text-gray-400"
-                }`}
-              >
-                {step.label}
-              </p>
             </div>
 
             {/* Connector line */}
             {!isLast && (
-              <div className="flex-1 h-1">
+              <div className="flex-1">
                 {step.isComplete ? (
                   <div
-                    className={`h-full ${getGradient(
+                    className={`h-10 sm:h-12 justify-center -mx-5 sm:-mx-6 flex items-center ${getGradient(
                       step.color,
                       visibleSteps[index + 1].color
                     )}`}
-                  />
+                  >
+                    <p
+                      className={`text-xs sm:text-sm font-medium text-center text-white ${
+                        step.isActive || step.isComplete
+                          ? "text-gray-600"
+                          : "text-gray-400"
+                      } `}
+                    >
+                      {step.label}
+                    </p>
+                  </div>
                 ) : (
-                  <div className="h-full bg-gray-200" />
+                  <div className="flex items-center justify-center h-10 -mx-5 bg-gray-200 sm:h-12 sm:-mx-6">
+                    <p
+                      className={`text-xs sm:text-sm font-medium text-center ${
+                        step.isActive || step.isComplete
+                          ? "text-gray-600"
+                          : "text-gray-400"
+                      } `}
+                    >
+                      {step.label}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
