@@ -34,7 +34,11 @@ const {
         id: "charter-1",
         name: "Captain Zee",
         startingPoint: "Marina",
-        captain: { id: "captain-1", email: "cap@test.com", displayName: "Captain Zee" },
+        captain: {
+          id: "captain-1",
+          email: "cap@test.com",
+          displayName: "Captain Zee",
+        },
       },
     },
     mockCharterService: {
@@ -43,7 +47,9 @@ const {
       getCharterApprovalTimeHours: vi.fn(),
     },
     mockCreatePaymentIntent: vi.fn(),
-    mockGetPaymentFlow: vi.fn((method: string) => (method === "CARD" ? "TOKENIZED" : "DIRECT")),
+    mockGetPaymentFlow: vi.fn((method: string) =>
+      method === "CARD" ? "TOKENIZED" : "DIRECT"
+    ),
     mockSendBookingCreatedEmail: vi.fn(),
     mockSendBookingReceivedCaptainEmail: vi.fn(),
     mockCreateNotification: vi.fn().mockResolvedValue({ id: "notif-1" }),
@@ -138,12 +144,12 @@ vi.mock("@/lib/database/prisma-captain", () => ({
   },
 }));
 
+import { POST as senangPayCallback } from "@/app/api/payment/senangpay-callback/route";
 import { prisma } from "@/lib/database/prisma";
 import { getTripById } from "@/lib/services/trip-service";
-import { POST as createBooking } from "../create/route";
-import { POST as createGuestBooking } from "../create-guest/route";
-import { POST as senangPayCallback } from "@/app/api/payment/senangpay-callback/route";
 import { NextRequest } from "next/server";
+import { POST as createGuestBooking } from "../create-guest/route";
+import { POST as createBooking } from "../create/route";
 
 function jsonReq(body: any) {
   return new Request("http://localhost", {
@@ -170,10 +176,15 @@ describe("AUTO booking flow", () => {
       SENANGPAY_MODE: "sandbox",
     };
 
-    mockAuth.mockResolvedValue({ user: { id: "user-1", email: "angler@test.com", name: "Angler" } });
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", email: "angler@test.com", name: "Angler" },
+    });
     (getTripById as any).mockResolvedValue({ ...mockTrip });
     mockCharterService.getCharterFlowType.mockResolvedValue("AUTO");
-    mockCharterService.getCharterById.mockResolvedValue({ id: "charter-1", ownerId: "owner-1" });
+    mockCharterService.getCharterById.mockResolvedValue({
+      id: "charter-1",
+      ownerId: "owner-1",
+    });
     mockCreatePaymentIntent.mockReset();
     mockCreatePaymentIntent.mockResolvedValue({
       success: true,
@@ -360,7 +371,10 @@ describe("SenangPay callback", () => {
       user: { name: "Angler" },
     });
     (prisma.booking.update as any).mockResolvedValue({ status: "PAID" });
-    mockCharterService.getCharterById.mockResolvedValue({ id: "charter-1", ownerId: "owner-1" });
+    mockCharterService.getCharterById.mockResolvedValue({
+      id: "charter-1",
+      ownerId: "owner-1",
+    });
   });
 
   afterEach(() => {
@@ -380,10 +394,13 @@ describe("SenangPay callback", () => {
       .spyOn(senangpayModule, "verifyReturnHash")
       .mockReturnValue(true);
 
-    const request = new NextRequest("http://localhost/api/payment/senangpay-callback", {
-      method: "POST",
-      body: formData,
-    });
+    const request = new NextRequest(
+      "http://localhost/api/payment/senangpay-callback",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
     const response = await senangPayCallback(request);
 
     expect(response.status).toBe(200);

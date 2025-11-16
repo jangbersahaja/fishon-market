@@ -455,7 +455,6 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     }
 
-
     // Availability guard: prevent overlapping bookings for the same charter
     // Only PAID bookings block dates (confirmed and paid bookings) for AUTO flow.
     // Manual flow blocks pending bookings to avoid duplicate requests in review window.

@@ -40,11 +40,11 @@ Guest users can later upgrade to ANGLER via `/api/auth/register`; OAuth login al
 
 ## 3. Payment Options
 
-| Method    | Flow                              | Notes                                                                                                                   | Required env vars                                                 |
-| --------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `CARD`    | Tokenized (charge after approval) | Stores SenangPay token; charged only if captain approves (manual) or immediately recorded (auto).                       | `SENANGPAY_MERCHANT_ID`, `SENANGPAY_SECRET_KEY`, `SENANGPAY_MODE` |
-| `FPX`     | Direct                            | Bank redirect, funds captured instantly. AUTO flow is the default entry point; manual flow charges only after approval. | Same as above + `NEXT_PUBLIC_BASE_URL` for return URLs            |
-| `EWALLET` | Direct                            | Same handling as FPX; determined by `paymentMethod` payload.                                                            | Same as above                                                     |
+| Method    | Flow                              | Notes                                                                                                                    | Required env vars                                                 |
+| --------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `CARD`    | Tokenized (charge after approval) | Stores SenangPay token; charged only if captain approves (manual) or immediately recorded (auto).                        | `SENANGPAY_MERCHANT_ID`, `SENANGPAY_SECRET_KEY`, `SENANGPAY_MODE` |
+| `FPX`     | Direct                            | Bank redirect, funds captured instantly. AUTO flow is the default entry point; manual flow charges only after approval.  | Same as above + `NEXT_PUBLIC_BASE_URL` for return URLs            |
+| `EWALLET` | Direct                            | Same handling as FPX; determined by `paymentMethod` payload.                                                             | Same as above                                                     |
 | `MOCK`    | Direct (dev only)                 | Development fallback; **disabled by default** and only works when `SENANGPAY_FORCE_MOCK="true"` (still blocked in prod). | `SENANGPAY_FORCE_MOCK`                                            |
 
 Supporting modules:
