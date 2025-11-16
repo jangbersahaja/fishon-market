@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useBookingStorage } from "@/hooks/useBookingStorage";
 import type { Charter, Trip } from "@fishon/ui";
 import { Building2, CreditCard, Loader2, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -27,6 +28,8 @@ interface BookingPreviewData {
   emergencyPhone: string;
   emergencyRelation: string;
   note?: string;
+  participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
+  guestVerification?: { userId: string; email: string };
   sessionStart: number;
 }
 
@@ -60,6 +63,7 @@ export function PaymentPreviewForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("CARD");
+  const { addBooking } = useBookingStorage();
 
   // Card details for TOKENIZED flow
   const [cardNumber, setCardNumber] = useState("");
@@ -126,7 +130,7 @@ export function PaymentPreviewForm({
       }
 
       // Prepare booking payload
-      const payload = {
+      const basePayload = {
         tripId: bookingData.tripId,
         date: bookingData.date,
         days: bookingData.days,
@@ -138,6 +142,7 @@ export function PaymentPreviewForm({
         emergencyName: bookingData.emergencyName,
         emergencyPhone: bookingData.emergencyPhone,
         emergencyRelation: bookingData.emergencyRelation,
+        participants: bookingData.participants,
         paymentMethod,
         ...(paymentMethod === "CARD" && {
           cardNumber,
@@ -147,13 +152,27 @@ export function PaymentPreviewForm({
         }),
       };
 
-      // Call the existing /api/bookings/create endpoint
-      const response = await fetch("/api/bookings/create", {
+      const guestVerification = bookingData.guestVerification;
+      const endpoint = guestVerification
+        ? "/api/bookings/create-guest"
+        : "/api/bookings/create";
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(
+          guestVerification
+            ? {
+                verifiedEmail: guestVerification.email,
+                verifiedUserId: guestVerification.userId,
+                firstName: bookingData.firstName,
+                lastName: bookingData.lastName,
+                ...basePayload,
+              }
+            : basePayload
+        ),
       });
 
       const result = await response.json();
@@ -163,17 +182,33 @@ export function PaymentPreviewForm({
       }
 
       // Handle different payment flows
-      if (result.paymentUrl) {
-        // DIRECT flow (FPX/E-wallet): Redirect to gateway
-        window.location.href = result.paymentUrl;
-      } else if (result.redirectTo) {
-        // TOKENIZED flow: Card authorization succeeded
-        router.push(result.redirectTo);
-      } else {
-        // Fallback
-        toast.success("Booking created successfully!");
-        router.push(`/book/confirm?id=${result.booking?.id}`);
+      if (result.requiresRedirect && result.redirectUrl) {
+        if (result.booking?.id) {
+          addBooking({
+            id: result.booking.id,
+            charterName: charter.name,
+            date: bookingData.date,
+            status: result.booking.status ?? "PAYMENT_AUTHORIZED",
+          });
+        }
+        window.location.href = result.redirectUrl;
+        return;
       }
+
+      if (result.booking?.id) {
+        addBooking({
+          id: result.booking.id,
+          charterName: charter.name,
+          date: bookingData.date,
+          status: result.booking.status ?? "PAYMENT_AUTHORIZED",
+        });
+        router.push(`/book/confirm?id=${result.booking.id}`);
+        return;
+      }
+
+      toast.success("Booking created successfully!");
+      router.push(`/book/${bookingData.charterId}`);
+      return;
     } catch (error: any) {
       console.error("Payment error:", error);
       toast.error(error.message || "Failed to process payment");

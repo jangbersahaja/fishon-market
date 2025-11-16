@@ -566,6 +566,7 @@ export default function CheckoutForm({
               emergencyPhone: formData.emergencyPhone || "",
               emergencyRelation: formData.emergencyRelation || "",
               note: formData.note || "",
+              participants: formData.participants,
               sessionStart: Date.now(),
             };
 
@@ -584,15 +585,9 @@ export default function CheckoutForm({
         return;
       }
 
-      // Guest flow - Manual flow only (Auto flow requires authentication)
-      if (charterFlowType === "AUTO") {
-        // Redirect to login for Auto flow
-        openModal();
-        return;
-      }
-
-      // Guest Manual flow - show verification modal
+      // Guest flow (Manual + Auto) always goes through verification modal first
       setShowVerificationModal(true);
+      return;
     },
     (errors) => {
       // Validation failed - log errors for debugging
@@ -621,6 +616,38 @@ export default function CheckoutForm({
     const formData = watch();
 
     try {
+      if (charterFlowType === "AUTO") {
+        const bookingData = {
+          charterId: formData.charterId,
+          tripId: formData.tripId,
+          date: formData.date,
+          days: formData.days,
+          startTime: formData.startTime || "",
+          adults: formData.adults,
+          children: formData.children,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone || "",
+          emergencyName: formData.emergencyName || "",
+          emergencyPhone: formData.emergencyPhone || "",
+          emergencyRelation: formData.emergencyRelation || "",
+          note: formData.note || "",
+          participants: formData.participants,
+          guestVerification: {
+            userId: verificationData.userId,
+            email: verificationData.email,
+          },
+          sessionStart: Date.now(),
+        };
+
+        const encoded = Buffer.from(JSON.stringify(bookingData)).toString(
+          "base64"
+        );
+        router.push(`/book/payment/preview?data=${encoded}`);
+        return;
+      }
+
       const res = await fetch("/api/bookings/create-guest", {
         method: "POST",
         headers: {
@@ -743,7 +770,7 @@ export default function CheckoutForm({
       )}
 
       {charterFlowType === "MANUAL" && (
-        <div className="p-4 mb-6 border border-amber-200 rounded-lg bg-amber-50">
+        <div className="p-4 mb-6 border rounded-lg border-amber-200 bg-amber-50">
           <p className="text-sm font-medium text-amber-900">
             Captain approval required — no upfront payment
           </p>
@@ -758,7 +785,7 @@ export default function CheckoutForm({
             </p>
           ) : (
             <p className="mt-2 text-xs text-amber-800">
-              We'll email you as soon as the captain responds so you can
+              We&apos;ll email you as soon as the captain responds so you can
               complete payment.
             </p>
           )}

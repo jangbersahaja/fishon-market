@@ -3,6 +3,7 @@ import { PaymentSessionTimer } from "@/components/payment/PaymentSessionTimer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth/auth";
+import { buildBookingPreviewSummary } from "@/lib/helpers/booking-preview-summary";
 import { getCharterById } from "@/lib/services/charter-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
@@ -35,6 +36,8 @@ interface BookingPreviewData {
   emergencyPhone: string;
   emergencyRelation: string;
   note?: string;
+  participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
+  guestVerification?: { userId: string; email: string };
   sessionStart: number;
 }
 
@@ -95,7 +98,11 @@ export default async function PaymentPreviewPage({
     days: bookingData.days,
   });
 
-  const tripDate = new Date(bookingData.date);
+  const bookingSummary = buildBookingPreviewSummary({
+    booking: bookingData,
+    charter,
+    trip,
+  });
   const expiresAt = new Date(sessionExpiresAt);
 
   return (
@@ -134,9 +141,9 @@ export default async function PaymentPreviewPage({
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="font-semibold">{charter.name}</p>
+                  <p className="font-semibold">{bookingSummary.charter.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {charter.location}
+                    {bookingSummary.charter.location}
                   </p>
                 </div>
               </div>
@@ -145,17 +152,22 @@ export default async function PaymentPreviewPage({
                 <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="font-semibold">
-                    {tripDate.toLocaleDateString("en-MY", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {bookingSummary.schedule.primaryDateLabel}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {bookingData.days} {bookingData.days === 1 ? "day" : "days"}{" "}
-                    • Starts at {bookingData.startTime}
+                    {bookingSummary.schedule.daysLabel}
+                    {bookingSummary.schedule.startTimeLabel && (
+                      <>
+                        {" • "}
+                        {bookingSummary.schedule.startTimeLabel}
+                      </>
+                    )}
                   </p>
+                  {bookingSummary.schedule.multiDayRangeLabel && (
+                    <p className="text-sm text-muted-foreground">
+                      {bookingSummary.schedule.multiDayRangeLabel}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -163,28 +175,20 @@ export default async function PaymentPreviewPage({
                 <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="font-semibold">
-                    {bookingData.adults + bookingData.children}{" "}
-                    {bookingData.adults + bookingData.children === 1
-                      ? "guest"
-                      : "guests"}
+                    {bookingSummary.guests.totalLabel}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {bookingData.adults}{" "}
-                    {bookingData.adults === 1 ? "adult" : "adults"}
-                    {bookingData.children > 0 &&
-                      `, ${bookingData.children} ${
-                        bookingData.children === 1 ? "child" : "children"
-                      }`}
+                    {bookingSummary.guests.breakdownLabel}
                   </p>
                 </div>
               </div>
             </div>
 
-            {bookingData.note && (
+            {bookingSummary.note && (
               <div className="rounded-lg bg-muted p-4">
                 <p className="text-sm font-semibold mb-1">Special Requests</p>
                 <p className="text-sm text-muted-foreground">
-                  {bookingData.note}
+                  {bookingSummary.note}
                 </p>
               </div>
             )}
