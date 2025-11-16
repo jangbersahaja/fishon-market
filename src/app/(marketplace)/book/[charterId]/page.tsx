@@ -1,4 +1,3 @@
-import { BookingProgressTimeline } from "@/components/booking";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
@@ -161,11 +160,6 @@ export default async function CheckoutPage({
         <p className="mb-6 text-sm text-gray-600 sm:text-base">
           Review your trip details and tell the captain about yourself
         </p>
-
-        {/* Progress Timeline */}
-        <div className="px-4 py-10 pt-6 mb-6 sm:px-8">
-          <BookingProgressTimeline currentStep="details" />
-        </div>
 
         <CheckoutForm
           startTimes={startTimes}
