@@ -228,6 +228,12 @@ async function createAuthenticatedBooking(session: any, body: any) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // Get charter's booking flow type
+    const { getCharterFlowType } = await import(
+      "@/lib/services/charter-service"
+    );
+    const bookingFlowType = await getCharterFlowType(trip.charter.id);
+
     // --- PAYMENT METHOD VALIDATION ---
     // Validate payment method selection
     const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
@@ -543,8 +549,9 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
-                bookingFlowType: "AUTO", // TODO: Read from charter.bookingFlowType once implemented
-                acknowledgmentDeadline: expiresAt, // For AUTO flow, acknowledgment deadline = expiresAt
+                bookingFlowType: bookingFlowType,
+                acknowledgmentDeadline:
+                  bookingFlowType === "AUTO" ? expiresAt : null, // Only for AUTO flow, acknowledgment deadline = expiresAt
                 // Payment tracking fields
                 paymentMethod: paymentMethod as string,
                 paymentFlow: paymentFlow,

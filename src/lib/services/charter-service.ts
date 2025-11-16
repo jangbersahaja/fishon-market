@@ -268,16 +268,42 @@ export async function getCharterFlowType(
     if (isDbPreferred() && isCaptainDbConfigured()) {
       try {
         const rows = await prismaCaptain.$queryRaw<
-          Array<{ charter: { bookingFlowType?: string } }>
+          Array<{
+            charter: {
+              bookingFlowType?: string;
+              instantBookingEnabled?: boolean;
+            };
+          }>
         >`
           select charter from public.v_public_charters where id = ${charterId} limit 1
         `;
-        if (rows.length && rows[0].charter.bookingFlowType) {
-          return rows[0].charter.bookingFlowType as "MANUAL" | "AUTO";
+        if (rows.length) {
+          const charter = rows[0].charter;
+          const flowType = charter.bookingFlowType;
+
+          // Check if field exists in the response
+          if (flowType) {
+            console.log(
+              `[CharterService] Charter ${charterId} flow type from DB: ${flowType}`
+            );
+            return flowType as "MANUAL" | "AUTO";
+          }
+
+          // Fallback: check instantBookingEnabled flag
+          if (charter.instantBookingEnabled === true) {
+            console.log(
+              `[CharterService] Charter ${charterId} has instantBookingEnabled=true, using AUTO flow`
+            );
+            return "AUTO";
+          }
+
+          console.log(
+            `[CharterService] Charter ${charterId} bookingFlowType field missing in DB view, will try API`
+          );
         }
       } catch (e) {
         console.error(
-          "Error reading flow type from Captain DB; will try API",
+          `[CharterService] Error reading flow type from Captain DB for ${charterId}; will try API`,
           e
         );
       }
@@ -287,17 +313,26 @@ export async function getCharterFlowType(
     if (isBackendConfigured()) {
       const charter = await fetchCharterById(String(charterId));
       if (charter?.bookingFlowType) {
+        console.log(
+          `[CharterService] Charter ${charterId} flow type from API: ${charter.bookingFlowType}`
+        );
         return charter.bookingFlowType;
       }
+      console.log(
+        `[CharterService] Charter ${charterId} bookingFlowType missing from API response`
+      );
     }
 
     // Default to MANUAL (safer option)
     console.warn(
-      `Could not determine flow type for charter ${charterId}, defaulting to MANUAL`
+      `[CharterService] Could not determine flow type for charter ${charterId}; guest checkout fallback to MANUAL is active. Run migration_add_booking_flow_to_view.sql in fishon-captain to update the view.`
     );
     return "MANUAL";
   } catch (error) {
-    console.error(`Error fetching flow type for charter ${charterId}:`, error);
+    console.error(
+      `[CharterService] Error fetching flow type for charter ${charterId}:`,
+      error
+    );
     return "MANUAL"; // Default to safer Manual flow
   }
 }

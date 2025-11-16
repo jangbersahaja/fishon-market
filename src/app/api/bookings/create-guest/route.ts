@@ -152,46 +152,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
-    // --- PAYMENT METHOD VALIDATION ---
-    const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
-    if (!paymentMethod || !validMethods.includes(paymentMethod)) {
-      return NextResponse.json(
-        { error: "Valid payment method required (CARD, FPX, or EWALLET)" },
-        { status: 400 }
-      );
-    }
-
-    // MOCK payments only in development
-    if (paymentMethod === "MOCK" && process.env.NODE_ENV !== "development") {
-      return NextResponse.json(
-        { error: "Mock payments not available in production" },
-        { status: 400 }
-      );
-    }
-
-    // Card payments require card details
-    if (paymentMethod === "CARD") {
-      if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
-        return NextResponse.json(
-          { error: "Card details required for card payments" },
-          { status: 400 }
-        );
-      }
-      const cardNumClean = cardNumber.replace(/\s/g, "");
-      if (!/^\d{13,19}$/.test(cardNumClean)) {
-        return NextResponse.json(
-          { error: "Invalid card number format" },
-          { status: 400 }
-        );
-      }
-      if (!/^\d{3,4}$/.test(cardCvv)) {
-        return NextResponse.json(
-          { error: "Invalid CVV format" },
-          { status: 400 }
-        );
-      }
-    }
-
     // Rate limiting: Max 2 guest bookings per user per hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const recentGuestBookings = await prisma.booking.count({
@@ -217,6 +177,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // Get charter's booking flow type
+    const { getCharterFlowType } = await import(
+      "@/lib/services/charter-service"
+    );
+    const bookingFlowType = await getCharterFlowType(trip.charter.id);
+
     // If trip defines start times, require one selection
     if (trip.startTimes.length > 0) {
       const st = typeof startTime === "string" ? startTime : undefined;
@@ -241,71 +207,133 @@ export async function POST(req: Request) {
 
     const finalPrice = pricingBreakdown.finalPrice;
 
-    // --- PAYMENT PROCESSING ---
-    const paymentFlow = getPaymentFlow(
-      paymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
-    );
+    // --- FLOW-SPECIFIC LOGIC ---
+    let paymentFlow: string | null = null;
     let paymentResult: any = null;
-    let initialStatus: "PAYMENT_AUTHORIZED" | "PAID" = "PAYMENT_AUTHORIZED";
+    let initialStatus: "PENDING" | "PAYMENT_AUTHORIZED" | "PAID" = "PENDING";
+    let expiresAt: Date;
+    let approvalDeadline: Date | null = null;
 
-    // MOCK flow (development only)
-    if (paymentMethod === "MOCK") {
-      paymentResult = {
-        success: true,
-        flow: "MOCK",
-        paymentIntentId: `mock-${Date.now()}`,
-        requiresRedirect: false,
-      };
-      initialStatus = "PAYMENT_AUTHORIZED";
+    // MANUAL FLOW: No payment processing, create PENDING booking
+    if (bookingFlowType === "MANUAL") {
+      // Manual flow doesn't require payment method
+      initialStatus = "PENDING";
+
+      // Get approval deadline (default 24 hours)
+      const { getCharterApprovalTimeHours } = await import(
+        "@/lib/services/charter-service"
+      );
+      const approvalHours = await getCharterApprovalTimeHours(trip.charter.id);
+      approvalDeadline = new Date(Date.now() + approvalHours * 60 * 60 * 1000);
+      expiresAt = approvalDeadline; // Booking expires if not approved
+
+      paymentFlow = null; // No payment yet
+      paymentResult = null;
     }
-    // TOKENIZED flow (Card)
-    else if (paymentFlow === "TOKENIZED") {
-      try {
-        paymentResult = await createPaymentIntent({
-          bookingId: `temp-guest-${Date.now()}`,
-          amount: finalPrice,
-          paymentMethod: "CARD",
-          description: `Booking for ${trip.name} on ${date}`,
-          cardDetails: {
-            number: cardNumber!.replace(/\s/g, ""),
-            cvv: cardCvv!,
-            expiryMonth: cardExpMonth!,
-            expiryYear: cardExpYear!,
-          },
-          customerName: `${firstName} ${lastName}`,
-          customerEmail: guestUser.email,
-          customerPhone: phone,
-        });
+    // AUTO FLOW: Process payment immediately
+    else {
+      // --- PAYMENT METHOD VALIDATION (AUTO FLOW ONLY) ---
+      const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
+      if (!paymentMethod || !validMethods.includes(paymentMethod)) {
+        return NextResponse.json(
+          { error: "Valid payment method required (CARD, FPX, or EWALLET)" },
+          { status: 400 }
+        );
+      }
 
-        if (!paymentResult.success) {
-          console.error(
-            "❌ Card tokenization failed (guest):",
-            paymentResult.error
-          );
+      // MOCK payments only in development
+      if (paymentMethod === "MOCK" && process.env.NODE_ENV !== "development") {
+        return NextResponse.json(
+          { error: "Mock payments not available in production" },
+          { status: 400 }
+        );
+      }
+
+      // Card payments require card details
+      if (paymentMethod === "CARD") {
+        if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
           return NextResponse.json(
-            {
-              error: paymentResult.error || "Failed to process card",
-            },
+            { error: "Card details required for card payments" },
             { status: 400 }
           );
         }
-
-        initialStatus = "PAYMENT_AUTHORIZED";
-      } catch (error: any) {
-        console.error("❌ Payment gateway error (guest):", error);
-        return NextResponse.json(
-          { error: "Payment gateway error" },
-          { status: 500 }
-        );
+        const cardNumClean = cardNumber.replace(/\s/g, "");
+        if (!/^\d{13,19}$/.test(cardNumClean)) {
+          return NextResponse.json(
+            { error: "Invalid card number format" },
+            { status: 400 }
+          );
+        }
+        if (!/^\d{3,4}$/.test(cardCvv)) {
+          return NextResponse.json(
+            { error: "Invalid CVV format" },
+            { status: 400 }
+          );
+        }
       }
-    }
-    // DIRECT flow (FPX/E-wallet)
-    else if (paymentFlow === "DIRECT") {
-      initialStatus = "PAYMENT_AUTHORIZED"; // Will be updated by callback to PAID
-    }
 
-    // Hold expires in 12 hours
-    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
+      paymentFlow = getPaymentFlow(
+        paymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
+      );
+      initialStatus = "PAYMENT_AUTHORIZED";
+      expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hour hold for payment
+
+      // MOCK flow (development only)
+      if (paymentMethod === "MOCK") {
+        paymentResult = {
+          success: true,
+          flow: "MOCK",
+          paymentIntentId: `mock-${Date.now()}`,
+          requiresRedirect: false,
+        };
+        initialStatus = "PAYMENT_AUTHORIZED";
+      }
+      // TOKENIZED flow (Card)
+      else if (paymentFlow === "TOKENIZED") {
+        try {
+          paymentResult = await createPaymentIntent({
+            bookingId: `temp-guest-${Date.now()}`,
+            amount: finalPrice,
+            paymentMethod: "CARD",
+            description: `Booking for ${trip.name} on ${date}`,
+            cardDetails: {
+              number: cardNumber!.replace(/\s/g, ""),
+              cvv: cardCvv!,
+              expiryMonth: cardExpMonth!,
+              expiryYear: cardExpYear!,
+            },
+            customerName: `${firstName} ${lastName}`,
+            customerEmail: guestUser.email,
+            customerPhone: phone,
+          });
+
+          if (!paymentResult.success) {
+            console.error(
+              "❌ Card tokenization failed (guest):",
+              paymentResult.error
+            );
+            return NextResponse.json(
+              {
+                error: paymentResult.error || "Failed to process card",
+              },
+              { status: 400 }
+            );
+          }
+
+          initialStatus = "PAYMENT_AUTHORIZED";
+        } catch (error: any) {
+          console.error("❌ Payment gateway error (guest):", error);
+          return NextResponse.json(
+            { error: "Payment gateway error" },
+            { status: 500 }
+          );
+        }
+      }
+      // DIRECT flow (FPX/E-wallet)
+      else if (paymentFlow === "DIRECT") {
+        initialStatus = "PAYMENT_AUTHORIZED"; // Will be updated by callback to PAID
+      }
+    } // End AUTO flow payment processing
 
     // Availability guard: prevent overlapping bookings
     // Only PAID bookings block dates (confirmed and paid bookings)
@@ -419,10 +447,13 @@ export async function POST(req: Request) {
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
-                bookingFlowType: "AUTO", // TODO: Read from charter.bookingFlowType once implemented
-                acknowledgmentDeadline: expiresAt, // For AUTO flow
-                // Payment tracking fields
-                paymentMethod: paymentMethod as string,
+                bookingFlowType: bookingFlowType,
+                approvalDeadline:
+                  bookingFlowType === "MANUAL" ? approvalDeadline : null, // Manual flow
+                acknowledgmentDeadline:
+                  bookingFlowType === "AUTO" ? expiresAt : null, // Auto flow
+                // Payment tracking fields (null for Manual flow pending bookings)
+                paymentMethod: (paymentMethod as string) || null,
                 paymentFlow: paymentFlow,
                 paymentIntentId: paymentResult?.paymentIntentId || null,
                 paymentAuthorizedAt:
@@ -565,6 +596,7 @@ export async function POST(req: Request) {
             finalPrice: Number(booking.finalPrice),
             expiresAt: booking.expiresAt.toISOString(),
             status: booking.status,
+            bookingFlowType: booking.bookingFlowType,
             paymentMethod: booking.paymentMethod,
             paymentFlow: booking.paymentFlow,
           },
@@ -591,22 +623,41 @@ export async function POST(req: Request) {
           booking.id
         )}`;
 
-        await sendBookingCreatedEmail({
-          to: guestUser.email,
-          userName: firstName,
-          charterName: trip.charter.name,
-          tripName: trip.name,
-          tripDate: booking.date.toISOString().slice(0, 10),
-          tripDays: booking.days,
-          durationHours: trip.durationHours,
-          startTime: booking.startTime ?? undefined,
-          totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
-          confirmationUrl,
-          paymentFlow: booking.paymentFlow as
-            | "TOKENIZED"
-            | "DIRECT"
-            | undefined,
-        });
+        // Different email based on flow type
+        if (bookingFlowType === "MANUAL") {
+          // Manual flow: "Request received, awaiting approval"
+          await sendBookingCreatedEmail({
+            to: guestUser.email,
+            userName: firstName,
+            charterName: trip.charter.name,
+            tripName: trip.name,
+            tripDate: booking.date.toISOString().slice(0, 10),
+            tripDays: booking.days,
+            durationHours: trip.durationHours,
+            startTime: booking.startTime ?? undefined,
+            totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
+            confirmationUrl,
+            paymentFlow: undefined, // No payment yet
+          });
+        } else {
+          // Auto flow: "Payment received"
+          await sendBookingCreatedEmail({
+            to: guestUser.email,
+            userName: firstName,
+            charterName: trip.charter.name,
+            tripName: trip.name,
+            tripDate: booking.date.toISOString().slice(0, 10),
+            tripDays: booking.days,
+            durationHours: trip.durationHours,
+            startTime: booking.startTime ?? undefined,
+            totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
+            confirmationUrl,
+            paymentFlow: booking.paymentFlow as
+              | "TOKENIZED"
+              | "DIRECT"
+              | undefined,
+          });
+        }
       } catch (emailErr) {
         console.error("Failed to send guest booking email:", emailErr);
       }
@@ -630,6 +681,8 @@ export async function POST(req: Request) {
           booking.id
         )}`;
 
+        // Manual flow: Captain needs to approve
+        // Auto flow: Captain needs to acknowledge payment
         await sendBookingReceivedCaptainEmail({
           to: captain.email,
           captainName: captain.displayName,
@@ -680,8 +733,12 @@ export async function POST(req: Request) {
       }
     })();
 
-    // Handle DIRECT flow redirect
-    if (paymentFlow === "DIRECT" && paymentMethod !== "MOCK") {
+    // Handle DIRECT flow redirect (AUTO flow only)
+    if (
+      bookingFlowType === "AUTO" &&
+      paymentFlow === "DIRECT" &&
+      paymentMethod !== "MOCK"
+    ) {
       try {
         const directPaymentResult = await createPaymentIntent({
           bookingId: booking.id,
