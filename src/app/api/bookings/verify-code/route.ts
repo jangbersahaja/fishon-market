@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/database/prisma";
-import { SignJWT } from "jose";
+import {
+  findOrCreateGuestUser,
+  verifyGuestEmail,
+} from "@/lib/services/guest-user-service";
 import { NextResponse } from "next/server";
 
 /**
  * POST /api/bookings/verify-code
  *
- * Verify guest email code and return temporary JWT token.
- * Token is valid for 15 minutes and can be used to create a guest booking.
+ * Verify guest email code and create/find GUEST user.
+ * Returns user ID for booking creation.
  */
 export async function POST(request: Request) {
   try {
@@ -15,11 +18,21 @@ export async function POST(request: Request) {
       .trim()
       .toLowerCase();
     const code = String(body?.code || "").trim();
+    const firstName = String(body?.firstName || "").trim();
+    const lastName = String(body?.lastName || "").trim();
+    const phone = String(body?.phone || "").trim();
 
     // Validate inputs
     if (!email || !code) {
       return NextResponse.json(
         { error: "Email and code are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!firstName || !lastName || !phone) {
+      return NextResponse.json(
+        { error: "Name and phone are required" },
         { status: 400 }
       );
     }
@@ -32,67 +45,51 @@ export async function POST(request: Request) {
       );
     }
 
-    // Rate limiting: Check verification attempts
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const recentFailedAttempts = await prisma.verificationCode.count({
-      where: {
-        email,
-        type: "GUEST_BOOKING",
-        createdAt: { gte: fiveMinutesAgo },
-        usedAt: null,
-        NOT: { code },
-      },
-    });
+    // Verify email with TAC code
+    const verificationResult = await verifyGuestEmail(email, code);
 
-    if (recentFailedAttempts >= 5) {
+    if (!verificationResult) {
       return NextResponse.json(
-        {
-          error:
-            "Too many failed attempts. Please request a new code and try again.",
-        },
-        { status: 429 }
-      );
-    }
-
-    // Find valid, unused verification code
-    const verification = await prisma.verificationCode.findFirst({
-      where: {
-        email,
-        code,
-        type: "GUEST_BOOKING",
-        expiresAt: { gt: new Date() },
-        usedAt: null,
-      },
-    });
-
-    if (!verification) {
-      return NextResponse.json(
-        { error: "Invalid or expired code" },
+        { error: "Invalid or expired verification code" },
         { status: 401 }
       );
     }
 
-    // Mark code as used
-    await prisma.verificationCode.update({
-      where: { id: verification.id },
-      data: { usedAt: new Date() },
+    // Find or create GUEST user (after successful verification)
+    const guestUser = await findOrCreateGuestUser({
+      email,
+      firstName,
+      lastName,
+      phone,
     });
 
-    // Generate temporary JWT token (15 minutes)
-    const secret = new TextEncoder().encode(
-      process.env.NEXTAUTH_SECRET || "dev-secret"
-    );
-    const token = await new SignJWT({ email, purpose: "guest_booking" })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("15m")
-      .sign(secret);
+    // If user was just created, mark email as verified
+    if (guestUser) {
+      await prisma.user.update({
+        where: { id: guestUser.id },
+        data: { emailVerified: new Date() },
+      });
+    }
 
+    if (!guestUser) {
+      // User exists but is not a GUEST (ANGLER/ADMIN)
+      return NextResponse.json(
+        {
+          error: "This email is registered. Please sign in to continue.",
+          requireSignIn: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Return verified user data for booking creation
     return NextResponse.json(
       {
         valid: true,
-        token,
-        email,
+        verified: true,
+        userId: guestUser.id,
+        email: guestUser.email,
+        message: "Email verified successfully",
       },
       { status: 200 }
     );

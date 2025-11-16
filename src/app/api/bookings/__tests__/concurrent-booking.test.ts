@@ -186,14 +186,21 @@ async function createBookingWithTransaction(
             throw new Error("BOOKING_CONFLICT");
           }
 
-          // 3. Create guest booking
+          // 3. Create test GUEST user and booking
+          const testUser = await tx.user.create({
+            data: {
+              email: guestEmail,
+              name: guestEmail.split("@")[0],
+              firstName: guestEmail.split("@")[0],
+              lastName: "Test",
+              role: "GUEST",
+              emailVerified: new Date(),
+            },
+          });
+
           return await tx.booking.create({
             data: {
-              userId: null, // Guest booking
-              guestEmail,
-              guestFirstName: guestEmail.split("@")[0],
-              guestLastName: "Test",
-              emailVerified: true,
+              userId: testUser.id,
               charterId,
               tripId,
               date,
@@ -205,6 +212,7 @@ async function createBookingWithTransaction(
               status: "PAID", // Simulate immediate payment for test
               paidAt: new Date(),
               expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+              bookingFlowType: "MANUAL", // Manual flow for test
             },
           });
         },

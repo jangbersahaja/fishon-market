@@ -1,5 +1,7 @@
+import { trackEvent } from "@/lib/analytics-service";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { releasePayment } from "@/lib/payment/payment-gateway";
 import {
   checkRateLimit,
   getClientIP,
@@ -9,6 +11,10 @@ import { sendBookingCancelledEmail } from "@/lib/services/email-service";
 import { sendMessage } from "@/lib/services/message-service";
 import { bookingCancelledMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
+import {
+  calculateRefundAmount,
+  initiateRefund,
+} from "@/lib/services/refund-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { revalidatePath } from "next/cache";
@@ -32,14 +38,18 @@ export async function POST(req: Request) {
       id: true,
       status: true,
       userId: true,
-      guestEmail: true,
-      guestFirstName: true,
-      guestLastName: true,
       tripId: true,
       charterId: true,
+      finalPrice: true,
+      paymentMethod: true,
+      paymentFlow: true,
+      paymentIntentId: true,
+      paymentAuthorizedAt: true,
+      paymentCapturedAt: true,
       user: {
         select: {
           email: true,
+          name: true,
         },
       },
     },
@@ -49,8 +59,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }
 
-  // Check booking status
-  if (booking.status !== "PENDING" && booking.status !== "APPROVED") {
+  // Check booking status - can cancel PENDING, APPROVED, PAYMENT_PENDING, or PAID
+  const cancellableStatuses = [
+    "PENDING",
+    "APPROVED",
+    "PAYMENT_PENDING",
+    "PAID",
+  ];
+  if (!cancellableStatuses.includes(booking.status)) {
     return NextResponse.json(
       { error: "Cannot cancel booking in current status" },
       { status: 409 }
@@ -58,7 +74,7 @@ export async function POST(req: Request) {
   }
 
   // Determine booking email
-  const bookingEmail = booking.user?.email || booking.guestEmail;
+  const bookingEmail = booking.user?.email;
   if (!bookingEmail) {
     return NextResponse.json(
       { error: "No email associated with this booking" },
@@ -111,24 +127,152 @@ export async function POST(req: Request) {
     }
   }
 
-  // Update booking status
+  // Payment handling based on status and flow
+  let refundAmount: number | null = null;
+  let refundTransactionId: string | null = null;
+  let paymentReleaseOutcome: string | null = null;
+
+  try {
+    // PAYMENT_AUTHORIZED + TOKENIZED: Release the token (no charge occurred)
+    if (
+      booking.status === "PAYMENT_AUTHORIZED" &&
+      booking.paymentFlow === "TOKENIZED"
+    ) {
+      if (!booking.paymentIntentId) {
+        throw new Error("Missing payment intent ID for TOKENIZED booking");
+      }
+
+      await releasePayment(booking.paymentIntentId);
+      paymentReleaseOutcome = "TOKEN_RELEASED";
+
+      // Log analytics
+      await trackEvent({
+        eventType: "PAYMENT_RELEASED",
+        userId: booking.userId || undefined,
+        charterId: booking.charterId,
+        metadata: {
+          bookingId: booking.id,
+          paymentMethod: booking.paymentMethod || undefined,
+          paymentFlow: booking.paymentFlow || undefined,
+          reason: "ANGLER_CANCELLED_BEFORE_APPROVAL",
+        },
+      });
+    }
+
+    // PAID: Apply cancellation policy and refund
+    else if (booking.status === "PAID") {
+      // Get booking with trip date for refund calculation
+      const bookingWithPrice = await prisma.booking.findUnique({
+        where: { id: booking.id },
+        select: {
+          finalPrice: true,
+          platformFee: true,
+          date: true,
+        },
+      });
+
+      if (!bookingWithPrice) {
+        throw new Error("Booking not found for refund calculation");
+      }
+
+      // Calculate refund based on cancellation policy
+      const refundCalculation = calculateRefundAmount(
+        bookingWithPrice,
+        new Date()
+      );
+
+      refundAmount = refundCalculation.refundAmount;
+
+      // Only initiate refund if amount > 0
+      if (refundAmount !== null && refundAmount > 0) {
+        if (
+          booking.paymentFlow === "DIRECT" ||
+          booking.paymentFlow === "TOKENIZED"
+        ) {
+          const refundResult = await initiateRefund({
+            bookingId: booking.id,
+            reason: "ANGLER_CANCELLATION",
+            refundType: "POLICY_BASED",
+            notes: cancellationReason || "Angler-initiated cancellation",
+          });
+
+          refundTransactionId = refundResult.bookingId; // Using bookingId as transaction reference
+
+          // Log analytics
+          await trackEvent({
+            eventType: "PAYMENT_REFUNDED",
+            userId: booking.userId || undefined,
+            charterId: booking.charterId,
+            metadata: {
+              bookingId: booking.id,
+              paymentMethod: booking.paymentMethod || undefined,
+              paymentFlow: booking.paymentFlow || undefined,
+              refundAmount,
+              refundPercentage: refundCalculation.refundPercentage * 100,
+              daysBeforeTrip: refundCalculation.daysBeforeTrip,
+              reason: "ANGLER_CANCELLATION",
+            },
+          });
+        } else {
+          console.warn(`[CANCEL] Unknown payment flow: ${booking.paymentFlow}`);
+        }
+      } else {
+        console.log(`[CANCEL] No refund due (amount: RM${refundAmount})`);
+      }
+    }
+  } catch (paymentError) {
+    console.error("[CANCEL] Payment handling error:", paymentError);
+    // Continue with cancellation but flag the payment issue
+    return NextResponse.json(
+      {
+        error: "Cancellation failed during payment processing",
+        details:
+          paymentError instanceof Error
+            ? paymentError.message
+            : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
+
+  // Update booking status with payment/refund data
+  const updateData: any = {
+    status: "CANCELLED",
+    cancellationReason: cancellationReason || null,
+  };
+
+  if (paymentReleaseOutcome) {
+    updateData.paymentReleasedAt = new Date();
+  }
+
+  if (refundAmount !== null) {
+    updateData.refundStatus = refundAmount > 0 ? "PENDING" : "NOT_APPLICABLE";
+    updateData.refundAmount = refundAmount;
+    if (refundTransactionId) {
+      updateData.refundTransactionId = refundTransactionId;
+    }
+  }
+
   const updated = await prisma.booking.update({
     where: { id },
-    data: {
-      status: "CANCELLED",
-      cancellationReason: cancellationReason || null,
-    },
+    data: updateData,
     select: {
       id: true,
       status: true,
       userId: true,
-      guestEmail: true,
-      guestFirstName: true,
-      guestLastName: true,
       tripId: true,
       charterId: true,
       date: true,
       cancellationReason: true,
+      finalPrice: true,
+      paymentFlow: true,
+      refundAmount: true,
+      refundStatus: true,
+      user: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
@@ -146,15 +290,7 @@ export async function POST(req: Request) {
     if (hookUrl && hookSecret) {
       // Fetch trip data for webhook payload
       const trip = await getTripById(updated.tripId);
-      const user = updated.userId
-        ? await prisma.user.findUnique({ where: { id: updated.userId } })
-        : null;
-
-      const anglerName =
-        user?.name ||
-        (updated.guestFirstName
-          ? `${updated.guestFirstName} ${updated.guestLastName}`
-          : "Angler");
+      const anglerName = updated.user?.name || "Angler";
 
       const payload = {
         type: "booking.cancelled",
@@ -166,6 +302,9 @@ export async function POST(req: Request) {
           date: updated.date.toISOString(),
           anglerName,
           charterName: trip?.charter?.name || "Your charter",
+          paymentFlow: updated.paymentFlow || undefined,
+          refundAmount: updated.refundAmount || undefined,
+          refundStatus: updated.refundStatus || undefined,
         },
       };
 
@@ -232,11 +371,28 @@ export async function POST(req: Request) {
       const trip = await getTripById(updated.tripId);
       if (!trip) return;
 
+      // Build refund message
+      let refundMessage = "";
+      if (updated.refundAmount !== null && updated.refundAmount !== undefined) {
+        const refundAmountNum = Number(updated.refundAmount);
+        if (refundAmountNum > 0) {
+          const refundPercentage = Math.round(
+            (refundAmountNum / Number(updated.finalPrice)) * 100
+          );
+          refundMessage = ` You will receive a ${refundPercentage}% refund (RM${refundAmountNum.toFixed(2)}) within 3-5 business days.`;
+        } else {
+          refundMessage =
+            " No refund is available due to the cancellation policy.";
+        }
+      } else if (paymentReleaseOutcome === "TOKEN_RELEASED") {
+        refundMessage = " Your card was not charged.";
+      }
+
       await createNotification({
         userId: recipientUserId,
         type: "BOOKING_CANCELLED",
         title: "Booking Cancelled",
-        message: `Your booking for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been cancelled.${updated.cancellationReason ? ` Reason: ${updated.cancellationReason}` : ""}`,
+        message: `Your booking for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been cancelled.${updated.cancellationReason ? ` Reason: ${updated.cancellationReason}` : ""}${refundMessage}`,
         actionUrl: `/search`,
         actionLabel: "Find Another Charter",
         bookingId: updated.id,
@@ -245,6 +401,8 @@ export async function POST(req: Request) {
           charterName: trip.charter.name,
           tripDate: updated.date.toISOString().slice(0, 10),
           cancellationReason: updated.cancellationReason ?? undefined,
+          refundAmount: updated.refundAmount ?? undefined,
+          refundStatus: updated.refundStatus ?? undefined,
         },
       });
     } catch (err) {
@@ -268,17 +426,7 @@ export async function POST(req: Request) {
         return;
       }
 
-      const user = updated.userId
-        ? await prisma.user.findUnique({
-            where: { id: updated.userId },
-          })
-        : null;
-
-      const anglerName =
-        user?.name ||
-        (updated.guestFirstName
-          ? `${updated.guestFirstName} ${updated.guestLastName}`
-          : "Angler");
+      const anglerName = updated.user?.name || "Angler";
 
       const captainBaseUrl =
         process.env.FISHON_CAPTAIN_API_URL || "http://localhost:3000";
@@ -309,5 +457,30 @@ export async function POST(req: Request) {
     console.error("Revalidation failed:", error);
   }
 
-  return NextResponse.json({ ok: true });
+  // Build user-facing message
+  let message = "Booking cancelled successfully.";
+  if (updated.refundAmount !== null && updated.refundAmount !== undefined) {
+    const refundAmountNum = Number(updated.refundAmount);
+    if (refundAmountNum > 0) {
+      const refundPercentage = Math.round(
+        (refundAmountNum / Number(updated.finalPrice)) * 100
+      );
+      message += ` You will receive a ${refundPercentage}% refund (RM${refundAmountNum.toFixed(2)}) within 3-5 business days.`;
+    } else {
+      message += " No refund is available due to the cancellation policy.";
+    }
+  } else if (paymentReleaseOutcome === "TOKEN_RELEASED") {
+    message += " Your card was not charged.";
+  }
+
+  return NextResponse.json({
+    ok: true,
+    message,
+    booking: {
+      id: updated.id,
+      status: updated.status,
+      refundAmount: updated.refundAmount,
+      refundStatus: updated.refundStatus,
+    },
+  });
 }

@@ -1,4 +1,16 @@
-import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+/**
+ * Booking Confirmation PDF Template
+ * Modern, clean design focused on trip details and customer information
+ * Uses Fishon brand colors and logo
+ */
+import {
+  Document,
+  Image,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
 import React from "react";
 
 // Date formatting helper (using native Date methods to avoid date-fns dependency)
@@ -59,334 +71,391 @@ interface ReceiptData {
   receiptNumber: string;
 }
 
-// Styles
+// Styles - Modern Booking Confirmation Design
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 0,
     fontSize: 10,
     fontFamily: "Helvetica",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#F8FAFC",
   },
-  header: {
-    marginBottom: 30,
-    borderBottom: "2pt solid #0F6292",
-    paddingBottom: 20,
+  // Hero Header with Fishon Brand
+  hero: {
+    backgroundColor: "#ec2227",
+    padding: 40,
+    paddingBottom: 60,
   },
-  brandRow: {
+  logoContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  logo: {
+    width: 150,
+    height: 50,
+    marginRight: 12,
   },
   brandName: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "Helvetica-Bold",
-    color: "#0F6292",
+    color: "#FFFFFF",
   },
   tagline: {
-    fontSize: 10,
-    color: "#666",
+    fontSize: 11,
+    color: "#FFE5E6",
     marginTop: 4,
   },
-  receiptTitle: {
-    fontSize: 18,
+  confirmationBadge: {
+    marginTop: 20,
+    backgroundColor: "#10B981",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+  },
+  confirmationText: {
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: "#333",
-    textAlign: "right",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
-  receiptMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+  // Main Content Container
+  contentContainer: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 40,
+    marginTop: -40,
+    borderRadius: 8,
+    padding: 30,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
-  metaLeft: {
-    flex: 1,
-  },
-  metaRight: {
-    flex: 1,
-    alignItems: "flex-end",
-  },
-  label: {
-    fontSize: 9,
-    color: "#666",
-    marginBottom: 3,
-  },
-  value: {
-    fontSize: 10,
-    color: "#333",
+  confirmationTitle: {
+    fontSize: 24,
+    fontFamily: "Helvetica-Bold",
+    color: "#1E293B",
     marginBottom: 8,
   },
+  confirmationSubtitle: {
+    fontSize: 11,
+    color: "#64748B",
+    marginBottom: 24,
+  },
+  // Trip Highlight Card
+  tripCard: {
+    backgroundColor: "#FEF2F2",
+    borderRadius: 6,
+    padding: 20,
+    marginBottom: 24,
+    borderLeft: "4pt solid #ec2227",
+  },
+  charterName: {
+    fontSize: 18,
+    fontFamily: "Helvetica-Bold",
+    color: "#ec2227",
+    marginBottom: 6,
+  },
+  tripName: {
+    fontSize: 12,
+    color: "#475569",
+    marginBottom: 12,
+  },
+  tripDetails: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  tripDetailItem: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 9,
+    color: "#64748B",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: "#1E293B",
+  },
+  // Info Sections
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Helvetica-Bold",
-    color: "#0F6292",
-    marginBottom: 10,
-    paddingBottom: 5,
-    borderBottom: "1pt solid #E5E7EB",
+    color: "#1E293B",
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottom: "2pt solid #E2E8F0",
   },
-  table: {
-    width: "100%",
-  },
-  tableRow: {
+  infoGrid: {
     flexDirection: "row",
-    borderBottom: "1pt solid #E5E7EB",
-    paddingVertical: 8,
+    gap: 24,
   },
-  tableHeader: {
-    backgroundColor: "#F3F4F6",
-    paddingVertical: 10,
+  infoColumn: {
+    flex: 1,
+  },
+  infoRow: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 9,
+    color: "#64748B",
+    marginBottom: 3,
+  },
+  value: {
+    fontSize: 10,
+    color: "#334155",
+  },
+  // Pricing Card
+  pricingCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 6,
+    padding: 20,
+    marginTop: 24,
+  },
+  pricingRow: {
     flexDirection: "row",
-    fontFamily: "Helvetica-Bold",
+    justifyContent: "space-between",
+    paddingVertical: 6,
   },
-  tableColDescription: {
-    width: "50%",
-    paddingLeft: 8,
+  pricingLabel: {
+    fontSize: 10,
+    color: "#64748B",
   },
-  tableColQty: {
-    width: "15%",
-    textAlign: "center",
-  },
-  tableColUnit: {
-    width: "15%",
-    textAlign: "right",
-  },
-  tableColAmount: {
-    width: "20%",
-    textAlign: "right",
-    paddingRight: 8,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 8,
-    paddingVertical: 4,
-  },
-  summaryLabel: {
-    width: "30%",
-    textAlign: "right",
-    paddingRight: 10,
-    color: "#666",
-  },
-  summaryValue: {
-    width: "20%",
-    textAlign: "right",
-    paddingRight: 8,
+  pricingValue: {
+    fontSize: 10,
+    color: "#334155",
   },
   totalRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 10,
-    paddingVertical: 10,
-    borderTop: "2pt solid #0F6292",
-    backgroundColor: "#F0F9FF",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    marginTop: 8,
+    borderTop: "2pt solid #CBD5E1",
   },
   totalLabel: {
-    width: "30%",
-    textAlign: "right",
-    paddingRight: 10,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Helvetica-Bold",
-    color: "#0F6292",
+    color: "#ec2227",
   },
   totalValue: {
-    width: "20%",
-    textAlign: "right",
-    paddingRight: 8,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: "Helvetica-Bold",
-    color: "#0F6292",
+    color: "#ec2227",
   },
+  // Footer
   footer: {
-    marginTop: 40,
+    marginHorizontal: 40,
+    marginTop: 30,
+    marginBottom: 40,
     paddingTop: 20,
-    borderTop: "1pt solid #E5E7EB",
+    borderTop: "1pt solid #CBD5E1",
   },
   footerText: {
     fontSize: 9,
-    color: "#666",
+    color: "#64748B",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 6,
+    lineHeight: 1.4,
   },
-  paidStamp: {
-    position: "absolute",
-    top: 150,
-    right: 60,
-    fontSize: 48,
-    color: "#10B981",
+  footerNote: {
+    fontSize: 8,
+    color: "#94A3B8",
+    textAlign: "center",
+    marginTop: 12,
+  },
+  // Reference Numbers Box
+  referenceBox: {
+    backgroundColor: "#F1F5F9",
+    padding: 12,
+    borderRadius: 4,
+    marginBottom: 20,
+  },
+  referenceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  referenceLabel: {
+    fontSize: 9,
+    color: "#64748B",
+  },
+  referenceValue: {
+    fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    transform: "rotate(-15deg)",
-    opacity: 0.2,
+    color: "#475569",
   },
 });
 
 const ReceiptTemplate: React.FC<{ data: ReceiptData }> = ({ data }) => {
   const { booking, user, receiptNumber } = data;
 
+  // For PDF rendering, we need absolute URLs
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.NEXTAUTH_URL ||
+    "https://fishon.my";
+  const logoUrl = `${baseUrl}/images/logos/fishon-logo-white.png`;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* PAID Watermark */}
-        {booking.paidAt && <Text style={styles.paidStamp}>PAID</Text>}
-
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.brandRow}>
-            <View>
-              <Text style={styles.brandName}>Fishon.my</Text>
-              <Text style={styles.tagline}>
-                Malaysia&apos;s Premier Fishing Charter Marketplace
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.receiptTitle}>RECEIPT</Text>
-            </View>
+        {/* Hero Header */}
+        <View style={styles.hero}>
+          <View style={styles.logoContainer}>
+            <Image src={logoUrl} style={styles.logo} />
           </View>
+          <Text style={styles.tagline}>
+            Malaysia&apos;s Premier Fishing Charter Marketplace
+          </Text>
+          {booking.paidAt && (
+            <View style={styles.confirmationBadge}>
+              <Text style={styles.confirmationText}>✓ BOOKING CONFIRMED</Text>
+            </View>
+          )}
+        </View>
 
-          <View style={styles.receiptMeta}>
-            <View style={styles.metaLeft}>
-              <Text style={styles.label}>Receipt Number</Text>
-              <Text style={styles.value}>{receiptNumber}</Text>
+        {/* Main Content Card */}
+        <View style={styles.contentContainer}>
+          {/* Title */}
+          <Text style={styles.confirmationTitle}>Booking Confirmation</Text>
+          <Text style={styles.confirmationSubtitle}>
+            Your fishing adventure awaits! Here are your booking details.
+          </Text>
 
-              <Text style={styles.label}>Booking ID</Text>
-              <Text style={styles.value}>{booking.id}</Text>
-
-              <Text style={styles.label}>Booking Date</Text>
-              <Text style={styles.value}>
+          {/* Reference Numbers */}
+          <View style={styles.referenceBox}>
+            <View style={styles.referenceRow}>
+              <Text style={styles.referenceLabel}>Confirmation Number</Text>
+              <Text style={styles.referenceValue}>{receiptNumber}</Text>
+            </View>
+            <View style={styles.referenceRow}>
+              <Text style={styles.referenceLabel}>Booking ID</Text>
+              <Text style={styles.referenceValue}>{booking.id}</Text>
+            </View>
+            <View style={styles.referenceRow}>
+              <Text style={styles.referenceLabel}>Booked On</Text>
+              <Text style={styles.referenceValue}>
                 {formatDate(booking.createdAt, true)}
               </Text>
             </View>
+            {booking.paidAt && (
+              <View style={styles.referenceRow}>
+                <Text style={styles.referenceLabel}>Paid On</Text>
+                <Text style={styles.referenceValue}>
+                  {formatDate(booking.paidAt, true)}
+                </Text>
+              </View>
+            )}
+          </View>
 
-            <View style={styles.metaRight}>
-              <Text style={styles.label}>Payment Date</Text>
-              <Text style={styles.value}>
-                {booking.paidAt ? formatDate(booking.paidAt, true) : "—"}
-              </Text>
-
-              <Text style={styles.label}>Status</Text>
-              <Text
-                style={[
-                  styles.value,
-                  { color: booking.paidAt ? "#10B981" : "#F59E0B" },
-                ]}
-              >
-                {booking.paidAt ? "PAID" : "PENDING"}
-              </Text>
+          {/* Trip Highlight Card */}
+          <View style={styles.tripCard}>
+            <Text style={styles.charterName}>{booking.charterName}</Text>
+            <Text style={styles.tripName}>
+              {booking.tripName} • {booking.location}
+            </Text>
+            <View style={styles.tripDetails}>
+              <View style={styles.tripDetailItem}>
+                <Text style={styles.detailLabel}>Date</Text>
+                <Text style={styles.detailValue}>
+                  {formatDate(booking.date)}
+                </Text>
+              </View>
+              <View style={styles.tripDetailItem}>
+                <Text style={styles.detailLabel}>Duration</Text>
+                <Text style={styles.detailValue}>
+                  {booking.days} {booking.days === 1 ? "day" : "days"}
+                </Text>
+              </View>
+              {booking.startTime && (
+                <View style={styles.tripDetailItem}>
+                  <Text style={styles.detailLabel}>Start Time</Text>
+                  <Text style={styles.detailValue}>{booking.startTime}</Text>
+                </View>
+              )}
+              <View style={styles.tripDetailItem}>
+                <Text style={styles.detailLabel}>Guests</Text>
+                <Text style={styles.detailValue}>
+                  {booking.adults} Adult{booking.adults !== 1 ? "s" : ""}
+                  {booking.children > 0 &&
+                    `, ${booking.children} Child${booking.children !== 1 ? "ren" : ""}`}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Customer Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Information</Text>
-          <View style={styles.receiptMeta}>
-            <View style={styles.metaLeft}>
-              <Text style={styles.label}>Name</Text>
-              <Text style={styles.value}>{user.name || "—"}</Text>
-
-              <Text style={styles.label}>Email</Text>
-              <Text style={styles.value}>{user.email}</Text>
-            </View>
-            <View style={styles.metaRight}>
-              <Text style={styles.label}>Phone</Text>
-              <Text style={styles.value}>{user.phone || "—"}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Charter Details */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Charter Details</Text>
-          <View style={styles.receiptMeta}>
-            <View style={styles.metaLeft}>
-              <Text style={styles.label}>Charter</Text>
-              <Text style={styles.value}>{booking.charterName}</Text>
-
-              <Text style={styles.label}>Location</Text>
-              <Text style={styles.value}>{booking.location}</Text>
-            </View>
-            <View style={styles.metaRight}>
-              <Text style={styles.label}>Trip</Text>
-              <Text style={styles.value}>{booking.tripName}</Text>
-
-              <Text style={styles.label}>Date</Text>
-              <Text style={styles.value}>
-                {formatDate(booking.date)}
-                {booking.startTime && ` • ${booking.startTime}`}
-              </Text>
+          {/* Customer Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+            <View style={styles.infoGrid}>
+              <View style={styles.infoColumn}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Name</Text>
+                  <Text style={styles.value}>{user.name || "Guest"}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Email</Text>
+                  <Text style={styles.value}>{user.email}</Text>
+                </View>
+              </View>
+              <View style={styles.infoColumn}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Phone</Text>
+                  <Text style={styles.value}>{user.phone || "—"}</Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Itemized Breakdown */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Itemized Breakdown</Text>
-
-          <View style={styles.table}>
-            {/* Table Header */}
-            <View style={styles.tableHeader}>
-              <Text style={styles.tableColDescription}>Description</Text>
-              <Text style={styles.tableColQty}>Qty</Text>
-              <Text style={styles.tableColUnit}>Unit Price</Text>
-              <Text style={styles.tableColAmount}>Amount</Text>
-            </View>
-
-            {/* Trip Row */}
-            <View style={styles.tableRow}>
-              <Text style={styles.tableColDescription}>
-                {booking.tripName} ({booking.days}{" "}
-                {booking.days > 1 ? "days" : "day"})
+          {/* Pricing Summary */}
+          <View style={styles.pricingCard}>
+            <View style={styles.pricingRow}>
+              <Text style={styles.pricingLabel}>
+                Trip Price ({booking.days} {booking.days === 1 ? "day" : "days"}{" "}
+                × RM {booking.unitPrice.toFixed(2)})
               </Text>
-              <Text style={styles.tableColQty}>{booking.days}</Text>
-              <Text style={styles.tableColUnit}>
-                RM {booking.unitPrice.toFixed(2)}
-              </Text>
-              <Text style={styles.tableColAmount}>
+              <Text style={styles.pricingValue}>
                 RM {(booking.unitPrice * booking.days).toFixed(2)}
               </Text>
             </View>
-
-            {/* Guests Row */}
-            <View style={styles.tableRow}>
-              <Text style={styles.tableColDescription}>
-                Guests ({booking.adults} adults
-                {booking.children > 0 && `, ${booking.children} children`})
+            <View style={styles.pricingRow}>
+              <Text style={styles.pricingLabel}>
+                Guests ({booking.adults} adult{booking.adults !== 1 ? "s" : ""}
+                {booking.children > 0 &&
+                  `, ${booking.children} child${booking.children !== 1 ? "ren" : ""}`}
+                )
               </Text>
-              <Text style={styles.tableColQty}>—</Text>
-              <Text style={styles.tableColUnit}>—</Text>
-              <Text style={styles.tableColAmount}>Included</Text>
+              <Text style={styles.pricingValue}>Included</Text>
             </View>
-          </View>
-
-          {/* Summary */}
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal:</Text>
-            <Text style={styles.summaryValue}>
-              RM {booking.totalPrice.toFixed(2)}
-            </Text>
-          </View>
-
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Amount:</Text>
-            <Text style={styles.totalValue}>
-              RM {booking.totalPrice.toFixed(2)}
-            </Text>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount Paid</Text>
+              <Text style={styles.totalValue}>
+                RM {booking.totalPrice.toFixed(2)}
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Thank you for booking with Fishon.my
+            🎣 Get ready for an unforgettable fishing adventure!
           </Text>
           <Text style={styles.footerText}>
-            For support, contact us at support@fishon.my
+            Thank you for choosing Fishon.my - Malaysia&apos;s Premier Fishing
+            Charter Marketplace
           </Text>
-          <Text style={[styles.footerText, { marginTop: 10 }]}>
-            This is a computer-generated receipt and does not require a
-            signature.
+          <Text style={styles.footerText}>
+            Questions? Contact us at support@fishon.my or visit fishon.my/help
+          </Text>
+          <Text style={styles.footerNote}>
+            This is an automated booking confirmation. Please bring this
+            document or your confirmation number on the day of your trip.
           </Text>
         </View>
       </Page>

@@ -40,6 +40,9 @@ export async function POST(req: Request) {
     const booking = await prisma.booking.findUnique({ where: { id } });
     if (!booking)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Only PENDING bookings can be approved (Manual flow)
+    // AUTO flow bookings use PAYMENT_AUTHORIZED status and need /acknowledge endpoint instead
     if (booking.status !== "PENDING") {
       return NextResponse.json(
         { error: "Only pending bookings can be approved" },
@@ -47,37 +50,50 @@ export async function POST(req: Request) {
       );
     }
 
-    // Extend expiration for APPROVED bookings (48 hours to pay)
-    const APPROVED_EXPIRY_HOURS = 48;
-    const newExpiresAt = new Date(
-      Date.now() + APPROVED_EXPIRY_HOURS * 60 * 60 * 1000
+    // Verify this is a Manual flow booking
+    if (booking.bookingFlowType !== "MANUAL") {
+      return NextResponse.json(
+        {
+          error:
+            "Only manual flow bookings can be approved. Auto flow bookings are already paid.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // Check if booking expired
+    if (booking.expiresAt && booking.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: "Booking expired and cannot be approved" },
+        { status: 409 }
+      );
+    }
+
+    // --- MANUAL FLOW: PENDING → AWAITING_PAYMENT ---
+    // Transition to AWAITING_PAYMENT with 48-hour payment deadline
+    const finalStatus = "AWAITING_PAYMENT" as const;
+    const PAYMENT_DEADLINE_HOURS = 48;
+    const paymentDeadline = new Date(
+      Date.now() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000
     );
 
     const updated = await prisma.booking.update({
       where: { id },
       data: {
-        status: "APPROVED",
+        status: finalStatus,
         captainDecisionAt: new Date(),
         cancellationReason: null,
-        // Extend expiration: anglers have 48 hours to complete payment
-        expiresAt: newExpiresAt,
+        paymentDeadline,
       },
-      select: {
-        id: true,
-        status: true,
-        userId: true,
-        guestEmail: true,
-        guestFirstName: true,
-        guestLastName: true,
-        tripId: true,
-        charterId: true,
-        date: true,
-        days: true,
-        guests: true,
-        tripPrice: true,
-        finalPrice: true,
-        startTime: true,
-        expiresAt: true,
+      include: {
+        user: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -93,6 +109,8 @@ export async function POST(req: Request) {
             tripId: updated.tripId,
             charterId: updated.charterId,
             status: updated.status,
+            bookingFlowType: booking.bookingFlowType,
+            paymentDeadline: paymentDeadline.toISOString(),
           },
         };
         sendWithRetry(hookUrl, payload, {
@@ -102,6 +120,8 @@ export async function POST(req: Request) {
         });
       }
     } catch {}
+
+    // Note: Analytics tracking not needed for captain-side approval actions
 
     // Send system message to conversation (Phase 2.2) (non-blocking best-effort)
     (async () => {
@@ -147,11 +167,12 @@ export async function POST(req: Request) {
 
         const trip = await getTripById(updated.tripId);
         if (trip) {
+          // Manual flow: Captain approved, angler needs to pay within 48h
           await createNotification({
             userId: recipientUserId,
             type: "BOOKING_APPROVED",
             title: "Booking Approved! 🎉",
-            message: `${trip.charter.name} approved your booking for ${updated.date.toISOString().slice(0, 10)}. Complete your payment to confirm your spot!`,
+            message: `${trip.charter.name} approved your booking for ${updated.date.toISOString().slice(0, 10)}. Complete your payment within 48 hours to confirm your spot!`,
             actionUrl: `/book/payment/${updated.id}`,
             actionLabel: "Complete Payment",
             bookingId: updated.id,
@@ -159,6 +180,7 @@ export async function POST(req: Request) {
             metadata: {
               charterName: trip.charter.name,
               tripDate: updated.date.toISOString().slice(0, 10),
+              paymentDeadline: paymentDeadline.toISOString(),
             },
           });
         }
@@ -169,18 +191,12 @@ export async function POST(req: Request) {
 
     // Email angler (best-effort)
     try {
-      // Handle both authenticated and guest bookings
-      const user = updated.userId
-        ? await prisma.user.findUnique({
-            where: { id: updated.userId },
-          })
-        : null;
-
-      const email = user?.email || updated.guestEmail;
+      // Extract user data from booking.user relation
+      const email = updated.user.email;
       const name =
-        user?.name ||
-        (updated.guestFirstName
-          ? `${updated.guestFirstName} ${updated.guestLastName}`
+        updated.user.name ||
+        (updated.user.firstName && updated.user.lastName
+          ? `${updated.user.firstName} ${updated.user.lastName}`
           : null);
 
       if (email) {
@@ -190,8 +206,10 @@ export async function POST(req: Request) {
           const base =
             process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
           const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(updated.id)}`;
+          const bookingUrl = `${base}/account/bookings/${encodeURIComponent(updated.id)}`;
           const paymentUrl = `${base}/book/payment/${encodeURIComponent(updated.id)}`;
 
+          // Manual flow: Send approval email with payment link
           await sendBookingApprovedEmail({
             to: email,
             userName: name ?? "there",
@@ -200,6 +218,9 @@ export async function POST(req: Request) {
             paymentUrl,
             confirmationUrl,
           });
+          console.log(
+            "✅ Booking approved email sent (AWAITING_PAYMENT status)"
+          );
         }
       }
     } catch (err) {

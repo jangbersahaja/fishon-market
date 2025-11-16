@@ -34,11 +34,7 @@ const abouts = [
   },
   {
     name: "Contact Us",
-    link: "/contact",
-  },
-  {
-    name: "Safety",
-    link: "/safety",
+    link: "support/contact",
   },
 ];
 
@@ -67,12 +63,16 @@ const support = [
     link: "/support/help",
   },
   {
-    name: "Term of Use",
-    link: "/support/terms",
+    name: "Term of Services",
+    link: "/terms",
   },
   {
     name: "Privacy Policy",
-    link: "/support/privacy",
+    link: "/privacy",
+  },
+  {
+    name: "Refund & Cancellation",
+    link: "/refund-policy",
   },
 ];
 
@@ -85,8 +85,15 @@ const Footer = () => {
           <ul className="flex flex-col gap-2">
             {abouts.map((a) => (
               <li key={a.name}>
-                <Link href={a.link}>
-                  {a.link != "" ? a.name : a.name + " (not ready)"}
+                <Link
+                  href={a.link}
+                  className={
+                    a.link != ""
+                      ? ""
+                      : "disabled cursor-not-allowed text-slate-500"
+                  }
+                >
+                  {a.name}
                 </Link>
               </li>
             ))}
@@ -97,8 +104,15 @@ const Footer = () => {
           <ul className="flex flex-col gap-2">
             {discover.map((a) => (
               <li key={a.name}>
-                <Link href={a.link}>
-                  {a.link != "" ? a.name : a.name + " (not ready)"}
+                <Link
+                  href={a.link}
+                  className={
+                    a.link != ""
+                      ? ""
+                      : "disabled cursor-not-allowed text-slate-500"
+                  }
+                >
+                  {a.name}
                 </Link>
               </li>
             ))}
@@ -117,8 +131,15 @@ const Footer = () => {
           <ul className="flex flex-col gap-2">
             {support.map((a) => (
               <li key={a.name}>
-                <Link href={a.link}>
-                  {a.link != "" ? a.name : a.name + " (not ready)"}
+                <Link
+                  href={a.link}
+                  className={
+                    a.link != ""
+                      ? ""
+                      : "disabled cursor-not-allowed text-slate-500"
+                  }
+                >
+                  {a.name}
                 </Link>
               </li>
             ))}
@@ -127,7 +148,11 @@ const Footer = () => {
         <div className="flex flex-col gap-3 text-sm">
           <span className="font-bold">Become a Captain</span>
           <ul className="flex flex-col gap-2">
-            <li>List Your Boat</li>
+            <li>
+              <Link href="https://fishon-captain.vercel.app/list-your-business">
+                List Your Boat
+              </Link>
+            </li>
           </ul>
         </div>
       </section>

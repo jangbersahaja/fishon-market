@@ -14,28 +14,56 @@ import { z } from "zod";
 
 import BookingSummaryCard from "./BookingSummaryCard";
 import DateGuestsCard from "./DateGuestsCard";
+import EmergencyContactCard from "./EmergencyContactCard";
+import ParticipantListCard from "./ParticipantListCard";
 import StartConversationCard from "./StartConversationCard";
 import StartTimeSelection from "./StartTimeSelection";
 import TripSelectionCard from "./TripSelectionCard";
 import YourDetailsCard from "./YourDetailsCard";
 
 // Zod validation schema for booking form
-const bookingSchema = z.object({
-  charterId: z.string().min(1, "Charter ID is required"),
-  tripId: z.string().min(1, "Trip ID is required"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-  days: z.number().int().min(1).max(14, "Days must be between 1 and 14"),
-  adults: z.number().int().min(1, "At least one adult is required"),
-  children: z.number().int().min(0),
-  startTime: z.string().optional(),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  note: z.string().optional(),
-});
+// Base schema without payment validation
+const baseBookingSchema = z
+  .object({
+    charterId: z.string().min(1, "Charter ID is required"),
+    tripId: z.string().min(1, "Trip ID is required"),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+    days: z.number().int().min(1).max(14, "Days must be between 1 and 14"),
+    adults: z.number().int().min(1, "At least one adult is required"),
+    children: z.number().int().min(0),
+    startTime: z.string().optional(),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().optional(),
+    note: z.string().optional(),
+    // Emergency contact fields
+    emergencyName: z.string().optional(),
+    emergencyPhone: z.string().optional(),
+    emergencyRelation: z.string().optional(),
+    // Participants list
+    participants: z
+      .array(
+        z.object({
+          name: z.string().min(1, "Name is required"),
+          phone: z.string().min(1, "Phone is required"),
+          isBooker: z.boolean().optional(),
+        })
+      )
+      .min(1, "At least one participant is required"),
+  })
+  .refine(
+    (data) => {
+      const totalGuests = data.adults + data.children;
+      return data.participants.length <= totalGuests;
+    },
+    {
+      message: "Number of participants cannot exceed total guests",
+      path: ["participants"],
+    }
+  );
 
-type BookingFormData = z.infer<typeof bookingSchema>;
+type BookingFormData = z.infer<typeof baseBookingSchema>;
 
 function toInt(v: string | null, fallback: number) {
   const n = Number(v);
@@ -100,6 +128,7 @@ export default function CheckoutForm({
   selectedTripIndex,
   charter,
   defaultUser,
+  charterFlowType = "MANUAL",
 }: {
   startTimes?: string[];
   defaultStartTime?: string;
@@ -111,7 +140,11 @@ export default function CheckoutForm({
     lastName?: string;
     email?: string;
     phone?: string;
+    emergencyName?: string;
+    emergencyPhone?: string;
+    emergencyRelation?: string;
   };
+  charterFlowType?: "MANUAL" | "AUTO";
 }) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -230,7 +263,7 @@ export default function CheckoutForm({
     [blockedDatesSet]
   );
 
-  // Initialize React Hook Form with Zod validation
+  // Initialize React Hook Form with Zod validation (dynamic schema based on flow type)
   const {
     register,
     handleSubmit,
@@ -241,7 +274,7 @@ export default function CheckoutForm({
     setError: setFormError,
     clearErrors,
   } = useForm<BookingFormData>({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(baseBookingSchema),
     defaultValues: {
       charterId: charterId || "",
       tripId: "",
@@ -255,6 +288,16 @@ export default function CheckoutForm({
       email: defaultUser?.email || "",
       phone: defaultUser?.phone || "",
       note: "",
+      emergencyName: "",
+      emergencyPhone: "",
+      emergencyRelation: "",
+      participants: [
+        {
+          name: "",
+          phone: "",
+          isBooker: false,
+        },
+      ],
     },
   });
 
@@ -296,14 +339,34 @@ export default function CheckoutForm({
       const ln = rest.join(" ").trim();
       if (!lastName && ln) setValue("lastName", ln);
     }
-  }, [session?.user, email, firstName, lastName, setValue]);
+    // Pre-fill emergency contact from defaultUser (fetched from User model)
+    if (defaultUser?.emergencyName)
+      setValue("emergencyName", defaultUser.emergencyName);
+    if (defaultUser?.emergencyPhone)
+      setValue("emergencyPhone", defaultUser.emergencyPhone);
+    if (defaultUser?.emergencyRelation)
+      setValue("emergencyRelation", defaultUser.emergencyRelation);
+  }, [session?.user, email, firstName, lastName, defaultUser, setValue]);
 
   const effectiveStartTimes = useMemo(() => {
     const t = trips?.[tripIndex];
-    if (Array.isArray(t?.startTimes) && t!.startTimes!.length > 0)
-      return t!.startTimes as string[];
-    return startTimes;
-  }, [trips, tripIndex, startTimes]);
+    const tripStartTimes = t?.startTimes;
+    const result =
+      Array.isArray(tripStartTimes) && tripStartTimes.length > 0
+        ? (tripStartTimes as string[])
+        : startTimes;
+
+    console.log(`[CheckoutForm] effectiveStartTimes:`, {
+      tripIndex,
+      tripName: t?.name,
+      tripStartTimes,
+      propStartTimes: startTimes,
+      result,
+      charterFlowType,
+    });
+
+    return result;
+  }, [trips, tripIndex, startTimes, charterFlowType]);
 
   const canSubmit = useMemo(() => {
     const startTimeOk =
@@ -318,6 +381,7 @@ export default function CheckoutForm({
           isDateRangeValid(selectedDate, selectedDays)
         : false;
 
+    // No payment validation on checkout form - payment is handled on preview page for AUTO flow
     return Boolean(
       charterId &&
         date &&
@@ -425,61 +489,118 @@ export default function CheckoutForm({
     clearErrors,
   ]);
 
-  const onSubmit = handleSubmit(async (formData) => {
-    console.log("✅ Validation passed, submitting booking...");
+  const onSubmit = handleSubmit(
+    async (formData) => {
+      console.log("✅ Validation passed, submitting booking...");
 
-    // Authenticated user flow - direct booking creation
-    if (isLoggedIn) {
-      try {
-        const res = await fetch("/api/bookings/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+      // Authenticated user flow
+      if (isLoggedIn) {
+        try {
+          // Manual flow: Create PENDING booking without payment
+          if (charterFlowType === "MANUAL") {
+            const res = await fetch("/api/bookings/create", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                charterId: formData.charterId,
+                tripId: formData.tripId,
+                date: formData.date,
+                days: formData.days,
+                adults: formData.adults,
+                children: formData.children,
+                startTime: formData.startTime,
+                note: formData.note,
+                phone: formData.phone,
+                emergencyName: formData.emergencyName,
+                emergencyPhone: formData.emergencyPhone,
+                emergencyRelation: formData.emergencyRelation,
+                participants: formData.participants,
+              }),
+            });
 
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              setFormError("root", {
+                type: "manual",
+                message: data?.error || "Failed to create booking request",
+              });
+              return;
+            }
+
+            const data = await res.json();
+            const bookingId = data?.booking?.id;
+
+            if (bookingId) {
+              addBooking({
+                id: bookingId,
+                charterName: charter?.name || "Charter Trip",
+                date: formData.date,
+                status: "PENDING",
+              });
+              router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+            } else {
+              setFormError("root", {
+                type: "manual",
+                message: "Missing booking id",
+              });
+            }
+            return;
+          }
+
+          // Auto flow: Redirect to payment preview
+          if (charterFlowType === "AUTO") {
+            // Encode booking data for payment preview
+            const bookingData = {
+              charterId: formData.charterId,
+              tripId: formData.tripId,
+              date: formData.date,
+              days: formData.days,
+              startTime: formData.startTime || "",
+              adults: formData.adults,
+              children: formData.children,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email,
+              phone: formData.phone || "",
+              emergencyName: formData.emergencyName || "",
+              emergencyPhone: formData.emergencyPhone || "",
+              emergencyRelation: formData.emergencyRelation || "",
+              note: formData.note || "",
+              participants: formData.participants,
+              sessionStart: Date.now(),
+            };
+
+            const encoded = Buffer.from(JSON.stringify(bookingData)).toString(
+              "base64"
+            );
+            router.push(`/book/payment/preview?data=${encoded}`);
+            return;
+          }
+        } catch (err: any) {
           setFormError("root", {
             type: "manual",
-            message: data?.error || "Failed to create booking",
-          });
-          return;
-        }
-
-        const data = await res.json();
-        const bookingId = data?.booking?.id;
-
-        if (bookingId) {
-          // Save to local storage for guest tracking (even for logged-in users)
-          addBooking({
-            id: bookingId,
-            charterName: charter?.name || "Charter Trip",
-            date: formData.date,
-            status: "PENDING",
-          });
-
-          router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
-        } else {
-          setFormError("root", {
-            type: "manual",
-            message: "Missing booking id",
+            message: err?.message || String(err),
           });
         }
-      } catch (err: any) {
-        setFormError("root", {
-          type: "manual",
-          message: err?.message || String(err),
-        });
+        return;
       }
-      return;
-    }
 
-    // Guest flow - show verification modal
-    setShowVerificationModal(true);
-  });
+      // Guest flow (Manual + Auto) always goes through verification modal first
+      setShowVerificationModal(true);
+      return;
+    },
+    (errors) => {
+      // Validation failed - log errors for debugging
+      console.error("❌ Form validation failed:", errors);
+      console.log("Current form values:", watch());
+    }
+  );
 
   // Handle guest booking after email verification
-  async function handleGuestVerified(token: string) {
+  async function handleGuestVerified(verificationData: {
+    userId: string;
+    email: string;
+  }) {
     setShowVerificationModal(false);
 
     // Trigger validation and get form values
@@ -495,18 +616,47 @@ export default function CheckoutForm({
     const formData = watch();
 
     try {
+      if (charterFlowType === "AUTO") {
+        const bookingData = {
+          charterId: formData.charterId,
+          tripId: formData.tripId,
+          date: formData.date,
+          days: formData.days,
+          startTime: formData.startTime || "",
+          adults: formData.adults,
+          children: formData.children,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone || "",
+          emergencyName: formData.emergencyName || "",
+          emergencyPhone: formData.emergencyPhone || "",
+          emergencyRelation: formData.emergencyRelation || "",
+          note: formData.note || "",
+          participants: formData.participants,
+          guestVerification: {
+            userId: verificationData.userId,
+            email: verificationData.email,
+          },
+          sessionStart: Date.now(),
+        };
+
+        const encoded = Buffer.from(JSON.stringify(bookingData)).toString(
+          "base64"
+        );
+        router.push(`/book/payment/preview?data=${encoded}`);
+        return;
+      }
+
       const res = await fetch("/api/bookings/create-guest", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          verificationToken: token,
+          verifiedEmail: verificationData.email,
+          verifiedUserId: verificationData.userId,
           ...formData,
-          guestFirstName: formData.firstName,
-          guestLastName: formData.lastName,
-          guestEmail: formData.email,
-          guestPhone: formData.phone,
         }),
       });
 
@@ -531,7 +681,14 @@ export default function CheckoutForm({
           status: "PENDING",
         });
 
-        router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+        // Check if payment requires redirect (FPX/E-wallet DIRECT flow)
+        if (data.requiresRedirect && data.redirectUrl) {
+          console.log("🏦 Redirecting to payment gateway:", data.redirectUrl);
+          window.location.href = data.redirectUrl;
+        } else {
+          // TOKENIZED flow (Card) or MOCK - go to confirmation
+          router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+        }
       } else {
         setFormError("root", {
           type: "manual",
@@ -573,13 +730,38 @@ export default function CheckoutForm({
       updateSearchParam("adults", String(newAdults));
     }
   }, [maxGuests, adults, children, updateSearchParam]);
-  const estTotal = useMemo(() => {
-    const p = chosenTrip?.price ?? 0;
-    return p * Math.max(1, days);
+  // Calculate complete pricing breakdown
+  const pricingBreakdown = useMemo(() => {
+    const tripPrice = chosenTrip?.price ?? 0;
+    if (tripPrice === 0) return null;
+
+    // Import and use the same pricing calculation as backend
+    const subtotal = tripPrice * Math.max(1, days);
+    const platformFee = Math.round(subtotal * 0.1 * 100) / 100;
+    const discount = 0; // TODO: Promo code support
+    const amountBeforeGateway = subtotal + platformFee - discount;
+    const paymentGatewayFee =
+      Math.round(amountBeforeGateway * 0.015 * 100) / 100;
+    const sst = 0; // Future
+    const finalPrice =
+      Math.round((amountBeforeGateway + paymentGatewayFee + sst) * 100) / 100;
+    const captainEarnings = Math.round((subtotal - platformFee) * 100) / 100;
+
+    return {
+      tripPrice,
+      days: Math.max(1, days),
+      subtotal,
+      platformFee,
+      discount,
+      paymentGatewayFee,
+      sst,
+      finalPrice,
+      captainEarnings,
+    };
   }, [chosenTrip?.price, days]);
 
   return (
-    <form onSubmit={onSubmit} className="mt-6">
+    <form onSubmit={onSubmit} className="">
       {/* Error display */}
       {errors.root && (
         <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
@@ -587,100 +769,174 @@ export default function CheckoutForm({
         </div>
       )}
 
+      {charterFlowType === "MANUAL" && (
+        <div className="p-4 mb-6 border rounded-lg border-amber-200 bg-amber-50">
+          <p className="text-sm font-medium text-amber-900">
+            Captain approval required — no upfront payment
+          </p>
+          <p className="mt-1 text-sm text-amber-900">
+            Submit your request now and pay only after the captain approves
+            (typically within 24 hours).
+          </p>
+          {!isLoggedIn ? (
+            <p className="mt-2 text-xs text-amber-800">
+              Guests will verify their email with a TAC code before the request
+              is sent.
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-amber-800">
+              We&apos;ll email you as soon as the captain responds so you can
+              complete payment.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Mobile: Summary first */}
-      <div className="mb-6 lg:hidden">
+      <div className="mb-3 lg:hidden">
         <BookingSummaryCard
           charter={charter}
           captain={charter?.captain}
-          totalPrice={estTotal}
+          pricingBreakdown={pricingBreakdown}
         />
       </div>
 
       {/* Main grid */}
-      <section className="grid gap-6 lg:grid-cols-5 ">
+      <section className="grid gap-3 sm:gap-5 lg:grid-cols-3 ">
         {/* Left column: Form sections */}
-        <div className="p-5 space-y-6 bg-white border lg:col-span-3 rounded-2xl border-black/10 sm:p-6">
-          {/* Your Details */}
-          <YourDetailsCard
-            register={register}
-            errors={errors}
-            firstName={firstName}
-            lastName={lastName}
-            email={email}
-            phone={phone || ""}
-          />
-
-          {/* Date + Guests (Search box style) */}
-          <DateGuestsCard
-            schedule={charter?.schedule}
-            unavailability={charter?.unavailability}
-            charterId={charterId || undefined}
-            charterType={charter?.charterType}
-            date={date}
-            onDateChange={(d) => updateSearchParam("date", d)}
-            days={days}
-            onDaysChange={(v) => updateSearchParam("days", String(v))}
-            adults={adults}
-            onAdultsChange={(nextAdults) => {
-              const max = maxGuests ?? Infinity;
-              const clampedAdults = Math.max(
-                1,
-                Math.min(nextAdults, max - children)
-              );
-              updateSearchParam("adults", String(clampedAdults));
-            }}
-            childrenCount={children}
-            onChildrenChange={(nextChildren) => {
-              const max = maxGuests ?? Infinity;
-              const clampedChildren = Math.max(
-                0,
-                Math.min(nextChildren, max - adults)
-              );
-              updateSearchParam("children", String(clampedChildren));
-            }}
-            maxGuests={maxGuests}
-            blockedDatesSet={blockedDatesSet}
-            dateError={errors.date?.message}
-          />
-
-          {/* Trip Selection */}
-          <TripSelectionCard
-            trips={trips || []}
-            selectedIndex={tripIndex}
-            days={days}
-            charterSpecies={charter?.species || []}
-            charterTechniques={charter?.techniques || []}
-            onTripSelect={handleTripSelect}
-          />
-
-          {/* Start Time Selection */}
-          {effectiveStartTimes && effectiveStartTimes.length > 0 && (
-            <StartTimeSelection
-              startTimes={effectiveStartTimes}
-              selectedTime={startTime}
-              onTimeSelect={(v) => setValue("startTime", v)}
+        <div className="space-y-3 lg:col-span-2 ">
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            {/* Your Details */}
+            <YourDetailsCard
+              register={register}
+              errors={errors}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              phone={phone || ""}
             />
-          )}
 
-          {/* Start Conversation */}
-          <StartConversationCard
-            captain={charter?.captain}
-            charterName={charter?.name}
-            location={charter?.location}
-            species={charter?.species || []}
-            techniques={charter?.techniques || []}
-            register={register}
-            errors={errors}
-          />
+            {/* Emergency Contact */}
+            <EmergencyContactCard
+              register={register}
+              errors={errors}
+              emergencyName={watch("emergencyName")}
+              emergencyPhone={watch("emergencyPhone")}
+              emergencyRelation={watch("emergencyRelation")}
+            />
+
+            {/* Participant List */}
+            <ParticipantListCard
+              register={register}
+              errors={errors}
+              watch={watch}
+              setValue={setValue}
+              guests={adults + (children || 0)}
+            />
+          </div>
+
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            {/* Trip Selection */}
+            <TripSelectionCard
+              trips={trips || []}
+              selectedIndex={tripIndex}
+              days={days}
+              charterSpecies={charter?.species || []}
+              charterTechniques={charter?.techniques || []}
+              onTripSelect={handleTripSelect}
+            />
+            {/* Date + Guests (Search box style) */}
+            <DateGuestsCard
+              schedule={charter?.schedule}
+              unavailability={charter?.unavailability}
+              charterId={charterId || undefined}
+              charterType={charter?.charterType}
+              date={date}
+              onDateChange={(d) => updateSearchParam("date", d)}
+              days={days}
+              onDaysChange={(v) => updateSearchParam("days", String(v))}
+              adults={adults}
+              onAdultsChange={(nextAdults) => {
+                const max = maxGuests ?? Infinity;
+                const clampedAdults = Math.max(
+                  1,
+                  Math.min(nextAdults, max - children)
+                );
+                updateSearchParam("adults", String(clampedAdults));
+              }}
+              childrenCount={children}
+              onChildrenChange={(nextChildren) => {
+                const max = maxGuests ?? Infinity;
+                const clampedChildren = Math.max(
+                  0,
+                  Math.min(nextChildren, max - adults)
+                );
+                updateSearchParam("children", String(clampedChildren));
+              }}
+              maxGuests={maxGuests}
+              blockedDatesSet={blockedDatesSet}
+              dateError={errors.date?.message}
+            />
+
+            {/* Start Time Selection */}
+            {effectiveStartTimes && effectiveStartTimes.length > 0 && (
+              <StartTimeSelection
+                startTimes={effectiveStartTimes}
+                selectedTime={startTime}
+                onTimeSelect={(v) => setValue("startTime", v)}
+              />
+            )}
+          </div>
+
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            {/* Start Conversation */}
+            <StartConversationCard
+              captain={charter?.captain}
+              charterName={charter?.name}
+              location={charter?.location}
+              species={charter?.species || []}
+              techniques={charter?.techniques || []}
+              register={register}
+              errors={errors}
+            />
+          </div>
 
           {/* Submit Button */}
           <div className="flex flex-col gap-3">
+            {/* Show validation errors */}
+            {Object.keys(errors).length > 0 && !errors.root && (
+              <div className="p-3 border border-red-200 rounded-lg bg-red-50">
+                <p className="mb-2 text-sm font-semibold text-red-800">
+                  Please fix the following errors:
+                </p>
+                <ul className="space-y-1 text-sm text-red-700">
+                  {Object.entries(errors).map(
+                    ([field, error]: [string, any]) => {
+                      if (field === "root" || !error?.message) return null;
+                      return (
+                        <li key={field} className="flex items-start gap-2">
+                          <span className="mt-0.5">•</span>
+                          <span>
+                            <strong>{field}:</strong> {error.message}
+                          </span>
+                        </li>
+                      );
+                    }
+                  )}
+                </ul>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={!canSubmit || isSubmitting}
               className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
-              {isSubmitting ? "Submitting..." : "Request to Book"}
+              {isSubmitting
+                ? "Submitting..."
+                : charterFlowType === "MANUAL"
+                  ? "Request Booking"
+                  : "Proceed to Payment"}
             </button>
 
             {!canSubmit && (
@@ -737,12 +993,12 @@ export default function CheckoutForm({
         </div>
 
         {/* Right column: Summary (desktop only) */}
-        <div className="hidden lg:block lg:col-span-2">
+        <div className="hidden lg:block ">
           <div className="">
             <BookingSummaryCard
               charter={charter}
               captain={charter?.captain}
-              totalPrice={estTotal}
+              pricingBreakdown={pricingBreakdown}
             />
           </div>
         </div>
@@ -755,6 +1011,8 @@ export default function CheckoutForm({
         onVerified={handleGuestVerified}
         email={email}
         firstName={firstName}
+        lastName={lastName}
+        phone={phone || ""}
       />
     </form>
   );

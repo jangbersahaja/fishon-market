@@ -1,5 +1,6 @@
 "use client";
 
+import { calculatePricing } from "@/lib/services/pricing-service";
 import type { SpeciesItem } from "@fishon/ui";
 import { SPECIES_BY_ID } from "@fishon/ui";
 import { SpeciesPills } from "@fishon/ui/charter";
@@ -60,12 +61,15 @@ export default function TripSelectionCard({
 
   return (
     <section className="pb-5 border-b border-black/10">
-      <h2 className="mb-4 text-base font-semibold sm:text-lg">Confirm Trips</h2>
+      <h2 className="mb-3 text-base font-semibold sm:text-lg">Confirm Trips</h2>
 
       <div className="space-y-3">
         {trips.map((trip, index) => {
           const isSelected = index === selectedIndex;
-          const totalPrice = trip.price * Math.max(1, days);
+          const totalPrice = calculatePricing({
+            tripPrice: trip.price,
+            days,
+          });
 
           const speciesToShow =
             trip.targetSpecies && trip.targetSpecies.length > 0
@@ -79,20 +83,20 @@ export default function TripSelectionCard({
           return (
             <div
               key={trip.name + index}
-              className={`relative overflow-hidden rounded-xl border transition-all cursor-pointer ${
+              className={`relative overflow-hidden rounded-lg ring  bg-slate-50 transition-all cursor-pointer ${
                 isSelected
-                  ? "border-[#ec2227] bg-red-50/30"
-                  : "border-black/10 hover:border-black/20"
+                  ? "ring-[#ec2227] ring-2"
+                  : "ring-black/10 hover:ring-black/20"
               }`}
               onClick={() => onTripSelect(index)}
             >
-              <div className="p-4">
+              <div className="p-3">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base font-semibold">{trip.name}</h3>
                     {trip.duration && (
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="text-xs text-gray-600">
                         {trip.duration}
                         {trip.maxAnglers &&
                           ` • Up to ${trip.maxAnglers} anglers`}
@@ -103,7 +107,7 @@ export default function TripSelectionCard({
                   <div className="flex items-start gap-3">
                     <div className="text-right">
                       <p className="text-lg font-bold text-[#ec2227]">
-                        RM{totalPrice}
+                        RM{totalPrice.finalPrice}
                       </p>
                       {days > 1 && (
                         <p className="text-xs text-gray-500">
@@ -127,9 +131,9 @@ export default function TripSelectionCard({
 
                 {/* Expanded details when selected */}
                 {isSelected && (
-                  <div className="pt-4 mt-4 space-y-3 border-t border-black/10">
+                  <div className="pt-3 mt-3 space-y-3 border-t border-black/10">
                     {trip.description && (
-                      <p className="text-sm leading-relaxed text-gray-700">
+                      <p className="text-xs leading-relaxed text-gray-700">
                         {trip.description}
                       </p>
                     )}

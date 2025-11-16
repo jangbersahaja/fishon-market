@@ -1,24 +1,24 @@
 /**
  * Smart Refresh Component for Booking Status Pages
  *
- * This component provides intelligent status refresh without continuous polling:
+ * This component provides intelligent status refresh based on booking status:
  *
  * Features:
- * 1. **Tab Focus Refresh**: Auto-refreshes when user returns to the tab (PENDING/APPROVED only)
- * 2. **One-Time Delayed Check**: For PENDING bookings, checks once after 30 seconds
- * 3. **Manual Refresh Button**: User can manually check status anytime
- * 4. **No Continuous Polling**: Zero background API calls - clean server logs
+ * 1. **Tab Focus Refresh**: Auto-refreshes when user returns to the tab (PENDING/PAYMENT_PENDING/APPROVED)
+ * 2. **Continuous Polling**: For PAYMENT_PENDING status, polls every 30 seconds for captain approval
+ * 3. **One-Time Delayed Check**: For legacy PENDING bookings, checks once after 30 seconds
+ * 4. **Manual Refresh Button**: User can manually check status anytime
  *
  * Performance Impact:
- * - No continuous polling overhead
- * - Only refreshes when user interacts or returns to tab
- * - Minimal battery/data usage
- * - Clean server logs (no repeated requests)
+ * - PAYMENT_PENDING: Active polling (30s interval) for real-time captain approval updates
+ * - PENDING: One-time delayed check + focus refresh
+ * - APPROVED: Focus refresh only
+ * - Other statuses: No auto-refresh
  *
  * Usage:
  * ```tsx
  * <BookingStatusRefresh
- *   status="PENDING"
+ *   status="PAYMENT_PENDING"
  *   showButton={true}  // Optional: hide button for silent mode
  * />
  * ```
@@ -55,9 +55,12 @@ export function BookingStatusRefresh({
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
   // Only enable auto-refresh for statuses that can change
-  const shouldAutoRefresh = status === "PENDING" || status === "APPROVED";
+  const shouldAutoRefresh =
+    status === "PENDING" ||
+    status === "PAYMENT_PENDING" ||
+    status === "APPROVED";
 
-  // Auto-refresh when user returns to tab (only for pending/approved bookings)
+  // Auto-refresh when user returns to tab (only for pending/payment_pending/approved bookings)
   useEffect(() => {
     if (!shouldAutoRefresh) return;
 
@@ -71,7 +74,32 @@ export function BookingStatusRefresh({
     return () => window.removeEventListener("focus", onFocus);
   }, [router, shouldAutoRefresh]);
 
-  // Optional: One-time delayed check after 30 seconds for pending bookings
+  // Continuous polling for PAYMENT_PENDING status (every 30 seconds)
+  useEffect(() => {
+    if (status !== "PAYMENT_PENDING") return;
+
+    console.log(
+      "[BookingStatusRefresh] Starting 30s polling for PAYMENT_PENDING status..."
+    );
+
+    // Initial refresh
+    router.refresh();
+    setLastRefreshTime(new Date());
+
+    // Set up interval for continuous polling
+    const interval = setInterval(() => {
+      console.log("[BookingStatusRefresh] Polling PAYMENT_PENDING status...");
+      router.refresh();
+      setLastRefreshTime(new Date());
+    }, 30000); // 30 seconds
+
+    return () => {
+      console.log("[BookingStatusRefresh] Cleaning up polling interval");
+      clearInterval(interval);
+    };
+  }, [router, status]);
+
+  // Optional: One-time delayed check after 30 seconds for legacy PENDING bookings
   useEffect(() => {
     if (status !== "PENDING") return;
 

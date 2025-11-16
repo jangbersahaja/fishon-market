@@ -25,16 +25,30 @@ interface Captain {
   avatarUrl?: string;
 }
 
+interface PricingBreakdown {
+  tripPrice: number;
+  days: number;
+  subtotal: number;
+  platformFee: number;
+  discount: number;
+  paymentGatewayFee: number;
+  sst: number;
+  finalPrice: number;
+  captainEarnings: number;
+}
+
 interface BookingSummaryCardProps {
   charter?: Charter;
   captain?: Captain | null;
-  totalPrice?: number | null;
+  totalPrice?: number | null; // Legacy, remove after full migration
+  pricingBreakdown?: PricingBreakdown | null;
 }
 
 export default function BookingSummaryCard({
   charter,
   captain,
   totalPrice,
+  pricingBreakdown,
 }: BookingSummaryCardProps) {
   const images = charter?.images || [];
   const mainImage = images[0] || "/placeholder-1.jpg";
@@ -43,20 +57,20 @@ export default function BookingSummaryCard({
   const mapEmbedSrc = charter?.coordinates
     ? `https://www.google.com/maps?q=${charter.coordinates.lat},${charter.coordinates.lng}&z=13&output=embed`
     : charter?.address
-    ? `https://www.google.com/maps?q=${encodeURIComponent(
-        charter.address
-      )}&z=13&output=embed`
-    : null;
+      ? `https://www.google.com/maps?q=${encodeURIComponent(
+          charter.address
+        )}&z=13&output=embed`
+      : null;
 
   return (
-    <aside className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6 h-fit">
-      <h2 className="mb-4 text-base font-semibold sm:text-lg">
+    <aside className="p-3 bg-white border rounded-lg border-black/10 sm:p-5 h-fit">
+      <h2 className="mb-3 text-base font-semibold sm:text-lg">
         Charter Summary
       </h2>
 
       {/* Photo Collage */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 mb-4 overflow-hidden h-60 sm:h-60 rounded-xl">
+        <div className="grid grid-cols-2 gap-1.5 mb-3 overflow-hidden h-60 sm:h-48 rounded-lg">
           {/* Main large image */}
           <div className="relative h-full col-span-2 bg-gray-100 sm:col-span-1 sm:row-span-2">
             <Image
@@ -103,7 +117,7 @@ export default function BookingSummaryCard({
       )}
 
       {/* Charter Info */}
-      <div className="pb-4 mb-4 border-b border-black/10">
+      <div className="pb-3 mb-3 border-b border-black/10">
         <h3 className="text-base font-semibold">
           {charter?.name || "Charter"}
         </h3>
@@ -117,8 +131,8 @@ export default function BookingSummaryCard({
 
       {/* Boat Details */}
       {charter?.boat && (
-        <div className="pb-4 mb-4 border-b border-black/10">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="pb-3 mb-3 border-b border-black/10">
+          <div className="flex items-center gap-1.5 mb-1.5">
             <Ship className="w-4 h-4 text-gray-600" />
             <h4 className="text-sm font-semibold">
               {charter.boat.name || "Vessel"}
@@ -129,7 +143,7 @@ export default function BookingSummaryCard({
           </div>
 
           {charter.boat.features && charter.boat.features.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
               {charter.boat.features.slice(0, 3).map((feature) => (
                 <span
                   key={feature}
@@ -150,7 +164,7 @@ export default function BookingSummaryCard({
 
       {/* Map */}
       {mapEmbedSrc && (
-        <div className="pb-4 mb-4 border-b border-black/10">
+        <div className="pb-3 mb-3 border-b border-black/10">
           <div className="overflow-hidden rounded-lg">
             <iframe
               src={mapEmbedSrc}
@@ -166,8 +180,8 @@ export default function BookingSummaryCard({
           </div>
           {charter?.address && (
             <div className="mt-4">
-              <h4 className="mb-2 text-sm font-semibold">Starting Point</h4>
-              <div className="flex items-start gap-1.5 mt-2 text-sm text-gray-600">
+              <h4 className="mb-1.5 text-sm font-semibold">Starting Point</h4>
+              <div className="flex items-start gap-1.5 mt-1.5 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                 <p className="capitalize">{charter.address}</p>
               </div>
@@ -179,7 +193,7 @@ export default function BookingSummaryCard({
       {/* Amenities */}
       {charter?.includes && charter.includes.length > 0 && (
         <div className="">
-          <h4 className="mb-2 text-sm font-semibold">Included</h4>
+          <h4 className="mb-1.5 text-sm font-semibold">Included</h4>
           <div className="flex flex-wrap gap-1.5">
             {charter.includes.slice(0, 4).map((item) => (
               <span
@@ -198,28 +212,100 @@ export default function BookingSummaryCard({
         </div>
       )}
 
-      {totalPrice && (
+      {(pricingBreakdown || totalPrice) && (
         <>
-          {/* Pricing */}
-          <div className="pt-4 mt-4 mb-4 border-t border-black/10">
-            <div className="flex items-center justify-between text-base font-semibold">
-              <span>Total (est.)</span>
-              <span className="text-[#ec2227]">RM{totalPrice}</span>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">
-              Final price confirmed by captain. No payment required now.
-            </p>
+          {/* Pricing Breakdown */}
+          <div className="pt-3 mt-3 border-t border-black/10">
+            {pricingBreakdown ? (
+              <>
+                {/* Itemized Breakdown */}
+                <div className="mb-3 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">
+                      Trip Price ({pricingBreakdown.days}{" "}
+                      {pricingBreakdown.days > 1 ? "days" : "day"})
+                    </span>
+                    <span className="font-medium">
+                      RM{pricingBreakdown.subtotal.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Commission (10%)</span>
+                    <span className="font-medium">
+                      RM{pricingBreakdown.platformFee.toFixed(2)}
+                    </span>
+                  </div>
+                  {pricingBreakdown.discount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Discount</span>
+                      <span className="font-medium text-green-600">
+                        -RM{pricingBreakdown.discount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Service Fee (1.5%)</span>
+                    <span className="font-medium">
+                      RM{pricingBreakdown.paymentGatewayFee.toFixed(2)}
+                    </span>
+                  </div>
+                  {pricingBreakdown.sst > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">SST</span>
+                      <span className="font-medium">
+                        RM{pricingBreakdown.sst.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div className="pt-3 border-t border-black/10">
+                  <div className="flex items-center justify-between text-base font-semibold">
+                    <span>Total</span>
+                    <span className="text-[#ec2227]">
+                      RM{pricingBreakdown.finalPrice.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Legacy: show simple total
+              <div className="flex items-center justify-between text-base font-semibold">
+                <span>Total (est.)</span>
+                <span className="text-[#ec2227]">RM{totalPrice}</span>
+              </div>
+            )}
           </div>
 
           {/* Payment Info */}
-          <details className="mt-4 text-xs text-gray-600">
+          <details className="mt-3 text-xs text-gray-600">
             <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
               Payment information
             </summary>
-            <p className="mt-2 leading-relaxed">
-              No payment is required now. Once your booking is confirmed, the
-              captain will send you a secure payment link.
+            <p className="mt-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50">
+              {pricingBreakdown
+                ? "For card payments: Your card will be authorized (not charged) when you submit. If the captain confirms your booking, your card will be charged automatically. If rejected, the authorization will be released."
+                : "No payment is required now. Once your booking is confirmed, the captain will send you a secure payment link."}
             </p>
+          </details>
+
+          {/* Cancellation Policy Note */}
+
+          <details className="mt-3 text-xs text-gray-600">
+            <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
+              Cancellation notes
+            </summary>
+            <ul className="space-y-0.5 my-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50">
+              <li>• More than 30 days before trip: 80% refund</li>
+              <li>• 15-30 days before trip: 50% refund</li>
+              <li>• Less than 15 days before trip: No refund</li>
+            </ul>
+            <p>
+              If the captain rejects your booking, you&apos;ll receive a full
+              refund
+            </p>
+            <p>Refunds typically take 5-7 business days</p>
           </details>
         </>
       )}

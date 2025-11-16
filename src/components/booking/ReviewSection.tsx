@@ -22,7 +22,7 @@ export function ReviewSection({
   // Show guest message if user is not logged in
   if (!userId) {
     return (
-      <div className="p-6 bg-white border border-gray-200 rounded-lg">
+      <div className="p-3 bg-white border border-gray-200 rounded-lg sm:p-5">
         <h3 className="mb-4 text-lg font-semibold text-gray-900">
           Leave a Review
         </h3>

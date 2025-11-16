@@ -19,6 +19,7 @@ import {
   isCaptainDbConfigured,
   searchChartersFromDb,
 } from "@/lib/api/captain-db";
+import { prismaCaptain } from "@/lib/database/prisma-captain";
 import type { Charter } from "@fishon/ui";
 import {
   convertBackendChartersToFrontend,
@@ -252,4 +253,132 @@ export async function getChartersByTechnique(
   return allCharters.filter((c) =>
     c.techniques.some((t) => t.toLowerCase().includes(technique.toLowerCase()))
   );
+}
+
+/**
+ * Get charter's booking flow type
+ * Returns MANUAL or AUTO based on captain's configuration
+ * Defaults to MANUAL (safer option) if not configured
+ */
+export async function getCharterFlowType(
+  charterId: string
+): Promise<"MANUAL" | "AUTO"> {
+  try {
+    // Try DB first when enabled
+    if (isDbPreferred() && isCaptainDbConfigured()) {
+      try {
+        const rows = await prismaCaptain.$queryRaw<
+          Array<{
+            charter: {
+              bookingFlowType?: string;
+              instantBookingEnabled?: boolean;
+            };
+          }>
+        >`
+          select charter from public.v_public_charters where id = ${charterId} limit 1
+        `;
+        if (rows.length) {
+          const charter = rows[0].charter;
+          const flowType = charter.bookingFlowType;
+
+          // Check if field exists in the response
+          if (flowType) {
+            console.log(
+              `[CharterService] Charter ${charterId} flow type from DB: ${flowType}`
+            );
+            return flowType as "MANUAL" | "AUTO";
+          }
+
+          // Fallback: check instantBookingEnabled flag
+          if (charter.instantBookingEnabled === true) {
+            console.log(
+              `[CharterService] Charter ${charterId} has instantBookingEnabled=true, using AUTO flow`
+            );
+            return "AUTO";
+          }
+
+          console.log(
+            `[CharterService] Charter ${charterId} bookingFlowType field missing in DB view, will try API`
+          );
+        }
+      } catch (e) {
+        console.error(
+          `[CharterService] Error reading flow type from Captain DB for ${charterId}; will try API`,
+          e
+        );
+      }
+    }
+
+    // Try API
+    if (isBackendConfigured()) {
+      const charter = await fetchCharterById(String(charterId));
+      if (charter?.bookingFlowType) {
+        console.log(
+          `[CharterService] Charter ${charterId} flow type from API: ${charter.bookingFlowType}`
+        );
+        return charter.bookingFlowType;
+      }
+      console.log(
+        `[CharterService] Charter ${charterId} bookingFlowType missing from API response`
+      );
+    }
+
+    // Default to MANUAL (safer option)
+    console.warn(
+      `[CharterService] Could not determine flow type for charter ${charterId}; guest checkout fallback to MANUAL is active. Run migration_add_booking_flow_to_view.sql in fishon-captain to update the view.`
+    );
+    return "MANUAL";
+  } catch (error) {
+    console.error(
+      `[CharterService] Error fetching flow type for charter ${charterId}:`,
+      error
+    );
+    return "MANUAL"; // Default to safer Manual flow
+  }
+}
+
+/**
+ * Get charter's approval time hours for Manual flow
+ * Returns configured hours or defaults to 24
+ */
+export async function getCharterApprovalTimeHours(
+  charterId: string
+): Promise<number> {
+  try {
+    // Try DB first when enabled
+    if (isDbPreferred() && isCaptainDbConfigured()) {
+      try {
+        const rows = await prismaCaptain.$queryRaw<
+          Array<{ charter: { approvalTimeHours?: number } }>
+        >`
+          select charter from public.v_public_charters where id = ${charterId} limit 1
+        `;
+        if (rows.length && rows[0].charter.approvalTimeHours) {
+          return rows[0].charter.approvalTimeHours;
+        }
+      } catch (e) {
+        console.error(
+          "Error reading approval time from Captain DB; will try API",
+          e
+        );
+      }
+    }
+
+    // Try API
+    if (isBackendConfigured()) {
+      const charter = await fetchCharterById(String(charterId));
+      if (charter?.approvalTimeHours) {
+        return charter.approvalTimeHours;
+      }
+    }
+
+    // Default to 24 hours
+    return 24;
+  } catch (error) {
+    console.error(
+      `Error fetching approval time for charter ${charterId}:`,
+      error
+    );
+    return 24; // Default to 24 hours
+  }
 }

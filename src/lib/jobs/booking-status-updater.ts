@@ -14,9 +14,10 @@ import {
 import { BookingStatus } from "@prisma/client";
 
 /**
- * Update expired pending and approved bookings
- * Changes PENDING → EXPIRED if expiresAt has passed (12 hours after creation)
- * Changes APPROVED → EXPIRED if expiresAt has passed (48 hours after approval)
+ * Update expired pending and awaiting payment bookings
+ * Changes PENDING → EXPIRED if expiresAt has passed (12 hours after creation, Manual flow only)
+ * Changes AWAITING_PAYMENT → EXPIRED if paymentDeadline has passed (48 hours after approval)
+ * Changes PAYMENT_AUTHORIZED → EXPIRED if acknowledgmentDeadline has passed (12 hours after payment, Auto flow)
  */
 export async function updateExpiredBookings(): Promise<{
   updated: number;
@@ -27,12 +28,10 @@ export async function updateExpiredBookings(): Promise<{
   let errors = 0;
 
   try {
-    // Find all PENDING or APPROVED bookings where expiresAt has passed
-    const expiredBookings = await prisma.booking.findMany({
+    // Find all PENDING bookings where expiresAt has passed (Manual flow: captain didn't respond)
+    const expiredPendingBookings = await prisma.booking.findMany({
       where: {
-        status: {
-          in: [BookingStatus.PENDING, BookingStatus.APPROVED],
-        },
+        status: BookingStatus.PENDING,
         expiresAt: {
           lt: now,
         },
@@ -44,8 +43,44 @@ export async function updateExpiredBookings(): Promise<{
       },
     });
 
+    // Find all AWAITING_PAYMENT bookings where paymentDeadline has passed
+    const expiredPaymentBookings = await prisma.booking.findMany({
+      where: {
+        status: BookingStatus.AWAITING_PAYMENT,
+        paymentDeadline: {
+          lt: now,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        paymentDeadline: true,
+      },
+    });
+
+    // Find all PAYMENT_AUTHORIZED bookings where acknowledgmentDeadline has passed (Auto flow: captain didn't acknowledge)
+    const expiredAuthorizedBookings = await prisma.booking.findMany({
+      where: {
+        status: BookingStatus.PAYMENT_AUTHORIZED,
+        acknowledgmentDeadline: {
+          lt: now,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        acknowledgmentDeadline: true,
+      },
+    });
+
+    const expiredBookings = [
+      ...expiredPendingBookings,
+      ...expiredPaymentBookings,
+      ...expiredAuthorizedBookings,
+    ];
+
     console.log(
-      `🔄 Found ${expiredBookings.length} expired bookings (PENDING/APPROVED)`
+      `🔄 Found ${expiredBookings.length} expired bookings (PENDING: ${expiredPendingBookings.length}, AWAITING_PAYMENT: ${expiredPaymentBookings.length}, PAYMENT_AUTHORIZED: ${expiredAuthorizedBookings.length})`
     );
 
     // Update each booking to EXPIRED status

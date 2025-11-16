@@ -121,12 +121,14 @@ export function isTripCompleted(booking: BookingForStatus): boolean {
  * Check if booking is in "In Progress" state
  */
 export function isInProgress(booking: BookingForStatus): boolean {
-  // PENDING - waiting for captain approval
-  // APPROVED - waiting for payment
+  // PENDING - Manual flow: waiting for captain approval
+  // PAYMENT_AUTHORIZED - Auto flow: payment received, waiting for captain acknowledgment
+  // AWAITING_PAYMENT - Manual flow: approved, waiting for payment
   // PAID (future) - trip confirmed, waiting for trip date
   if (
     booking.status === BookingStatus.PENDING ||
-    booking.status === BookingStatus.APPROVED
+    booking.status === BookingStatus.PAYMENT_AUTHORIZED ||
+    booking.status === BookingStatus.AWAITING_PAYMENT
   ) {
     return true;
   }

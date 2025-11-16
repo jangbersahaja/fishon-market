@@ -16,16 +16,22 @@ export function getBookingStatusColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "bg-amber-100 text-amber-800 border-amber-200";
-    case "APPROVED":
+    case "AWAITING_PAYMENT":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "PAYMENT_AUTHORIZED":
       return "bg-green-100 text-green-800 border-green-200";
     case "PAID":
       return "bg-blue-100 text-blue-800 border-blue-200";
+    case "UNDER_REVIEW":
+      return "bg-purple-100 text-purple-800 border-purple-200";
     case "REJECTED":
       return "bg-red-100 text-red-800 border-red-200";
     case "EXPIRED":
       return "bg-gray-100 text-gray-800 border-gray-200";
     case "CANCELLED":
       return "bg-gray-100 text-gray-800 border-gray-200";
+    case "COMPLETED":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -40,16 +46,22 @@ export function getBookingStatusIconColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "text-amber-600";
-    case "APPROVED":
+    case "AWAITING_PAYMENT":
+      return "text-blue-600";
+    case "PAYMENT_AUTHORIZED":
       return "text-green-600";
     case "PAID":
       return "text-blue-600";
+    case "UNDER_REVIEW":
+      return "text-purple-600";
     case "REJECTED":
       return "text-red-600";
     case "EXPIRED":
       return "text-gray-600";
     case "CANCELLED":
       return "text-gray-600";
+    case "COMPLETED":
+      return "text-emerald-600";
     default:
       return "text-gray-600";
   }
@@ -64,16 +76,22 @@ export function getBookingStatusBgColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "bg-amber-50";
-    case "APPROVED":
+    case "AWAITING_PAYMENT":
+      return "bg-blue-50";
+    case "PAYMENT_AUTHORIZED":
       return "bg-green-50";
     case "PAID":
       return "bg-blue-50";
+    case "UNDER_REVIEW":
+      return "bg-purple-50";
     case "REJECTED":
       return "bg-red-50";
     case "EXPIRED":
       return "bg-gray-50";
     case "CANCELLED":
       return "bg-gray-50";
+    case "COMPLETED":
+      return "bg-emerald-50";
     default:
       return "bg-gray-50";
   }
@@ -88,16 +106,22 @@ export function getBookingStatusLabel(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "Pending Review";
-    case "APPROVED":
+    case "AWAITING_PAYMENT":
       return "Approved - Awaiting Payment";
+    case "PAYMENT_AUTHORIZED":
+      return "Payment Received - Pending Acknowledgment";
     case "PAID":
       return "Confirmed";
+    case "UNDER_REVIEW":
+      return "Under Review";
     case "REJECTED":
       return "Rejected";
     case "EXPIRED":
       return "Expired";
     case "CANCELLED":
       return "Cancelled";
+    case "COMPLETED":
+      return "Completed";
     default:
       return status;
   }
@@ -112,10 +136,14 @@ export function getBookingStatusMessage(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
       return "Your booking request is under review by the captain. You'll be notified once it's approved.";
-    case "APPROVED":
-      return "Your booking has been approved! Complete payment to confirm your trip.";
+    case "AWAITING_PAYMENT":
+      return "Your booking has been approved! Complete payment within 48 hours to confirm your trip.";
+    case "PAYMENT_AUTHORIZED":
+      return "Your payment has been received. Awaiting captain acknowledgment within 12 hours.";
     case "PAID":
       return "Your trip is confirmed. Check your email for details.";
+    case "UNDER_REVIEW":
+      return "Our team is reviewing this booking. We'll update you soon.";
     case "REJECTED":
       return "Unfortunately, your booking request was rejected. Try another charter or contact support.";
     case "EXPIRED":
@@ -133,7 +161,11 @@ export function getBookingStatusMessage(status: BookingStatus): string {
  * @returns True if booking can be cancelled
  */
 export function canCancelBooking(status: BookingStatus): boolean {
-  return status === "PENDING" || status === "APPROVED";
+  return (
+    status === "PENDING" ||
+    status === "AWAITING_PAYMENT" ||
+    status === "PAYMENT_AUTHORIZED"
+  );
 }
 
 /**
@@ -151,7 +183,7 @@ export function getBookingActionButton(
   variant: "default" | "primary" | "secondary";
 } | null {
   switch (status) {
-    case "APPROVED":
+    case "AWAITING_PAYMENT":
       return {
         label: "Pay Now",
         href: `/book/payment/${bookingId}`,

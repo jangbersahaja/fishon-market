@@ -1,30 +1,27 @@
 import { BookingExpiredScreen } from "@/components/booking/BookingExpiredScreen";
 import { DateNoLongerAvailableScreen } from "@/components/booking/DateNoLongerAvailableScreen";
-import { PaymentConfigurationError } from "@/components/payment/PaymentConfigurationError";
+import { ManualFlowPaymentForm } from "@/components/payment/ManualFlowPaymentForm";
+import { PaymentContactCard } from "@/components/payment/shared/PaymentContactCard";
+import { PaymentTripSummaryCard } from "@/components/payment/shared/PaymentTripSummaryCard";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import {
   checkDateAvailability,
   getNextAvailableDates,
 } from "@/lib/helpers/availability-helpers";
-import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
-import {
-  formatAmount,
-  generatePaymentHash,
-  getMerchantId,
-  getSecretKey,
-  getSenangPayUrl,
-  isForceMockMode,
-  sanitizeName,
-  sanitizePhone,
-  validateSenangPayConfig,
-} from "@/lib/payment/senangpay";
+import { isForceMockMode } from "@/lib/payment/senangpay";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
-import { Shield } from "lucide-react";
-import { revalidatePath } from "next/cache";
+import { getCharterById } from "@/lib/services/charter-service";
+import {
+  AlertCircle,
+  Check,
+  Clock,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { redirect } from "next/navigation";
-import { MockPaymentForm } from "./MockPaymentForm";
-import { PaymentForm } from "./PaymentForm";
 
 export default async function PaymentPage({
   params,
@@ -36,6 +33,15 @@ export default async function PaymentPage({
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
   });
 
   if (!booking) {
@@ -43,20 +49,20 @@ export default async function PaymentPage({
   }
 
   // Check authorization: User must be logged in and own the booking
-  // OR booking must be a guest booking (userId is null)
   const isAuthenticatedOwner =
     session?.user?.id && booking.userId === session.user.id;
-  const isGuestBooking = !booking.userId && booking.guestEmail;
 
-  if (!isAuthenticatedOwner && !isGuestBooking) {
+  // Note: All bookings now have userId (including GUEST role)
+  if (!isAuthenticatedOwner) {
     redirect(`/login?next=${encodeURIComponent(`/book/payment/${bookingId}`)}`);
   }
 
-  // CHECK 1: Booking status must be APPROVED
+  // CHECK 1: Booking status must be AWAITING_PAYMENT
   if (booking.status === "EXPIRED") {
-    // Show BookingExpiredScreen with appropriate messaging
     const enrichedBooking = await enrichBookingWithTripData(booking);
-    const expirationType = booking.captainDecisionAt ? "APPROVED" : "PENDING";
+    const expirationType = booking.captainDecisionAt
+      ? "AWAITING_PAYMENT"
+      : "PENDING";
 
     return (
       <BookingExpiredScreen
@@ -64,42 +70,38 @@ export default async function PaymentPage({
           id: booking.id,
           status: "EXPIRED",
           date: booking.date,
-          startTime: booking.startTime || "08:00", // Trip departure time (e.g., "08:00" = 8 AM)
+          startTime: booking.startTime || "08:00",
           expiresAt: booking.expiresAt,
           charter: {
             id: booking.charterId,
             title: enrichedBooking.charterName,
-            location: undefined, // TODO: Add location to enriched data
+            location: undefined,
           },
         }}
-        expirationType={expirationType as "PENDING" | "APPROVED"}
+        expirationType={expirationType as "PENDING" | "AWAITING_PAYMENT"}
       />
     );
   }
 
-  if (booking.status !== "APPROVED") {
+  if (booking.status !== "AWAITING_PAYMENT") {
     redirect(`/book/confirm?id=${bookingId}`);
   }
 
-  // CHECK 2: Verify date is still available (no PAID conflicts)
-  // This catches edge cases where another angler paid between approval and now
+  // CHECK 2: Verify date is still available
   const availabilityCheck = await checkDateAvailability({
     charterId: booking.charterId,
     date: booking.date,
     days: booking.days,
     startTime: booking.startTime,
-    excludeBookingId: booking.id, // Exclude current booking
+    excludeBookingId: booking.id,
   });
 
   if (!availabilityCheck.isAvailable) {
-    // Date is no longer available - show friendly screen
     const enrichedBooking = await enrichBookingWithTripData(booking);
-
-    // Fetch alternative available dates (next 5)
     const alternativeDates = await getNextAvailableDates(
       booking.charterId,
-      new Date(), // Start from today
-      5, // Get 5 alternatives
+      new Date(),
+      5,
       booking.days,
       booking.startTime
     );
@@ -112,7 +114,7 @@ export default async function PaymentPage({
           charter: {
             id: booking.charterId,
             title: enrichedBooking.charterName,
-            location: undefined, // TODO: Add location to enriched data
+            location: undefined,
           },
         }}
         alternativeDates={alternativeDates}
@@ -120,343 +122,364 @@ export default async function PaymentPage({
     );
   }
 
-  // All checks passed - proceed with payment
+  // Fetch charter data separately (charter is in fishon-captain DB)
+  const charter = await getCharterById(booking.charterId);
+  if (!charter) {
+    redirect("/");
+  }
+
+  // Fetch enriched booking data
   const enrichedBooking = await enrichBookingWithTripData(booking);
 
-  // ========================================
-  // SENANG PAY INTEGRATION
-  // ========================================
+  // Calculate payment deadline info
+  const paymentDeadline = booking.paymentDeadline || booking.expiresAt;
+  const formattedDeadline = paymentDeadline
+    ? new Date(paymentDeadline).toLocaleString("en-MY", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null;
 
-  // Check payment gateway configuration
-  const configValidation = validateSenangPayConfig();
-  const forceMock = isForceMockMode();
+  // Get user details
+  const contactName = booking.user?.name || session?.user?.name || "Guest";
+  const contactEmail = booking.user?.email || session?.user?.email || "";
+  const contactPhone = booking.user?.phone || "";
 
-  // SECURITY: If not configured and NOT in force mock mode, show error
-  if (!configValidation.isConfigured && !forceMock) {
-    return <PaymentConfigurationError errors={configValidation.errors || []} />;
+  // Format date display
+  const tripDate = new Date(booking.date);
+  const primaryDateLabel = tripDate.toLocaleDateString("en-MY", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const daysLabel =
+    booking.days === 1 ? "1 day trip" : `${booking.days} days trip`;
+
+  // Parse participants from guests JSON
+  const guestsData = booking.guests as any;
+  const participants = guestsData?.participants || [];
+  const participantList =
+    participants.length > 0
+      ? participants
+      : [
+          {
+            name: contactName,
+            phone: contactPhone,
+            isBooker: true,
+          },
+        ];
+
+  // Cancellation policy
+  const cancellationPolicy = charter?.policies;
+  const cancellationHeadline = "Flexible cancellation before departure";
+  const cancellationAfterText =
+    "After this window: Refunds follow captain policy and processing fees.";
+
+  const policyHighlights: string[] = [];
+  if (cancellationPolicy?.childFriendly) {
+    policyHighlights.push("Child-friendly crew and gear options available.");
   }
-
-  // Prepare payment data for Senang Pay
-  let paymentData = null;
-  let paymentUrl = null;
-
-  if (!forceMock) {
-    // Real Senang Pay integration
-    const merchantId = getMerchantId();
-    const secretKey = getSecretKey();
-
-    if (!merchantId || !secretKey) {
-      return (
-        <PaymentConfigurationError
-          errors={["Merchant ID or Secret Key not configured"]}
-        />
-      );
-    }
-
-    const amount = formatAmount(enrichedBooking.totalPrice);
-    const orderId = booking.id;
-    const detail = `Charter Booking: ${enrichedBooking.charterName} - ${enrichedBooking.tripName}`;
-
-    // Generate payment hash
-    const hash = generatePaymentHash({
-      merchantId,
-      secretKey,
-      detail,
-      amount,
-      orderId,
-    });
-
-    // Get user details for payment
-    const rawName =
-      booking.guestFirstName && booking.guestLastName
-        ? `${booking.guestFirstName} ${booking.guestLastName}`
-        : session?.user?.name || "Guest";
-
-    const rawPhone = booking.guestPhone || "";
-
-    // Sanitize name and phone to meet Senang Pay requirements
-    // Name: only letters and spaces (no special characters)
-    // Phone: only digits (no spaces, dashes, parentheses)
-    const userName = sanitizeName(rawName);
-    const userPhone = sanitizePhone(rawPhone);
-    const userEmail = booking.guestEmail || session?.user?.email || "";
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-
-    paymentData = {
-      merchantId,
-      detail,
-      amount,
-      orderId,
-      hash,
-      name: userName,
-      email: userEmail,
-      phone: userPhone,
-      returnUrl: `${appUrl}/book/payment/return`,
-      callbackUrl: `${appUrl}/api/payment/senangpay-callback`,
-    };
-
-    paymentUrl = getSenangPayUrl();
+  if (cancellationPolicy?.catchAndKeep) {
+    policyHighlights.push("Catch & keep allowed within local regulations.");
   }
-
-  // Mock payment handler (development only)
-  async function handlePayment() {
-    "use server";
-    console.log("🚀 [PAYMENT] handlePayment called for bookingId:", bookingId);
-
-    const session = await auth();
-
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
-
-    console.log(
-      "📦 [PAYMENT] Booking found:",
-      booking
-        ? { id: booking.id, status: booking.status, date: booking.date }
-        : "NOT FOUND"
+  if (cancellationPolicy?.catchAndRelease) {
+    policyHighlights.push("Catch & release encouraged for trophy species.");
+  }
+  if (!policyHighlights.length) {
+    policyHighlights.push(
+      "Captain will brief everyone on safety and catch policies at the dock."
     );
-
-    if (!booking) return;
-
-    // Check authorization: must be authenticated owner OR guest booking
-    const isAuthenticatedOwner =
-      session?.user?.id && booking.userId === session.user.id;
-    const isGuestBooking = !booking.userId && booking.guestEmail;
-
-    if (!isAuthenticatedOwner && !isGuestBooking) {
-      console.log("❌ [PAYMENT] Authorization failed");
-      return;
-    }
-
-    if (booking.status !== "APPROVED") {
-      console.log(
-        "❌ [PAYMENT] Booking status not APPROVED, current status:",
-        booking.status
-      );
-      return;
-    }
-
-    // CRITICAL: Re-check availability before processing payment
-    // This prevents race conditions where multiple users try to pay simultaneously
-    const { checkDateAvailability } = await import(
-      "@/lib/helpers/availability-helpers"
-    );
-
-    console.log("🔍 [PAYMENT] Checking availability before payment:", {
-      bookingId: booking.id,
-      charterId: booking.charterId,
-      date: booking.date,
-      startTime: booking.startTime,
-      days: booking.days,
-    });
-
-    const availabilityCheck = await checkDateAvailability({
-      charterId: booking.charterId,
-      date: booking.date,
-      days: booking.days,
-      startTime: booking.startTime,
-      excludeBookingId: booking.id,
-    });
-
-    console.log("✅ [PAYMENT] Availability check result:", availabilityCheck);
-
-    if (!availabilityCheck.isAvailable) {
-      console.log("❌ [PAYMENT] Date no longer available - blocking payment");
-
-      // Update booking status to EXPIRED since date is no longer available
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-          status: "EXPIRED",
-          rejectionReason:
-            "Date was booked by another angler while you were completing payment. Please select another available date.",
-        },
-      });
-
-      // Date is no longer available - redirect back to payment page
-      // The page render will show DateNoLongerAvailableScreen
-      revalidatePath(`/book/payment/${bookingId}`, "page");
-      redirect(`/book/payment/${bookingId}`);
-    }
-
-    // Calculate financial breakdown for mock payment
-    const { prismaCaptain } = await import("@/lib/database/prisma-captain");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const charter = await (prismaCaptain as any).charter.findUnique({
-      where: { id: booking.charterId },
-      select: { pricingPlan: true },
-    });
-
-    const commissionRate =
-      charter?.pricingPlan === "GOLD"
-        ? 0.05
-        : charter?.pricingPlan === "SILVER"
-          ? 0.08
-          : 0.1; // BASIC
-
-    const finalPrice = Number(booking.finalPrice);
-    const platformFee = Math.round(finalPrice * commissionRate * 100) / 100;
-    const captainEarnings = finalPrice - platformFee;
-
-    // Mock payment - update status to PAID with financial data
-    const updated = await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "PAID",
-        paidAt: new Date(),
-        paymentMethod: "MOCK",
-        paymentTransactionId: `MOCK-${Date.now()}`,
-        platformFee,
-        captainEarnings,
-        payoutStatus: "PENDING",
-      },
-    });
-
-    console.log("✅ Payment completed for booking:", bookingId, {
-      finalPrice,
-      platformFee,
-      captainEarnings,
-    });
-
-    // Trigger all payment side effects (captain webhook, angler notification, page revalidation)
-    await triggerPaymentSideEffects({
-      bookingId: updated.id,
-      source: "mock",
-    });
-
-    redirect(`/book/confirm?id=${bookingId}`);
   }
+
+  // Enable mock payment in development mode
+  const enableMockPayment = isForceMockMode();
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl px-4 py-12 mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
-          <p className="mt-2 text-gray-600">Complete your booking payment</p>
-        </div>
-
-        {/* Payment Card */}
-        <div className="p-8 bg-white border rounded-lg shadow-sm">
-          {/* Booking Summary */}
-          <div className="pb-6 mb-8 border-b">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">
-              Booking Summary
-            </h2>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Booking ID:</dt>
-                <dd className="font-medium text-gray-900">{booking.id}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Charter:</dt>
-                <dd className="font-medium text-gray-900">
-                  {enrichedBooking.charterName}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Trip:</dt>
-                <dd className="font-medium text-gray-900">
-                  {enrichedBooking.tripName}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Date:</dt>
-                <dd className="font-medium text-gray-900">
-                  {new Date(booking.date).toLocaleDateString("en-MY", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </dd>
-              </div>
-              {booking.startTime && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-600">Start Time:</dt>
-                  <dd className="font-medium text-gray-900">
-                    {booking.startTime}
-                  </dd>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Guests:</dt>
-                <dd className="font-medium text-gray-900">
-                  {enrichedBooking.adults} Adult(s)
-                  {enrichedBooking.children > 0 &&
-                    `, ${enrichedBooking.children} Child(ren)`}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Amount */}
-          <div className="p-6 mb-8 rounded-lg bg-gray-50">
-            <div className="flex items-baseline justify-between">
-              <span className="text-lg font-medium text-gray-700">
-                Total Amount
-              </span>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-[#ec2227]">
-                  RM {enrichedBooking.totalPrice.toFixed(2)}
-                </div>
-                <div className="mt-1 text-sm text-gray-500">
-                  ({booking.days} day{booking.days > 1 ? "s" : ""} × RM{" "}
-                  {enrichedBooking.unitPrice.toFixed(2)})
-                </div>
+    <main className="bg-slate-50">
+      <div className="w-full px-4 py-8 mx-auto max-w-7xl sm:px-6">
+        {/* Payment Deadline Timer */}
+        {paymentDeadline && (
+          <div className="p-4 mb-6 border rounded-lg bg-amber-50 border-amber-200">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-600" />
+              <div>
+                <p className="font-semibold text-amber-900">
+                  Payment Due: {formattedDeadline}
+                </p>
+                <p className="text-sm text-amber-700">
+                  Complete payment before this deadline to confirm your booking
+                </p>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Payment Method */}
-          {forceMock ? (
-            // Development: Mock Payment
-            <MockPaymentForm
-              bookingId={booking.id}
-              amount={enrichedBooking.totalPrice.toFixed(2)}
-              onSubmit={handlePayment}
-            />
-          ) : paymentData && paymentUrl ? (
-            // Production: Real Senang Pay Integration
-            <>
-              {/* Security Notice */}
-              <div className="p-4 mb-6 border border-blue-200 rounded-lg bg-blue-50">
-                <div className="flex items-start gap-3">
-                  <Shield className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium">Secure Payment via Senang Pay</p>
-                    <p className="mt-1">
-                      You will be redirected to Senang Pay&apos;s secure payment
-                      page. After completing payment, you will be redirected
-                      back to view your booking confirmation.
-                    </p>
+        <header className="pb-6 space-y-3 border-b border-border">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold tracking-wide uppercase text-primary">
+              Manual Booking Payment
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Complete Your Payment
+            </h1>
+            <p className="text-muted-foreground">
+              Your booking has been approved by the captain. Complete payment to
+              confirm your trip.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge
+              variant="outline"
+              className="text-green-700 border-green-500"
+            >
+              Captain Approved
+            </Badge>
+            <Badge
+              variant="outline"
+              className="border-amber-500 text-amber-700"
+            >
+              Payment Required
+            </Badge>
+          </div>
+        </header>
+
+        <section className="mt-8">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {/* Left Column - Main Content */}
+            <div className="space-y-5 lg:col-span-2">
+              {/* Trip Summary Card - Shared Component */}
+              <PaymentTripSummaryCard
+                charterName={enrichedBooking.charterName}
+                location={enrichedBooking.location}
+                tripName={enrichedBooking.tripName}
+                primaryDateLabel={primaryDateLabel}
+                daysLabel={daysLabel}
+                startTime={booking.startTime || undefined}
+                totalGuests={enrichedBooking.adults + enrichedBooking.children}
+                guestBreakdown={`${enrichedBooking.adults} Adult${enrichedBooking.adults !== 1 ? "s" : ""}${enrichedBooking.children > 0 ? `, ${enrichedBooking.children} Child${enrichedBooking.children !== 1 ? "ren" : ""}` : ""}`}
+                note={booking.note || undefined}
+              />
+
+              {/* Pricing Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle role="heading" aria-level={2}>
+                    Payment Breakdown
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Total amount due for your booking
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <dl className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <dt className="text-muted-foreground">
+                        {enrichedBooking.tripName} × {booking.days}{" "}
+                        {booking.days === 1 ? "day" : "days"}
+                      </dt>
+                      <dd>RM {enrichedBooking.unitPrice.toFixed(2)}</dd>
+                    </div>
+                    {booking.platformFee && (
+                      <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">Platform fee</dt>
+                        <dd>RM {Number(booking.platformFee).toFixed(2)}</dd>
+                      </div>
+                    )}
+                    {booking.serviceFee && (
+                      <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">
+                          Payment gateway fee
+                        </dt>
+                        <dd>RM {Number(booking.serviceFee).toFixed(2)}</dd>
+                      </div>
+                    )}
+                    <div className="pt-3 border-t">
+                      <div className="flex items-center justify-between text-lg font-semibold">
+                        <span>Total</span>
+                        <span className="flex items-center gap-1">
+                          RM {enrichedBooking.totalPrice.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </dl>
+
+                  <div className="p-3 text-xs border rounded-lg bg-muted/40 text-muted-foreground">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>
+                        This booking has been approved by the captain. Your
+                        payment will be processed immediately upon submission.
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
-              {/* Senang Pay Payment Form */}
-              <PaymentForm paymentUrl={paymentUrl} paymentData={paymentData} />
+              {/* Payment Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle role="heading" aria-level={2}>
+                    Complete Payment
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Select your payment method and submit
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ManualFlowPaymentForm
+                    bookingId={booking.id}
+                    amount={enrichedBooking.totalPrice}
+                    charterId={booking.charterId}
+                    enableMockPayment={enableMockPayment}
+                  />
 
-              {/* Security Notice */}
-              <div className="mt-6 text-xs text-center text-gray-500">
-                <p>
-                  🔒 Your payment information is secure and encrypted by Senang
-                  Pay
-                </p>
-              </div>
-            </>
-          ) : null}
-        </div>
+                  <div className="p-4 space-y-3 text-xs border rounded-lg bg-muted/30 text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-primary" />
+                      <span>
+                        Payments are encrypted and secured by Senang Pay
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <UserRound className="w-4 h-4 text-primary" />
+                      <span>Booking for: {contactEmail}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Back Link */}
-        <div className="mt-6 text-center">
-          <a
-            href={`/book/confirm?id=${bookingId}`}
-            className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
-          >
-            ← Back to booking details
-          </a>
-        </div>
+            {/* Right Column - Contact & Info */}
+            <div className="space-y-5">
+              {/* Contact Information - Shared Component */}
+              <PaymentContactCard
+                contactName={contactName}
+                contactEmail={contactEmail}
+                contactPhone={contactPhone || undefined}
+              />
+
+              {/* Participants Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle role="heading" aria-level={2}>
+                    Participants ({participantList.length})
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Anglers joining this trip
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {participantList.map((p: any, idx: number) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+                            <span className="text-xs font-medium">
+                              {idx + 1}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium">{p.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {p.isBooker ? "Booker" : "Guest"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Emergency Contact Card */}
+              {guestsData?.emergencyContact && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle role="heading" aria-level={2}>
+                      Emergency Contact
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      In case of emergency
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium">
+                        {guestsData.emergencyContact.name}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {guestsData.emergencyContact.relationship}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Phone Number
+                      </p>
+                      <p className="font-medium">
+                        {guestsData.emergencyContact.phone}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Cancellation Policy Card */}
+              {cancellationHeadline && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle role="heading" aria-level={2}>
+                      Cancellation Policy
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-start gap-2 text-sm">
+                      <AlertCircle className="w-4 h-4 text-primary" />
+                      <div>
+                        <p className="font-semibold">{cancellationHeadline}</p>
+                        {cancellationAfterText && (
+                          <p className="mt-1 text-muted-foreground">
+                            {cancellationAfterText}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {policyHighlights.length > 0 && (
+                      <div className="pt-4 space-y-2 border-t">
+                        {policyHighlights.map((highlight, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Check className="w-4 h-4 text-green-600" />
+                            <span>{highlight}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Booking Reference */}
+              <Card>
+                <CardHeader>
+                  <CardTitle role="heading" aria-level={2}>
+                    Booking Reference
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="p-3 font-mono text-xs break-all border rounded-lg bg-muted">
+                    {booking.id}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Save this reference for your records
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );

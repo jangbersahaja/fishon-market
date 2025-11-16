@@ -22,31 +22,17 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Search bookings by email (both user and guest)
+    // Search bookings by user email
     const bookings = await prisma.booking.findMany({
       where: {
-        OR: [
-          {
-            user: {
-              email: {
-                equals: email,
-                mode: "insensitive",
-              },
-            },
+        user: {
+          email: {
+            equals: email,
+            mode: "insensitive",
           },
-          {
-            guestEmail: {
-              equals: email,
-              mode: "insensitive",
-            },
-          },
-        ],
-        // Optional phone filter
-        ...(phone
-          ? {
-              OR: [{ user: { phone } }, { guestPhone: phone }],
-            }
-          : {}),
+          // Optional phone filter
+          ...(phone ? { phone } : {}),
+        },
       },
       select: {
         id: true,
@@ -54,10 +40,6 @@ export async function GET(req: Request) {
         status: true,
         charterId: true,
         tripId: true,
-        guestFirstName: true,
-        guestLastName: true,
-        guestEmail: true,
-        guestPhone: true,
         user: {
           select: {
             email: true,
@@ -92,8 +74,7 @@ export async function GET(req: Request) {
           charterName,
           date: booking.date,
           status: booking.status,
-          guestFirstName: booking.guestFirstName,
-          guestLastName: booking.guestLastName,
+          anglerName: booking.user?.name || "Guest",
         };
       })
     );

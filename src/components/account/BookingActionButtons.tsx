@@ -46,10 +46,10 @@ export function CallCaptainButton({
 }
 
 // ============================================================================
-// Chat with Captain Button (placeholder for future)
+// Chat with Captain Button
 // ============================================================================
 interface ChatCaptainButtonProps {
-  bookingId?: string; // Optional for future use
+  conversationId?: string | null;
   disabled?: boolean;
   variant?: "default" | "outline";
   size?: "default" | "sm" | "lg";
@@ -58,7 +58,8 @@ interface ChatCaptainButtonProps {
 }
 
 export function ChatCaptainButton({
-  disabled = true,
+  conversationId,
+  disabled = false,
   variant = "outline",
   size = "default",
   className = "",
@@ -69,12 +70,23 @@ export function ChatCaptainButton({
       variant={variant}
       size={size}
       className={fullWidth ? `w-full ${className}` : className}
-      disabled={disabled}
-      title={disabled ? "Chat feature coming soon" : "Chat with captain"}
+      disabled={disabled || !conversationId}
+      title={
+        disabled || !conversationId ? "Chat not available" : "Chat with captain"
+      }
+      asChild={!disabled && conversationId ? true : false}
     >
-      <MessageSquare className="w-4 h-4 mr-2" />
-      Chat Captain
-      {disabled && <span className="ml-2 text-xs opacity-60">(Soon)</span>}
+      {!disabled && conversationId ? (
+        <Link href={`/account/messages/${conversationId}`}>
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Chat Captain
+        </Link>
+      ) : (
+        <>
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Chat Captain
+        </>
+      )}
     </Button>
   );
 }

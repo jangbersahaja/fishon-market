@@ -1,7 +1,12 @@
 import { trackEvent } from "@/lib/analytics-service";
 import { auth } from "@/lib/auth/auth";
+import { calculateTimeSlots } from "@/lib/booking/booking-time";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
+import {
+  createPaymentIntent,
+  getPaymentFlow,
+} from "@/lib/payment/payment-gateway";
 import {
   sendBookingCreatedEmail,
   sendBookingReceivedCaptainEmail,
@@ -9,10 +14,12 @@ import {
 import {
   createConversation,
   sendMessage,
+  unlockConversation,
 } from "@/lib/services/message-service";
 import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
-import { calculateFinalPrice, getTripById } from "@/lib/services/trip-service";
+import { calculatePricing } from "@/lib/services/pricing-service";
+import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -64,6 +71,15 @@ async function createAuthenticatedBooking(session: any, body: any) {
       startTime,
       note,
       phone, // Optional: update user phone if provided
+      emergencyName, // Emergency contact fields
+      emergencyPhone,
+      emergencyRelation,
+      participants, // Participant list
+      paymentMethod, // NEW: "CARD", "FPX", "EWALLET", "MOCK"
+      cardNumber, // Card details for TOKENIZED flow
+      cardExpMonth,
+      cardExpYear,
+      cardCvv,
     } = body as {
       tripId?: string;
       date?: string;
@@ -73,6 +89,15 @@ async function createAuthenticatedBooking(session: any, body: any) {
       startTime?: string;
       note?: string;
       phone?: string;
+      emergencyName?: string;
+      emergencyPhone?: string;
+      emergencyRelation?: string;
+      participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
+      paymentMethod?: string;
+      cardNumber?: string;
+      cardExpMonth?: string;
+      cardExpYear?: string;
+      cardCvv?: string;
     };
 
     // Basic validation
@@ -96,6 +121,22 @@ async function createAuthenticatedBooking(session: any, body: any) {
 
     if (!d) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    // Validate date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today in local time
+    const bookingDate = new Date(d);
+    bookingDate.setHours(0, 0, 0, 0);
+
+    if (bookingDate <= today) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot book for today or past dates. Please select a future date.",
+        },
+        { status: 400 }
+      );
     }
 
     // Ensure local user exists (safety net for legacy OAuth tokens)
@@ -131,15 +172,41 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     } catch {}
 
-    // Update user phone if provided
+    // Update user phone and emergency contact if provided
+    const userUpdates: any = {};
     if (phone && typeof phone === "string" && phone.trim()) {
+      userUpdates.phone = phone.trim();
+    }
+    if (
+      emergencyName &&
+      typeof emergencyName === "string" &&
+      emergencyName.trim()
+    ) {
+      userUpdates.emergencyName = emergencyName.trim();
+    }
+    if (
+      emergencyPhone &&
+      typeof emergencyPhone === "string" &&
+      emergencyPhone.trim()
+    ) {
+      userUpdates.emergencyPhone = emergencyPhone.trim();
+    }
+    if (
+      emergencyRelation &&
+      typeof emergencyRelation === "string" &&
+      emergencyRelation.trim()
+    ) {
+      userUpdates.emergencyRelation = emergencyRelation.trim();
+    }
+
+    if (Object.keys(userUpdates).length > 0) {
       try {
         await prisma.user.update({
           where: { id: dbUserId },
-          data: { phone: phone.trim() },
+          data: userUpdates,
         });
       } catch (err) {
-        console.error("Failed to update user phone:", err);
+        console.error("Failed to update user details:", err);
         // Non-critical, continue with booking
       }
     }
@@ -161,6 +228,164 @@ async function createAuthenticatedBooking(session: any, body: any) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // IMPORTANT: Use normal price (not promo price) for booking submission
+    const tripPrice = trip.price; // Always use base price, never promoPrice
+
+    // Calculate complete pricing breakdown including platform fees and payment gateway fees
+    const pricingBreakdown = calculatePricing({
+      tripPrice,
+      days: ds,
+      // TODO: Add promo code support in future
+      // promoCode: promoCode ? { code: promoCode, percentage: 10 } : undefined,
+    });
+
+    const finalPrice = pricingBreakdown.finalPrice;
+
+    // Get charter's booking flow type
+    const charterService = await import("@/lib/services/charter-service");
+    const bookingFlowType = await charterService.getCharterFlowType(
+      trip.charter.id
+    );
+    const isManualFlow = bookingFlowType === "MANUAL";
+
+    let paymentFlow: "TOKENIZED" | "DIRECT" | "MOCK" | null = null;
+    let paymentResult: any = null;
+    let normalizedPaymentMethod: string | null = null;
+    let initialStatus: "PENDING" | "PAYMENT_AUTHORIZED" | "PAID" =
+      "PAYMENT_AUTHORIZED";
+    let approvalDeadline: Date | null = null;
+    let expiresAt: Date;
+
+    if (isManualFlow) {
+      const approvalHours = await charterService.getCharterApprovalTimeHours(
+        trip.charter.id
+      );
+      const manualSlaHours = Number.isFinite(approvalHours)
+        ? Number(approvalHours)
+        : 24;
+      approvalDeadline = new Date(Date.now() + manualSlaHours * 60 * 60 * 1000);
+      expiresAt = approvalDeadline;
+      initialStatus = "PENDING";
+      console.log(
+        `[BookingAPI] Manual flow booking → awaiting captain approval within ${manualSlaHours}h before payment.`,
+        {
+          charterId: trip.charter.id,
+          userId: dbUserId,
+        }
+      );
+    } else {
+      // --- PAYMENT METHOD VALIDATION (AUTO FLOW) ---
+      const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
+      if (!paymentMethod || !validMethods.includes(paymentMethod)) {
+        return NextResponse.json(
+          { error: "Valid payment method required (CARD, FPX, or EWALLET)" },
+          { status: 400 }
+        );
+      }
+
+      normalizedPaymentMethod = paymentMethod;
+
+      if (
+        normalizedPaymentMethod === "MOCK" &&
+        process.env.SENANGPAY_FORCE_MOCK !== "true"
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Mock payments disabled. Set SENANGPAY_FORCE_MOCK=true to enable.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (normalizedPaymentMethod === "CARD") {
+        if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
+          return NextResponse.json(
+            { error: "Card details required for card payments" },
+            { status: 400 }
+          );
+        }
+        const cardNumClean = cardNumber.replace(/\s/g, "");
+        if (!/^\d{13,19}$/.test(cardNumClean)) {
+          return NextResponse.json(
+            { error: "Invalid card number format" },
+            { status: 400 }
+          );
+        }
+        if (!/^\d{3,4}$/.test(cardCvv)) {
+          return NextResponse.json(
+            { error: "Invalid CVV format" },
+            { status: 400 }
+          );
+        }
+      }
+
+      paymentFlow = getPaymentFlow(
+        normalizedPaymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
+      );
+      expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hour hold
+
+      if (normalizedPaymentMethod === "MOCK") {
+        paymentResult = {
+          success: true,
+          flow: "MOCK",
+          paymentIntentId: `mock-${Date.now()}`,
+          requiresRedirect: false,
+        };
+        initialStatus = "PAYMENT_AUTHORIZED";
+      } else if (paymentFlow === "TOKENIZED") {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: dbUserId },
+          });
+          if (!user) {
+            return NextResponse.json(
+              { error: "User not found" },
+              { status: 404 }
+            );
+          }
+
+          paymentResult = await createPaymentIntent({
+            bookingId: `temp-${Date.now()}`,
+            amount: finalPrice,
+            paymentMethod: "CARD",
+            description: `Booking for ${trip.name} on ${date}`,
+            cardDetails: {
+              number: cardNumber!.replace(/\s/g, ""),
+              cvv: cardCvv!,
+              expiryMonth: cardExpMonth!,
+              expiryYear: cardExpYear!,
+            },
+            customerName: user.name || "Guest",
+            customerEmail: user.email,
+            customerPhone: user.phone || phone || "",
+          });
+
+          if (!paymentResult.success) {
+            console.error("❌ Card tokenization failed:", paymentResult.error);
+            return NextResponse.json(
+              {
+                error:
+                  paymentResult.error ||
+                  "Failed to process card. Please check your card details and try again.",
+              },
+              { status: 400 }
+            );
+          }
+
+          initialStatus = "PAYMENT_AUTHORIZED";
+        } catch (error: any) {
+          console.error("❌ Payment gateway error:", error);
+          return NextResponse.json(
+            { error: "Payment gateway error. Please try again." },
+            { status: 500 }
+          );
+        }
+      } else if (paymentFlow === "DIRECT") {
+        initialStatus = "PAYMENT_AUTHORIZED";
+      }
+    }
+
     // --- AVAILABILITY: Check for blocked dates (schedule/unavailability) ---
     // Fetch charter schedule and unavailability from captain DB (or API)
     let charterSchedule = null;
@@ -168,8 +393,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
     try {
       // Try to get full charter details (schedule, unavailability)
       // Use charterId from trip.charter.id
-      const { getCharterById } = await import("@/lib/services/charter-service");
-      const charter = await getCharterById(trip.charter.id);
+      const charter = await charterService.getCharterById(trip.charter.id);
       charterSchedule = charter?.schedule ?? null;
       charterUnavailability = charter?.unavailability ?? null;
     } catch (e) {
@@ -180,7 +404,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
     }
 
     // Calculate blocked dates for the requested range
-    if (charterSchedule) {
+    // IMPORTANT: Check both schedule AND unavailability, even if schedule is null
+    if (charterSchedule || charterUnavailability) {
       const { calculateBlockedDates, formatDateYMD } = await import(
         "@/lib/helpers/availability-helpers"
       );
@@ -230,19 +455,18 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     }
 
-    // IMPORTANT: Use normal price (not promo price) for booking submission
-    const tripPrice = trip.price; // Always use base price, never promoPrice
-    const finalPrice = calculateFinalPrice({
-      tripPrice,
-      days: ds,
-    });
-
-    // Hold expires in 12 hours
-    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
-
     // Availability guard: prevent overlapping bookings for the same charter
-    // Only PAID bookings block dates (confirmed and paid bookings)
-    const blockingStatuses = ["PAID"] as const;
+    // Only PAID bookings block dates (confirmed and paid bookings) for AUTO flow.
+    // Manual flow blocks pending bookings to avoid duplicate requests in review window.
+    const blockingStatuses = isManualFlow
+      ? ([
+          "PENDING",
+          "AWAITING_PAYMENT",
+          "PAYMENT_AUTHORIZED",
+          "PAID",
+          "COMPLETED",
+        ] as const)
+      : (["PAID"] as const);
 
     const newStart = new Date(
       Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
@@ -259,6 +483,15 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Retry loop with transaction to prevent double bookings
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
+        // Calculate timeSlots for new booking
+        const newTimeSlots = calculateTimeSlots({
+          date: d,
+          startTime:
+            trip.startTimes.length > 0 ? (startTime as string) : "08:00",
+          durationHours: trip.durationHours,
+          days: ds,
+        });
+
         // Use transaction with serializable isolation to prevent race conditions
         booking = await prisma.$transaction(
           async (tx) => {
@@ -269,20 +502,63 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 status: { in: blockingStatuses as any },
                 date: { lte: newEnd, gte: addDaysUTC(newStart, -31) },
               },
-              select: { id: true, date: true, days: true, startTime: true },
+              select: {
+                id: true,
+                date: true,
+                days: true,
+                startTime: true,
+                timeSlots: true,
+              },
             });
 
             const conflicts = hasConflicts(candidates, newStart, ds, {
               usesStartTimes: trip.startTimes.length > 0,
               selectedStartTime:
                 trip.startTimes.length > 0 ? (startTime as string) : null,
+              newTimeSlots: newTimeSlots,
             });
 
             if (conflicts) {
               throw new Error("BOOKING_CONFLICT");
             }
 
-            // Create booking atomically
+            // Create booking atomically with payment tracking
+            // Build guests JSON with participants list and emergency contact
+            const guestsData: any = {
+              adults: ad,
+              children: ch,
+            };
+
+            // Add participants if provided
+            if (Array.isArray(participants) && participants.length > 0) {
+              guestsData.participants = participants.map((p: any) => ({
+                name: p.name,
+                phone: p.phone,
+                isBooker: p.isBooker || false,
+              }));
+            }
+
+            // Add emergency contact if provided
+            if (
+              emergencyName &&
+              typeof emergencyName === "string" &&
+              emergencyName.trim() &&
+              emergencyPhone &&
+              typeof emergencyPhone === "string" &&
+              emergencyPhone.trim()
+            ) {
+              guestsData.emergencyContact = {
+                name: emergencyName.trim(),
+                phone: emergencyPhone.trim(),
+                relationship:
+                  emergencyRelation &&
+                  typeof emergencyRelation === "string" &&
+                  emergencyRelation.trim()
+                    ? emergencyRelation.trim()
+                    : "Not specified",
+              };
+            }
+
             return await tx.booking.create({
               data: {
                 userId: dbUserId,
@@ -292,10 +568,30 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 days: ds,
                 startTime:
                   trip.startTimes.length > 0 ? (startTime as string) : null,
-                guests: { adults: ad, children: ch } as Prisma.JsonObject,
-                tripPrice: tripPrice,
-                finalPrice: finalPrice,
+                timeSlots: newTimeSlots as unknown as Prisma.JsonArray,
+                guests: guestsData as Prisma.JsonObject,
+                tripPrice: pricingBreakdown.tripPrice, // Base price per day, not subtotal
+                finalPrice: pricingBreakdown.finalPrice,
+                platformFee: pricingBreakdown.platformFee,
+                serviceFee: pricingBreakdown.paymentGatewayFee,
+                captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
+                status: initialStatus,
+                bookingFlowType: bookingFlowType,
+                approvalDeadline: approvalDeadline,
+                acknowledgmentDeadline: !isManualFlow ? expiresAt : null, // Only AUTO flow uses acknowledgment deadline
+                // Payment tracking fields
+                paymentMethod: normalizedPaymentMethod,
+                paymentFlow: paymentFlow,
+                paymentIntentId: !isManualFlow
+                  ? paymentResult?.paymentIntentId || null
+                  : null,
+                paymentAuthorizedAt:
+                  !isManualFlow &&
+                  paymentFlow === "TOKENIZED" &&
+                  paymentResult?.success
+                    ? new Date()
+                    : null,
                 note:
                   typeof note === "string" && note.trim()
                     ? note.trim()
@@ -414,6 +710,14 @@ async function createAuthenticatedBooking(session: any, body: any) {
           trip.charter.captain.id // ownerId
         );
 
+        // If booking has PAYMENT_AUTHORIZED status, unlock conversation immediately (payment already received)
+        if (booking.status === "PAYMENT_AUTHORIZED") {
+          console.log(
+            "🔓 Unlocking conversation for PAYMENT_AUTHORIZED booking (AUTO flow)"
+          );
+          await unlockConversation(conversation.id);
+        }
+
         // Send initial booking card message
         const bookingCardData = {
           bookingId: booking.id,
@@ -473,6 +777,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
             finalPrice: Number(booking.finalPrice),
             expiresAt: booking.expiresAt.toISOString(),
             status: booking.status,
+            paymentMethod: booking.paymentMethod,
+            paymentFlow: booking.paymentFlow,
           },
         };
         // Best-effort retry
@@ -536,6 +842,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           confirmationUrl,
+          paymentFlow: booking.paymentFlow as
+            | "TOKENIZED"
+            | "DIRECT"
+            | undefined,
         });
       } catch (err) {
         console.error("Failed to send booking created email:", err);
@@ -581,11 +891,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Track booking submission (non-blocking)
     (async () => {
       try {
-        // Fetch charter to get ownerId
-        const { getCharterById } = await import(
-          "@/lib/services/charter-service"
-        );
-        const charter = await getCharterById(trip.charter.id);
+        const charter = await charterService.getCharterById(trip.charter.id);
 
         await trackEvent({
           eventType: "BOOKING_SUBMITTED",
@@ -608,6 +914,66 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     })();
 
+    // Handle DIRECT flow redirect
+    if (
+      !isManualFlow &&
+      paymentFlow === "DIRECT" &&
+      normalizedPaymentMethod &&
+      normalizedPaymentMethod !== "MOCK"
+    ) {
+      // Generate payment URL for FPX/E-wallet
+      try {
+        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
+        if (!user) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 404 }
+          );
+        }
+
+        const directPaymentResult = await createPaymentIntent({
+          bookingId: booking.id, // Use actual booking ID
+          amount: finalPrice,
+          paymentMethod: normalizedPaymentMethod as "FPX" | "EWALLET",
+          description: `Booking for ${trip.name} on ${date}`,
+          customerName: user.name || "Guest",
+          customerEmail: user.email,
+          customerPhone: user.phone || phone || "",
+        });
+
+        if (!directPaymentResult.success || !directPaymentResult.redirectUrl) {
+          console.error(
+            "❌ Failed to generate payment URL:",
+            directPaymentResult.error
+          );
+          return NextResponse.json(
+            {
+              error:
+                directPaymentResult.error || "Failed to generate payment URL",
+            },
+            { status: 500 }
+          );
+        }
+
+        // Return redirect URL to client
+        return NextResponse.json(
+          {
+            booking,
+            requiresRedirect: true,
+            redirectUrl: directPaymentResult.redirectUrl,
+          },
+          { status: 201 }
+        );
+      } catch (error: any) {
+        console.error("❌ Direct payment redirect error:", error);
+        return NextResponse.json(
+          { error: "Failed to process payment" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // TOKENIZED or MOCK flow - return booking directly
     return NextResponse.json({ booking }, { status: 201 });
   } catch (e: any) {
     console.error("authenticated booking.create error", e);

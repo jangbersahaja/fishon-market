@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/database/prisma";
+import { upgradeGuestToAngler } from "@/lib/services/guest-user-service";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -27,12 +28,47 @@ export async function POST(request: Request) {
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
+      // If GUEST user, upgrade to ANGLER
+      if (existing.role === "GUEST") {
+        const passwordHash = await bcrypt.hash(password, 10);
+        const upgraded = await upgradeGuestToAngler({
+          email,
+          passwordHash,
+          name: name || existing.name || undefined,
+          phone: phone || existing.phone || undefined,
+        });
+
+        // Return user data with upgraded flag
+        const user = await prisma.user.findUnique({
+          where: { id: upgraded.id },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            phone: true,
+            role: true,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            user,
+            upgraded: true,
+            message:
+              "Account upgraded successfully! Your previous bookings are now linked to your account.",
+          },
+          { status: 200 }
+        );
+      }
+
+      // Already a registered user (ANGLER/ADMIN)
       return NextResponse.json(
         { error: "Email already registered" },
         { status: 409 }
       );
     }
 
+    // Create new user
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {

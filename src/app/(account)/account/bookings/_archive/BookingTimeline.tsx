@@ -22,7 +22,7 @@ export function BookingTimeline({
       date: createdAt,
       isComplete:
         status === "PENDING" ||
-        status === "APPROVED" ||
+        status === "AWAITING_PAYMENT" ||
         status === "PAID" ||
         status === "REJECTED" ||
         status === "CANCELLED",
@@ -34,7 +34,7 @@ export function BookingTimeline({
       label: "Captain Review",
       icon: Clock,
       date: captainDecisionAt,
-      isComplete: status === "APPROVED" || status === "PAID",
+      isComplete: status === "AWAITING_PAYMENT" || status === "PAID",
       isCurrent: false,
       isError: status === "REJECTED",
     },
@@ -44,7 +44,7 @@ export function BookingTimeline({
       icon: CreditCard,
       date: null,
       isComplete: status === "PAID",
-      isCurrent: status === "APPROVED",
+      isCurrent: status === "AWAITING_PAYMENT",
       isError: false,
     },
     {
@@ -92,10 +92,10 @@ export function BookingTimeline({
                     step.isError
                       ? "border-red-500 bg-red-50"
                       : step.isComplete
-                      ? "border-green-500 bg-green-50"
-                      : step.isCurrent
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300 bg-white"
+                        ? "border-green-500 bg-green-50"
+                        : step.isCurrent
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-300 bg-white"
                   }`}
                 >
                   <Icon
@@ -103,10 +103,10 @@ export function BookingTimeline({
                       step.isError
                         ? "text-red-600"
                         : step.isComplete
-                        ? "text-green-600"
-                        : step.isCurrent
-                        ? "text-blue-600"
-                        : "text-gray-400"
+                          ? "text-green-600"
+                          : step.isCurrent
+                            ? "text-blue-600"
+                            : "text-gray-400"
                     }`}
                   />
                 </div>

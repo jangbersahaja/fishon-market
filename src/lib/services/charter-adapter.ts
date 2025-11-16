@@ -46,6 +46,23 @@ function mapTier(pricingPlan: string): Tier {
  * Convert a backend trip to frontend format
  */
 function convertTrip(backendTrip: BackendTrip): Trip {
+  // Handle both formats: API returns [{ value: "08:00" }], DB view returns ["08:00"]
+  let startTimes: string[] = [];
+  if (Array.isArray(backendTrip.startTimes)) {
+    startTimes = backendTrip.startTimes
+      .map((st) => {
+        // If it's already a string (from DB view), use it directly
+        if (typeof st === "string") return st;
+        // If it's an object with value property (from API), extract value
+        if (typeof st === "object" && st !== null && "value" in st) {
+          return (st as { value: string }).value;
+        }
+        // Fallback: empty string (shouldn't happen)
+        return "";
+      })
+      .filter(Boolean); // Remove empty strings
+  }
+
   return {
     id: backendTrip.id, // Include trip ID for booking creation
     name: backendTrip.name,
@@ -54,7 +71,7 @@ function convertTrip(backendTrip: BackendTrip): Trip {
       backendTrip.durationHours !== 1 ? "s" : ""
     }`,
     description: backendTrip.description || undefined,
-    startTimes: backendTrip.startTimes?.map((st) => st.value) || [],
+    startTimes,
     maxAnglers: backendTrip.maxAnglers,
     private: backendTrip.style === "PRIVATE",
   };
@@ -234,8 +251,15 @@ export function convertBackendCharterToFrontend(
   const allTechniques = new Set<string>();
 
   backendCharter.trips?.forEach((trip) => {
-    trip.species?.forEach((s) => allSpecies.add(s.value));
-    trip.techniques?.forEach((t) => allTechniques.add(t.value));
+    // Handle both formats: API returns [{ value: "..." }], DB view returns ["..."]
+    trip.species?.forEach((s) => {
+      const value = typeof s === "string" ? s : (s as any)?.value;
+      if (value) allSpecies.add(value);
+    });
+    trip.techniques?.forEach((t) => {
+      const value = typeof t === "string" ? t : (t as any)?.value;
+      if (value) allTechniques.add(value);
+    });
   });
 
   const species = Array.from(allSpecies);

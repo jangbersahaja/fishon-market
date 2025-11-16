@@ -3,13 +3,12 @@
 import {
   BookAgainButton,
   CancelBookingButton,
-  PayNowButton,
 } from "@/components/account/BookingActionButtons";
+import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { EmailVerificationModal } from "@/components/booking/EmailVerificationModal";
 import { Button } from "@/components/ui/button";
 import type { BookingStatus } from "@/lib/services/booking-service";
-import { Download } from "lucide-react";
-import Link from "next/link";
+import { Download, Mail, MessageCircle, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -19,6 +18,14 @@ interface BookingActionsProps {
   status: BookingStatus;
   bookingEmail: string;
   isLoggedInOwner?: boolean;
+  userRole?: string;
+  captainName?: string;
+  captainPhone?: string;
+  captainEmail?: string;
+  conversationId?: string;
+  conversationStatus?: string;
+  tripDate?: Date;
+  finalPrice?: number;
 }
 
 export function BookingActions({
@@ -27,15 +34,26 @@ export function BookingActions({
   status,
   bookingEmail,
   isLoggedInOwner = false,
+  userRole,
+  captainName,
+  captainPhone,
+  captainEmail,
+  conversationId,
+  conversationStatus,
+  tripDate,
+  finalPrice,
 }: BookingActionsProps) {
   const router = useRouter();
+  const { openModal } = useAuthModal();
   const [isDownloading, setIsDownloading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showRefundPreview, setShowRefundPreview] = useState(false);
   const [selectedReason, setSelectedReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [estimatedRefund, setEstimatedRefund] = useState<number>(0);
   const [verificationAction, setVerificationAction] = useState<
     "cancel" | "download"
   >("cancel");
@@ -44,6 +62,26 @@ export function BookingActions({
   );
 
   const requiresEmailVerification = !isLoggedInOwner;
+
+  // Check user role - GUEST users need to register to chat
+  const isGuestUser = userRole === "GUEST";
+  const isRegisteredUser = userRole === "ANGLER" || userRole === "ADMIN";
+
+  // Check if chat is available (conversation exists and is unlocked)
+  const isChatAvailable =
+    conversationId && conversationStatus === "ACTIVE" && isRegisteredUser;
+
+  // Debug chat availability
+  console.log("💬 Chat Availability Debug:", {
+    userRole,
+    isGuestUser,
+    isRegisteredUser,
+    conversationId,
+    conversationStatus,
+    isChatAvailable,
+    hasConversationId: !!conversationId,
+    statusCheck: conversationStatus === "ACTIVE",
+  });
 
   const commonReasons = [
     "Change of plans",
@@ -54,6 +92,29 @@ export function BookingActions({
     "Booking mistake",
     "Other",
   ];
+
+  // Calculate estimated refund based on cancellation policy
+  const calculateRefund = () => {
+    if (!tripDate || !finalPrice) return 0;
+
+    const now = new Date();
+    const trip = new Date(tripDate);
+    const daysUntilTrip = Math.ceil(
+      (trip.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Cancellation policy:
+    // >30 days: 80% refund
+    // 15-30 days: 50% refund
+    // <15 days: 0% refund
+    if (daysUntilTrip > 30) {
+      return finalPrice * 0.8;
+    } else if (daysUntilTrip >= 15) {
+      return finalPrice * 0.5;
+    } else {
+      return 0;
+    }
+  };
 
   const getFinalReason = () => {
     if (selectedReason === "Other") {
@@ -75,22 +136,24 @@ export function BookingActions({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to download receipt");
+        throw new Error(data.error || "Failed to download confirmation");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Fishon-Receipt-${bookingId}.pdf`;
+      a.download = `Fishon-Booking-Confirmation-${bookingId}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Failed to download receipt:", error);
+      console.error("Failed to download confirmation:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to download receipt"
+        error instanceof Error
+          ? error.message
+          : "Failed to download confirmation"
       );
     } finally {
       setIsDownloading(false);
@@ -158,12 +221,16 @@ export function BookingActions({
   };
 
   const handleCancelClick = () => {
+    // Calculate refund first
+    const refund = calculateRefund();
+    setEstimatedRefund(refund);
+
     if (requiresEmailVerification) {
       setVerificationAction("cancel");
       setShowEmailVerification(true);
     } else {
-      // For logged-in owners, show cancellation reason dialog
-      setShowCancelDialog(true);
+      // For logged-in owners, show refund preview first
+      setShowRefundPreview(true);
     }
   };
 
@@ -173,75 +240,158 @@ export function BookingActions({
     } else if (verificationAction === "cancel") {
       // Store verified email for later use in cancellation
       setVerifiedEmail(email);
-      // After email verification, still need to get cancellation reason
+      // After email verification, show refund preview
       setShowEmailVerification(false);
-      setShowCancelDialog(true);
+      setShowRefundPreview(true);
     }
+  };
+
+  const handleRefundPreviewContinue = () => {
+    setShowRefundPreview(false);
+    setShowCancelDialog(true);
   };
 
   return (
     <>
-      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <div className="p-3 space-y-3 bg-white border border-gray-200 rounded-lg sm:p-5">
         <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
 
-        {/* PENDING: Cancel button */}
-        {status === "PENDING" && (
-          <CancelBookingButton
-            bookingId={bookingId}
-            fullWidth
-            onCancel={handleCancelClick}
-          />
+        {/* PAYMENT_AUTHORIZED or PAID: Contact Captain + Cancel */}
+        {(status === "PAYMENT_AUTHORIZED" || status === "PAID") && (
+          <>
+            <div className="pb-3 mb-3 border-b border-gray-200">
+              <p className="mb-3 text-sm font-medium text-gray-700">
+                Contact {captainName || "Captain"}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {/* Call Button */}
+                {captainPhone && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`tel:${captainPhone}`)}
+                    className="flex-col h-auto py-3"
+                  >
+                    <Phone className="w-4 h-4 mb-1" />
+                    <span className="text-xs">Call</span>
+                  </Button>
+                )}
+                {/* Email Button */}
+                {captainEmail && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`mailto:${captainEmail}`)}
+                    className="flex-col h-auto py-3"
+                  >
+                    <Mail className="w-4 h-4 mb-1" />
+                    <span className="text-xs">Email</span>
+                  </Button>
+                )}
+                {/* Chat Button - Different for Guest vs Registered Users */}
+                {isGuestUser ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      openModal("register", `/book/confirm?id=${bookingId}`);
+                    }}
+                    className="flex-col h-auto py-3"
+                    title="Register to enable chat with captain"
+                  >
+                    <MessageCircle className="w-4 h-4 mb-1" />
+                    <span className="text-xs">Register to Chat</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (conversationId) {
+                        router.push(`/account/messages/${conversationId}`);
+                      }
+                    }}
+                    disabled={!isChatAvailable}
+                    className="flex-col h-auto py-3"
+                    title={
+                      !isChatAvailable
+                        ? "Chat will be enabled after captain approval"
+                        : "Chat with captain"
+                    }
+                  >
+                    <MessageCircle className="w-4 h-4 mb-1" />
+                    <span className="text-xs">Chat</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </>
         )}
 
-        {/* APPROVED: Pay Now + Cancel */}
-        {status === "APPROVED" && (
-          <>
-            <PayNowButton bookingId={bookingId} fullWidth />
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {/* Pay Now button for AWAITING_PAYMENT - Manual Flow */}
+          {status === "AWAITING_PAYMENT" && (
+            <Button
+              onClick={() => router.push(`/book/payment/${bookingId}`)}
+              className="w-full col-span-3 text-white bg-green-600 hover:bg-green-700"
+              size="lg"
+            >
+              Pay Now
+            </Button>
+          )}
+
+          {/* Cancel button for PENDING, AWAITING_PAYMENT, PAYMENT_AUTHORIZED and PAID */}
+          {(status === "PENDING" ||
+            status === "AWAITING_PAYMENT" ||
+            status === "PAYMENT_AUTHORIZED" ||
+            status === "PAID") && (
             <CancelBookingButton
               bookingId={bookingId}
               fullWidth
               onCancel={handleCancelClick}
             />
-          </>
-        )}
+          )}
 
-        {/* PAID: Download Receipt + Book Again */}
-        {status === "PAID" && (
-          <>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleDownloadClick}
-              disabled={isDownloading}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              {isDownloading ? "Downloading..." : "Download Receipt"}
-            </Button>
+          {/* CANCELLED: Book Again */}
+          {status === "CANCELLED" && (
             <BookAgainButton charterId={charterId} fullWidth />
-          </>
-        )}
+          )}
 
-        {/* CANCELLED: Try Book Again */}
-        {status === "CANCELLED" && (
-          <BookAgainButton charterId={charterId} fullWidth variant="default" />
-        )}
+          {/* REJECTED: Book Again */}
+          {status === "REJECTED" && (
+            <BookAgainButton charterId={charterId} fullWidth />
+          )}
 
-        {/* REJECTED: Try Book Again */}
-        {status === "REJECTED" && (
-          <BookAgainButton charterId={charterId} fullWidth />
-        )}
+          {/* COMPLETED: Download Confirmation + Book Again */}
+          {status === "COMPLETED" && (
+            <>
+              <button
+                onClick={handleDownloadClick}
+                disabled={isDownloading}
+                className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                {isDownloading ? "Downloading..." : "Download Confirmation"}
+              </button>
+              <BookAgainButton charterId={charterId} fullWidth />
+            </>
+          )}
 
-        {/* Divider */}
-        <div className="border-t border-gray-200 my-4" />
-
-        {/* Additional Actions */}
-        <Button variant="outline" className="w-full" asChild>
-          <Link href="/support/help">Contact Support</Link>
-        </Button>
-
-        <Button variant="outline" className="w-full" asChild>
-          <Link href="/charters">Browse Similar Charters</Link>
-        </Button>
+          {/* PAID: Download Confirmation + Book Again */}
+          {status === "PAID" && (
+            <>
+              <button
+                onClick={handleDownloadClick}
+                disabled={isDownloading}
+                className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                {isDownloading ? "Downloading..." : "Download Confirmation"}
+              </button>
+              <BookAgainButton charterId={charterId} fullWidth />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Email Verification Modal */}
@@ -252,6 +402,129 @@ export function BookingActions({
         action={verificationAction}
         bookingEmail={bookingEmail}
       />
+
+      {/* Refund Preview Modal */}
+      {showRefundPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center transition-colors duration-200 bg-black/50"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div className="relative w-full max-w-md p-0 sm:p-0">
+            <div className="p-6 bg-white shadow-2xl rounded-2xl sm:p-8 animate-fadeIn">
+              {/* Close button */}
+              <button
+                className="absolute text-gray-400 top-3 right-3 hover:text-gray-600 focus:outline-none"
+                aria-label="Close"
+                onClick={() => setShowRefundPreview(false)}
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                  <path
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M18 6 6 18M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              <h3 className="mb-2 text-xl font-bold text-gray-900">
+                Cancellation Refund
+              </h3>
+
+              {estimatedRefund > 0 ? (
+                <>
+                  <div className="p-4 mb-4 rounded-lg bg-green-50">
+                    <p className="text-sm text-gray-700">
+                      Estimated refund amount:
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      RM {estimatedRefund.toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 mb-4 border border-gray-200 rounded-lg">
+                    <p className="mb-2 text-sm font-semibold text-gray-900">
+                      Cancellation Policy:
+                    </p>
+                    <ul className="space-y-1 text-xs text-gray-600">
+                      <li>• More than 30 days before trip: 80% refund</li>
+                      <li>• 15-30 days before trip: 50% refund</li>
+                      <li>• Less than 15 days before trip: No refund</li>
+                    </ul>
+                  </div>
+
+                  <p className="mb-5 text-sm text-gray-700">
+                    Refunds are typically processed within 5-7 business days.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 mb-4 rounded-lg bg-amber-50">
+                    <p className="text-sm font-semibold text-amber-800">
+                      No refund available
+                    </p>
+                    <p className="mt-1 text-xs text-amber-700">
+                      Your trip is less than 15 days away. According to our
+                      cancellation policy, no refund is available for
+                      cancellations within this period.
+                    </p>
+                  </div>
+
+                  <div className="p-4 mb-4 border border-gray-200 rounded-lg">
+                    <p className="mb-2 text-sm font-semibold text-gray-900">
+                      Cancellation Policy:
+                    </p>
+                    <ul className="space-y-1 text-xs text-gray-600">
+                      <li>• More than 30 days before trip: 80% refund</li>
+                      <li>• 15-30 days before trip: 50% refund</li>
+                      <li>• Less than 15 days before trip: No refund</li>
+                    </ul>
+                  </div>
+
+                  <p className="mb-5 text-sm text-gray-700">
+                    You can still cancel your booking, but no refund will be
+                    issued.
+                  </p>
+                </>
+              )}
+
+              <div className="flex flex-row-reverse gap-2 mt-2">
+                <button
+                  className="px-4 py-2 text-sm rounded-lg bg-[#ec2227] text-white font-semibold hover:bg-[#d11f24] focus:outline-none focus:ring-2 focus:ring-[#ec2227]"
+                  onClick={handleRefundPreviewContinue}
+                >
+                  Continue to Cancel
+                </button>
+                <button
+                  className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => setShowRefundPreview(false)}
+                >
+                  Nevermind
+                </button>
+              </div>
+            </div>
+
+            {/* Simple fade-in animation */}
+            <style jsx>{`
+              .animate-fadeIn {
+                animation: fadeIn 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+              }
+              @keyframes fadeIn {
+                from {
+                  opacity: 0;
+                  transform: translateY(16px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            `}</style>
+          </div>
+        </div>
+      )}
 
       {/* Cancellation Reason Dialog */}
       {showCancelDialog && (

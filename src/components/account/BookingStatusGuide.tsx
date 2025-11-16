@@ -1,8 +1,7 @@
 import {
   AlertCircle,
   CheckCircle2,
-  Clock,
-  CreditCard,
+  DollarSign,
   HelpCircle,
   X,
   XCircle,
@@ -10,24 +9,14 @@ import {
 
 const statusGuides = [
   {
-    status: "PENDING",
-    label: "Pending Review",
-    icon: Clock,
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-    description: "Your booking request is awaiting captain approval.",
-    action: "Wait for captain to review your request within 12 hours.",
-  },
-  {
-    status: "APPROVED",
-    label: "Awaiting Payment",
-    icon: CreditCard,
+    status: "PAYMENT_PENDING",
+    label: "Payment Received",
+    icon: DollarSign,
     color: "text-blue-600",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
-    description: "Captain approved your booking!",
-    action: "Please make payment to confirm your booking.",
+    description: "Payment received! Awaiting captain approval.",
+    action: "Captain will review within 12 hours. Full refund if declined.",
   },
   {
     status: "PAID",
@@ -38,6 +27,16 @@ const statusGuides = [
     borderColor: "border-green-200",
     description: "Your booking is confirmed and payment received.",
     action: "Prepare for your trip! Contact captain for details.",
+  },
+  {
+    status: "COMPLETED",
+    label: "Completed",
+    icon: CheckCircle2,
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-50",
+    borderColor: "border-emerald-200",
+    description: "Your trip is complete! We hope you had a great time.",
+    action: "Leave a review to help other anglers.",
   },
   {
     status: "REJECTED",
@@ -73,19 +72,19 @@ const statusGuides = [
 
 export function BookingStatusGuide() {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="p-6 bg-white border border-gray-200 rounded-lg">
       <div className="flex items-center gap-2 mb-4">
         <HelpCircle className="w-5 h-5 text-gray-600" />
         <h2 className="text-lg font-semibold text-gray-900">
           Booking Status Guide
         </h2>
       </div>
-      <p className="text-sm text-gray-600 mb-6">
+      <p className="mb-6 text-sm text-gray-600">
         Understand what each booking status means and what actions you should
         take.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statusGuides.map((guide) => {
           const Icon = guide.icon;
           return (
@@ -100,7 +99,7 @@ export function BookingStatusGuide() {
                 </h3>
               </div>
               <p className="text-sm text-gray-700">{guide.description}</p>
-              <p className="text-xs text-gray-600 font-medium pt-2 border-t border-gray-200">
+              <p className="pt-2 text-xs font-medium text-gray-600 border-t border-gray-200">
                 <span className="text-gray-500">What to do:</span>{" "}
                 {guide.action}
               </p>

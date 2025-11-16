@@ -1,235 +1,143 @@
-# Fishon.my Booking Flow (Market)
+````markdown
+# Booking Flow (Dual Flow + Guest Support)
 
-This document describes the booking flow implemented in Fishon.my (marketplace), including endpoints, availability logic, status lifecycle, email notifications, environment variables, and testing.
-
-Last updated: 2025-10-20
-
----
-
-## Overview
-
-- Anglers create bookings from charter pages via the Checkout flow
-- A 12-hour hold is placed (status PENDING) while the captain decides
-- Captains approve/reject via a webhook (from the Captain app)
-- If approved, the angler completes payment (mock flow for now) → status PAID
-- Holds can expire → status EXPIRED
-
-Data model: Prisma `Booking` (see `prisma/schema.prisma`) with fields like `userId`, `captainCharterId`, `tripName`, `startTime`, `date`, `days`, `status`, `expiresAt`.
+> 📦 **Current state (Nov 2025):** Dual booking flows are live (MANUAL + AUTO), SenangPay powers real payments, and guest checkout is supported for both flows. Legacy single-flow docs now live in `docs/archive/BOOKING_FLOW_LEGACY.md`.
 
 ---
 
-## Endpoints and Pages
+## 1. Flow Types at a Glance
 
-All endpoints are App Router handlers under `src/app/api/bookings/*`.
+| Flow       | Trigger                           | Captain Action                                                    | Payment Moment                                            | Guest Eligibility                 |
+| ---------- | --------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
+| **MANUAL** | Angler (or guest) submits request | Captain approves/rejects within `approvalTimeHours` (default 24h) | After approval (CARD capture or FPX/E-Wallet redirect)    | ✅ Yes, handled by `create-guest` |
+| **AUTO**   | Angler/guest confirms booking     | Captain receives notification + conversation unlocked immediately | Immediately (CARD tokenized + held, FPX/E-Wallet charged) | ✅ Yes, same guest checkout       |
 
-- POST `/api/bookings/create`
+- Flow configuration lives on the captain side (Prisma `Charter.bookingFlowType`).
+- Market reads the flow via `getCharterFlowType(charterId)`, which prioritizes the public DB view (`v_public_charters`) and falls back to the public v1 API.
+- If both data sources are missing, we log a guest-safe warning and default to MANUAL to prevent instant payments without explicit consent.
+- Manual bookings now go through the primary `/api/bookings/create` (auth) and `/api/bookings/create-guest` (guest) routes. They always start in `PENDING`, carry an `approvalDeadline` derived from `approvalTimeHours` (24h default, charter override respected), and defer payment intent creation until the captain approves. Webhooks/emails still dispatch immediately so captains get notified during the review window.
 
-  - Auth required
-  - Body: `{ charterId: string, tripIndex: number, date: 'YYYY-MM-DD', days: number, adults: number, children: number, startTime?: string }`
-  - Validations:
-    - Requires `startTime` if the selected trip defines start times
-    - Availability guard (multi-day + start-time aware; see Availability)
-  - Side effects:
-    - Creates Booking with 12-hour hold (`expiresAt = now + 12h`)
-    - Sends outbound webhook to Captain app (`CAPTAIN_WEBHOOK_URL`) with retry
-    - Sends confirmation email to angler
-  - Response: `{ booking }` (201) or 409 on conflict
+### Helper functions
 
-- POST `/api/bookings/status-webhook`
-
-  - Security: header `x-captain-secret = CAPTAIN_WEBHOOK_SECRET`
-  - Body: `{ id: string, status: 'APPROVED' | 'REJECTED' }`
-  - Transitions booking from PENDING → APPROVED/REJECTED and sets `captainDecisionAt`
-  - Sends angler email (if APPROVED, includes payment link)
-
-- POST `/api/bookings/expire`
-
-  - Security: header `x-expire-secret = BOOKINGS_EXPIRE_SECRET`
-  - Marks all `PENDING` bookings with `expiresAt < now` as `EXPIRED`
-  - Response: `{ expired: number }`
-
-- POST `/api/bookings/pay`
-
-  - Auth required; only the booking owner can pay
-  - Transition: `APPROVED` → `PAID`
-  - Mock payment logic (no real PSP integration yet)
-
-- Page `/checkout/confirmation?id=...`
-
-  - Displays booking summary and next steps
-  - If `APPROVED`, shows a link to the mock payment UI
-
-- Page `/pay/[id]`
-  - Mock payment UI (server component)
-  - Calls `/api/bookings/pay` and redirects back to confirmation
+- `getCharterFlowType(charterId)` — decides MANUAL vs AUTO with DB→API fallback and emits guest fallback warning when data is missing.
+- `getCharterApprovalTimeHours(charterId)` — fetches charter-specific approval SLA (defaults to 24h). Used for countdowns + expiry job messaging.
 
 ---
 
-## Availability and Overlap Logic
+## 2. Guest Checkout Lifecycle
 
-Implemented in `src/lib/booking/overlap.ts` and used by the create endpoint.
+1. **Email verification** — `POST /api/bookings/verify-guest` stores a TAC (`type: "TAC"`) and emails the guest via `sendVerificationCode()`.
+2. **Code confirmation** — `POST /api/bookings/verify-code` validates the TAC, creates/fetches a `User` with role `GUEST`, and returns `verifiedUserId` + `verifiedEmail`.
+3. **Booking submission** — `POST /api/bookings/create-guest` mirrors the signed-in flow:
+   - Reads `bookingFlowType` via `getCharterFlowType`.
+   - Manual flow ⇒ booking status `PENDING`, no payment required up front.
+   - Auto flow ⇒ payment intent is created immediately (CARD tokenization or FPX/E-Wallet redirect) and booking enters the paid path.
+4. **Notifications** — guests receive Zoho SMTP emails, captains receive webhooks + emails (same payloads as signed-in bookings).
 
-- New bookings are ranges `[date .. date + (days-1)]` (UTC midnight semantics)
-- Existing candidate bookings are fetched for the same `captainCharterId` with statuses blocking the calendar (`PENDING`, `APPROVED`, `PAID`)
-- Overlap predicate:
-  - If trips do NOT define start times: any range overlap blocks
-  - If trips DO define start times: only overlapping ranges with the SAME `startTime` block
-
-Helpers:
-
-- `addDaysUTC(date, n)` — date math pinned to UTC midnight
-- `rangesOverlap(aStart, aDays, bStart, bDays)`
-- `hasConflicts(candidates, newStart, newDays, { usesStartTimes, selectedStartTime })`
-
-Edge cases:
-
-- Multi-day trips (e.g., existing 3-day trip covering 20–22 conflicts with a 2-day trip starting on 22)
-- Start-time-aware conflicts allow two trips on the same day at different times when supported by the charter
+Guest users can later upgrade to ANGLER via `/api/auth/register`; OAuth login also auto-upgrades via `upgradeGuestToAngler()`.
 
 ---
 
-## Status Lifecycle
+## 3. Payment Options
 
-`PENDING` → `APPROVED` or `REJECTED` (via captain webhook)
+| Method    | Flow                              | Notes                                                                                                                    | Required env vars                                                 |
+| --------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `CARD`    | Tokenized (charge after approval) | Stores SenangPay token; charged only if captain approves (manual) or immediately recorded (auto).                        | `SENANGPAY_MERCHANT_ID`, `SENANGPAY_SECRET_KEY`, `SENANGPAY_MODE` |
+| `FPX`     | Direct                            | Bank redirect, funds captured instantly. AUTO flow is the default entry point; manual flow charges only after approval.  | Same as above + `NEXT_PUBLIC_BASE_URL` for return URLs            |
+| `EWALLET` | Direct                            | Same handling as FPX; determined by `paymentMethod` payload.                                                             | Same as above                                                     |
+| `MOCK`    | Direct (dev only)                 | Development fallback; **disabled by default** and only works when `SENANGPAY_FORCE_MOCK="true"` (still blocked in prod). | `SENANGPAY_FORCE_MOCK`                                            |
 
-`APPROVED` → `PAID` (via angler payment)
+Supporting modules:
 
-`PENDING` → `EXPIRED` (via expiry job)
-
-Possible future: `CANCELLED` (by angler) path.
-
----
-
-## Webhooks and Reliability
-
-Outbound `booking.created` is sent to the Captain app from the create endpoint.
-
-Implementation:
-
-- `src/lib/webhook.ts` → `sendWithRetry(url, body, { headers, attempts, baseDelayMs })`
-- Default: 3 attempts, exponential backoff (300ms, 600ms, 1200ms)
-- Best effort (non-blocking) with console warning in non-production on repeated failure
-
-Payload example:
-
-```json
-{
-  "type": "booking.created",
-  "booking": {
-    "id": "...",
-    "captainCharterId": "...",
-    "charterName": "...",
-    "tripName": "...",
-    "startTime": "07:00",
-    "date": "2025-10-20T00:00:00.000Z",
-    "days": 2,
-    "adults": 2,
-    "children": 0,
-    "totalPrice": 1200,
-    "expiresAt": "2025-10-20T12:00:00.000Z",
-    "status": "PENDING"
-  }
-}
-```
+- `src/lib/payment/payment-gateway.ts` — intent creation, capture, release, refund helpers.
+- `src/lib/payment/payment-side-effects.ts` — ensures guest bookings skip duplicate notifications.
+- `src/app/api/payment/senangpay-callback/route.ts` — handles FPX/E-Wallet callbacks and transitions bookings to `PAID`.
 
 ---
 
-## Email Notifications (Zoho SMTP)
+## 4. Data Sources & Logging
 
-Implemented in `src/lib/email.ts` using Nodemailer. Best-effort (non-blocking) sends.
-
-Events:
-
-- On booking created (to angler): summary, total, and confirmation link
-- On status update (APPROVED/REJECTED): result; if APPROVED, includes payment link
-
-Templates:
-
-- `renderBookingCreatedEmail({...})`
-- `renderStatusEmail({...})`
-
-Environment (see below) must be configured for SMTP.
+1. **Captain DB view** — requires `CAPTAIN_DATABASE_URL` + `USE_CAPTAIN_DB=1`.
+   - `prismaCaptain.$queryRaw` reads `public.v_public_charters` (or `mv_public_charters_*`).
+   - Includes `bookingFlowType`, `approvalTimeHours`, `instantBookingEnabled` (legacy flag for AUTO fallback).
+2. **Fishon Captain API** — fallback when DB is unavailable or missing fields.
+   - Configure `FISHON_CAPTAIN_API_URL` (+ optional `FISHON_CAPTAIN_API_KEY`).
+3. **Fallback logging** — when both sources lack flow data, we emit:
+   ```
+   [CharterService] Could not determine flow type for charter <id>; guest checkout fallback to MANUAL is active...
+   ```
+   Tests in `src/lib/services/__tests__/charter-service-flow-type.test.ts` enforce this behavior.
 
 ---
 
-## Environment Variables
+## 5. Key Endpoints & Workers
 
-Add to `.env.local`:
+- `POST /api/bookings/create` — Authenticated anglers; enforces guest redirect if no session.
+- `POST /api/bookings/create-guest` — Guest bookings (requires verified TAC). Handles both flows, payment intents, and webhooks.
+- `POST /api/bookings/verify-guest` — Issues TAC codes via Zoho SMTP (purpose `guest_booking`).
+- `POST /api/bookings/verify-code` — Validates TAC + upserts GUEST user.
+- `POST /api/payment/senangpay-callback` — Finalizes direct payments (FPX/E-Wallet) and reconciles booking state.
+- `POST /api/bookings/status-webhook` — Captain app sends approvals/rejections; manual flow relies on this.
+- `POST /api/bookings/expire` — Cron-driven endpoint guarded by `BOOKINGS_EXPIRE_SECRET` to auto-expire pending/manual bookings.
 
-```bash
-# Database
-DATABASE_URL=
+Client components:
 
-# Public base URL (for links in emails)
-NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+- `src/app/(marketplace)/book/[charterId]/ui/CheckoutForm.tsx` — surfaces both flows, toggles payment UI, and shows guest verification modal.
+- `src/components/booking/GuestBookingVerificationModal.tsx` — email verification UX.
 
-# Captain webhook (outbound and inbound security)
+---
+
+## 6. Environment Checklist
+
+```dotenv
+# Captain data sources
+CAPTAIN_DATABASE_URL="postgresql://.../fishon_captain"
+USE_CAPTAIN_DB="1"          # Prefer DB view when true
+FISHON_CAPTAIN_API_URL="https://fishon-captain.vercel.app"
+FISHON_CAPTAIN_API_KEY="<optional>"
+
+# Booking + guest security
+BOOKINGS_EXPIRE_SECRET="expire-cron-secret"
+CRON_SECRET="queue-cron-secret"
 CAPTAIN_WEBHOOK_URL="https://fishon-captain.vercel.app/api/webhooks/booking"
-CAPTAIN_WEBHOOK_SECRET="change-me-captain"
+CAPTAIN_API_SECRET="shared-service-secret"
+TAC_SECRET="guest-verification-secret"  # fallback to NEXTAUTH_SECRET if omitted
 
-# Expiry job security
-BOOKINGS_EXPIRE_SECRET="change-me-expire"
+# Payments
+SENANGPAY_MERCHANT_ID="merchant"
+SENANGPAY_SECRET_KEY="secret"
+SENANGPAY_MODE="sandbox"   # or production
+SENANGPAY_FORCE_MOCK="false" # set true for local-only mock
+NEXT_PUBLIC_BASE_URL="http://localhost:3000" # used for SenangPay return/callback URLs
 
-# Zoho SMTP (Nodemailer)
-SMTP_HOST="smtp.zoho.com"
-SMTP_PORT="465" # or 587 for STARTTLS
-SMTP_SECURE="true" # true for 465, false for 587
-SMTP_USER="no-reply@fishon.my"
-SMTP_PASS="your-zoho-app-password"
+# Optional guest UX helpers
+NEXT_PUBLIC_CAPTAIN_URL="https://fishon-captain.vercel.app"
+EMAIL_TEST_SECRET="local-email-check"
 ```
 
-Notes:
-
-- For paid Zoho org accounts with a custom domain, use `smtppro.zoho.com`. For personal/free, use `smtp.zoho.com`.
-- We support both `SMTP_PASS` and `SMTP_PASSWORD` environment names.
-- In dev, absolute links in emails will fall back to `NEXTAUTH_URL` when `NEXT_PUBLIC_BASE_URL` is not set.
-- Optional: set `EMAIL_TEST_SECRET` and use POST `/api/dev/email-test` with header `x-email-test-secret` to validate SMTP quickly.
+Use `npm run check:env` to validate required values and ensure secrets are not accidentally exposed as `NEXT_PUBLIC_*`.
 
 ---
 
-## Testing
+## 7. Testing & Monitoring
 
-We use Vitest. Relevant tests live under `src/app/api/bookings/__tests__/`.
-
-Unit tests:
-
-- Overlap logic — `create-route.test.ts` (now delegates to `hasConflicts`)
-
-API tests:
-
-- Create route — `create-api.test.ts`
-- Expire route — `expire-api.test.ts`
-- Webhook & pay — `webhook-and-pay.test.ts`
-
-Run tests:
-
-```bash
-npm test
-```
+- **Unit**: `npm run test -- charter-service-flow-type` covers DB-first, API fallback, and MANUAL default logging.
+- **Manual flow API**: `npm run test -- manual-flow` validates that both `/api/bookings/create` and `/api/bookings/create-guest` produce `PENDING` bookings with approval deadlines, skip payment intents, and queue notifications/webhooks.
+- **Auto flow API**: `npm run test -- auto-flow` covers CARD tokenization metadata, FPX/E-Wallet redirects, mock-payment gating, guest AUTO parity, and the SenangPay callback → `PAID` transition.
+- **API suites** (Vitest + Prisma mocks) remain under `src/app/api/bookings/__tests__/` for create/expire/webhook flows.
+- **Manual verification**:
+  1. Configure one MANUAL and one AUTO charter in fishon-captain.
+  2. Run guest checkout for both flows (verify TAC email + SenangPay redirect/tokenization).
+  3. Approve/reject via captain portal and confirm booking + payment transitions.
+- **Logging**: Search for `[CharterService]` + `[Payment Gateway]` in logs to confirm fallback paths; guest-specific warnings should be rare in production.
 
 ---
 
-## Implementation Pointers
+## 8. Reference Material
 
-- Server files:
+- Legacy single-flow write-up → `docs/archive/BOOKING_FLOW_LEGACY.md`
+- Dual flow migration notes → `docs/DUAL_BOOKING_FLOW_PHASE1_COMPLETE.md`
+- Payment deep dives → `docs/HYBRID_PAYMENT_SYSTEM_SUMMARY.md`, `docs/SENANGPAY_TESTING_QUICKSTART.md`
 
-  - `src/app/api/bookings/create/route.ts`
-  - `src/app/api/bookings/status-webhook/route.ts`
-  - `src/app/api/bookings/expire/route.ts`
-  - `src/app/api/bookings/pay/route.ts`
-  - `src/lib/booking/overlap.ts`
-  - `src/lib/webhook.ts`
-  - `src/lib/email.ts`
-
-- UI files:
-  - `src/app/checkout/confirmation/page.tsx`
-  - `src/app/pay/[id]/page.tsx`
-
----
-
-## Future Work
-
-- Replace mock payment with real PSP integration (e.g., SenangPay)
-- Add cancellation flows and policies
-- Improve email templating and add localization
-- Add retry/backoff and dead-letter handling for emails (currently best-effort)
+Need more details? Ping #booking-flow or see `plans/booking-flow-verification-plan.md` for future work tracking.
+````

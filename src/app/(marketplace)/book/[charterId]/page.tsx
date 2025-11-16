@@ -1,8 +1,10 @@
-import { BookingProgressTimeline } from "@/components/booking";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
-import { getCharterById } from "@/lib/services/charter-service";
+import {
+  getCharterById,
+  getCharterFlowType,
+} from "@/lib/services/charter-service";
 import { notFound } from "next/navigation";
 import CheckoutForm from "./ui/CheckoutForm";
 
@@ -56,6 +58,9 @@ export default async function CheckoutPage({
     notFound();
   }
 
+  // Fetch charter's booking flow type
+  const charterFlowType = await getCharterFlowType(charterId);
+
   const tripIndex = Number.isFinite(Number(sp.trip_index))
     ? Number(sp.trip_index)
     : 0;
@@ -71,15 +76,39 @@ export default async function CheckoutPage({
       ? sp.start_time
       : undefined;
 
+  // Debug logging for start times
+  console.log(`[CheckoutPage] Charter ${charterId}, Trip ${tripIndex}:`, {
+    hasTrips: trips.length > 0,
+    selectedTrip: selectedTrip?.name,
+    startTimes,
+    defaultStartTime,
+    charterFlowType,
+  });
+
   // Prefill user details if available
   let defaultUser:
-    | { firstName?: string; lastName?: string; email?: string; phone?: string }
+    | {
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        phone?: string;
+        emergencyName?: string;
+        emergencyPhone?: string;
+        emergencyRelation?: string;
+      }
     | undefined;
   if (session?.user?.id) {
     try {
       const user = await prisma.user.findUnique({
         where: { id: String((session.user as any).id) },
-        select: { name: true, email: true, phone: true },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          emergencyName: true,
+          emergencyPhone: true,
+          emergencyRelation: true,
+        },
       });
       if (user) {
         const name = user.name || "";
@@ -90,6 +119,9 @@ export default async function CheckoutPage({
           lastName,
           email: user.email || undefined,
           phone: user.phone || undefined,
+          emergencyName: user.emergencyName || undefined,
+          emergencyPhone: user.emergencyPhone || undefined,
+          emergencyRelation: user.emergencyRelation || undefined,
         };
       }
     } catch {}
@@ -120,7 +152,7 @@ export default async function CheckoutPage({
   };
 
   return (
-    <main className="w-full min-h-screen mx-auto bg-gray-50">
+    <main className="w-full min-h-screen mx-auto bg-slate-50">
       <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 ">
         <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
           Complete Your Booking
@@ -129,11 +161,6 @@ export default async function CheckoutPage({
           Review your trip details and tell the captain about yourself
         </p>
 
-        {/* Progress Timeline */}
-        <div className="px-4 py-10 pt-6 mb-6 sm:px-8">
-          <BookingProgressTimeline currentStep="details" />
-        </div>
-
         <CheckoutForm
           startTimes={startTimes}
           defaultStartTime={defaultStartTime}
@@ -141,6 +168,7 @@ export default async function CheckoutPage({
           selectedTripIndex={tripIndex}
           charter={charterData as any}
           defaultUser={defaultUser}
+          charterFlowType={charterFlowType}
         />
       </div>
     </main>

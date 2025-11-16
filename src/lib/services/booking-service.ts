@@ -10,11 +10,14 @@ import { prismaCaptain } from "@/lib/database/prisma-captain";
 
 export type BookingStatus =
   | "PENDING"
-  | "APPROVED"
+  | "AWAITING_PAYMENT"
+  | "PAYMENT_AUTHORIZED"
   | "REJECTED"
   | "EXPIRED"
   | "PAID"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "UNDER_REVIEW"
+  | "COMPLETED";
 
 export interface BookingWithDetails {
   id: string;
@@ -48,6 +51,15 @@ export interface BookingWithDetails {
   longitude?: number | null;
   // Trip details
   durationHours?: number | null;
+  // Time slots
+  timeSlots?: Array<{
+    day: number;
+    date: string;
+    startDateTime: string;
+    endDateTime: string;
+  }> | null;
+  // Conversation
+  conversationId?: string | null;
 }
 
 export interface BookingFilters {
@@ -158,6 +170,14 @@ async function enrichBookingsWithCaptainData(
       children: number;
     } | null;
 
+    // Parse timeSlots if available
+    const timeSlots = booking.timeSlots as Array<{
+      day: number;
+      date: string;
+      startDateTime: string;
+      endDateTime: string;
+    }> | null;
+
     // Convert Prisma Decimal types to numbers and map field names
     const serializedBooking = {
       ...booking,
@@ -184,6 +204,10 @@ async function enrichBookingsWithCaptainData(
       longitude: charter?.longitude || null,
       discount: booking.discount, // Already JSON
       tax: booking.tax, // Already JSON
+      // Time slots
+      timeSlots: timeSlots || null,
+      // Conversation
+      conversationId: (booking as any).conversation?.id || null,
     };
 
     return serializedBooking as BookingWithDetails;
@@ -230,6 +254,13 @@ export async function getUserBookings(
   try {
     const bookings = await prisma.booking.findMany({
       where,
+      include: {
+        conversation: {
+          select: {
+            id: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -256,6 +287,13 @@ export async function getBookingById(
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
+      include: {
+        conversation: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
 
     // Ownership check
@@ -280,28 +318,39 @@ export async function getBookingById(
 export async function getBookingStats(userId: string): Promise<{
   total: number;
   pending: number;
-  approved: number;
+  awaitingPayment: number;
+  paymentAuthorized: number;
   paid: number;
   rejected: number;
   expired: number;
   cancelled: number;
 }> {
   try {
-    const [total, pending, approved, paid, rejected, expired, cancelled] =
-      await Promise.all([
-        prisma.booking.count({ where: { userId } }),
-        prisma.booking.count({ where: { userId, status: "PENDING" } }),
-        prisma.booking.count({ where: { userId, status: "APPROVED" } }),
-        prisma.booking.count({ where: { userId, status: "PAID" } }),
-        prisma.booking.count({ where: { userId, status: "REJECTED" } }),
-        prisma.booking.count({ where: { userId, status: "EXPIRED" } }),
-        prisma.booking.count({ where: { userId, status: "CANCELLED" } }),
-      ]);
+    const [
+      total,
+      pending,
+      awaitingPayment,
+      paymentAuthorized,
+      paid,
+      rejected,
+      expired,
+      cancelled,
+    ] = await Promise.all([
+      prisma.booking.count({ where: { userId } }),
+      prisma.booking.count({ where: { userId, status: "PENDING" } }),
+      prisma.booking.count({ where: { userId, status: "AWAITING_PAYMENT" } }),
+      prisma.booking.count({ where: { userId, status: "PAYMENT_AUTHORIZED" } }),
+      prisma.booking.count({ where: { userId, status: "PAID" } }),
+      prisma.booking.count({ where: { userId, status: "REJECTED" } }),
+      prisma.booking.count({ where: { userId, status: "EXPIRED" } }),
+      prisma.booking.count({ where: { userId, status: "CANCELLED" } }),
+    ]);
 
     return {
       total,
       pending,
-      approved,
+      awaitingPayment,
+      paymentAuthorized,
       paid,
       rejected,
       expired,
@@ -388,8 +437,8 @@ export async function cancelBooking(
       return null;
     }
 
-    // Only allow cancellation for PENDING or APPROVED bookings
-    if (booking.status !== "PENDING" && booking.status !== "APPROVED") {
+    // Only allow cancellation for PENDING or AWAITING_PAYMENT bookings
+    if (booking.status !== "PENDING" && booking.status !== "AWAITING_PAYMENT") {
       return null;
     }
 

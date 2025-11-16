@@ -24,7 +24,8 @@ export function BookingTimeline({
       date: createdAt,
       isComplete:
         status === "PENDING" ||
-        status === "APPROVED" ||
+        status === "AWAITING_PAYMENT" ||
+        status === "PAYMENT_AUTHORIZED" ||
         status === "PAID" ||
         status === "REJECTED" ||
         status === "EXPIRED" ||
@@ -37,7 +38,10 @@ export function BookingTimeline({
       label: "Captain Review",
       icon: Clock,
       date: captainDecisionAt,
-      isComplete: status === "APPROVED" || status === "PAID",
+      isComplete:
+        status === "AWAITING_PAYMENT" ||
+        status === "PAYMENT_AUTHORIZED" ||
+        status === "PAID",
       isCurrent: false,
       isError: status === "REJECTED" || status === "EXPIRED",
     },
@@ -46,8 +50,9 @@ export function BookingTimeline({
       label: "Payment",
       icon: CreditCard,
       date: null,
-      isComplete: status === "PAID",
-      isCurrent: status === "APPROVED",
+      isComplete: status === "PAID" || status === "PAYMENT_AUTHORIZED",
+      isCurrent:
+        status === "AWAITING_PAYMENT" || status === "PAYMENT_AUTHORIZED",
       isError: false,
     },
     {
@@ -87,8 +92,8 @@ export function BookingTimeline({
                     step.isComplete && !step.isError
                       ? "bg-green-500"
                       : step.isError
-                      ? "bg-red-300"
-                      : "bg-gray-200"
+                        ? "bg-red-300"
+                        : "bg-gray-200"
                   }`}
                 />
               )}
@@ -101,10 +106,10 @@ export function BookingTimeline({
                     step.isError
                       ? "bg-red-50 border-red-500 text-red-600"
                       : step.isComplete
-                      ? "bg-green-500 border-green-500 text-white"
-                      : step.isCurrent
-                      ? "bg-white border-[#ec2227] text-[#ec2227]"
-                      : "bg-white border-gray-200 text-gray-400"
+                        ? "bg-green-500 border-green-500 text-white"
+                        : step.isCurrent
+                          ? "bg-white border-[#ec2227] text-[#ec2227]"
+                          : "bg-white border-gray-200 text-gray-400"
                   }`}
                 >
                   {step.isComplete && !step.isError ? (
@@ -174,8 +179,8 @@ export function BookingTimeline({
                       {status === "REJECTED"
                         ? "Request rejected"
                         : status === "EXPIRED"
-                        ? "Request expired"
-                        : "Request cancelled"}
+                          ? "Request expired"
+                          : "Request cancelled"}
                     </p>
                   )}
                 </div>

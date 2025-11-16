@@ -4,12 +4,16 @@ interface QuickStatsProps {
   stats: {
     total: number;
     pending: number;
-    approved: number;
+    awaitingPayment: number;
+    paymentAuthorized: number;
     paid: number;
   };
 }
 
 export function QuickStats({ stats }: QuickStatsProps) {
+  // Combine pending and payment_authorized for "Pending Review" stat
+  const totalPending = stats.pending + stats.paymentAuthorized;
+
   const statItems = [
     {
       label: "Total Bookings",
@@ -20,14 +24,14 @@ export function QuickStats({ stats }: QuickStatsProps) {
     },
     {
       label: "Pending Review",
-      value: stats.pending,
+      value: totalPending,
       icon: Clock,
       color: "text-amber-600",
       bgColor: "bg-amber-50",
     },
     {
       label: "Awaiting Payment",
-      value: stats.approved,
+      value: stats.awaitingPayment,
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-50",

@@ -71,8 +71,9 @@ export default async function BookingDetailPage({
         </Link>
       </Button>
 
-      {/* Smart Refresh - Shows for PENDING/APPROVED bookings */}
-      {(booking.status === "PENDING" || booking.status === "APPROVED") && (
+      {/* Smart Refresh - Shows for PENDING/AWAITING_PAYMENT bookings */}
+      {(booking.status === "PENDING" ||
+        booking.status === "AWAITING_PAYMENT") && (
         <div className="flex justify-end">
           <BookingStatusRefresh status={booking.status} />
         </div>
@@ -126,8 +127,8 @@ export default async function BookingDetailPage({
               <CancelBookingAction bookingId={booking.id} fullWidth />
             )}
 
-            {/* APPROVED: Pay Now + Cancel */}
-            {booking.status === "APPROVED" && (
+            {/* AWAITING_PAYMENT: Pay Now + Cancel */}
+            {booking.status === "AWAITING_PAYMENT" && (
               <>
                 <PayNowButton bookingId={booking.id} fullWidth />
                 <CancelBookingAction bookingId={booking.id} fullWidth />
@@ -152,7 +153,7 @@ export default async function BookingDetailPage({
                         size="sm"
                       />
                       <ChatCaptainButton
-                        bookingId={booking.id}
+                        conversationId={null}
                         disabled
                         fullWidth
                         size="sm"

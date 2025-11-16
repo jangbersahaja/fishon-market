@@ -8,8 +8,12 @@ const __dirname = dirname(__filename);
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/__tests__/**/*.{test,spec}.ts"],
+    include: [
+      "src/**/__tests__/**/*.test.{ts,tsx}",
+      "src/**/__tests__/**/*.spec.{ts,tsx}",
+    ],
     globals: true,
+    environmentMatchGlobs: [["src/app/**/book/payment/preview/**", "jsdom"]],
     coverage: {
       enabled: false,
     },
