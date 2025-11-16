@@ -133,9 +133,9 @@ export async function POST(req: Request) {
   let paymentReleaseOutcome: string | null = null;
 
   try {
-    // PAYMENT_PENDING + TOKENIZED: Release the token (no charge occurred)
+    // PAYMENT_AUTHORIZED + TOKENIZED: Release the token (no charge occurred)
     if (
-      booking.status === "PAYMENT_PENDING" &&
+      booking.status === "PAYMENT_AUTHORIZED" &&
       booking.paymentFlow === "TOKENIZED"
     ) {
       if (!booking.paymentIntentId) {

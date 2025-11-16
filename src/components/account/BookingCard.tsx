@@ -161,7 +161,7 @@ export function BookingCard({
             <span className="px-3 text-sm text-gray-500 bg-emerald-100">
               PAID
             </span>
-          ) : booking.status === "PAYMENT_PENDING" ? (
+          ) : booking.status === "PAYMENT_AUTHORIZED" ? (
             <span className="px-3 text-sm text-blue-700 bg-blue-100">
               PAYMENT RECEIVED
             </span>
@@ -174,10 +174,10 @@ export function BookingCard({
         </div>
       </div>
 
-      {/* Countdown Timer for PENDING, PAYMENT_PENDING & APPROVED status */}
+      {/* Countdown Timer for PENDING, PAYMENT_AUTHORIZED & AWAITING_PAYMENT status */}
       {(booking.status === "PENDING" ||
-        booking.status === "PAYMENT_PENDING" ||
-        booking.status === "APPROVED") &&
+        booking.status === "PAYMENT_AUTHORIZED" ||
+        booking.status === "AWAITING_PAYMENT") &&
         booking.expiresAt &&
         !timeRemaining.isExpired && (
           <div className="mb-4">
@@ -187,14 +187,14 @@ export function BookingCard({
               showIcon={true}
               className="justify-center w-full py-2"
             />
-            {booking.status === "APPROVED" && (
+            {booking.status === "AWAITING_PAYMENT" && (
               <p className="mt-2 text-xs text-center text-gray-600">
                 Complete payment to secure your booking
               </p>
             )}
-            {booking.status === "PAYMENT_PENDING" && (
+            {booking.status === "PAYMENT_AUTHORIZED" && (
               <p className="mt-2 text-xs text-center text-gray-600">
-                Awaiting captain approval. Full refund if declined.
+                Awaiting captain acknowledgment.
               </p>
             )}
           </div>
@@ -227,8 +227,8 @@ export function BookingCard({
           </div>
         )}
 
-        {/* PAYMENT_PENDING: View Details + Contact Captain */}
-        {booking.status === "PAYMENT_PENDING" && (
+        {/* PAYMENT_AUTHORIZED: View Details + Contact Captain */}
+        {booking.status === "PAYMENT_AUTHORIZED" && (
           <>
             <div className="flex gap-3">
               <ViewDetailsButton bookingId={booking.id} fullWidth />
@@ -256,8 +256,8 @@ export function BookingCard({
           </>
         )}
 
-        {/* APPROVED: Pay Now + Cancel */}
-        {booking.status === "APPROVED" && (
+        {/* AWAITING_PAYMENT: Pay Now + Cancel */}
+        {booking.status === "AWAITING_PAYMENT" && (
           <div className="flex flex-col gap-3">
             {/* High urgency alert (< 6 hours remaining) */}
             {booking.expiresAt &&

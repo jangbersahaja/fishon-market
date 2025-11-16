@@ -1,6 +1,175 @@
-# Hybrid Payment System Implementation Summary
+# Dual Booking Flow System
 
-## Overview
+## ⚠️ IMPORTANT: System Redesign in Progress
+
+**Status**: Phase 1 Complete - Backend Migration In Progress  
+**Date**: November 16, 2025  
+**Previous System**: Single hybrid flow with PAYMENT_PENDING (DEPRECATED)  
+**New System**: Dual booking flows (Manual vs Auto-Approval)
+
+The previous PAYMENT_PENDING implementation caused confusion with unclear status progression. We are replacing it with two distinct, purpose-built flows.
+
+---
+
+## New System Overview
+
+Two separate booking flows that captains can choose between:
+
+1. **Manual Approval Flow**: Request → Review → Approve → Payment → Confirmation
+2. **Auto-Approval Flow**: Payment → Quick Acknowledgment → Confirmation
+
+### Key Improvements
+
+- ✅ Clear status names (AWAITING_PAYMENT vs PAYMENT_AUTHORIZED)
+- ✅ Captain chooses preferred flow per charter
+- ✅ No tokenization for manual flow (simpler, direct payment)
+- ✅ Admin review system for disputes (UNDER_REVIEW status)
+- ✅ Fixed deadlines to create urgency
+
+---
+
+## Flow Comparison
+
+| Aspect               | Manual Approval                   | Auto-Approval                            |
+| -------------------- | --------------------------------- | ---------------------------------------- |
+| **First Status**     | PENDING                           | PAYMENT_AUTHORIZED                       |
+| **Payment Timing**   | After captain approval            | Immediate                                |
+| **Captain Deadline** | Configurable (12h-7d)             | Fixed 12 hours                           |
+| **Payment Methods**  | FPX/E-wallet/Card (DIRECT)        | Card (TOKENIZED) + FPX/E-wallet (DIRECT) |
+| **Best For**         | Selective captains, complex trips | High-volume captains, simple trips       |
+| **Conversion Rate**  | Lower (approval friction)         | Higher (instant confirmation)            |
+
+---
+
+## Status Definitions
+
+### Manual Flow Statuses
+
+- **PENDING**: Awaiting captain approval (no payment yet)
+  - Deadline: Configurable (12h/24h/48h/custom up to 7 days)
+  - Expires to: EXPIRED
+- **AWAITING_PAYMENT**: Captain approved, awaiting angler payment
+  - Deadline: Fixed 48 hours
+  - Expires to: EXPIRED
+- **PAID**: Payment received, trip confirmed
+
+### Auto-Approval Flow Statuses
+
+- **PAYMENT_AUTHORIZED**: Payment secured (held or captured), awaiting captain acknowledgment
+  - Card: Token authorized (no charge yet)
+  - FPX/E-wallet: Payment captured (immediate)
+  - Deadline: Fixed 12 hours
+  - Expires to: EXPIRED + full refund
+- **PAID**: Captain acknowledged, trip confirmed
+  - Card: Token charged at this point
+  - FPX/E-wallet: Already captured
+
+### Common Statuses
+
+- **UNDER_REVIEW**: Admin reviewing captain's request (manual dispute handling)
+- **COMPLETED**: Trip finished (auto-changed by cron after trip date)
+- **REJECTED**: Captain declined
+- **CANCELLED**: Angler cancelled
+- **EXPIRED**: Deadline passed without action
+
+---
+
+## Implementation Plan
+
+See: `/plans/dual-booking-flow-implementation-plan.md`
+
+### Phase 1: Schema & Database ✅ COMPLETE
+
+**Completed**: November 16, 2025
+
+#### Database Changes
+
+- ✅ Added `BookingFlowType` enum (MANUAL, AUTO)
+- ✅ Updated `BookingStatus` enum:
+  - Removed: PAYMENT_PENDING, APPROVED
+  - Added: AWAITING_PAYMENT, PAYMENT_AUTHORIZED, UNDER_REVIEW
+- ✅ Added charter booking flow settings:
+  - `bookingFlowType` (default: MANUAL)
+  - `approvalTimeHours` (12-168h, default: 24)
+  - `instantBookingEnabled` (boolean flag)
+- ✅ Added booking deadline fields:
+  - `approvalDeadline` (Manual flow)
+  - `paymentDeadline` (Manual flow - 48h after approval)
+  - `acknowledgmentDeadline` (Auto flow - 12h after payment)
+- ✅ Added admin review tracking:
+  - `reviewRequestedBy`, `reviewRequestedAt`
+  - `reviewedBy`, `reviewedAt`
+  - `reviewNotes`
+- ✅ Data migration:
+  - PAYMENT_PENDING → PAYMENT_AUTHORIZED
+  - APPROVED → AWAITING_PAYMENT
+  - All existing bookings set to MANUAL flow
+
+#### API Endpoints Updated
+
+- ✅ `/api/bookings/create` - AUTO flow with PAYMENT_AUTHORIZED status
+- ✅ `/api/bookings/create-guest` - AUTO flow with PAYMENT_AUTHORIZED status
+- ✅ `/api/bookings/approve` - Complete rewrite for Manual flow (PENDING → AWAITING_PAYMENT)
+- ✅ `/api/bookings/pay` - Updated to AWAITING_PAYMENT → PAID
+- ✅ `/api/bookings/cancel` - Updated for PAYMENT_AUTHORIZED
+- ✅ `/api/bookings/reject` - Updated for PAYMENT_AUTHORIZED
+
+#### Services & Helpers Updated
+
+- ✅ `booking-service.ts` - Status types and stats queries
+- ✅ `booking-status-helpers.ts` - `isInProgress()` function
+- ✅ `booking-status-updater.ts` - Expiration logic for new statuses
+- ✅ `message-service.ts` - Chat lock logic
+
+#### Pending Phase 1 Work
+
+- ⏳ UI components (confirm page, payment page, status cards)
+- ⏳ Helper files (booking-helpers.ts)
+- ⏳ Test files (missing bookingFlowType, old statuses)
+- ⏳ Cron job redesign (expire-bookings)
+
+### Phase 2: Manual Flow (Week 2-3) - NOT STARTED
+
+- Charter settings endpoint
+- Booking creation for MANUAL flow
+- Captain approval → AWAITING_PAYMENT
+- Angler payment → PAID
+- Expiration handling
+
+### Phase 3: Auto-Approval Flow (Week 4-5)
+
+- Booking creation for AUTO flow
+- Payment authorization (TOKENIZED + DIRECT)
+- Captain acknowledgment → PAID
+- Rejection with refunds
+- Expiration with refunds
+
+### Phase 4: Admin Review System (Week 6)
+
+- Request review endpoint
+- Admin dashboard
+- Resolution options (continue/full refund/partial refund)
+- Notifications
+
+### Phase 5: Testing & Migration (Week 7)
+
+- Unit and integration tests
+- Data migration from old system
+- Performance testing
+- Edge case handling
+
+### Phase 6: Documentation & Rollout (Week 8)
+
+- Complete documentation
+- Captain onboarding
+- Gradual rollout
+- Monitoring and support
+
+---
+
+## Previous Implementation (DEPRECATED)
+
+### Old Hybrid Payment System
 
 Successfully implemented a dual-flow payment system for fishon-market that supports:
 

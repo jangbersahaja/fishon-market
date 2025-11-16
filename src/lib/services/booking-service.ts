@@ -10,12 +10,13 @@ import { prismaCaptain } from "@/lib/database/prisma-captain";
 
 export type BookingStatus =
   | "PENDING"
-  | "APPROVED"
-  | "PAYMENT_PENDING"
+  | "AWAITING_PAYMENT"
+  | "PAYMENT_AUTHORIZED"
   | "REJECTED"
   | "EXPIRED"
   | "PAID"
   | "CANCELLED"
+  | "UNDER_REVIEW"
   | "COMPLETED";
 
 export interface BookingWithDetails {
@@ -317,8 +318,8 @@ export async function getBookingById(
 export async function getBookingStats(userId: string): Promise<{
   total: number;
   pending: number;
-  paymentPending: number;
-  approved: number;
+  awaitingPayment: number;
+  paymentAuthorized: number;
   paid: number;
   rejected: number;
   expired: number;
@@ -328,8 +329,8 @@ export async function getBookingStats(userId: string): Promise<{
     const [
       total,
       pending,
-      paymentPending,
-      approved,
+      awaitingPayment,
+      paymentAuthorized,
       paid,
       rejected,
       expired,
@@ -337,8 +338,8 @@ export async function getBookingStats(userId: string): Promise<{
     ] = await Promise.all([
       prisma.booking.count({ where: { userId } }),
       prisma.booking.count({ where: { userId, status: "PENDING" } }),
-      prisma.booking.count({ where: { userId, status: "PAYMENT_PENDING" } }),
-      prisma.booking.count({ where: { userId, status: "APPROVED" } }),
+      prisma.booking.count({ where: { userId, status: "AWAITING_PAYMENT" } }),
+      prisma.booking.count({ where: { userId, status: "PAYMENT_AUTHORIZED" } }),
       prisma.booking.count({ where: { userId, status: "PAID" } }),
       prisma.booking.count({ where: { userId, status: "REJECTED" } }),
       prisma.booking.count({ where: { userId, status: "EXPIRED" } }),
@@ -348,8 +349,8 @@ export async function getBookingStats(userId: string): Promise<{
     return {
       total,
       pending,
-      paymentPending,
-      approved,
+      awaitingPayment,
+      paymentAuthorized,
       paid,
       rejected,
       expired,
@@ -436,8 +437,8 @@ export async function cancelBooking(
       return null;
     }
 
-    // Only allow cancellation for PENDING or APPROVED bookings
-    if (booking.status !== "PENDING" && booking.status !== "APPROVED") {
+    // Only allow cancellation for PENDING or AWAITING_PAYMENT bookings
+    if (booking.status !== "PENDING" && booking.status !== "AWAITING_PAYMENT") {
       return null;
     }
 

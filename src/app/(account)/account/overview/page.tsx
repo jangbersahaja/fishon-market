@@ -39,8 +39,8 @@ export default async function OverviewPage() {
         stats={{
           total: stats.total,
           pending: stats.pending,
-          paymentPending: stats.paymentPending,
-          approved: stats.approved,
+          awaitingPayment: stats.awaitingPayment,
+          paymentAuthorized: stats.paymentAuthorized,
           paid: stats.paid,
         }}
       />

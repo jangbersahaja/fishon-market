@@ -1,7 +1,7 @@
 /**
  * BookingExpiredScreen Component
  *
- * Displays empathetic message when a booking has expired (PENDING or APPROVED status).
+ * Displays empathetic message when a booking has expired (PENDING or AWAITING_PAYMENT status).
  * Shows booking details, explains why expiration happened, and provides actionable next steps.
  */
 
@@ -27,15 +27,15 @@ interface BookingExpiredScreenProps {
       location?: string;
     };
   };
-  /** Type of expiration: PENDING (captain didn't respond) or APPROVED (angler didn't pay) */
-  expirationType: "PENDING" | "APPROVED";
+  /** Type of expiration: PENDING (captain didn't respond) or AWAITING_PAYMENT (angler didn't pay) */
+  expirationType: "PENDING" | "AWAITING_PAYMENT";
 }
 
 export function BookingExpiredScreen({
   booking,
   expirationType,
 }: BookingExpiredScreenProps) {
-  const isApprovedExpiry = expirationType === "APPROVED";
+  const isAwaitingPaymentExpiry = expirationType === "AWAITING_PAYMENT";
 
   return (
     <div className="container max-w-3xl mx-auto px-4 py-12">
@@ -48,7 +48,7 @@ export function BookingExpiredScreen({
           Booking Expired
         </h1>
         <p className="text-lg text-gray-600">
-          {isApprovedExpiry
+          {isAwaitingPaymentExpiry
             ? "Your 48-hour payment window has passed"
             : "Your booking request timed out"}
         </p>
@@ -58,7 +58,7 @@ export function BookingExpiredScreen({
       <div className="mb-6 border-amber-200 bg-amber-50 border rounded-lg p-4 flex gap-3">
         <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800">
-          {isApprovedExpiry ? (
+          {isAwaitingPaymentExpiry ? (
             <>
               This booking was approved but payment wasn&apos;t completed within{" "}
               <strong>48 hours</strong>. To keep dates available for other
@@ -136,7 +136,7 @@ export function BookingExpiredScreen({
                 Why do bookings expire?
               </h3>
               <p className="text-sm text-blue-800 leading-relaxed">
-                {isApprovedExpiry ? (
+                {isAwaitingPaymentExpiry ? (
                   <>
                     To ensure fair access for all anglers, approved bookings
                     must be paid within 48 hours. This prevents dates from being

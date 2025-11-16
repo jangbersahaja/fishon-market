@@ -44,8 +44,8 @@ export async function POST(req: Request) {
     if (!booking)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // Allow rejection of PENDING (legacy), PAYMENT_PENDING (new hybrid), or PAID (DIRECT flow awaiting approval)
-    const rejectableStatuses = ["PENDING", "PAYMENT_PENDING", "PAID"];
+    // Allow rejection of PENDING (Manual flow), PAYMENT_AUTHORIZED (Auto flow), or PAID (post-acknowledgment rejection)
+    const rejectableStatuses = ["PENDING", "PAYMENT_AUTHORIZED", "PAID"];
     if (!rejectableStatuses.includes(booking.status)) {
       return NextResponse.json(
         { error: "Only pending or payment-pending bookings can be rejected" },
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     let needsRefundProcessing = false;
 
     // Determine payment action based on flow
-    if (booking.status === "PAYMENT_PENDING" || booking.status === "PAID") {
+    if (booking.status === "PAYMENT_AUTHORIZED" || booking.status === "PAID") {
       const paymentFlow = booking.paymentFlow;
       const paymentMethod = booking.paymentMethod;
 

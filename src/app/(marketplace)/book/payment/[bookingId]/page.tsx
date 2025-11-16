@@ -80,12 +80,12 @@ export default async function PaymentPage({
             location: undefined, // TODO: Add location to enriched data
           },
         }}
-        expirationType={expirationType as "PENDING" | "APPROVED"}
+        expirationType={expirationType as "PENDING" | "AWAITING_PAYMENT"}
       />
     );
   }
 
-  if (booking.status !== "APPROVED") {
+  if (booking.status !== "AWAITING_PAYMENT") {
     redirect(`/book/confirm?id=${bookingId}`);
   }
 
@@ -233,9 +233,9 @@ export default async function PaymentPage({
       return;
     }
 
-    if (booking.status !== "APPROVED") {
+    if (booking.status !== "AWAITING_PAYMENT") {
       console.log(
-        "❌ [PAYMENT] Booking status not APPROVED, current status:",
+        "❌ [PAYMENT] Booking status not AWAITING_PAYMENT, current status:",
         booking.status
       );
       return;

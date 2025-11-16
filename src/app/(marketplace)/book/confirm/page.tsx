@@ -203,8 +203,8 @@ export default async function ConfirmationPage({
     <main className="bg-slate-50">
       <div className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
         {/* Payment Status Notifications */}
-        {/* PAYMENT_PENDING Status - Show authorization/payment details */}
-        {booking.status === "PAYMENT_PENDING" && booking.paymentFlow && (
+        {/* PAYMENT_AUTHORIZED Status - Show authorization/payment details */}
+        {booking.status === "PAYMENT_AUTHORIZED" && booking.paymentFlow && (
           <div
             className={`p-3 mb-6 border rounded-lg ${
               booking.paymentFlow === "TOKENIZED"
@@ -291,7 +291,7 @@ export default async function ConfirmationPage({
         )}
         {/* Success after redirect from payment gateway */}
         {paymentStatus === "success" &&
-          booking.status !== "PAYMENT_PENDING" &&
+          booking.status !== "PAYMENT_AUTHORIZED" &&
           booking.paymentFlow && (
             <div
               className={`p-3 mb-6 border rounded-lg ${
@@ -389,7 +389,7 @@ export default async function ConfirmationPage({
                   {paymentReason ||
                     "Your payment could not be processed. Please try again."}
                 </p>
-                {booking.status === "APPROVED" && (
+                {booking.status === "AWAITING_PAYMENT" && (
                   <div className="mt-3">
                     <Link
                       href={`/book/payment/${booking.id}`}
@@ -452,11 +452,11 @@ export default async function ConfirmationPage({
                   ? "Trip In Progress!"
                   : booking.status === "PAID"
                     ? "Booking Confirmed!"
-                    : booking.status === "PAYMENT_PENDING"
+                    : booking.status === "PAYMENT_AUTHORIZED"
                       ? booking.paymentFlow === "TOKENIZED"
                         ? "Card Authorized - Awaiting Approval"
                         : "Payment Received - Awaiting Approval"
-                      : booking.status === "APPROVED"
+                      : booking.status === "AWAITING_PAYMENT"
                         ? "Approved! Complete Payment"
                         : booking.status === "PENDING"
                           ? "Waiting For Captain Approval"
@@ -476,11 +476,11 @@ export default async function ConfirmationPage({
                   ? "Your fishing trip is currently in progress. Have a great time and stay safe!"
                   : booking.status === "PAID"
                     ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
-                    : booking.status === "PAYMENT_PENDING"
+                    : booking.status === "PAYMENT_AUTHORIZED"
                       ? booking.paymentFlow === "TOKENIZED"
                         ? "Your card has been authorized. Awaiting captain approval within 12 hours. No charge until approved."
                         : "Your payment has been received. Awaiting captain approval within 12 hours. Full refund if declined."
-                      : booking.status === "APPROVED"
+                      : booking.status === "AWAITING_PAYMENT"
                         ? "The captain has approved your request. Complete payment to confirm your booking."
                         : booking.status === "PENDING"
                           ? "Your booking request has been sent to the captain for review."
@@ -493,10 +493,10 @@ export default async function ConfirmationPage({
                                 : "View your booking details below."}
             </p>
 
-            {/* Countdown Timer for PENDING/PAYMENT_PENDING/APPROVED bookings */}
+            {/* Countdown Timer for PENDING/PAYMENT_AUTHORIZED/AWAITING_PAYMENT bookings */}
             {(booking.status === "PENDING" ||
-              booking.status === "PAYMENT_PENDING" ||
-              booking.status === "APPROVED") &&
+              booking.status === "PAYMENT_AUTHORIZED" ||
+              booking.status === "AWAITING_PAYMENT") &&
               booking.expiresAt && (
                 <div className="mt-4">
                   <BookingCountdown
@@ -507,8 +507,8 @@ export default async function ConfirmationPage({
                 </div>
               )}
 
-            {/* Payment Flow Info for PAYMENT_PENDING status */}
-            {booking.status === "PAYMENT_PENDING" && booking.paymentFlow && (
+            {/* Payment Flow Info for PAYMENT_AUTHORIZED status */}
+            {booking.status === "PAYMENT_AUTHORIZED" && booking.paymentFlow && (
               <div className="p-3 mt-4 border border-gray-200 rounded-lg bg-gray-50">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
@@ -615,10 +615,10 @@ export default async function ConfirmationPage({
             </code>
           </div>
 
-          {/* Smart Refresh - Auto-refreshes on tab focus, manual button for PENDING/PAYMENT_PENDING/APPROVED */}
+          {/* Smart Refresh - Auto-refreshes on tab focus, manual button for PENDING/PAYMENT_AUTHORIZED/AWAITING_PAYMENT */}
           {(booking.status === "PENDING" ||
-            booking.status === "PAYMENT_PENDING" ||
-            booking.status === "APPROVED") && (
+            booking.status === "PAYMENT_AUTHORIZED" ||
+            booking.status === "AWAITING_PAYMENT") && (
             <BookingStatusRefresh status={booking.status} />
           )}
         </div>

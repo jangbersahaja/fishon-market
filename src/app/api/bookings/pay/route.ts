@@ -25,17 +25,17 @@ export async function POST(req: Request) {
   const { id } = body as { id?: string };
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  // Only allow transition from APPROVED and for this user
+  // Only allow transition from AWAITING_PAYMENT and for this user
   const result = await prisma.booking
     .updateMany({
-      where: { id, userId: session.user.id, status: "APPROVED" },
+      where: { id, userId: session.user.id, status: "AWAITING_PAYMENT" },
       data: { status: "PAID" },
     })
     .catch(() => ({ count: 0 }));
 
   if (!result || result.count === 0) {
     return NextResponse.json(
-      { error: "No APPROVED booking for this user" },
+      { error: "No AWAITING_PAYMENT booking for this user" },
       { status: 409 }
     );
   }

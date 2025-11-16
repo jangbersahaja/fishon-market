@@ -5,9 +5,9 @@ interface BookingProgressTimelineProps {
   /**
    * Current step in the booking flow
    * - 'details': User is filling out booking form (/book/[id])
-   * - 'PENDING': Legacy flow - Waiting for captain approval (no payment yet)
-   * - 'PAYMENT_PENDING': Hybrid flow - Payment authorized/received, awaiting captain approval
-   * - 'APPROVED': Legacy flow - Captain approved, waiting for payment
+   * - 'PENDING': Manual flow - Waiting for captain approval (no payment yet)
+   * - 'PAYMENT_AUTHORIZED': Auto flow - Payment authorized/received, awaiting captain acknowledgment
+   * - 'AWAITING_PAYMENT': Manual flow - Captain approved, waiting for payment
    * - 'PAID': Payment completed (confirmed booking)
    * - 'completed': Trip finished
    * - 'REJECTED': Captain rejected
@@ -16,7 +16,7 @@ interface BookingProgressTimelineProps {
    */
   currentStep: "details" | BookingStatus | "completed";
   /**
-   * Payment flow type (only relevant for PAYMENT_PENDING status)
+   * Payment flow type (only relevant for PAYMENT_AUTHORIZED status)
    * - 'TOKENIZED': Card authorized but not charged (charge on captain approval)
    * - 'DIRECT': Payment received immediately (refund if captain rejects)
    */
@@ -36,9 +36,10 @@ export function BookingProgressTimeline({
     );
   }
 
-  // Determine if using new hybrid flow (PAYMENT_PENDING) or legacy flow (PENDING)
-  const isHybridFlow = currentStep === "PAYMENT_PENDING";
-  const isLegacyFlow = currentStep === "PENDING" || currentStep === "APPROVED";
+  // Determine if using Auto flow (PAYMENT_AUTHORIZED) or Manual flow (PENDING)
+  const isAutoFlow = currentStep === "PAYMENT_AUTHORIZED";
+  const isManualFlow =
+    currentStep === "PENDING" || currentStep === "AWAITING_PAYMENT";
 
   // Define main timeline steps
   const steps = [
@@ -52,7 +53,7 @@ export function BookingProgressTimeline({
       isError: false,
       hidden: false,
     },
-    // Hybrid flow: Payment authorization step (PAYMENT_PENDING)
+    // Auto flow: Payment authorization step (PAYMENT_AUTHORIZED)
     {
       id: "payment-authorization",
       label:
@@ -63,18 +64,18 @@ export function BookingProgressTimeline({
             : "Payment Processing",
       icon: CreditCard,
       color: paymentFlow === "TOKENIZED" ? "blue" : "green",
-      isActive: currentStep === "PAYMENT_PENDING",
+      isActive: currentStep === "PAYMENT_AUTHORIZED",
       isComplete:
         currentStep === "PAID" ||
-        currentStep === "PAYMENT_PENDING" ||
+        currentStep === "PAYMENT_AUTHORIZED" ||
         currentStep === "completed",
       isError:
         currentStep === "REJECTED" ||
         currentStep === "EXPIRED" ||
         currentStep === "CANCELLED",
-      // Only show this step for hybrid flow
+      // Only show this step for auto flow
       hidden:
-        !isHybridFlow && currentStep !== "PAID" && currentStep !== "completed",
+        !isAutoFlow && currentStep !== "PAID" && currentStep !== "completed",
     },
     {
       id: "captain-review",
@@ -82,10 +83,10 @@ export function BookingProgressTimeline({
       icon: CheckCircle2,
       color: "yellow",
       isActive:
-        (currentStep === "PENDING" || currentStep === "PAYMENT_PENDING") &&
+        (currentStep === "PENDING" || currentStep === "PAYMENT_AUTHORIZED") &&
         !isErrorState(currentStep),
       isComplete:
-        currentStep === "APPROVED" ||
+        currentStep === "AWAITING_PAYMENT" ||
         currentStep === "PAID" ||
         currentStep === "completed",
       isError:
@@ -94,19 +95,19 @@ export function BookingProgressTimeline({
         currentStep === "CANCELLED",
       hidden: false,
     },
-    // Legacy flow: Payment step (APPROVED waiting for payment)
+    // Manual flow: Payment step (AWAITING_PAYMENT waiting for payment)
     {
       id: "payment",
       label: "Make Payment",
       icon: CreditCard,
       color: "yellow",
-      isActive: currentStep === "APPROVED",
+      isActive: currentStep === "AWAITING_PAYMENT",
       isComplete: currentStep === "PAID" || currentStep === "completed",
       isError: currentStep === "EXPIRED" || currentStep === "CANCELLED",
-      // Only show this step for legacy flow
+      // Only show this step for manual flow
       hidden:
-        isHybridFlow ||
-        (currentStep !== "APPROVED" &&
+        isAutoFlow ||
+        (currentStep !== "AWAITING_PAYMENT" &&
           currentStep !== "PAID" &&
           currentStep !== "completed"),
     },

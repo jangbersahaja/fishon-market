@@ -75,6 +75,9 @@ export type BackendCharter = {
   pricingPlan: "BASIC" | "SILVER" | "GOLD";
   captainId: string; // ID of the captain profile (operator)
   ownerId?: string | null; // ID of the user who owns this charter
+  // Booking flow settings
+  bookingFlowType?: "MANUAL" | "AUTO"; // MANUAL (request→approve→pay) or AUTO (instant booking)
+  approvalTimeHours?: number; // For MANUAL flow: hours captain has to respond (default 24)
   captain: BackendCaptainProfile;
   boat: BackendBoat | null;
   trips: BackendTrip[];

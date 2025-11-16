@@ -51,10 +51,10 @@ export async function POST(req: Request) {
   console.log("[EXPIRE_CRON] Starting expiration check...");
 
   try {
-    // Find all expired PAYMENT_PENDING bookings
+    // Find all expired PAYMENT_AUTHORIZED bookings
     const expiredBookings = await prisma.booking.findMany({
       where: {
-        status: "PAYMENT_PENDING",
+        status: "PAYMENT_AUTHORIZED",
         expiresAt: {
           lt: new Date(), // Expired (expiresAt in the past)
         },
@@ -299,7 +299,7 @@ export async function GET() {
   try {
     const count = await prisma.booking.count({
       where: {
-        status: "PAYMENT_PENDING",
+        status: "PAYMENT_AUTHORIZED",
         expiresAt: {
           lt: new Date(),
         },

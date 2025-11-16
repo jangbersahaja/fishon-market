@@ -246,7 +246,7 @@ export async function POST(req: Request) {
       paymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
     );
     let paymentResult: any = null;
-    let initialStatus: "PAYMENT_PENDING" | "PAID" = "PAYMENT_PENDING";
+    let initialStatus: "PAYMENT_AUTHORIZED" | "PAID" = "PAYMENT_AUTHORIZED";
 
     // MOCK flow (development only)
     if (paymentMethod === "MOCK") {
@@ -256,7 +256,7 @@ export async function POST(req: Request) {
         paymentIntentId: `mock-${Date.now()}`,
         requiresRedirect: false,
       };
-      initialStatus = "PAYMENT_PENDING";
+      initialStatus = "PAYMENT_AUTHORIZED";
     }
     // TOKENIZED flow (Card)
     else if (paymentFlow === "TOKENIZED") {
@@ -290,7 +290,7 @@ export async function POST(req: Request) {
           );
         }
 
-        initialStatus = "PAYMENT_PENDING";
+        initialStatus = "PAYMENT_AUTHORIZED";
       } catch (error: any) {
         console.error("❌ Payment gateway error (guest):", error);
         return NextResponse.json(
@@ -301,7 +301,7 @@ export async function POST(req: Request) {
     }
     // DIRECT flow (FPX/E-wallet)
     else if (paymentFlow === "DIRECT") {
-      initialStatus = "PAYMENT_PENDING"; // Will be updated by callback
+      initialStatus = "PAYMENT_AUTHORIZED"; // Will be updated by callback to PAID
     }
 
     // Hold expires in 12 hours
@@ -419,6 +419,8 @@ export async function POST(req: Request) {
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
+                bookingFlowType: "AUTO", // TODO: Read from charter.bookingFlowType once implemented
+                acknowledgmentDeadline: expiresAt, // For AUTO flow
                 // Payment tracking fields
                 paymentMethod: paymentMethod as string,
                 paymentFlow: paymentFlow,

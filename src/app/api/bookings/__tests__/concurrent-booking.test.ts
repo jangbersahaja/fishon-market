@@ -212,6 +212,7 @@ async function createBookingWithTransaction(
               status: "PAID", // Simulate immediate payment for test
               paidAt: new Date(),
               expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+              bookingFlowType: "MANUAL", // Manual flow for test
             },
           });
         },

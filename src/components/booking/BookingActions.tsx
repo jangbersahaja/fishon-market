@@ -233,8 +233,8 @@ export function BookingActions({
       <div className="p-3 space-y-3 bg-white border border-gray-200 rounded-lg sm:p-5">
         <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
 
-        {/* PAYMENT_PENDING: Contact Captain + Cancel */}
-        {(status === "PAYMENT_PENDING" || status === "PAID") && (
+        {/* PAYMENT_AUTHORIZED or PAID: Contact Captain + Cancel */}
+        {(status === "PAYMENT_AUTHORIZED" || status === "PAID") && (
           <>
             <div className="pb-3 mb-3 border-b border-gray-200">
               <p className="mb-3 text-sm font-medium text-gray-700">
@@ -291,8 +291,8 @@ export function BookingActions({
         )}
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {/* PENDING: Cancel button */}
-          {(status === "PAID" || status === "PAYMENT_PENDING") && (
+          {/* Cancel button for PAYMENT_AUTHORIZED and PAID */}
+          {(status === "PAID" || status === "PAYMENT_AUTHORIZED") && (
             <CancelBookingButton
               bookingId={bookingId}
               fullWidth

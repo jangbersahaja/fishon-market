@@ -359,7 +359,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       paymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
     );
     let paymentResult: any = null;
-    let initialStatus: "PAYMENT_PENDING" | "PAID" = "PAYMENT_PENDING";
+    let initialStatus: "PAYMENT_AUTHORIZED" | "PAID" = "PAYMENT_AUTHORIZED";
 
     // MOCK flow (development only)
     if (paymentMethod === "MOCK") {
@@ -369,7 +369,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
         paymentIntentId: `mock-${Date.now()}`,
         requiresRedirect: false,
       };
-      initialStatus = "PAYMENT_PENDING"; // Mock behaves like TOKENIZED
+      initialStatus = "PAYMENT_AUTHORIZED"; // Mock behaves like TOKENIZED
     }
     // TOKENIZED flow (Card) - create token without charging
     else if (paymentFlow === "TOKENIZED") {
@@ -410,7 +410,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           );
         }
 
-        initialStatus = "PAYMENT_PENDING"; // Token stored, awaiting captain approval
+        initialStatus = "PAYMENT_AUTHORIZED"; // Token stored, awaiting captain acknowledgment
       } catch (error: any) {
         console.error("❌ Payment gateway error:", error);
         return NextResponse.json(
@@ -422,9 +422,9 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // DIRECT flow (FPX/E-wallet) - will redirect to gateway
     else if (paymentFlow === "DIRECT") {
       // For DIRECT flow, we create booking first with PENDING status,
-      // then redirect to payment gateway. Callback will update to PAID.
+      // then redirect to payment gateway. Callback will update to PAYMENT_AUTHORIZED, then PAID after acknowledgment.
       // This is different from TOKENIZED where we create token first.
-      initialStatus = "PAYMENT_PENDING"; // Will be updated by callback
+      initialStatus = "PAYMENT_AUTHORIZED"; // Will be updated by callback to PAID
     }
 
     // Hold expires in 12 hours
@@ -543,6 +543,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
+                bookingFlowType: "AUTO", // TODO: Read from charter.bookingFlowType once implemented
+                acknowledgmentDeadline: expiresAt, // For AUTO flow, acknowledgment deadline = expiresAt
                 // Payment tracking fields
                 paymentMethod: paymentMethod as string,
                 paymentFlow: paymentFlow,
@@ -669,9 +671,11 @@ async function createAuthenticatedBooking(session: any, body: any) {
           trip.charter.captain.id // ownerId
         );
 
-        // If booking has PAYMENT_PENDING status, unlock conversation immediately (payment already received)
-        if (booking.status === "PAYMENT_PENDING") {
-          console.log("🔓 Unlocking conversation for PAYMENT_PENDING booking");
+        // If booking has PAYMENT_AUTHORIZED status, unlock conversation immediately (payment already received)
+        if (booking.status === "PAYMENT_AUTHORIZED") {
+          console.log(
+            "🔓 Unlocking conversation for PAYMENT_AUTHORIZED booking (AUTO flow)"
+          );
           await unlockConversation(conversation.id);
         }
 

@@ -2,7 +2,10 @@ import { BookingProgressTimeline } from "@/components/booking";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
-import { getCharterById } from "@/lib/services/charter-service";
+import {
+  getCharterById,
+  getCharterFlowType,
+} from "@/lib/services/charter-service";
 import { notFound } from "next/navigation";
 import CheckoutForm from "./ui/CheckoutForm";
 
@@ -55,6 +58,9 @@ export default async function CheckoutPage({
   if (!charter) {
     notFound();
   }
+
+  // Fetch charter's booking flow type
+  const charterFlowType = await getCharterFlowType(charterId);
 
   const tripIndex = Number.isFinite(Number(sp.trip_index))
     ? Number(sp.trip_index)
@@ -159,6 +165,7 @@ export default async function CheckoutPage({
           selectedTripIndex={tripIndex}
           charter={charterData as any}
           defaultUser={defaultUser}
+          charterFlowType={charterFlowType}
         />
       </div>
     </main>

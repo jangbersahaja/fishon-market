@@ -77,13 +77,14 @@ export default async function BookingTestsPage() {
         finalPrice: 450.0,
         status: status as any,
         expiresAt,
-        captainDecisionAt: status === "APPROVED" ? new Date() : null,
-        // Hybrid flow fields
+        captainDecisionAt: status === "AWAITING_PAYMENT" ? new Date() : null,
+        // Dual flow fields
+        bookingFlowType: status === "PAYMENT_AUTHORIZED" ? "AUTO" : "MANUAL",
         paymentFlow: paymentFlow || null,
         paymentMethod: paymentMethod || null,
         paymentIntentId: paymentFlow ? `test-${Date.now()}` : null,
         paymentAuthorizedAt:
-          paymentFlow === "TOKENIZED" || status === "PAYMENT_PENDING"
+          paymentFlow === "TOKENIZED" || status === "PAYMENT_AUTHORIZED"
             ? new Date()
             : null,
       },
@@ -154,14 +155,14 @@ export default async function BookingTestsPage() {
 
     // This simulates the cron job that runs in production
     // Expire PENDING bookings past expiresAt
-    // Expire APPROVED bookings past expiresAt
+    // Expire AWAITING_PAYMENT bookings past expiresAt
     const now = new Date();
 
     const result = await prisma.booking.updateMany({
       where: {
         OR: [
           { status: "PENDING", expiresAt: { lte: now } },
-          { status: "APPROVED", expiresAt: { lte: now } },
+          { status: "AWAITING_PAYMENT", expiresAt: { lte: now } },
         ],
       },
       data: {
@@ -587,7 +588,7 @@ export default async function BookingTestsPage() {
                             >
                               Detail
                             </a>
-                            {booking.status === "APPROVED" && (
+                            {booking.status === "AWAITING_PAYMENT" && (
                               <a
                                 href={`/book/payment/${booking.id}`}
                                 target="_blank"

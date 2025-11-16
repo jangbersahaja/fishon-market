@@ -54,9 +54,7 @@ const bookingSchema = z
         })
       )
       .min(1, "At least one participant is required"),
-    paymentMethod: z.enum(["CARD", "FPX", "MOCK"], {
-      required_error: "Please select a payment method",
-    }),
+    paymentMethod: z.enum(["CARD", "FPX", "MOCK"]).optional(),
     // Card details (required only when paymentMethod is CARD)
     cardNumber: z.string().optional(),
     cardExpMonth: z.string().optional(),
@@ -193,6 +191,7 @@ export default function CheckoutForm({
   selectedTripIndex,
   charter,
   defaultUser,
+  charterFlowType = "MANUAL",
 }: {
   startTimes?: string[];
   defaultStartTime?: string;
@@ -208,6 +207,7 @@ export default function CheckoutForm({
     emergencyPhone?: string;
     emergencyRelation?: string;
   };
+  charterFlowType?: "MANUAL" | "AUTO";
 }) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -439,18 +439,20 @@ export default function CheckoutForm({
           isDateRangeValid(selectedDate, selectedDays)
         : false;
 
-    // Check card details if CARD payment selected
-    const cardDetailsOk =
-      paymentMethod === "CARD"
-        ? Boolean(
-            cardNumber &&
-              cardNumber.replace(/\s/g, "").length >= 13 &&
-              cardExpMonth &&
-              cardExpYear &&
-              cardCvv &&
-              /^\d{3,4}$/.test(cardCvv)
-          )
-        : true;
+    // Payment validation only for AUTO flow
+    const paymentOk =
+      charterFlowType === "AUTO"
+        ? paymentMethod === "CARD"
+          ? Boolean(
+              cardNumber &&
+                cardNumber.replace(/\s/g, "").length >= 13 &&
+                cardExpMonth &&
+                cardExpYear &&
+                cardCvv &&
+                /^\d{3,4}$/.test(cardCvv)
+            )
+          : Boolean(paymentMethod) // FPX or MOCK selected
+        : true; // Manual flow doesn't need payment
 
     return Boolean(
       charterId &&
@@ -462,7 +464,7 @@ export default function CheckoutForm({
         email &&
         startTimeOk &&
         dateIsValid &&
-        cardDetailsOk
+        paymentOk
     );
   }, [
     charterId,
@@ -478,6 +480,7 @@ export default function CheckoutForm({
     selectedDays,
     isDateBlocked,
     isDateRangeValid,
+    charterFlowType,
     paymentMethod,
     cardNumber,
     cardExpMonth,
@@ -568,49 +571,87 @@ export default function CheckoutForm({
   const onSubmit = handleSubmit(async (formData) => {
     console.log("✅ Validation passed, submitting booking...");
 
-    // Authenticated user flow - direct booking creation
+    // Authenticated user flow
     if (isLoggedIn) {
       try {
-        const res = await fetch("/api/bookings/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setFormError("root", {
-            type: "manual",
-            message: data?.error || "Failed to create booking",
+        // Manual flow: Create PENDING booking without payment
+        if (charterFlowType === "MANUAL") {
+          const res = await fetch("/api/bookings/create-manual", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              charterId: formData.charterId,
+              tripId: formData.tripId,
+              date: formData.date,
+              days: formData.days,
+              adults: formData.adults,
+              children: formData.children,
+              startTime: formData.startTime,
+              note: formData.note,
+              phone: formData.phone,
+              emergencyName: formData.emergencyName,
+              emergencyPhone: formData.emergencyPhone,
+              emergencyRelation: formData.emergencyRelation,
+              participants: formData.participants,
+            }),
           });
+
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            setFormError("root", {
+              type: "manual",
+              message: data?.error || "Failed to create booking request",
+            });
+            return;
+          }
+
+          const data = await res.json();
+          const bookingId = data?.booking?.id;
+
+          if (bookingId) {
+            addBooking({
+              id: bookingId,
+              charterName: charter?.name || "Charter Trip",
+              date: formData.date,
+              status: "PENDING",
+            });
+            router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+          } else {
+            setFormError("root", {
+              type: "manual",
+              message: "Missing booking id",
+            });
+          }
           return;
         }
 
-        const data = await res.json();
-        const bookingId = data?.booking?.id;
-
-        if (bookingId) {
-          // Save to local storage for guest tracking (even for logged-in users)
-          addBooking({
-            id: bookingId,
-            charterName: charter?.name || "Charter Trip",
+        // Auto flow: Redirect to payment preview
+        if (charterFlowType === "AUTO") {
+          // Encode booking data for payment preview
+          const bookingData = {
+            charterId: formData.charterId,
+            tripId: formData.tripId,
             date: formData.date,
-            status: "PENDING",
-          });
+            days: formData.days,
+            startTime: formData.startTime || "",
+            adults: formData.adults,
+            children: formData.children,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone || "",
+            emergencyName: formData.emergencyName || "",
+            emergencyPhone: formData.emergencyPhone || "",
+            emergencyRelation: formData.emergencyRelation || "",
+            note: formData.note || "",
+            sessionStart: Date.now(),
+          };
 
-          // Check if payment requires redirect (FPX/E-wallet DIRECT flow)
-          if (data.requiresRedirect && data.redirectUrl) {
-            console.log("🏦 Redirecting to payment gateway:", data.redirectUrl);
-            window.location.href = data.redirectUrl;
-          } else {
-            // TOKENIZED flow (Card) or MOCK - go to confirmation
-            router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
-          }
-        } else {
-          setFormError("root", {
-            type: "manual",
-            message: "Missing booking id",
-          });
+          const encoded = Buffer.from(JSON.stringify(bookingData)).toString(
+            "base64"
+          );
+          router.push(`/book/payment/preview?data=${encoded}`);
+          return;
         }
       } catch (err: any) {
         setFormError("root", {
@@ -621,7 +662,14 @@ export default function CheckoutForm({
       return;
     }
 
-    // Guest flow - show verification modal
+    // Guest flow - Manual flow only (Auto flow requires authentication)
+    if (charterFlowType === "AUTO") {
+      // Redirect to login for Auto flow
+      openModal();
+      return;
+    }
+
+    // Guest Manual flow - show verification modal
     setShowVerificationModal(true);
   });
 
@@ -862,16 +910,20 @@ export default function CheckoutForm({
             )}
           </div>
 
-          {/* Payment Method */}
-          <PaymentMethodSelector
-            value={paymentMethod}
-            onChange={(method) => setValue("paymentMethod", method)}
-            error={errors.paymentMethod?.message}
-          />
+          {/* Payment Method - Only show for AUTO flow */}
+          {charterFlowType === "AUTO" && (
+            <>
+              <PaymentMethodSelector
+                value={paymentMethod}
+                onChange={(method) => setValue("paymentMethod", method)}
+                error={errors.paymentMethod?.message}
+              />
 
-          {/* Card Details (show only for CARD payment, not for MOCK) */}
-          {paymentMethod === "CARD" && (
-            <CardDetailsInput register={register} errors={errors} />
+              {/* Card Details (show only for CARD payment, not for MOCK) */}
+              {paymentMethod === "CARD" && (
+                <CardDetailsInput register={register} errors={errors} />
+              )}
+            </>
           )}
 
           <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
@@ -894,7 +946,11 @@ export default function CheckoutForm({
               disabled={!canSubmit || isSubmitting}
               className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
-              {isSubmitting ? "Submitting..." : "Request to Book"}
+              {isSubmitting
+                ? "Submitting..."
+                : charterFlowType === "MANUAL"
+                  ? "Request Booking"
+                  : "Proceed to Payment"}
             </button>
 
             {!canSubmit && (
