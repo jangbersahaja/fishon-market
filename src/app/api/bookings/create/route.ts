@@ -228,51 +228,161 @@ async function createAuthenticatedBooking(session: any, body: any) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // IMPORTANT: Use normal price (not promo price) for booking submission
+    const tripPrice = trip.price; // Always use base price, never promoPrice
+
+    // Calculate complete pricing breakdown including platform fees and payment gateway fees
+    const pricingBreakdown = calculatePricing({
+      tripPrice,
+      days: ds,
+      // TODO: Add promo code support in future
+      // promoCode: promoCode ? { code: promoCode, percentage: 10 } : undefined,
+    });
+
+    const finalPrice = pricingBreakdown.finalPrice;
+
     // Get charter's booking flow type
-    const { getCharterFlowType } = await import(
-      "@/lib/services/charter-service"
+    const charterService = await import("@/lib/services/charter-service");
+    const bookingFlowType = await charterService.getCharterFlowType(
+      trip.charter.id
     );
-    const bookingFlowType = await getCharterFlowType(trip.charter.id);
+    const isManualFlow = bookingFlowType === "MANUAL";
 
-    // --- PAYMENT METHOD VALIDATION ---
-    // Validate payment method selection
-    const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
-    if (!paymentMethod || !validMethods.includes(paymentMethod)) {
-      return NextResponse.json(
-        { error: "Valid payment method required (CARD, FPX, or EWALLET)" },
-        { status: 400 }
+    let paymentFlow: "TOKENIZED" | "DIRECT" | "MOCK" | null = null;
+    let paymentResult: any = null;
+    let normalizedPaymentMethod: string | null = null;
+    let initialStatus: "PENDING" | "PAYMENT_AUTHORIZED" | "PAID" =
+      "PAYMENT_AUTHORIZED";
+    let approvalDeadline: Date | null = null;
+    let expiresAt: Date;
+
+    if (isManualFlow) {
+      const approvalHours = await charterService.getCharterApprovalTimeHours(
+        trip.charter.id
       );
-    }
-
-    // MOCK payments only in development
-    if (paymentMethod === "MOCK" && process.env.NODE_ENV !== "development") {
-      return NextResponse.json(
-        { error: "Mock payments not available in production" },
-        { status: 400 }
+      const manualSlaHours = Number.isFinite(approvalHours)
+        ? Number(approvalHours)
+        : 24;
+      approvalDeadline = new Date(Date.now() + manualSlaHours * 60 * 60 * 1000);
+      expiresAt = approvalDeadline;
+      initialStatus = "PENDING";
+      console.log(
+        `[BookingAPI] Manual flow booking → awaiting captain approval within ${manualSlaHours}h before payment.`,
+        {
+          charterId: trip.charter.id,
+          userId: dbUserId,
+        }
       );
-    }
-
-    // Card payments require card details
-    if (paymentMethod === "CARD") {
-      if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
+    } else {
+      // --- PAYMENT METHOD VALIDATION (AUTO FLOW) ---
+      const validMethods = ["CARD", "FPX", "EWALLET", "MOCK"];
+      if (!paymentMethod || !validMethods.includes(paymentMethod)) {
         return NextResponse.json(
-          { error: "Card details required for card payments" },
+          { error: "Valid payment method required (CARD, FPX, or EWALLET)" },
           { status: 400 }
         );
       }
-      // Basic validation
-      const cardNumClean = cardNumber.replace(/\s/g, "");
-      if (!/^\d{13,19}$/.test(cardNumClean)) {
+
+      normalizedPaymentMethod = paymentMethod;
+
+      if (
+        normalizedPaymentMethod === "MOCK" &&
+        process.env.SENANGPAY_FORCE_MOCK !== "true"
+      ) {
         return NextResponse.json(
-          { error: "Invalid card number format" },
+          {
+            error:
+              "Mock payments disabled. Set SENANGPAY_FORCE_MOCK=true to enable.",
+          },
           { status: 400 }
         );
       }
-      if (!/^\d{3,4}$/.test(cardCvv)) {
-        return NextResponse.json(
-          { error: "Invalid CVV format" },
-          { status: 400 }
-        );
+
+      if (normalizedPaymentMethod === "CARD") {
+        if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
+          return NextResponse.json(
+            { error: "Card details required for card payments" },
+            { status: 400 }
+          );
+        }
+        const cardNumClean = cardNumber.replace(/\s/g, "");
+        if (!/^\d{13,19}$/.test(cardNumClean)) {
+          return NextResponse.json(
+            { error: "Invalid card number format" },
+            { status: 400 }
+          );
+        }
+        if (!/^\d{3,4}$/.test(cardCvv)) {
+          return NextResponse.json(
+            { error: "Invalid CVV format" },
+            { status: 400 }
+          );
+        }
+      }
+
+      paymentFlow = getPaymentFlow(
+        normalizedPaymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
+      );
+      expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hour hold
+
+      if (normalizedPaymentMethod === "MOCK") {
+        paymentResult = {
+          success: true,
+          flow: "MOCK",
+          paymentIntentId: `mock-${Date.now()}`,
+          requiresRedirect: false,
+        };
+        initialStatus = "PAYMENT_AUTHORIZED";
+      } else if (paymentFlow === "TOKENIZED") {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: dbUserId },
+          });
+          if (!user) {
+            return NextResponse.json(
+              { error: "User not found" },
+              { status: 404 }
+            );
+          }
+
+          paymentResult = await createPaymentIntent({
+            bookingId: `temp-${Date.now()}`,
+            amount: finalPrice,
+            paymentMethod: "CARD",
+            description: `Booking for ${trip.name} on ${date}`,
+            cardDetails: {
+              number: cardNumber!.replace(/\s/g, ""),
+              cvv: cardCvv!,
+              expiryMonth: cardExpMonth!,
+              expiryYear: cardExpYear!,
+            },
+            customerName: user.name || "Guest",
+            customerEmail: user.email,
+            customerPhone: user.phone || phone || "",
+          });
+
+          if (!paymentResult.success) {
+            console.error("❌ Card tokenization failed:", paymentResult.error);
+            return NextResponse.json(
+              {
+                error:
+                  paymentResult.error ||
+                  "Failed to process card. Please check your card details and try again.",
+              },
+              { status: 400 }
+            );
+          }
+
+          initialStatus = "PAYMENT_AUTHORIZED";
+        } catch (error: any) {
+          console.error("❌ Payment gateway error:", error);
+          return NextResponse.json(
+            { error: "Payment gateway error. Please try again." },
+            { status: 500 }
+          );
+        }
+      } else if (paymentFlow === "DIRECT") {
+        initialStatus = "PAYMENT_AUTHORIZED";
       }
     }
 
@@ -283,8 +393,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
     try {
       // Try to get full charter details (schedule, unavailability)
       // Use charterId from trip.charter.id
-      const { getCharterById } = await import("@/lib/services/charter-service");
-      const charter = await getCharterById(trip.charter.id);
+      const charter = await charterService.getCharterById(trip.charter.id);
       charterSchedule = charter?.schedule ?? null;
       charterUnavailability = charter?.unavailability ?? null;
     } catch (e) {
@@ -346,99 +455,19 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     }
 
-    // IMPORTANT: Use normal price (not promo price) for booking submission
-    const tripPrice = trip.price; // Always use base price, never promoPrice
-
-    // Calculate complete pricing breakdown including platform fees and payment gateway fees
-    const pricingBreakdown = calculatePricing({
-      tripPrice,
-      days: ds,
-      // TODO: Add promo code support in future
-      // promoCode: promoCode ? { code: promoCode, percentage: 10 } : undefined,
-    });
-
-    const finalPrice = pricingBreakdown.finalPrice;
-
-    // --- PAYMENT PROCESSING ---
-    // Determine payment flow based on method
-    const paymentFlow = getPaymentFlow(
-      paymentMethod as "CARD" | "FPX" | "EWALLET" | "MOCK"
-    );
-    let paymentResult: any = null;
-    let initialStatus: "PAYMENT_AUTHORIZED" | "PAID" = "PAYMENT_AUTHORIZED";
-
-    // MOCK flow (development only)
-    if (paymentMethod === "MOCK") {
-      paymentResult = {
-        success: true,
-        flow: "MOCK",
-        paymentIntentId: `mock-${Date.now()}`,
-        requiresRedirect: false,
-      };
-      initialStatus = "PAYMENT_AUTHORIZED"; // Mock behaves like TOKENIZED
-    }
-    // TOKENIZED flow (Card) - create token without charging
-    else if (paymentFlow === "TOKENIZED") {
-      try {
-        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
-        if (!user) {
-          return NextResponse.json(
-            { error: "User not found" },
-            { status: 404 }
-          );
-        }
-
-        paymentResult = await createPaymentIntent({
-          bookingId: `temp-${Date.now()}`, // Temporary, will update after booking created
-          amount: finalPrice,
-          paymentMethod: "CARD",
-          description: `Booking for ${trip.name} on ${date}`,
-          cardDetails: {
-            number: cardNumber!.replace(/\s/g, ""),
-            cvv: cardCvv!,
-            expiryMonth: cardExpMonth!,
-            expiryYear: cardExpYear!,
-          },
-          customerName: user.name || "Guest",
-          customerEmail: user.email,
-          customerPhone: user.phone || phone || "",
-        });
-
-        if (!paymentResult.success) {
-          console.error("❌ Card tokenization failed:", paymentResult.error);
-          return NextResponse.json(
-            {
-              error:
-                paymentResult.error ||
-                "Failed to process card. Please check your card details and try again.",
-            },
-            { status: 400 }
-          );
-        }
-
-        initialStatus = "PAYMENT_AUTHORIZED"; // Token stored, awaiting captain acknowledgment
-      } catch (error: any) {
-        console.error("❌ Payment gateway error:", error);
-        return NextResponse.json(
-          { error: "Payment gateway error. Please try again." },
-          { status: 500 }
-        );
-      }
-    }
-    // DIRECT flow (FPX/E-wallet) - will redirect to gateway
-    else if (paymentFlow === "DIRECT") {
-      // For DIRECT flow, we create booking first with PENDING status,
-      // then redirect to payment gateway. Callback will update to PAYMENT_AUTHORIZED, then PAID after acknowledgment.
-      // This is different from TOKENIZED where we create token first.
-      initialStatus = "PAYMENT_AUTHORIZED"; // Will be updated by callback to PAID
-    }
-
-    // Hold expires in 12 hours
-    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
     // Availability guard: prevent overlapping bookings for the same charter
-    // Only PAID bookings block dates (confirmed and paid bookings)
-    const blockingStatuses = ["PAID"] as const;
+    // Only PAID bookings block dates (confirmed and paid bookings) for AUTO flow.
+    // Manual flow blocks pending bookings to avoid duplicate requests in review window.
+    const blockingStatuses = isManualFlow
+      ? ([
+          "PENDING",
+          "AWAITING_PAYMENT",
+          "PAYMENT_AUTHORIZED",
+          "PAID",
+          "COMPLETED",
+        ] as const)
+      : (["PAID"] as const);
 
     const newStart = new Date(
       Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
@@ -550,14 +579,18 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 expiresAt,
                 status: initialStatus,
                 bookingFlowType: bookingFlowType,
-                acknowledgmentDeadline:
-                  bookingFlowType === "AUTO" ? expiresAt : null, // Only for AUTO flow, acknowledgment deadline = expiresAt
+                approvalDeadline: approvalDeadline,
+                acknowledgmentDeadline: !isManualFlow ? expiresAt : null, // Only AUTO flow uses acknowledgment deadline
                 // Payment tracking fields
-                paymentMethod: paymentMethod as string,
+                paymentMethod: normalizedPaymentMethod,
                 paymentFlow: paymentFlow,
-                paymentIntentId: paymentResult?.paymentIntentId || null,
+                paymentIntentId: !isManualFlow
+                  ? paymentResult?.paymentIntentId || null
+                  : null,
                 paymentAuthorizedAt:
-                  paymentFlow === "TOKENIZED" && paymentResult?.success
+                  !isManualFlow &&
+                  paymentFlow === "TOKENIZED" &&
+                  paymentResult?.success
                     ? new Date()
                     : null,
                 note:
@@ -859,11 +892,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Track booking submission (non-blocking)
     (async () => {
       try {
-        // Fetch charter to get ownerId
-        const { getCharterById } = await import(
-          "@/lib/services/charter-service"
-        );
-        const charter = await getCharterById(trip.charter.id);
+        const charter = await charterService.getCharterById(trip.charter.id);
 
         await trackEvent({
           eventType: "BOOKING_SUBMITTED",
@@ -887,7 +916,12 @@ async function createAuthenticatedBooking(session: any, body: any) {
     })();
 
     // Handle DIRECT flow redirect
-    if (paymentFlow === "DIRECT" && paymentMethod !== "MOCK") {
+    if (
+      !isManualFlow &&
+      paymentFlow === "DIRECT" &&
+      normalizedPaymentMethod &&
+      normalizedPaymentMethod !== "MOCK"
+    ) {
       // Generate payment URL for FPX/E-wallet
       try {
         const user = await prisma.user.findUnique({ where: { id: dbUserId } });
@@ -901,7 +935,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
         const directPaymentResult = await createPaymentIntent({
           bookingId: booking.id, // Use actual booking ID
           amount: finalPrice,
-          paymentMethod: paymentMethod as "FPX" | "EWALLET",
+          paymentMethod: normalizedPaymentMethod as "FPX" | "EWALLET",
           description: `Booking for ${trip.name} on ${date}`,
           customerName: user.name || "Guest",
           customerEmail: user.email,

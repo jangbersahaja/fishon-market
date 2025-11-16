@@ -224,7 +224,10 @@ export async function POST(req: Request) {
         "@/lib/services/charter-service"
       );
       const approvalHours = await getCharterApprovalTimeHours(trip.charter.id);
-      approvalDeadline = new Date(Date.now() + approvalHours * 60 * 60 * 1000);
+      const manualSlaHours = Number.isFinite(approvalHours)
+        ? Number(approvalHours)
+        : 24;
+      approvalDeadline = new Date(Date.now() + manualSlaHours * 60 * 60 * 1000);
       expiresAt = approvalDeadline; // Booking expires if not approved
 
       paymentFlow = null; // No payment yet
@@ -336,8 +339,19 @@ export async function POST(req: Request) {
     } // End AUTO flow payment processing
 
     // Availability guard: prevent overlapping bookings
-    // Only PAID bookings block dates (confirmed and paid bookings)
-    const blockingStatuses = ["PAID"] as const;
+    // Manual flow blocks pending/awaiting bookings, auto flow blocks paid
+    const manualBlockingStatuses = [
+      "PENDING",
+      "AWAITING_PAYMENT",
+      "PAYMENT_AUTHORIZED",
+      "PAID",
+      "COMPLETED",
+    ] as const;
+    const autoBlockingStatuses = ["PAID"] as const;
+    const blockingStatuses =
+      bookingFlowType === "MANUAL"
+        ? manualBlockingStatuses
+        : autoBlockingStatuses;
 
     const newStart = new Date(
       Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())

@@ -15,6 +15,7 @@
 - Flow configuration lives on the captain side (Prisma `Charter.bookingFlowType`).
 - Market reads the flow via `getCharterFlowType(charterId)`, which prioritizes the public DB view (`v_public_charters`) and falls back to the public v1 API.
 - If both data sources are missing, we log a guest-safe warning and default to MANUAL to prevent instant payments without explicit consent.
+- Manual bookings now go through the primary `/api/bookings/create` (auth) and `/api/bookings/create-guest` (guest) routes. They always start in `PENDING`, carry an `approvalDeadline` derived from `approvalTimeHours` (24h default, charter override respected), and defer payment intent creation until the captain approves. Webhooks/emails still dispatch immediately so captains get notified during the review window.
 
 ### Helper functions
 
@@ -44,7 +45,7 @@ Guest users can later upgrade to ANGLER via `/api/auth/register`; OAuth login al
 | `CARD`    | Tokenized (charge after approval) | Stores SenangPay token; charged only if captain approves (manual) or immediately recorded (auto).                       | `SENANGPAY_MERCHANT_ID`, `SENANGPAY_SECRET_KEY`, `SENANGPAY_MODE` |
 | `FPX`     | Direct                            | Bank redirect, funds captured instantly. AUTO flow is the default entry point; manual flow charges only after approval. | Same as above + `NEXT_PUBLIC_BASE_URL` for return URLs            |
 | `EWALLET` | Direct                            | Same handling as FPX; determined by `paymentMethod` payload.                                                            | Same as above                                                     |
-| `MOCK`    | Direct (dev only)                 | Development fallback; blocked in production and can be forced via `SENANGPAY_FORCE_MOCK="true"`.                        | `SENANGPAY_FORCE_MOCK`                                            |
+| `MOCK`    | Direct (dev only)                 | Development fallback; **disabled by default** and only works when `SENANGPAY_FORCE_MOCK="true"` (still blocked in prod). | `SENANGPAY_FORCE_MOCK`                                            |
 
 Supporting modules:
 
@@ -121,6 +122,8 @@ Use `npm run check:env` to validate required values and ensure secrets are not a
 ## 7. Testing & Monitoring
 
 - **Unit**: `npm run test -- charter-service-flow-type` covers DB-first, API fallback, and MANUAL default logging.
+- **Manual flow API**: `npm run test -- manual-flow` validates that both `/api/bookings/create` and `/api/bookings/create-guest` produce `PENDING` bookings with approval deadlines, skip payment intents, and queue notifications/webhooks.
+- **Auto flow API**: `npm run test -- auto-flow` covers CARD tokenization metadata, FPX/E-Wallet redirects, mock-payment gating, guest AUTO parity, and the SenangPay callback → `PAID` transition.
 - **API suites** (Vitest + Prisma mocks) remain under `src/app/api/bookings/__tests__/` for create/expire/webhook flows.
 - **Manual verification**:
   1. Configure one MANUAL and one AUTO charter in fishon-captain.

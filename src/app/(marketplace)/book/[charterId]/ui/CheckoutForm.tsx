@@ -498,7 +498,7 @@ export default function CheckoutForm({
         try {
           // Manual flow: Create PENDING booking without payment
           if (charterFlowType === "MANUAL") {
-            const res = await fetch("/api/bookings/create-manual", {
+            const res = await fetch("/api/bookings/create", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -739,6 +739,29 @@ export default function CheckoutForm({
       {errors.root && (
         <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
           <p className="text-sm text-red-800">{errors.root.message}</p>
+        </div>
+      )}
+
+      {charterFlowType === "MANUAL" && (
+        <div className="p-4 mb-6 border border-amber-200 rounded-lg bg-amber-50">
+          <p className="text-sm font-medium text-amber-900">
+            Captain approval required — no upfront payment
+          </p>
+          <p className="mt-1 text-sm text-amber-900">
+            Submit your request now and pay only after the captain approves
+            (typically within 24 hours).
+          </p>
+          {!isLoggedIn ? (
+            <p className="mt-2 text-xs text-amber-800">
+              Guests will verify their email with a TAC code before the request
+              is sent.
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-amber-800">
+              We'll email you as soon as the captain responds so you can
+              complete payment.
+            </p>
+          )}
         </div>
       )}
 
