@@ -11,18 +11,15 @@ import {
   checkDateAvailability,
   getNextAvailableDates,
 } from "@/lib/helpers/availability-helpers";
+import { isForceMockMode } from "@/lib/payment/senangpay";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
 import { getCharterById } from "@/lib/services/charter-service";
-import { isForceMockMode } from "@/lib/payment/senangpay";
 import {
   AlertCircle,
-  Calendar,
   Check,
   Clock,
-  MapPin,
   ShieldCheck,
   UserRound,
-  Users,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -176,7 +173,8 @@ export default async function PaymentPage({
   // Cancellation policy
   const cancellationPolicy = charter?.policies;
   const cancellationHeadline = "Flexible cancellation before departure";
-  const cancellationAfterText = "After this window: Refunds follow captain policy and processing fees.";
+  const cancellationAfterText =
+    "After this window: Refunds follow captain policy and processing fees.";
 
   const policyHighlights: string[] = [];
   if (cancellationPolicy?.childFriendly) {
