@@ -64,6 +64,7 @@ export async function triggerPaymentSideEffects({
   await Promise.allSettled([
     notifyCaptain(booking, source),
     notifyAngler(booking, source),
+    unlockConversation(bookingId, source),
     revalidatePages(bookingId),
   ]);
 
@@ -213,7 +214,56 @@ async function notifyAngler(
 }
 
 /**
- * Side Effect 3: Revalidate Pages
+ * Side Effect 3: Unlock Conversation
+ *
+ * Unlocks the conversation between angler and captain after payment is confirmed.
+ * This enables the chat feature for both parties.
+ */
+async function unlockConversation(
+  bookingId: string,
+  source: string
+): Promise<void> {
+  try {
+    const conversation = await prisma.conversation.findUnique({
+      where: { bookingId },
+      select: { id: true, status: true },
+    });
+
+    if (!conversation) {
+      console.warn(
+        `⚠️ [PAYMENT SIDE EFFECTS] No conversation found for booking (source: ${source})`,
+        { bookingId }
+      );
+      return;
+    }
+
+    if (conversation.status === "ACTIVE") {
+      console.log(
+        `⏭️ [PAYMENT SIDE EFFECTS] Conversation already active (source: ${source})`,
+        { bookingId, conversationId: conversation.id }
+      );
+      return;
+    }
+
+    const { unlockConversation: unlock } = await import(
+      "@/lib/services/message-service"
+    );
+    await unlock(conversation.id);
+
+    console.log(
+      `✅ [PAYMENT SIDE EFFECTS] Conversation unlocked (source: ${source})`,
+      { bookingId, conversationId: conversation.id }
+    );
+  } catch (error) {
+    console.error(
+      `❌ [PAYMENT SIDE EFFECTS] Failed to unlock conversation (source: ${source}):`,
+      error
+    );
+  }
+}
+
+/**
+ * Side Effect 4: Revalidate Pages
  *
  * Revalidates Next.js pages to show fresh booking data.
  * - Confirmation page: Shows updated payment status

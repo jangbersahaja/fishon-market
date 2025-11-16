@@ -7,6 +7,7 @@ import { buildBookingPreviewSummary } from "@/lib/helpers/booking-preview-summar
 import { getCharterById } from "@/lib/services/charter-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
+import { isForceMockMode } from "@/lib/payment/senangpay";
 import {
   AlertCircle,
   Calendar,
@@ -166,6 +167,7 @@ export default async function PaymentPreviewPage({
     dateStyle: "medium",
     timeStyle: "short",
   });
+  const enableMockPayment = isForceMockMode();
 
   return (
     <main className="bg-slate-50">
@@ -364,6 +366,7 @@ export default async function PaymentPreviewPage({
                     trip={trip as any}
                     session={session}
                     sessionExpiresAt={sessionExpiresAt}
+                    enableMockPayment={enableMockPayment}
                   />
                   <div className="p-4 space-y-3 text-xs border rounded-lg bg-muted/30 text-muted-foreground">
                     <div className="flex items-center gap-2">

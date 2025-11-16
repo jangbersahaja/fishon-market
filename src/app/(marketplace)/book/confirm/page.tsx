@@ -105,6 +105,7 @@ export default async function ConfirmationPage({
         select: {
           email: true,
           name: true,
+          role: true,
         },
       },
     },
@@ -128,6 +129,15 @@ export default async function ConfirmationPage({
       id: true,
       status: true,
     },
+  });
+
+  // Debug conversation data
+  console.log("💬 Conversation Debug:", {
+    bookingId: booking.id,
+    bookingStatus: booking.status,
+    conversationId: conversation?.id,
+    conversationStatus: conversation?.status,
+    hasConversation: !!conversation,
   });
 
   // Enrich booking with trip and charter data
@@ -694,6 +704,7 @@ export default async function ConfirmationPage({
               charterId={enrichedBooking.charterId}
               status={enrichedBooking.status as any}
               userId={session?.user?.id}
+              userRole={booking.user?.role}
               bookingEmail={booking.user?.email || ""}
               captainName={enrichedBooking.charter?.captain?.displayName}
               captainPhone={enrichedBooking.charter?.captain?.phone}

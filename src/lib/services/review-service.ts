@@ -56,26 +56,33 @@ export async function canReviewBooking(
     return { canReview: false, reason: "Unauthorized" };
   }
 
-  if (booking.status !== BookingStatus.PAID) {
+  // Reviews available for PAID and COMPLETED bookings only
+  if (
+    booking.status !== BookingStatus.PAID &&
+    booking.status !== BookingStatus.COMPLETED
+  ) {
     return {
       canReview: false,
-      reason: "Only completed (paid) trips can be reviewed",
+      reason: "Only paid or completed trips can be reviewed",
     };
   }
 
-  // Reviews available 30 minutes BEFORE trip ends (for sharing experience while fresh)
-  const tripEndTime = calculateTripEndTime(booking);
-  const reviewAvailableTime = new Date(tripEndTime);
-  reviewAvailableTime.setMinutes(reviewAvailableTime.getMinutes() - 30); // 30min before end
+  // For PAID bookings, reviews available 30 minutes BEFORE trip ends (for sharing experience while fresh)
+  // For COMPLETED bookings, reviews are always available
+  if (booking.status === BookingStatus.PAID) {
+    const tripEndTime = calculateTripEndTime(booking);
+    const reviewAvailableTime = new Date(tripEndTime);
+    reviewAvailableTime.setMinutes(reviewAvailableTime.getMinutes() - 30); // 30min before end
 
-  const now = new Date();
+    const now = new Date();
 
-  if (now < reviewAvailableTime) {
-    return {
-      canReview: false,
-      reason: "Reviews are available 30 minutes before the trip ends",
-      booking,
-    };
+    if (now < reviewAvailableTime) {
+      return {
+        canReview: false,
+        reason: "Reviews are available 30 minutes before the trip ends",
+        booking,
+      };
+    }
   }
 
   // Check if already reviewed

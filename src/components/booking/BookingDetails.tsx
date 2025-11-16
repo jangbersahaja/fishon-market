@@ -287,7 +287,21 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
       )}
 
       {/* Pricing */}
-      <div className="pt-6 border-t border-gray-200">
+      <div className="relative pt-6 border-t border-gray-200">
+        {/* PAID Stamp */}
+        {(booking.status === "PAID" || booking.status === "COMPLETED") && (
+          <div className="absolute z-10 pointer-events-none top-15 right-20">
+            <div className="relative">
+              <div className="px-6 py-3 text-3xl font-black tracking-wider text-green-600 uppercase border-4 border-green-600 rounded-lg rotate-12 bg-white/90">
+                PAID
+              </div>
+              <div className="absolute inset-0 px-6 py-3 text-3xl font-black tracking-wider uppercase border-4 rounded-lg text-green-600/30 border-green-600/30 rotate-12 blur-sm">
+                PAID
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
           {/* Trip Price Calculation */}
           <div className="flex justify-between text-sm">
@@ -349,7 +363,11 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
 
           {/* Total */}
           <div className="flex justify-between pt-3 text-lg font-bold border-t border-gray-200">
-            <span className="text-gray-900">Total Paid</span>
+            <span className="text-gray-900">
+              {booking.status === "PAID" || booking.status === "COMPLETED"
+                ? "Total Paid"
+                : "Total"}
+            </span>
             <span className="text-gray-900">
               {formatCurrency(booking.totalPrice)}
             </span>

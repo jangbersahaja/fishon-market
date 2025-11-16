@@ -578,6 +578,45 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create conversation for this booking (non-blocking best-effort)
+    (async () => {
+      try {
+        const { createConversation, unlockConversation } = await import(
+          "@/lib/services/message-service"
+        );
+
+        // Create conversation with correct parameters
+        const conversation = await createConversation(
+          booking.id,
+          verifiedUserId,
+          String(trip.charter.id),
+          String(trip.charter.captainId)
+        );
+
+        console.log("✅ Conversation created for guest booking:", {
+          bookingId: booking.id,
+          conversationId: conversation.id,
+          initialStatus: conversation.status,
+          bookingFlowType,
+        });
+
+        // For AUTO flow (payment already authorized), unlock conversation immediately
+        if (bookingFlowType === "AUTO") {
+          await unlockConversation(conversation.id);
+          console.log("✅ Conversation unlocked for AUTO flow booking:", {
+            conversationId: conversation.id,
+            bookingId: booking.id,
+          });
+        }
+      } catch (err) {
+        console.error(
+          "❌ Failed to create conversation for guest booking:",
+          err
+        );
+        // Non-critical - booking is still valid
+      }
+    })();
+
     // Outbound webhook to captain app (non-blocking)
     try {
       const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;

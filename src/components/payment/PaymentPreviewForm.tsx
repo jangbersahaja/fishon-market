@@ -1,13 +1,12 @@
 "use client";
 
+import React from "react";
+import { PaymentMethodSelector } from "@/components/payment/shared/PaymentMethodSelector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useBookingStorage } from "@/hooks/useBookingStorage";
 import type { Charter, Trip } from "@fishon/ui";
-import { Building2, CreditCard, Loader2, Smartphone } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -50,6 +49,7 @@ interface PaymentPreviewFormProps {
   trip: Trip;
   session: any;
   sessionExpiresAt: number;
+  enableMockPayment?: boolean;
 }
 
 export function PaymentPreviewForm({
@@ -59,6 +59,7 @@ export function PaymentPreviewForm({
   trip,
   session,
   sessionExpiresAt,
+  enableMockPayment = false,
 }: PaymentPreviewFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -223,108 +224,20 @@ export function PaymentPreviewForm({
           <CardTitle>Payment Method</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-            <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
-              <RadioGroupItem value="CARD" id="card" />
-              <Label
-                htmlFor="card"
-                className="flex items-center flex-1 gap-2 cursor-pointer"
-              >
-                <CreditCard className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="font-semibold">Credit/Debit Card</p>
-                  <p className="text-sm text-muted-foreground">
-                    Visa, Mastercard
-                  </p>
-                </div>
-              </Label>
-            </div>
-
-            <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
-              <RadioGroupItem value="FPX" id="fpx" />
-              <Label
-                htmlFor="fpx"
-                className="flex items-center flex-1 gap-2 cursor-pointer"
-              >
-                <Building2 className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="font-semibold">Online Banking (FPX)</p>
-                  <p className="text-sm text-muted-foreground">
-                    All Malaysian banks
-                  </p>
-                </div>
-              </Label>
-            </div>
-
-            <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
-              <RadioGroupItem value="EWALLET" id="ewallet" />
-              <Label
-                htmlFor="ewallet"
-                className="flex items-center flex-1 gap-2 cursor-pointer"
-              >
-                <Smartphone className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="font-semibold">E-Wallet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Touch &#39;n Go, GrabPay, etc.
-                  </p>
-                </div>
-              </Label>
-            </div>
-          </RadioGroup>
-
-          {/* Card Details (only show if Card selected) */}
-          {paymentMethod === "CARD" && (
-            <div className="pt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="cardNumber">Card Number</Label>
-                <Input
-                  id="cardNumber"
-                  placeholder="1234 5678 9012 3456"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  maxLength={19}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="expMonth">Month</Label>
-                  <Input
-                    id="expMonth"
-                    placeholder="MM"
-                    value={cardExpMonth}
-                    onChange={(e) => setCardExpMonth(e.target.value)}
-                    maxLength={2}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expYear">Year</Label>
-                  <Input
-                    id="expYear"
-                    placeholder="YY"
-                    value={cardExpYear}
-                    onChange={(e) => setCardExpYear(e.target.value)}
-                    maxLength={2}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cvv">CVV</Label>
-                  <Input
-                    id="cvv"
-                    placeholder="123"
-                    value={cardCvv}
-                    onChange={(e) => setCardCvv(e.target.value)}
-                    maxLength={3}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Payment Method Selection - Shared Component */}
+          <PaymentMethodSelector
+            paymentMethod={paymentMethod}
+            onPaymentMethodChange={setPaymentMethod}
+            enableMockPayment={enableMockPayment}
+            cardNumber={cardNumber}
+            cardExpMonth={cardExpMonth}
+            cardExpYear={cardExpYear}
+            cardCvv={cardCvv}
+            onCardNumberChange={setCardNumber}
+            onCardExpMonthChange={setCardExpMonth}
+            onCardExpYearChange={setCardExpYear}
+            onCardCvvChange={setCardCvv}
+          />
 
           <Button
             type="submit"

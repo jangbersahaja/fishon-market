@@ -8,6 +8,7 @@ interface BookingConfirmActionsProps {
   charterId: string;
   status: BookingStatus;
   userId?: string | null;
+  userRole?: string;
   bookingEmail: string;
   captainName?: string;
   captainPhone?: string;
@@ -28,6 +29,7 @@ export function BookingConfirmActions({
   charterId,
   status,
   userId,
+  userRole,
   bookingEmail,
   captainName,
   captainPhone,
@@ -46,6 +48,7 @@ export function BookingConfirmActions({
       charterId={charterId}
       status={status}
       isLoggedInOwner={isLoggedInOwner}
+      userRole={userRole}
       bookingEmail={bookingEmail}
       captainName={captainName}
       captainPhone={captainPhone}

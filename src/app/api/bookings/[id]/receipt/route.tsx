@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/bookings/[id]/receipt
- * Generate and download PDF receipt for a PAID booking
+ * Generate and download PDF booking confirmation for a PAID booking
  * Requires email verification for security
  */
 export async function POST(
@@ -50,10 +50,10 @@ export async function POST(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
-    // Only PAID bookings can generate receipts
+    // Only PAID bookings can generate confirmation
     if (booking.status !== "PAID") {
       return NextResponse.json(
-        { error: "Receipt is only available for paid bookings" },
+        { error: "Booking confirmation is only available for paid bookings" },
         { status: 400 }
       );
     }
@@ -168,16 +168,16 @@ export async function POST(
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="Fishon-Receipt-${receiptNumber}.pdf"`,
+        "Content-Disposition": `attachment; filename="Fishon-Booking-Confirmation-${receiptNumber}.pdf"`,
         "Cache-Control": "no-cache, no-store, must-revalidate",
         Pragma: "no-cache",
         Expires: "0",
       },
     });
   } catch (error) {
-    console.error("Error generating receipt:", error);
+    console.error("Error generating booking confirmation:", error);
     return NextResponse.json(
-      { error: "Failed to generate receipt" },
+      { error: "Failed to generate booking confirmation" },
       { status: 500 }
     );
   }

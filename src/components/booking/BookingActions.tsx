@@ -4,6 +4,7 @@ import {
   BookAgainButton,
   CancelBookingButton,
 } from "@/components/account/BookingActionButtons";
+import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { EmailVerificationModal } from "@/components/booking/EmailVerificationModal";
 import { Button } from "@/components/ui/button";
 import type { BookingStatus } from "@/lib/services/booking-service";
@@ -17,6 +18,7 @@ interface BookingActionsProps {
   status: BookingStatus;
   bookingEmail: string;
   isLoggedInOwner?: boolean;
+  userRole?: string;
   captainName?: string;
   captainPhone?: string;
   captainEmail?: string;
@@ -32,6 +34,7 @@ export function BookingActions({
   status,
   bookingEmail,
   isLoggedInOwner = false,
+  userRole,
   captainName,
   captainPhone,
   captainEmail,
@@ -41,6 +44,7 @@ export function BookingActions({
   finalPrice,
 }: BookingActionsProps) {
   const router = useRouter();
+  const { openModal } = useAuthModal();
   const [isDownloading, setIsDownloading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -59,8 +63,25 @@ export function BookingActions({
 
   const requiresEmailVerification = !isLoggedInOwner;
 
+  // Check user role - GUEST users need to register to chat
+  const isGuestUser = userRole === "GUEST";
+  const isRegisteredUser = userRole === "ANGLER" || userRole === "ADMIN";
+
   // Check if chat is available (conversation exists and is unlocked)
-  const isChatAvailable = conversationId && conversationStatus === "ACTIVE";
+  const isChatAvailable =
+    conversationId && conversationStatus === "ACTIVE" && isRegisteredUser;
+
+  // Debug chat availability
+  console.log("💬 Chat Availability Debug:", {
+    userRole,
+    isGuestUser,
+    isRegisteredUser,
+    conversationId,
+    conversationStatus,
+    isChatAvailable,
+    hasConversationId: !!conversationId,
+    statusCheck: conversationStatus === "ACTIVE",
+  });
 
   const commonReasons = [
     "Change of plans",
@@ -115,22 +136,24 @@ export function BookingActions({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to download receipt");
+        throw new Error(data.error || "Failed to download confirmation");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Fishon-Receipt-${bookingId}.pdf`;
+      a.download = `Fishon-Booking-Confirmation-${bookingId}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Failed to download receipt:", error);
+      console.error("Failed to download confirmation:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to download receipt"
+        error instanceof Error
+          ? error.message
+          : "Failed to download confirmation"
       );
     } finally {
       setIsDownloading(false);
@@ -265,34 +288,63 @@ export function BookingActions({
                     <span className="text-xs">Email</span>
                   </Button>
                 )}
-                {/* Chat Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (conversationId) {
-                      router.push(`/account/messages/${conversationId}`);
+                {/* Chat Button - Different for Guest vs Registered Users */}
+                {isGuestUser ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      openModal("register", `/book/confirm?id=${bookingId}`);
+                    }}
+                    className="flex-col h-auto py-3"
+                    title="Register to enable chat with captain"
+                  >
+                    <MessageCircle className="w-4 h-4 mb-1" />
+                    <span className="text-xs">Register to Chat</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (conversationId) {
+                        router.push(`/account/messages/${conversationId}`);
+                      }
+                    }}
+                    disabled={!isChatAvailable}
+                    className="flex-col h-auto py-3"
+                    title={
+                      !isChatAvailable
+                        ? "Chat will be enabled after captain approval"
+                        : "Chat with captain"
                     }
-                  }}
-                  disabled={!isChatAvailable}
-                  className="flex-col h-auto py-3"
-                  title={
-                    !isChatAvailable
-                      ? "Chat will be enabled after captain approval"
-                      : "Chat with captain"
-                  }
-                >
-                  <MessageCircle className="w-4 h-4 mb-1" />
-                  <span className="text-xs">Chat</span>
-                </Button>
+                  >
+                    <MessageCircle className="w-4 h-4 mb-1" />
+                    <span className="text-xs">Chat</span>
+                  </Button>
+                )}
               </div>
             </div>
           </>
         )}
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {/* Cancel button for PAYMENT_AUTHORIZED and PAID */}
-          {(status === "PAID" || status === "PAYMENT_AUTHORIZED") && (
+          {/* Pay Now button for AWAITING_PAYMENT - Manual Flow */}
+          {status === "AWAITING_PAYMENT" && (
+            <Button
+              onClick={() => router.push(`/book/payment/${bookingId}`)}
+              className="w-full col-span-3 text-white bg-green-600 hover:bg-green-700"
+              size="lg"
+            >
+              Pay Now
+            </Button>
+          )}
+
+          {/* Cancel button for PENDING, AWAITING_PAYMENT, PAYMENT_AUTHORIZED and PAID */}
+          {(status === "PENDING" ||
+            status === "AWAITING_PAYMENT" ||
+            status === "PAYMENT_AUTHORIZED" ||
+            status === "PAID") && (
             <CancelBookingButton
               bookingId={bookingId}
               fullWidth
@@ -310,7 +362,7 @@ export function BookingActions({
             <BookAgainButton charterId={charterId} fullWidth />
           )}
 
-          {/* COMPLETED: Download Receipt + Book Again */}
+          {/* COMPLETED: Download Confirmation + Book Again */}
           {status === "COMPLETED" && (
             <>
               <button
@@ -319,13 +371,13 @@ export function BookingActions({
                 className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                {isDownloading ? "Downloading..." : "Download Receipt"}
+                {isDownloading ? "Downloading..." : "Download Confirmation"}
               </button>
               <BookAgainButton charterId={charterId} fullWidth />
             </>
           )}
 
-          {/* PAID: Download Receipt + Book Again */}
+          {/* PAID: Download Confirmation + Book Again */}
           {status === "PAID" && (
             <>
               <button
@@ -334,7 +386,7 @@ export function BookingActions({
                 className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                {isDownloading ? "Downloading..." : "Download Receipt"}
+                {isDownloading ? "Downloading..." : "Download Confirmation"}
               </button>
               <BookAgainButton charterId={charterId} fullWidth />
             </>
