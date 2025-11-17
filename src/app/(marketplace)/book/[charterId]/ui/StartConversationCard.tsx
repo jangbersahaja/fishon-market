@@ -1,6 +1,7 @@
 "use client";
 
 import { FieldErrors, UseFormRegister } from "react-hook-form";
+import type { BookingFormData } from "./types";
 
 interface Captain {
   name: string;
@@ -8,34 +9,6 @@ interface Captain {
   yearsExperience: number;
   crewCount: number;
   intro?: string;
-}
-
-interface BookingFormData {
-  charterId: string;
-  tripId: string;
-  date: string;
-  days: number;
-  adults: number;
-  children: number;
-  startTime?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  note?: string;
-  paymentMethod?: "CARD" | "FPX" | "MOCK";
-  emergencyName?: string;
-  emergencyPhone?: string;
-  emergencyRelation?: string;
-  participants: Array<{
-    name: string;
-    phone: string;
-    isBooker?: boolean;
-  }>;
-  // Payment fields
-  cardNumber?: string;
-  cardExpiry?: string;
-  cardCvv?: string;
 }
 
 interface StartConversationCardProps {

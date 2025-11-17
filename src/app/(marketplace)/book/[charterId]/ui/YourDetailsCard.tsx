@@ -3,34 +3,7 @@
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { useSession } from "next-auth/react";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
-
-interface BookingFormData {
-  charterId: string;
-  tripId: string;
-  date: string;
-  days: number;
-  adults: number;
-  children: number;
-  startTime?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  note?: string;
-  paymentMethod?: "CARD" | "FPX" | "MOCK";
-  emergencyName?: string;
-  emergencyPhone?: string;
-  emergencyRelation?: string;
-  participants: Array<{
-    name: string;
-    phone: string;
-    isBooker?: boolean;
-  }>;
-  // Payment fields
-  cardNumber?: string;
-  cardExpiry?: string;
-  cardCvv?: string;
-}
+import type { BookingFormData } from "./types";
 
 interface YourDetailsCardProps {
   register: UseFormRegister<BookingFormData>;
@@ -159,7 +132,7 @@ export default function YourDetailsCard({
 
           <label className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
-              Phone number
+              Phone number <span className="text-red-500">*</span>
             </span>
             <input
               type="tel"

@@ -7,35 +7,12 @@ import {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
+import type { BookingFormData } from "./types";
 
 interface Participant {
   name: string;
   phone: string;
   isBooker?: boolean;
-}
-
-interface BookingFormData {
-  charterId: string;
-  tripId: string;
-  date: string;
-  days: number;
-  adults: number;
-  children: number;
-  startTime?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  note?: string;
-  emergencyName?: string;
-  emergencyPhone?: string;
-  emergencyRelation?: string;
-  paymentMethod?: "CARD" | "FPX" | "MOCK";
-  participants: Array<{
-    name: string;
-    phone: string;
-    isBooker?: boolean;
-  }>;
 }
 
 interface ParticipantListCardProps {

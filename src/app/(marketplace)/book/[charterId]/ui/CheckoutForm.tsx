@@ -20,6 +20,7 @@ import StartConversationCard from "./StartConversationCard";
 import StartTimeSelection from "./StartTimeSelection";
 import TripSelectionCard from "./TripSelectionCard";
 import YourDetailsCard from "./YourDetailsCard";
+import type { BookingFormData } from "./types";
 
 // Zod validation schema for booking form
 // Base schema without payment validation
@@ -31,21 +32,29 @@ const baseBookingSchema = z
     days: z.number().int().min(1).max(14, "Days must be between 1 and 14"),
     adults: z.number().int().min(1, "At least one adult is required"),
     children: z.number().int().min(0),
-    startTime: z.string().optional(),
+    startTime: z.string().min(1, "Start time is required"),
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Invalid email address"),
-    phone: z.string().optional(),
+    phone: z
+      .string()
+      .min(1, "Phone number is required")
+      .regex(
+        /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/,
+        "Please enter a valid phone number"
+      ),
     note: z.string().optional(),
     // Emergency contact fields
-    emergencyName: z.string().optional(),
-    emergencyPhone: z.string().optional(),
-    emergencyRelation: z.string().optional(),
+    emergencyName: z.string().min(1, "Emergency contact name is required"),
+    emergencyPhone: z.string().min(1, "Emergency contact phone is required"),
+    emergencyRelation: z
+      .string()
+      .min(1, "Emergency contact relation is required"),
     // Participants list
     participants: z
       .array(
         z.object({
-          name: z.string().min(1, "Name is required"),
+          name: z.string().min(1, "At least one participant name is required"),
           phone: z.string().min(1, "Phone is required"),
           isBooker: z.boolean().optional(),
         })
@@ -61,9 +70,7 @@ const baseBookingSchema = z
       message: "Number of participants cannot exceed total guests",
       path: ["participants"],
     }
-  );
-
-type BookingFormData = z.infer<typeof baseBookingSchema>;
+  ) satisfies z.ZodType<BookingFormData>;
 
 function toInt(v: string | null, fallback: number) {
   const n = Number(v);
@@ -288,9 +295,9 @@ export default function CheckoutForm({
       email: defaultUser?.email || "",
       phone: defaultUser?.phone || "",
       note: "",
-      emergencyName: "",
-      emergencyPhone: "",
-      emergencyRelation: "",
+      emergencyName: defaultUser?.emergencyName || "",
+      emergencyPhone: defaultUser?.emergencyPhone || "",
+      emergencyRelation: defaultUser?.emergencyRelation || "",
       participants: [
         {
           name: "",
@@ -369,10 +376,8 @@ export default function CheckoutForm({
   }, [trips, tripIndex, startTimes, charterFlowType]);
 
   const canSubmit = useMemo(() => {
-    const startTimeOk =
-      Array.isArray(effectiveStartTimes) && effectiveStartTimes.length > 0
-        ? Boolean(startTime)
-        : true;
+    // Start time is always required for all charters
+    const startTimeOk = Boolean(startTime);
 
     // Check if date is valid (not blocked)
     const dateIsValid =
@@ -390,6 +395,7 @@ export default function CheckoutForm({
         firstName &&
         lastName &&
         email &&
+        phone &&
         startTimeOk &&
         dateIsValid
     );
@@ -401,8 +407,8 @@ export default function CheckoutForm({
     firstName,
     lastName,
     email,
+    phone,
     startTime,
-    effectiveStartTimes,
     selectedDate,
     selectedDays,
     isDateBlocked,
@@ -416,7 +422,7 @@ export default function CheckoutForm({
     if (startTime) params.set("start_time", startTime);
     router.replace(`${currentPath}?${params.toString()}`, { scroll: false });
     // reset start time when switching trips
-    setValue("startTime", undefined);
+    setValue("startTime", "");
   }
 
   const updateSearchParam = useCallback(
@@ -905,31 +911,131 @@ export default function CheckoutForm({
           <div className="flex flex-col gap-3">
             {/* Show validation errors */}
             {Object.keys(errors).length > 0 && !errors.root && (
-              <div className="p-3 border border-red-200 rounded-lg bg-red-50">
-                <p className="mb-2 text-sm font-semibold text-red-800">
-                  Please fix the following errors:
-                </p>
-                <ul className="space-y-1 text-sm text-red-700">
-                  {Object.entries(errors).map(
-                    ([field, error]: [string, any]) => {
-                      if (field === "root" || !error?.message) return null;
-                      return (
-                        <li key={field} className="flex items-start gap-2">
-                          <span className="mt-0.5">•</span>
-                          <span>
-                            <strong>{field}:</strong> {error.message}
-                          </span>
-                        </li>
-                      );
-                    }
-                  )}
-                </ul>
+              <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="mb-2 text-sm font-semibold text-red-800">
+                      Please fix the following errors:
+                    </p>
+                    <ul className="space-y-1.5 text-sm text-red-700">
+                      {Object.entries(errors).map(
+                        ([field, error]: [string, any]) => {
+                          if (field === "root") return null;
+                          // Map field names to user-friendly labels
+                          const fieldLabels: Record<string, string> = {
+                            firstName: "First name",
+                            lastName: "Last name",
+                            email: "Email",
+                            phone: "Phone number",
+                            date: "Date",
+                            days: "Number of days",
+                            adults: "Number of adults",
+                            startTime: "Start time",
+                            emergencyName: "Emergency contact name",
+                            emergencyPhone: "Emergency contact phone",
+                            emergencyRelation: "Emergency contact relationship",
+                            participants: "Participants",
+                            note: "Note to captain",
+                          };
+
+                          // Special handling for participants field
+                          if (field === "participants") {
+                            // If error.message exists, show it (e.g. min participants)
+                            if (error?.message) {
+                              return (
+                                <li
+                                  key={field}
+                                  className="flex items-start gap-2"
+                                >
+                                  <span className="font-bold mt-0.5">•</span>
+                                  <span>
+                                    <strong>
+                                      {fieldLabels[field] || field}:
+                                    </strong>{" "}
+                                    {error.message}
+                                  </span>
+                                </li>
+                              );
+                            }
+                            // If error is an array (field errors for each participant)
+                            if (Array.isArray(error)) {
+                              // Find first error in the array
+                              for (let i = 0; i < error.length; i++) {
+                                const participantError = error[i];
+                                if (
+                                  participantError &&
+                                  typeof participantError === "object"
+                                ) {
+                                  for (const [pField, pErr] of Object.entries(
+                                    participantError
+                                  )) {
+                                    if (
+                                      pErr &&
+                                      typeof pErr === "object" &&
+                                      "message" in pErr &&
+                                      typeof (pErr as any).message === "string"
+                                    ) {
+                                      return (
+                                        <li
+                                          key={`participants-${i}-${pField}`}
+                                          className="flex items-start gap-2"
+                                        >
+                                          <span className="font-bold mt-0.5">
+                                            •
+                                          </span>
+                                          <span>
+                                            <strong>
+                                              Participant {i + 1}{" "}
+                                              {pField.charAt(0).toUpperCase() +
+                                                pField.slice(1)}
+                                              :
+                                            </strong>{" "}
+                                            {(pErr as any).message}
+                                          </span>
+                                        </li>
+                                      );
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            return null;
+                          }
+
+                          if (!error?.message) return null;
+                          return (
+                            <li key={field} className="flex items-start gap-2">
+                              <span className="font-bold mt-0.5">•</span>
+                              <span>
+                                <strong>{fieldLabels[field] || field}:</strong>{" "}
+                                {error.message}
+                              </span>
+                            </li>
+                          );
+                        }
+                      )}
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
 
             <button
               type="submit"
-              disabled={!canSubmit || isSubmitting}
+              disabled={isSubmitting}
               className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
               {isSubmitting
@@ -938,14 +1044,6 @@ export default function CheckoutForm({
                   ? "Request Booking"
                   : "Proceed to Payment"}
             </button>
-
-            {!canSubmit && (
-              <div className="text-sm text-gray-600">
-                <p className="mb-2 font-medium text-center text-gray-700">
-                  Please complete all required fields
-                </p>
-              </div>
-            )}
 
             {!isLoggedIn && canSubmit && (
               <div className="pt-3 space-y-3 border-t border-gray-200">
