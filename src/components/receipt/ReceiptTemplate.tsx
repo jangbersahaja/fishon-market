@@ -13,38 +13,19 @@ import {
 } from "@react-pdf/renderer";
 import React from "react";
 
-// Date formatting helper (using native Date methods to avoid date-fns dependency)
-const formatDate = (date: Date, includeTime = false): string => {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = months[date.getMonth()];
-  const year = date.getFullYear();
-
-  if (!includeTime) {
-    return `${day} ${month} ${year}`;
+function formatDate(iso: string | undefined) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-MY", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "Asia/Kuala_Lumpur",
+    });
+  } catch {
+    return iso;
   }
-
-  let hours = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-
-  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
-};
+}
 
 // Types
 interface ReceiptData {
@@ -340,14 +321,14 @@ const ReceiptTemplate: React.FC<{ data: ReceiptData }> = ({ data }) => {
             <View style={styles.referenceRow}>
               <Text style={styles.referenceLabel}>Booked On</Text>
               <Text style={styles.referenceValue}>
-                {formatDate(booking.createdAt, true)}
+                {formatDate(booking.createdAt.toISOString())}
               </Text>
             </View>
             {booking.paidAt && (
               <View style={styles.referenceRow}>
                 <Text style={styles.referenceLabel}>Paid On</Text>
                 <Text style={styles.referenceValue}>
-                  {formatDate(booking.paidAt, true)}
+                  {formatDate(booking.paidAt.toISOString())}
                 </Text>
               </View>
             )}
@@ -363,7 +344,7 @@ const ReceiptTemplate: React.FC<{ data: ReceiptData }> = ({ data }) => {
               <View style={styles.tripDetailItem}>
                 <Text style={styles.detailLabel}>Date</Text>
                 <Text style={styles.detailValue}>
-                  {formatDate(booking.date)}
+                  {formatDate(booking.date.toISOString())}
                 </Text>
               </View>
               <View style={styles.tripDetailItem}>
