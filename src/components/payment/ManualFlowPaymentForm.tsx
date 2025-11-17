@@ -21,7 +21,7 @@ export function ManualFlowPaymentForm({
 }: ManualFlowPaymentFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<string>("CARD");
+  const [paymentMethod, setPaymentMethod] = useState<string>("FPX");
 
   // Card details for CARD payment
   const [cardNumber, setCardNumber] = useState("");

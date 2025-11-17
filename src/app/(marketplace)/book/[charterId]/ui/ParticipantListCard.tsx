@@ -112,6 +112,7 @@ export default function ParticipantListCard({
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
+                      defaultChecked
                       checked={participant.isBooker || false}
                       onChange={() => toggleIsBooker(index)}
                       className="w-4 h-4 text-[#ec2227] border-gray-300 rounded focus:ring-[#ec2227]"

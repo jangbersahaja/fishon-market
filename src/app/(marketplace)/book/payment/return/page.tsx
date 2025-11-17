@@ -98,19 +98,38 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
     redirect(`/book/confirm?id=${order_id}&payment=success`);
   }
 
+  // Check if booking is in PAYMENT_AUTHORIZED status (AUTO flow with FPX/E-wallet)
+  // In this case, the callback webhook should process it soon, so just redirect
+  if (booking.status === "PAYMENT_AUTHORIZED" && status_id === "1") {
+    console.log(
+      "✅ [PAYMENT RETURN] Booking in PAYMENT_AUTHORIZED, callback will process",
+      {
+        bookingId: order_id,
+        transactionId: transaction_id,
+        msg: "Waiting for callback webhook to complete processing",
+      }
+    );
+
+    // Redirect to confirmation page - callback will update status to PAID
+    // The confirmation page will show the current status
+    redirect(`/book/confirm?id=${order_id}&payment=success`);
+  }
+
   // Process payment update (if callback hasn't processed it yet)
+  // This is a fallback in case callback fails or is delayed
   if (status_id === "1") {
     // Payment successful
     console.log("✅ [PAYMENT RETURN] Processing successful payment", {
       orderId: order_id,
       transactionId: transaction_id,
       msg,
+      note: "Callback may have failed - processing as fallback",
     });
 
     try {
       // Calculate financial breakdown
       const { prismaCaptain } = await import("@/lib/database/prisma-captain");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const charter = await (prismaCaptain as any).charter.findUnique({
         where: { id: booking.charterId },
         select: { pricingPlan: true },
@@ -159,9 +178,18 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
     } catch (error) {
       console.error("❌ [PAYMENT RETURN] Failed to update booking", {
         orderId: order_id,
-        error,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      redirect("/book/confirm?error=payment_processing_error");
+
+      // Despite error, payment was likely successful on Senang Pay side
+      // Callback webhook should have processed it or will process it
+      // Redirect to booking page so user can see their booking
+      console.log(
+        "⚠️ [PAYMENT RETURN] Redirecting to booking despite error - callback should have processed",
+        { orderId: order_id }
+      );
+      redirect(`/book/confirm?id=${order_id}&payment=processing`);
     }
   } else {
     // Payment failed

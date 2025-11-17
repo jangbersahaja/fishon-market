@@ -62,7 +62,7 @@ export function PaymentPreviewForm({
 }: PaymentPreviewFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<string>("CARD");
+  const [paymentMethod, setPaymentMethod] = useState<string>("FPX");
   const { addBooking } = useBookingStorage();
 
   // Card details for TOKENIZED flow
