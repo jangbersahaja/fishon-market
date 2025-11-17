@@ -81,6 +81,15 @@ export const bookingExpiredMessage = (): MessageTemplate => ({
 });
 
 /**
+ * Message sent when payment is received (AUTO flow)
+ * Payment already captured, awaiting captain acknowledgment
+ */
+export const paymentReceivedMessage = (): MessageTemplate => ({
+  content: `💳 Payment Received!\nYour booking is confirmed. Payment has been received and the captain will acknowledge your booking shortly. You can now chat with the captain to discuss trip details.`,
+  systemType: "payment_received_auto",
+});
+
+/**
  * Message sent when trip completes - review prompt
  */
 export const tripCompletedMessage = (charterName: string): MessageTemplate => ({

@@ -716,6 +716,25 @@ async function createAuthenticatedBooking(session: any, body: any) {
             "🔓 Unlocking conversation for PAYMENT_AUTHORIZED booking (AUTO flow)"
           );
           await unlockConversation(conversation.id);
+
+          // Send system message informing about payment receipt
+          const { paymentReceivedMessage } = await import(
+            "@/lib/services/message-templates"
+          );
+          const { sendSystemMessage } = await import(
+            "@/lib/services/message-service"
+          );
+          const template = paymentReceivedMessage();
+          await sendSystemMessage(
+            conversation.id,
+            template.systemType,
+            template.content,
+            {
+              bookingId: booking.id,
+              status: "PAYMENT_AUTHORIZED",
+            }
+          );
+          console.log("✅ Sent payment received system message");
         }
 
         // Send initial booking card message
