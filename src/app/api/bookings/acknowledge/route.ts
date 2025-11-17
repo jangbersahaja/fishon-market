@@ -204,7 +204,12 @@ export async function POST(req: Request) {
             bookingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/bookings/${updated.id}`,
           });
 
-          // Also send email to captain
+          // Also send email to captain with pricing breakdown
+          const finalPrice = Number(updated.finalPrice);
+          const platformFee = Number(updated.platformFee || 0);
+          const captainEarnings = Number(updated.captainEarnings || 0);
+          const subtotal = captainEarnings + platformFee;
+
           await sendBookingConfirmedCaptainEmail({
             to: trip.charter.captain?.email || "",
             captainName: trip.charter.captain?.displayName || "Captain",
@@ -215,10 +220,15 @@ export async function POST(req: Request) {
             tripDays: updated.days,
             durationHours: trip.durationHours,
             startTime: updated.startTime || undefined,
-            finalPrice: updated.finalPrice.toFixed(2),
+            finalPrice: `RM ${finalPrice.toFixed(2)}`,
             anglerEmail: email,
             anglerPhone: anglerPhone,
             bookingUrl: `${process.env.NEXT_PUBLIC_CAPTAIN_DASHBOARD_URL}/bookings/${updated.id}`,
+            subtotal: `RM ${subtotal.toFixed(2)}`,
+            platformFee: `RM ${platformFee.toFixed(2)}`,
+            captainEarnings: `RM ${captainEarnings.toFixed(2)}`,
+            paymentFlow:
+              (updated.paymentFlow as "TOKENIZED" | "DIRECT") || "DIRECT",
           });
         }
       }

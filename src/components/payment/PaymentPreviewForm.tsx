@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { PaymentMethodSelector } from "@/components/payment/shared/PaymentMethodSelector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { useBookingStorage } from "@/hooks/useBookingStorage";
 import type { Charter, Trip } from "@fishon/ui";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 interface BookingPreviewData {

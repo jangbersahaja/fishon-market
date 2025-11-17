@@ -38,7 +38,7 @@ export function PaymentMethodSelector({
       <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
         {/* Credit/Debit Card */}
         <div className="flex items-center p-4 space-x-3 border rounded-lg cursor-pointer hover:bg-accent">
-          <RadioGroupItem value="CARD" id="card" />
+          <RadioGroupItem value="CARD" id="card" disabled />
           <Label
             htmlFor="card"
             className="flex items-center flex-1 gap-2 cursor-pointer"
