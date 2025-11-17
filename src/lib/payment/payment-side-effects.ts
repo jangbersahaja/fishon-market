@@ -64,6 +64,7 @@ export async function triggerPaymentSideEffects({
   await Promise.allSettled([
     notifyCaptain(booking, source),
     notifyAngler(booking, source),
+    sendCaptainPaymentEmail(bookingId, source),
     unlockConversation(bookingId, source),
     revalidatePages(bookingId),
   ]);
@@ -214,7 +215,134 @@ async function notifyAngler(
 }
 
 /**
- * Side Effect 3: Unlock Conversation
+ * Side Effect 3: Send Captain Payment Confirmation Email
+ *
+ * Sends detailed payment confirmation email to captain with pricing breakdown.
+ * Includes final price, platform fee, and captain earnings.
+ */
+async function sendCaptainPaymentEmail(
+  bookingId: string,
+  source: string
+): Promise<void> {
+  try {
+    // Fetch complete booking data with related information
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        tripId: true,
+        date: true,
+        days: true,
+        startTime: true,
+        finalPrice: true,
+        platformFee: true,
+        captainEarnings: true,
+        paymentFlow: true,
+        user: {
+          select: {
+            name: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      console.error(
+        `❌ [PAYMENT SIDE EFFECTS] Booking not found for email (source: ${source}):`,
+        bookingId
+      );
+      return;
+    }
+
+    // Fetch trip and charter info
+    const trip = await getTripById(booking.tripId);
+    if (!trip || !trip.charter) {
+      console.error(
+        `❌ [PAYMENT SIDE EFFECTS] Trip or charter not found for email (source: ${source})`
+      );
+      return;
+    }
+
+    if (!trip.charter.captain?.email) {
+      console.error(
+        `❌ [PAYMENT SIDE EFFECTS] Captain email not found (source: ${source})`
+      );
+      return;
+    }
+
+    // Format angler name
+    const anglerName =
+      booking.user?.name ||
+      (booking.user?.firstName && booking.user?.lastName
+        ? `${booking.user.firstName} ${booking.user.lastName}`
+        : "Angler");
+
+    // Format captain name
+    const captainName = trip.charter.captain.displayName || "Captain";
+
+    // Calculate trip price (subtotal before platform fee)
+    const finalPrice = Number(booking.finalPrice);
+    const platformFee = Number(booking.platformFee || 0);
+    const captainEarnings = Number(booking.captainEarnings || 0);
+    const subtotal = captainEarnings + platformFee;
+
+    // Format date
+    const tripDate = new Date(booking.date).toLocaleDateString("en-MY", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    // Send email with pricing breakdown
+    const { sendBookingConfirmedCaptainEmail } = await import(
+      "@/lib/services/email-service"
+    );
+
+    await sendBookingConfirmedCaptainEmail({
+      to: trip.charter.captain.email,
+      captainName,
+      charterName: trip.charter.name,
+      tripName: trip.name,
+      tripDate,
+      tripDays: booking.days,
+      durationHours: trip.durationHours,
+      startTime: booking.startTime || undefined,
+      finalPrice: `RM ${finalPrice.toFixed(2)}`,
+      anglerName,
+      anglerEmail: booking.user?.email || "",
+      anglerPhone: booking.user?.phone || "",
+      bookingUrl: `${process.env.NEXT_PUBLIC_CAPTAIN_APP_URL || "https://captain.fishon.my"}/captain/bookings/${bookingId}`,
+      subtotal: `RM ${subtotal.toFixed(2)}`,
+      platformFee: `RM ${platformFee.toFixed(2)}`,
+      captainEarnings: `RM ${captainEarnings.toFixed(2)}`,
+      paymentFlow:
+        (booking.paymentFlow as "TOKENIZED" | "DIRECT") || "TOKENIZED",
+    });
+
+    console.log(
+      `✅ [PAYMENT SIDE EFFECTS] Captain payment email sent successfully (source: ${source})`,
+      {
+        bookingId,
+        captainEmail: trip.charter.captain.email,
+        finalPrice: `RM ${finalPrice.toFixed(2)}`,
+        captainEarnings: `RM ${captainEarnings.toFixed(2)}`,
+      }
+    );
+  } catch (error) {
+    console.error(
+      `❌ [PAYMENT SIDE EFFECTS] Failed to send captain payment email (source: ${source}):`,
+      error
+    );
+  }
+}
+
+/**
+ * Side Effect 4: Unlock Conversation
  *
  * Unlocks the conversation between angler and captain after payment is confirmed.
  * This enables the chat feature for both parties.
@@ -263,7 +391,7 @@ async function unlockConversation(
 }
 
 /**
- * Side Effect 4: Revalidate Pages
+ * Side Effect 5: Revalidate Pages
  *
  * Revalidates Next.js pages to show fresh booking data.
  * - Confirmation page: Shows updated payment status
