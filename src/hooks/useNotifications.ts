@@ -237,7 +237,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     }
 
     // Subscribe to user's private channel
-    const channelName = `private-user-${userId}`;
+    const channelName = `private-user.${userId}`;
     if (!channelRef.current) {
       channelRef.current = pusherRef.current.subscribe(channelName);
 

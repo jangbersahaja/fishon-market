@@ -11,16 +11,16 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Fishon — Malaysia’s Fishing & Charter Booking (Coming Soon)",
+  title: "Fishon — Malaysia's Fishing & Charter Booking",
   description:
-    "Fishon is Malaysia’s first fishing & charter booking platform. We’re reeling in something exciting — launching soon!",
-  metadataBase: new URL("https://your-domain-here.com"),
-  robots: { index: false, follow: false }, // keep out of search until launch
+    "Fishon is Malaysia's first fishing & charter booking platform. Discover and book fishing charters across Malaysia.",
+  metadataBase: new URL("https://www.fishon.my"),
+  robots: { index: true, follow: true },
   openGraph: {
-    title: "Fishon — Coming Soon",
+    title: "Fishon — Malaysia's Fishing & Charter Booking",
     description:
-      "Malaysia’s first fishing & charter booking platform. Launching soon.",
-    url: "https://your-domain-here.com",
+      "Discover and book fishing charters across Malaysia with Fishon.",
+    url: "https://www.fishon.my",
     siteName: "Fishon",
     images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
     type: "website",

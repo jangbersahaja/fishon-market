@@ -45,6 +45,13 @@ function getTransporter(): any {
     port,
     secure,
     auth: { user, pass },
+    // Connection pooling for better performance
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    // Reduce connection timeout
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 5000, // 5 seconds
   });
   // In development, optionally verify the transporter to surface config errors early
   if (

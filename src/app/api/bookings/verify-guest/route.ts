@@ -68,41 +68,39 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send verification email using new email service
-    try {
-      await sendVerificationCode({
-        to: email,
-        userName: firstName || "there",
-        code,
-        purpose: "guest_booking",
-        expiryMinutes: 10,
-      });
-    } catch (emailError) {
-      // Log detailed email error for debugging
-      console.error("Email sending failed:", {
+    // Send verification email asynchronously (non-blocking)
+    // Fire-and-forget pattern to avoid blocking API response
+    // Email should arrive within 1-3 seconds after API response
+    sendVerificationCode({
+      to: email,
+      userName: firstName || "there",
+      code,
+      purpose: "guest_booking",
+      expiryMinutes: 10,
+    }).catch((emailError) => {
+      // Log detailed email error for debugging (don't throw - email sending is async)
+      console.error("Email sending failed (async):", {
         error: emailError,
         message:
           emailError instanceof Error ? emailError.message : "Unknown error",
         stack: emailError instanceof Error ? emailError.stack : undefined,
-        email: email, // Include email (sanitized in logs)
+        email: email,
+        codePrefix: code.substring(0, 2) + "****", // Log partial code for debugging
         smtpConfigured: !!(
           process.env.SMTP_HOST &&
           process.env.SMTP_USER &&
           (process.env.SMTP_PASS || process.env.SMTP_PASSWORD)
         ),
       });
+    });
 
-      // Throw to outer catch with more context
-      throw new Error(
-        `Email delivery failed: ${emailError instanceof Error ? emailError.message : "Unknown error"}`
-      );
-    }
-
+    // Return immediately - don't wait for email
     return NextResponse.json(
       {
         success: true,
         sentAt: Date.now(),
         expiresAt: expiresAt.getTime(),
+        message: "Verification code will be sent to your email shortly",
       },
       { status: 200 }
     );

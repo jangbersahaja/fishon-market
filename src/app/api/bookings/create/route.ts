@@ -780,6 +780,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
       const hookSecret = process.env.CAPTAIN_API_SECRET;
       if (hookUrl && hookSecret) {
+        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
         const guests = booking.guests as { adults: number; children: number };
         const payload = {
           type: "booking.created",
@@ -787,6 +788,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
             id: booking.id,
             tripId: booking.tripId,
             charterId: booking.charterId,
+            anglerName: user?.name || "Guest",
+            charterName: trip.charter.name,
             startTime: booking.startTime,
             date: booking.date.toISOString(),
             days: booking.days,
@@ -796,6 +799,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
             finalPrice: Number(booking.finalPrice),
             expiresAt: booking.expiresAt.toISOString(),
             status: booking.status,
+            bookingFlowType: booking.bookingFlowType,
             paymentMethod: booking.paymentMethod,
             paymentFlow: booking.paymentFlow,
           },

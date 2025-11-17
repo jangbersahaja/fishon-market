@@ -636,6 +636,7 @@ export async function POST(req: Request) {
             id: booking.id,
             userId: guestUser.id,
             anglerName: `${firstName} ${lastName}`,
+            charterName: trip.charter.name,
             anglerEmail: guestUser.email,
             anglerPhone: phone,
             tripId: booking.tripId,
