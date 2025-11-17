@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/expire-bookings",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/close-conversations",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

@@ -180,6 +180,43 @@ export async function POST(req: Request) {
 
         console.log(`[EXPIRE_CRON] Updated booking ${booking.id} to REJECTED`);
 
+        // Send system message to conversation (non-blocking)
+        (async () => {
+          try {
+            const conversation = await prisma.conversation.findUnique({
+              where: { bookingId: booking.id },
+            });
+
+            if (conversation) {
+              const { bookingExpiredMessage } = await import(
+                "@/lib/services/message-templates"
+              );
+              const { sendSystemMessage } = await import(
+                "@/lib/services/message-service"
+              );
+              const template = bookingExpiredMessage();
+              await sendSystemMessage(
+                conversation.id,
+                template.systemType,
+                template.content,
+                {
+                  bookingId: booking.id,
+                  reason: "expired",
+                  paymentAction,
+                }
+              );
+              console.log(
+                `[EXPIRE_CRON] Sent expiration system message for ${booking.id}`
+              );
+            }
+          } catch (err) {
+            console.error(
+              `[EXPIRE_CRON] Failed to send system message for ${booking.id}:`,
+              err
+            );
+          }
+        })();
+
         // Send notification to angler (non-blocking)
         (async () => {
           try {

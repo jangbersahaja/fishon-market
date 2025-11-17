@@ -10,6 +10,16 @@ Fishon.my is the **customer-facing marketplace** where anglers discover, browse,
 - **Fishon Captain**: Management dashboard for captains/charter operators (registration, editing, analytics)
 - **Fishon Video Worker**: External video normalization service
 
+## System Configuration
+
+- Please check on /docs/config/\* to see current system configuration file.
+- It's either in Fishon Captain or Fishon Market repository depending on where the main implementation is.
+- Treat this document as a living document and update it as necessary when you make changes to the system configuration.
+- Currently I have done configuration documentation for:
+  - Email Notification System
+  - Booking System
+- Other documents may not be correct or up to date.
+
 ### Current Implementation Status
 
 ### ✅ Complete

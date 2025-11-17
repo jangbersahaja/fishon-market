@@ -15,23 +15,23 @@ import type { BookingStatus } from "@/lib/services/booking-service";
 export function getBookingStatusColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
-      return "bg-amber-100 text-amber-800 border-amber-200";
+      return "bg-red-100 text-red-800 border-red-200";
     case "AWAITING_PAYMENT":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
     case "PAYMENT_AUTHORIZED":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-indigo-100 text-indigo-800 border-indigo-200";
     case "PAID":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-green-100 text-green-800 border-green-200";
     case "UNDER_REVIEW":
       return "bg-purple-100 text-purple-800 border-purple-200";
     case "REJECTED":
       return "bg-red-100 text-red-800 border-red-200";
     case "EXPIRED":
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-orange-100 text-orange-800 border-orange-200";
     case "CANCELLED":
       return "bg-gray-100 text-gray-800 border-gray-200";
     case "COMPLETED":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      return "bg-gray-100 text-gray-800 border-gray-200";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -45,23 +45,23 @@ export function getBookingStatusColor(status: BookingStatus): string {
 export function getBookingStatusIconColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
-      return "text-amber-600";
+      return "text-red-600";
     case "AWAITING_PAYMENT":
-      return "text-blue-600";
+      return "text-yellow-600";
     case "PAYMENT_AUTHORIZED":
-      return "text-green-600";
+      return "text-indigo-600";
     case "PAID":
-      return "text-blue-600";
+      return "text-green-600";
     case "UNDER_REVIEW":
       return "text-purple-600";
     case "REJECTED":
       return "text-red-600";
     case "EXPIRED":
-      return "text-gray-600";
+      return "text-orange-600";
     case "CANCELLED":
       return "text-gray-600";
     case "COMPLETED":
-      return "text-emerald-600";
+      return "text-gray-600";
     default:
       return "text-gray-600";
   }
@@ -75,23 +75,23 @@ export function getBookingStatusIconColor(status: BookingStatus): string {
 export function getBookingStatusBgColor(status: BookingStatus): string {
   switch (status) {
     case "PENDING":
-      return "bg-amber-50";
+      return "bg-red-50";
     case "AWAITING_PAYMENT":
-      return "bg-blue-50";
+      return "bg-yellow-50";
     case "PAYMENT_AUTHORIZED":
-      return "bg-green-50";
+      return "bg-indigo-50";
     case "PAID":
-      return "bg-blue-50";
+      return "bg-green-50";
     case "UNDER_REVIEW":
       return "bg-purple-50";
     case "REJECTED":
       return "bg-red-50";
     case "EXPIRED":
-      return "bg-gray-50";
+      return "bg-orange-50";
     case "CANCELLED":
       return "bg-gray-50";
     case "COMPLETED":
-      return "bg-emerald-50";
+      return "bg-gray-50";
     default:
       return "bg-gray-50";
   }
