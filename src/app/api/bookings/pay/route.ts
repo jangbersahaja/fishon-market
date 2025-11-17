@@ -1,6 +1,10 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import {
+  createPaymentIntent,
+  type PaymentMethod,
+} from "@/lib/payment/payment-gateway";
+import {
   sendBookingConfirmedAnglerEmail,
   sendBookingConfirmedCaptainEmail,
 } from "@/lib/services/email-service";
@@ -14,7 +18,7 @@ import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { NextResponse } from "next/server";
 
-// Minimal pay endpoint to mark an APPROVED booking as PAID for the owner
+// Manual flow payment endpoint - processes payment through SenangPay gateway
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -22,40 +26,221 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { id } = body as { id?: string };
-  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  const { id, paymentMethod, cardNumber, cardExpMonth, cardExpYear, cardCvv } =
+    body as {
+      id?: string;
+      paymentMethod?: string;
+      cardNumber?: string;
+      cardExpMonth?: string;
+      cardExpYear?: string;
+      cardCvv?: string;
+    };
 
-  // Only allow transition from AWAITING_PAYMENT and for this user
-  const result = await prisma.booking
-    .updateMany({
-      where: { id, userId: session.user.id, status: "AWAITING_PAYMENT" },
-      data: { status: "PAID" },
-    })
-    .catch(() => ({ count: 0 }));
+  if (!id) {
+    return NextResponse.json({ error: "id required" }, { status: 400 });
+  }
 
-  if (!result || result.count === 0) {
+  if (!paymentMethod) {
     return NextResponse.json(
-      { error: "No AWAITING_PAYMENT booking for this user" },
+      { error: "paymentMethod required" },
+      { status: 400 }
+    );
+  }
+
+  // Fetch the booking with user details
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
+  });
+
+  if (!booking) {
+    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+  }
+
+  // Verify ownership
+  if (booking.userId !== session.user.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  // Verify status
+  if (booking.status !== "AWAITING_PAYMENT") {
+    return NextResponse.json(
+      { error: "Booking is not awaiting payment" },
       { status: 409 }
     );
   }
 
-  // Fetch updated booking for notifications
-  const updated =
-    typeof (prisma as any)?.booking?.findUnique === "function"
-      ? await (prisma as any).booking
-          .findUnique({ where: { id } })
-          .catch(() => null)
-      : null;
+  // Normalize payment method
+  const normalizedPaymentMethod = (paymentMethod || "").toUpperCase();
 
+  // Handle MOCK payment (development only)
+  if (normalizedPaymentMethod === "MOCK") {
+    if (process.env.NODE_ENV !== "development") {
+      return NextResponse.json(
+        { error: "Mock payment not available in production" },
+        { status: 403 }
+      );
+    }
+
+    // Mock payment - directly mark as PAID
+    await prisma.booking.update({
+      where: { id },
+      data: {
+        status: "PAID",
+        paymentMethod: "MOCK",
+        paymentIntentId: `mock-${Date.now()}`,
+        paymentTransactionId: `mock-txn-${Date.now()}`,
+        paidAt: new Date(),
+      },
+    });
+
+    const updated = await prisma.booking.findUnique({ where: { id } });
+
+    // Trigger side effects (notifications, emails, webhooks)
+    await triggerPaymentSideEffects(updated!, session.user.id);
+
+    return NextResponse.json({ ok: true });
+  }
+
+  // Process real payment through SenangPay
+  try {
+    const user = booking.user;
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Fetch trip details for description
+    const trip = await getTripById(booking.tripId);
+    if (!trip) {
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
+    }
+
+    const description = `${trip.name} - ${booking.date.toISOString().slice(0, 10)}`;
+    const amount = Number(booking.finalPrice);
+
+    // Validate card details for CARD payment
+    if (normalizedPaymentMethod === "CARD") {
+      if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
+        return NextResponse.json(
+          { error: "Card details required for card payment" },
+          { status: 400 }
+        );
+      }
+
+      // Process card tokenization
+      const paymentResult = await createPaymentIntent({
+        bookingId: booking.id,
+        amount,
+        paymentMethod: "CARD",
+        description,
+        cardDetails: {
+          number: cardNumber.replace(/\s/g, ""),
+          cvv: cardCvv,
+          expiryMonth: cardExpMonth,
+          expiryYear: cardExpYear,
+        },
+        customerName: user.name || "Guest",
+        customerEmail: user.email,
+        customerPhone: user.phone || "",
+      });
+
+      if (!paymentResult.success) {
+        console.error("❌ Card tokenization failed:", paymentResult.error);
+        return NextResponse.json(
+          {
+            error:
+              paymentResult.error ||
+              "Failed to process card. Please check your card details.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Card tokenized successfully - mark as PAYMENT_AUTHORIZED
+      await prisma.booking.update({
+        where: { id },
+        data: {
+          status: "PAYMENT_AUTHORIZED",
+          paymentMethod: "CARD",
+          paymentIntentId: paymentResult.paymentIntentId,
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        requiresRedirect: false,
+      });
+    }
+
+    // Process FPX/E-wallet payment (requires redirect)
+    if (
+      normalizedPaymentMethod === "FPX" ||
+      normalizedPaymentMethod === "EWALLET"
+    ) {
+      const paymentResult = await createPaymentIntent({
+        bookingId: booking.id,
+        amount,
+        paymentMethod: normalizedPaymentMethod as PaymentMethod,
+        description,
+        customerName: user.name || "Guest",
+        customerEmail: user.email,
+        customerPhone: user.phone || "",
+      });
+
+      if (!paymentResult.success || !paymentResult.redirectUrl) {
+        console.error(
+          "❌ Failed to generate payment URL:",
+          paymentResult.error
+        );
+        return NextResponse.json(
+          {
+            error: paymentResult.error || "Failed to generate payment URL",
+          },
+          { status: 500 }
+        );
+      }
+
+      // Return redirect URL to client
+      return NextResponse.json({
+        ok: true,
+        requiresRedirect: true,
+        redirectUrl: paymentResult.redirectUrl,
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Invalid payment method" },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("❌ Payment processing error:", error);
+    return NextResponse.json(
+      { error: "Failed to process payment" },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper function to trigger payment side effects (notifications, emails, webhooks)
+async function triggerPaymentSideEffects(
+  booking: any,
+  userId: string
+): Promise<void> {
   // CRITICAL: Unlock conversation for payment (Phase 2.2) (non-blocking best-effort)
   // This transitions conversation from LOCKED -> ACTIVE, enabling full chat
   (async () => {
     try {
-      if (!updated) return;
-
       const conversation = await prisma.conversation.findUnique({
-        where: { bookingId: updated.id },
+        where: { bookingId: booking.id },
       });
 
       if (conversation) {
@@ -63,16 +248,16 @@ export async function POST(req: Request) {
         await unlockConversation(conversation.id);
 
         // Send payment confirmed system message
-        const trip = await getTripById(updated.tripId);
+        const trip = await getTripById(booking.tripId);
         const bookingCardData = {
-          bookingId: updated.id,
+          bookingId: booking.id,
           charterName: trip?.charter.name || "",
           tripName: trip?.name || "",
-          tripDate: updated.date.toISOString().slice(0, 10),
-          tripDays: updated.days,
+          tripDate: booking.date.toISOString().slice(0, 10),
+          tripDays: booking.days,
           adults: 0,
           children: 0,
-          totalPrice: `RM ${Number(updated.finalPrice).toFixed(2)}`,
+          totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           meetingPoint: trip?.charter.startingPoint ?? undefined,
         };
 
@@ -103,23 +288,21 @@ export async function POST(req: Request) {
   // Notify angler (non-blocking best-effort)
   (async () => {
     try {
-      if (!updated || !session?.user?.id) return;
-
-      const trip = await getTripById(updated.tripId);
+      const trip = await getTripById(booking.tripId);
       if (!trip) return;
 
       await createNotification({
-        userId: session.user.id,
+        userId: userId,
         type: "BOOKING_PAID",
         title: "Payment Confirmed! ✅",
-        message: `Your payment for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed. Get ready for an amazing trip!`,
-        actionUrl: `/book/confirm?id=${updated.id}`,
+        message: `Your payment for ${trip.charter.name} on ${booking.date.toISOString().slice(0, 10)} has been confirmed. Get ready for an amazing trip!`,
+        actionUrl: `/book/confirm?id=${booking.id}`,
         actionLabel: "View Booking Details",
-        bookingId: updated.id,
+        bookingId: booking.id,
         charterId: trip.charter.id,
         metadata: {
           charterName: trip.charter.name,
-          tripDate: updated.date.toISOString().slice(0, 10),
+          tripDate: booking.date.toISOString().slice(0, 10),
         },
       });
     } catch (err) {
@@ -130,15 +313,13 @@ export async function POST(req: Request) {
   // Email angler confirmation (non-blocking best-effort)
   (async () => {
     try {
-      if (!updated) return;
-
       const user = await prisma.user.findUnique({
-        where: { id: updated.userId },
+        where: { id: booking.userId },
       });
       if (!user?.email) return;
 
       // Fetch trip data to get all details
-      const trip = await getTripById(updated.tripId);
+      const trip = await getTripById(booking.tripId);
       if (!trip) return;
 
       const captain = trip.charter.captain;
@@ -147,7 +328,7 @@ export async function POST(req: Request) {
       const base =
         process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
       const bookingUrl = `${base}/book/confirm?id=${encodeURIComponent(
-        updated.id
+        booking.id
       )}`;
 
       await sendBookingConfirmedAnglerEmail({
@@ -158,11 +339,11 @@ export async function POST(req: Request) {
         captainEmail: captain.email,
         captainPhone: captain.phone || "",
         tripName: trip.name,
-        tripDate: updated.date.toISOString().slice(0, 10),
-        tripDays: updated.days,
+        tripDate: booking.date.toISOString().slice(0, 10),
+        tripDays: booking.days,
         durationHours: trip.durationHours,
-        startTime: updated.startTime ?? undefined,
-        finalPrice: `RM ${Number(updated.finalPrice).toFixed(2)}`,
+        startTime: booking.startTime ?? undefined,
+        finalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
         bookingUrl,
       });
     } catch (err) {
@@ -173,29 +354,27 @@ export async function POST(req: Request) {
   // Email captain confirmation (non-blocking best-effort)
   (async () => {
     try {
-      if (!updated) return;
-
       // Fetch trip data to get captain info
-      const trip = await getTripById(updated.tripId);
+      const trip = await getTripById(booking.tripId);
       if (!trip) return;
 
       const captain = trip.charter.captain;
       if (!captain?.email) {
         console.warn(
           "Captain email not available for payment confirmation:",
-          updated.id
+          booking.id
         );
         return;
       }
 
       const user = await prisma.user.findUnique({
-        where: { id: updated.userId },
+        where: { id: booking.userId },
       });
 
       const captainBaseUrl =
         process.env.FISHON_CAPTAIN_API_URL || "http://localhost:3000";
       const bookingUrl = `${captainBaseUrl}/captain/bookings/${encodeURIComponent(
-        updated.id
+        booking.id
       )}`;
 
       await sendBookingConfirmedCaptainEmail({
@@ -206,11 +385,11 @@ export async function POST(req: Request) {
         anglerEmail: user?.email ?? "",
         anglerPhone: user?.phone ?? "",
         tripName: trip.name,
-        tripDate: updated.date.toISOString().slice(0, 10),
-        tripDays: updated.days,
+        tripDate: booking.date.toISOString().slice(0, 10),
+        tripDays: booking.days,
         durationHours: trip.durationHours,
-        startTime: updated.startTime ?? undefined,
-        finalPrice: `RM ${Number(updated.finalPrice).toFixed(2)}`,
+        startTime: booking.startTime ?? undefined,
+        finalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
         bookingUrl,
       });
     } catch (err) {
@@ -222,19 +401,19 @@ export async function POST(req: Request) {
   try {
     const hookUrl = process.env.CAPTAIN_WEBHOOK_URL;
     const hookSecret = process.env.CAPTAIN_API_SECRET;
-    if (hookUrl && hookSecret && updated) {
+    if (hookUrl && hookSecret) {
       const payload = {
         type: "booking.paid",
         booking: {
-          id: updated.id,
-          captainCharterId: updated.captainCharterId,
-          charterName: updated.charterName,
-          tripName: updated.tripName,
-          date: updated.date.toISOString(),
-          startTime: updated.startTime,
-          days: updated.days,
-          totalPrice: updated.totalPrice,
-          status: updated.status,
+          id: booking.id,
+          captainCharterId: booking.captainCharterId,
+          charterName: booking.charterName,
+          tripName: booking.tripName,
+          date: booking.date.toISOString(),
+          startTime: booking.startTime,
+          days: booking.days,
+          totalPrice: booking.totalPrice,
+          status: booking.status,
         },
       };
       sendWithRetry(hookUrl, payload, {
@@ -244,6 +423,4 @@ export async function POST(req: Request) {
       });
     }
   } catch {}
-
-  return NextResponse.json({ ok: true });
 }

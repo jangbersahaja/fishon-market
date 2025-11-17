@@ -16,12 +16,20 @@ import React from "react";
 function formatDate(iso: string | undefined) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleDateString("en-MY", {
+    const date = new Date(iso);
+    const dateStr = date.toLocaleDateString("en-MY", {
       year: "numeric",
       month: "short",
       day: "numeric",
       timeZone: "Asia/Kuala_Lumpur",
     });
+    const timeStr = date.toLocaleTimeString("en-MY", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Kuala_Lumpur",
+    });
+    return `${dateStr}, ${timeStr}`;
   } catch {
     return iso;
   }
