@@ -231,6 +231,15 @@ export async function POST(req: Request) {
     try {
       revalidatePath("/book/confirm", "page");
       revalidatePath("/account/bookings", "page");
+
+      // Revalidate messages page if conversation exists
+      const conversation = await prisma.conversation.findUnique({
+        where: { bookingId: updated.id },
+        select: { id: true },
+      });
+      if (conversation) {
+        revalidatePath(`/account/messages/${conversation.id}`, "page");
+      }
     } catch (error) {
       console.error("Revalidation failed:", error);
     }

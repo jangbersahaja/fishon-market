@@ -22,6 +22,7 @@ import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -936,6 +937,30 @@ async function createAuthenticatedBooking(session: any, body: any) {
         console.error("Failed to track booking submitted:", err);
       }
     })();
+
+    // Revalidate relevant pages after booking creation
+    try {
+      // Fetch conversation ID for this booking
+      const conversation = await prisma.conversation.findUnique({
+        where: { bookingId: booking.id },
+        select: { id: true },
+      });
+
+      // Revalidate booking list and confirmation page
+      revalidatePath("/account/bookings");
+      revalidatePath("/book/confirm");
+
+      // Revalidate message page if conversation exists
+      if (conversation) {
+        revalidatePath(`/account/messages/${conversation.id}`);
+      }
+    } catch (revalidateErr) {
+      console.warn(
+        "⚠️ Failed to revalidate paths after booking creation:",
+        revalidateErr
+      );
+      // Non-critical error - continue with response
+    }
 
     // Handle DIRECT flow redirect
     if (

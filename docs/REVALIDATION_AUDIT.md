@@ -159,6 +159,7 @@
 **Impact:** Chat doesn't show cancelled status until refresh.
 
 ---
+
 #### ⚠️ Booking Reject: `/api/bookings/reject`
 
 **When:** Captain rejects booking (via admin)
@@ -228,7 +229,8 @@ revalidatePath("/captain/calendar");
 
 #### 3. Booking Create Routes (fishon-market)
 
-**Files:** 
+**Files:**
+
 - `fishon-market/src/app/api/bookings/create/route.ts`
 - `fishon-market/src/app/api/bookings/create-manual/route.ts`
 - `fishon-market/src/app/api/bookings/create-guest/route.ts`
@@ -277,7 +279,8 @@ if (conversationId) {
 
 #### 6. Booking Approve/Reject (fishon-market)
 
-**Files:** 
+**Files:**
+
 - `fishon-market/src/app/api/bookings/approve/route.ts`
 - `fishon-market/src/app/api/bookings/reject/route.ts`
 
