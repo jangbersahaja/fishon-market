@@ -69,13 +69,34 @@ export async function POST(request: Request) {
     });
 
     // Send verification email using new email service
-    await sendVerificationCode({
-      to: email,
-      userName: firstName || "there",
-      code,
-      purpose: "guest_booking",
-      expiryMinutes: 10,
-    });
+    try {
+      await sendVerificationCode({
+        to: email,
+        userName: firstName || "there",
+        code,
+        purpose: "guest_booking",
+        expiryMinutes: 10,
+      });
+    } catch (emailError) {
+      // Log detailed email error for debugging
+      console.error("Email sending failed:", {
+        error: emailError,
+        message:
+          emailError instanceof Error ? emailError.message : "Unknown error",
+        stack: emailError instanceof Error ? emailError.stack : undefined,
+        email: email, // Include email (sanitized in logs)
+        smtpConfigured: !!(
+          process.env.SMTP_HOST &&
+          process.env.SMTP_USER &&
+          (process.env.SMTP_PASS || process.env.SMTP_PASSWORD)
+        ),
+      });
+
+      // Throw to outer catch with more context
+      throw new Error(
+        `Email delivery failed: ${emailError instanceof Error ? emailError.message : "Unknown error"}`
+      );
+    }
 
     return NextResponse.json(
       {
@@ -86,9 +107,34 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (e) {
-    console.error("Guest verification error", e);
+    console.error("Guest verification error:", {
+      error: e,
+      message: e instanceof Error ? e.message : "Unknown error",
+      stack: e instanceof Error ? e.stack : undefined,
+    });
+
+    // Return more helpful error message in development
+    const errorMessage =
+      e instanceof Error
+        ? e.message
+        : "Failed to send verification code. Please try again.";
+    const isDev = process.env.NODE_ENV === "development";
+
     return NextResponse.json(
-      { error: "Failed to send verification code. Please try again." },
+      {
+        error: isDev
+          ? errorMessage
+          : "Failed to send verification code. Please try again.",
+        details: isDev
+          ? {
+              smtpConfigured: !!(
+                process.env.SMTP_HOST &&
+                process.env.SMTP_USER &&
+                (process.env.SMTP_PASS || process.env.SMTP_PASSWORD)
+              ),
+            }
+          : undefined,
+      },
       { status: 500 }
     );
   }
