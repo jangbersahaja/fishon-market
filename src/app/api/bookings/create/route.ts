@@ -805,14 +805,18 @@ async function createAuthenticatedBooking(session: any, body: any) {
             paymentFlow: booking.paymentFlow,
           },
         };
-        // Best-effort retry
-        sendWithRetry(hookUrl, payload, {
+        // Send webhook and wait for it to complete
+        await sendWithRetry(hookUrl, payload, {
           headers: { "x-captain-secret": hookSecret },
           attempts: 3,
           baseDelayMs: 300,
         });
+        console.log("✅ Webhook sent successfully to captain");
       }
-    } catch {}
+    } catch (webhookErr) {
+      console.error("⚠️ Webhook send failed:", webhookErr);
+      // Non-critical - continue
+    }
 
     // Notify angler (non-blocking best-effort)
     (async () => {
@@ -940,6 +944,9 @@ async function createAuthenticatedBooking(session: any, body: any) {
 
     // Revalidate relevant pages after booking creation
     try {
+      // Wait briefly for conversation creation (async IIFE above)
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
       // Fetch conversation ID for this booking
       const conversation = await prisma.conversation.findUnique({
         where: { bookingId: booking.id },
@@ -947,12 +954,18 @@ async function createAuthenticatedBooking(session: any, body: any) {
       });
 
       // Revalidate booking list and confirmation page
-      revalidatePath("/account/bookings");
-      revalidatePath("/book/confirm");
+      revalidatePath("/account/bookings", "page");
+      revalidatePath("/book/confirm", "page");
 
       // Revalidate message page if conversation exists
       if (conversation) {
-        revalidatePath(`/account/messages/${conversation.id}`);
+        revalidatePath(`/account/messages/${conversation.id}`, "page");
+        console.log(
+          "✅ Revalidated pages including message page:",
+          conversation.id
+        );
+      } else {
+        console.log("✅ Revalidated pages (no conversation yet)");
       }
     } catch (revalidateErr) {
       console.warn(

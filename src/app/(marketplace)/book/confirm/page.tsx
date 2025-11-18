@@ -18,6 +18,9 @@ import Link from "next/link";
 import { BookingConfirmActions } from "./BookingConfirmActions";
 import { BookingStatusRefresh } from "./BookingStatusRefresh";
 
+// Force dynamic rendering to ensure revalidation works
+export const dynamic = "force-dynamic";
+
 export default async function ConfirmationPage({
   searchParams,
 }: {

@@ -1,12 +1,15 @@
+import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import PrivacyInteractive from "./PrivacyInteractive";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | Fishon",
-  robots: { index: false, follow: false },
+export const metadata: Metadata = createMetadata({
+  title: "Privacy Policy",
   description:
-    "Privacy Policy for Fishon.my – how we collect, use, and protect your personal data.",
-};
+    "Learn how Fishon.my protects your personal information and data privacy",
+  keywords: ["privacy policy", "data protection", "personal information"],
+  canonicalUrl: "https://www.fishon.my/privacy",
+  // TODO: Add branded OG image (1200x630px) for social sharing
+});
 
 export default function PrivacyPolicyPage() {
   return (

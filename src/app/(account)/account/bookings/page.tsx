@@ -5,7 +5,8 @@ import { getUserBookings } from "@/lib/services/booking-service";
 import { canReviewBooking } from "@/lib/services/review-service";
 import { redirect } from "next/navigation";
 
-// TODO: revalidate page when booking status change
+// Force dynamic rendering to ensure revalidation works
+export const dynamic = "force-dynamic";
 
 export default async function BookingsPage() {
   const session = await auth();
