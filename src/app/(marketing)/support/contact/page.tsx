@@ -1,29 +1,16 @@
 "use client";
 
+import { createContactPointSchema, serializeSchema } from "@/lib/seo";
 import { useMemo, useState } from "react";
 
 // NOTE: If you later add a server action or API route, you can swap the mailto fallback with a real submit.
 
-// ---- Page-level metadata (kept here for co-location; App Router also supports exporting from a server file) ----
-
-const orgSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Fishon.my",
-  url: "https://www.fishon.my",
-  contactPoint: [
-    {
-      "@type": "ContactPoint",
-      contactType: "customer support",
-      email: "support@fishon.my",
-      availableLanguage: ["en", "ms"],
-    },
-  ],
-  sameAs: [
-    "https://www.facebook.com/fishon.my",
-    "https://www.instagram.com/fishon.my",
-  ],
-};
+// ContactPoint schema for structured data
+const contactPointSchema = createContactPointSchema(
+  "Customer Service",
+  "+60",
+  "support@fishon.my"
+);
 
 type Topic =
   | "General"
@@ -74,10 +61,12 @@ export default function ContactPage() {
 
   return (
     <main className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      {/* JSON-LD */}
+      {/* JSON-LD: ContactPoint schema */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        dangerouslySetInnerHTML={{
+          __html: serializeSchema(contactPointSchema),
+        }}
       />
 
       {/* Header */}
@@ -86,7 +75,7 @@ export default function ContactPage() {
           Contact <span className="text-[#EC2227]">Fishon.my</span>
         </h1>
         <p className="mt-4 text-neutral-700">
-          Questions about bookings, listing your charter, or partnerships? We’d
+          Questions about bookings, listing your charter, or partnerships? We'd
           love to hear from you.
         </p>
       </section>
@@ -110,7 +99,7 @@ export default function ContactPage() {
       <section className="p-6 border rounded-xl border-neutral-200">
         <h2 className="text-xl font-semibold">Send us a message</h2>
         <p className="mt-1 text-neutral-600">
-          Fill out the form and we’ll get back to you. Required fields are
+          Fill out the form and we'll get back to you. Required fields are
           marked with *.
         </p>
 
@@ -218,7 +207,7 @@ export default function ContactPage() {
       <section className="grid gap-6 mt-12 sm:grid-cols-2">
         <Card title="What happens after I send a message?">
           <p>
-            We’ll review your enquiry and respond via email. For urgent booking
+            We'll review your enquiry and respond via email. For urgent booking
             issues, include your booking reference or charter URL for faster
             handling.
           </p>
