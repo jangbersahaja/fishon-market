@@ -4,6 +4,11 @@ import Chrome from "@/components/layout/Chrome";
 import SessionProvider from "@/components/shared/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth/auth";
+import {
+  createOrganizationSchema,
+  createWebSiteSchema,
+  serializeSchema,
+} from "@/lib/seo";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -29,6 +34,10 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
 };
 
+// Global structured data schemas
+const organizationSchema = createOrganizationSchema();
+const websiteSchema = createWebSiteSchema();
+
 export default async function RootLayout({
   children,
 }: {
@@ -38,6 +47,20 @@ export default async function RootLayout({
   return (
     <html lang="ms">
       <head>
+        {/* Global JSON-LD: Organization schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeSchema(organizationSchema),
+          }}
+        />
+        {/* Global JSON-LD: WebSite schema with search action */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeSchema(websiteSchema),
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

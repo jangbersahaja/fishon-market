@@ -942,6 +942,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       }
     })();
 
+    //TODO: check if revalidation really needed
     // Revalidate relevant pages after booking creation
     try {
       // Wait briefly for conversation creation (async IIFE above)

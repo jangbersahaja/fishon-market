@@ -281,8 +281,8 @@ export default function ReviewForm({
               s === step
                 ? "bg-blue-600"
                 : s < step
-                ? "bg-blue-300"
-                : "bg-gray-200"
+                  ? "bg-blue-300"
+                  : "bg-gray-200"
             }`}
           />
         ))}
@@ -353,15 +353,22 @@ export default function ReviewForm({
                   key={badge.id}
                   type="button"
                   onClick={() => toggleBadge(badge.id as ReviewBadgeId)}
-                  className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  className={`p-4 rounded-lg border-2 transition-all text-left flex flex-col items-center ${
                     formData.badges.includes(badge.id as ReviewBadgeId)
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-blue-300"
+                      ? "border-blue-500 bg-blue-50 opacity-100"
+                      : "border-gray-200 hover:border-blue-300 opacity-65"
                   }`}
                 >
-                  <div className="mb-1 text-2xl">{badge.icon}</div>
+                  <div className="relative w-full h-20">
+                    <Image
+                      src={badge.iconUrl}
+                      alt={badge.label}
+                      layout="fill"
+                      objectFit="contain"
+                    />
+                  </div>
                   <div className="text-sm font-medium">{badge.label}</div>
-                  <div className="mt-1 text-xs text-gray-600">
+                  <div className="mt-1 text-xs text-center text-gray-600">
                     {badge.description}
                   </div>
                 </button>
