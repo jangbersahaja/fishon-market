@@ -9,6 +9,7 @@ It’s built with **Next.js 15**, **React 19**, **Prisma ORM**, and **PostgreSQL
 
 - 🎣 **Charter Bookings** — real-time listings, trip availability, instant booking & confirmation flow
 - 👤 **User Accounts** — anglers (frontend) + captains (backend) with distinct dashboards
+- 🌐 **Multi-lingual Support** — Malay (ms) and English (en) with next-intl
 - 💬 **Chat System (coming soon)** — instant communication between anglers & captains
 - 💳 **Secure Payments** — SenangPay / Stripe integration for deposits and transactions
 - ⭐ **Reviews & Ratings** — transparent feedback after completed trips
@@ -207,13 +208,16 @@ See:
 
 ## 🧭 Documentation Index
 
-| Doc                           | Description                        |
-| ----------------------------- | ---------------------------------- |
-| `DOCS/DB_ARCHITECTURE.md`     | Full database & migration guide    |
-| `CONTRIBUTING.md`             | How to develop, branch, and deploy |
-| `DEPLOY_CHECKLIST.md`         | Production deployment checklist    |
-| `docs/BACKEND_INTEGRATION.md` | Backend API and data flow          |
-| `@fishon/schemas`             | Shared Zod event schemas           |
+| Doc                                  | Description                               |
+| ------------------------------------ | ----------------------------------------- |
+| `docs/I18N_QUICKSTART.md`            | 🌐 Quick start guide for i18n usage       |
+| `docs/I18N_IMPLEMENTATION.md`        | 🌐 Complete i18n implementation guide     |
+| `docs/I18N_MIGRATION_PLAN.md`        | 🌐 Plan for migrating to i18n             |
+| `DOCS/DB_ARCHITECTURE.md`            | Full database & migration guide           |
+| `CONTRIBUTING.md`                    | How to develop, branch, and deploy        |
+| `DEPLOY_CHECKLIST.md`                | Production deployment checklist           |
+| `docs/BACKEND_INTEGRATION.md`        | Backend API and data flow                 |
+| `@fishon/schemas`                    | Shared Zod event schemas                  |
 
 ---
 
