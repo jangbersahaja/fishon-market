@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Database, MessageSquare } from "lucide-react";
+import { Database, MessageSquare, Smartphone } from "lucide-react";
 import Link from "next/link";
 
 export default function DevToolsPage() {
@@ -23,6 +23,14 @@ export default function DevToolsPage() {
       icon: MessageSquare,
       href: "/dev/toast-preview",
       badge: "New",
+    },
+    {
+      title: "SMS Test",
+      description:
+        "Test SMS notifications with Exabytes integration. Send test SMS to any phone number.",
+      icon: Smartphone,
+      href: "/dev/sms-test",
+      badge: "Dev",
     },
     {
       title: "Database Health",
@@ -42,7 +50,7 @@ export default function DevToolsPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {tools.map((tool) => {
           const Icon = tool.icon;
           return (

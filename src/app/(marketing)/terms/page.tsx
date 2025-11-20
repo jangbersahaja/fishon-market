@@ -1,12 +1,15 @@
+import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import TermsInteractive from "./TermsInteractive";
 
-export const metadata: Metadata = {
-  title: "Terms of Service | Fishon",
-  robots: { index: false, follow: false },
+export const metadata: Metadata = createMetadata({
+  title: "Terms of Service",
   description:
-    "Terms of Service for Fishon.my – Malaysia's fishing charter booking platform.",
-};
+    "Read our terms and conditions for using Fishon.my fishing charter booking platform",
+  keywords: ["terms of service", "user agreement", "booking terms"],
+  canonicalUrl: "https://www.fishon.my/terms",
+  // TODO: Add branded OG image (1200x630px) for social sharing
+});
 
 export default function TermsOfServicePage() {
   return (

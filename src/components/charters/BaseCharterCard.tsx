@@ -118,13 +118,13 @@ export default function BaseCharterCard({
   // Image height classes based on aspect ratio
   const imageHeightClasses = {
     square: {
-      full: "h-56 md:h-60",
+      full: "h-100 md:h-72",
       compact: "h-44",
       nearby: "h-84",
       favorite: "h-48",
     },
     landscape: {
-      full: "h-48 md:h-52",
+      full: "h-52 md:h-64",
       compact: "h-32",
       nearby: "h-48",
       favorite: "h-40",
@@ -157,7 +157,7 @@ export default function BaseCharterCard({
         <div className="flex flex-col flex-1 min-w-0 py-3 pr-3">
           <div className="flex items-start justify-between gap-2">
             <Link href={href} className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
+              <h3 className="font-semibold text-gray-900 text-md line-clamp-2 font-oswald">
                 {formatCharterName(c.name)}
               </h3>
             </Link>
@@ -185,9 +185,9 @@ export default function BaseCharterCard({
           </div>
 
           {/* Price pinned to bottom */}
-          <div className="pt-2 mt-auto">
+          <div className="pt-2 mt-auto font-oswald">
             {typeof minPrice === "number" && (
-              <PriceTag price={minPrice} variant="from" size="sm" />
+              <PriceTag price={minPrice} variant="from" size="md" />
             )}
           </div>
         </div>
@@ -225,7 +225,7 @@ export default function BaseCharterCard({
           )}
           <div className="absolute bottom-0 w-full ">
             <div className="bg-gradient-to-t from-[#ec2227] to-[#ec2227]/0 w-full flex flex-col items-center">
-              <h3 className="pt-10 pb-2 text-2xl font-bold text-center text-white line-clamp-1">
+              <h3 className="pt-10 pb-2 text-2xl font-semibold text-center text-white uppercase line-clamp-1 font-oswald">
                 {formatCharterName(c.name)}
               </h3>
             </div>
@@ -253,7 +253,7 @@ export default function BaseCharterCard({
             <span className="text-sm">{c.boat.type}</span>
           </div>
 
-          <div className="flex flex-col items-center w-full gap-2 p-3 text-xs border border-white/20 rounded-2xl">
+          <div className="flex flex-col items-center w-full gap-2 p-3 text-xs border border-white/20 rounded-2xl font-oswald">
             {typeof minPrice === "number" && (
               <PriceTag
                 price={minPrice}
@@ -268,7 +268,7 @@ export default function BaseCharterCard({
               rel="noopener noreferrer"
               className="w-full py-1.5 bg-gradient-to-tr from-gray-100 to-gray-200 rounded-full shadow-md transition-colors hover:from-gray-50 hover:to-gray-100 flex justify-center hover:scale-101"
             >
-              <span className="text-lg font-semibold text-[#ec2227] uppercase">
+              <span className="text-xl font-medium text-[#ec2227] uppercase font-oswald">
                 Book Trip
               </span>
             </Link>
@@ -300,7 +300,7 @@ export default function BaseCharterCard({
           {/* Header with Favorite Button */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <Link href={href} className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-gray-900 hover:text-[#ec2227] truncate">
+              <h3 className="text-xl font-semibold text-gray-900 hover:text-[#ec2227] truncate font-oswald uppercase">
                 {formatCharterName(c.name)}
               </h3>
             </Link>
@@ -338,12 +338,12 @@ export default function BaseCharterCard({
           {/* Actions */}
           <div className="flex gap-2">
             <Link href={`/book/${idForLink}`} className="flex-1">
-              <button className="w-full px-4 py-2 bg-[#ec2227] hover:bg-[#d11f24] text-white rounded-lg font-medium transition-colors">
+              <button className="w-full px-4 py-2 bg-[#ec2227] hover:bg-[#d11f24] text-white rounded-lg font-medium transition-colors font-oswald uppercase">
                 Book Now
               </button>
             </Link>
             <Link href={href}>
-              <button className="px-4 py-2 font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg hover:border-gray-400">
+              <button className="px-4 py-2 font-medium text-gray-700 uppercase transition-colors border border-gray-300 rounded-lg hover:border-gray-400 font-oswald">
                 Details
               </button>
             </Link>
@@ -410,34 +410,46 @@ export default function BaseCharterCard({
 
       <Link href={href}>
         {/* Body */}
-        <div className="flex flex-col flex-1 gap-2.5 p-3 bg-gradient-to-br from-white via-slate-50/30 to-white">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold leading-tight truncate lg:text-2xl text-slate-900 group-hover:text-[#ec2227] transition-colors duration-200">
-                {formatCharterName(c.name)}
-              </h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <StarRating
-                  value={avg ?? 0}
-                  size={14}
-                  reviewCount={reviews.length}
-                  textSize="text-[11px]"
-                />
-              </div>
-            </div>
+        <div className="px-3 my-3">
+          {/* Location */}
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <MapPin className="w-4 h-4 text-[#ec2227] flex-shrink-0" />
+            <span className="text-xs font-medium truncate">
+              {formatLocation(c.location)}
+            </span>
           </div>
-
-          <div className="flex flex-col gap-2">
-            {/* Location */}
-            <div className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg text-slate-700 bg-white/80 border-slate-200/60">
-              <MapPin className="w-4 h-4 text-[#ec2227] flex-shrink-0" />
-              <span className="text-xs font-medium truncate">
-                {formatLocation(c.location)}
+          <h3 className="mt-1 text-2xl uppercase font-semibold leading-tight truncate lg:text-3xl text-slate-900 group-hover:text-[#ec2227] transition-colors duration-200 font-oswald">
+            {formatCharterName(c.name)}
+          </h3>
+          {/* Trip list - Show first 4 trips with count */}
+          {Array.isArray(c.trip) && c.trip.length > 0 && (
+            <div className="text-[10px] mt-1">
+              <span className="font-semibold text-slate-900">Trips:</span>{" "}
+              <span className="text-slate-700">
+                {(() => {
+                  const tripNames = c.trip.map((t) => t.name).filter(Boolean);
+                  const shown = tripNames.slice(0, 3);
+                  const more = tripNames.length - shown.length;
+                  return (
+                    <>
+                      {shown.join(" • ")}
+                      {more > 0 && (
+                        <span className="ml-1 font-semibold text-[#ec2227]">
+                          + {more} more
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
               </span>
             </div>
+          )}
+        </div>
 
+        <div className="grid grid-cols-3 px-5 mb-5 bg-gradient-to-br from-white via-slate-50/30 to-white">
+          <div className="flex flex-col col-span-2 gap-3 pr-5 border-r-2 border-slate-200/60">
             {/* Captain row */}
-            <div className="flex items-center gap-2.5 text-xs text-slate-700 bg-white/80 rounded-lg px-3 py-2.5 border border-slate-200/60">
+            <div className="flex items-center gap-2.5 text-xs text-slate-700">
               {captainAvatar ? (
                 <span className="relative w-8 h-8 overflow-hidden rounded-full ring-2 ring-[#ec2227]/20">
                   <SafeImage
@@ -467,7 +479,7 @@ export default function BaseCharterCard({
             </div>
 
             {/* Compact meta */}
-            <div className="flex items-center gap-2 px-3 py-2 text-xs border rounded-lg bg-white/80 border-slate-200/60">
+            <div className="flex items-center gap-2 text-xs">
               <ShipIcon className="h-4 w-4 text-[#ec2227]" />
               <span className="font-medium text-slate-700">{c.boat.type}</span>
               <span className="text-slate-400">•</span>
@@ -477,69 +489,57 @@ export default function BaseCharterCard({
             </div>
 
             {/* Badges: species / techniques (first few) */}
-            <div className="flex flex-wrap gap-1.5 text-[10px]">
+            <div className="flex flex-col gap-1.5 text-[10px]">
               {/* Species badges - Blue theme with local names */}
-              {Array.isArray(c.species) &&
-                c.species.slice(0, 3).map((s) => {
-                  const speciesData = ALL_SPECIES.find(
-                    (species) => species.id === s
-                  );
-                  const displayName = speciesData?.local_name || s;
-                  return (
-                    <span
-                      key={s}
-                      className="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200/60 text-blue-700 font-medium hover:border-blue-400 hover:bg-blue-100 transition-all duration-200"
-                    >
-                      {displayName}
-                    </span>
-                  );
-                })}
-              {/* Techniques badges - Green theme */}
-              {Array.isArray(c.techniques) &&
-                c.techniques.slice(0, 2).map((t) => (
-                  <span
-                    key={t}
-                    className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200/60 text-emerald-700 font-medium hover:border-emerald-400 hover:bg-emerald-100 transition-all duration-200"
-                  >
-                    {t}
-                  </span>
-                ))}
-            </div>
-
-            {/* Trip list - Show first 4 trips with count */}
-            {Array.isArray(c.trip) && c.trip.length > 0 && (
-              <div className="px-2.5 py-1.5 text-[10px] border rounded-lg bg-white/80 border-slate-200/60">
-                <span className="font-semibold text-slate-900">Trips:</span>{" "}
-                <span className="text-slate-700">
-                  {(() => {
-                    const tripNames = c.trip.map((t) => t.name).filter(Boolean);
-                    const shown = tripNames.slice(0, 3);
-                    const more = tripNames.length - shown.length;
-                    return (
-                      <>
-                        {shown.join(" • ")}
-                        {more > 0 && (
-                          <span className="ml-1 font-semibold text-[#ec2227]">
-                            + {more} more
-                          </span>
-                        )}
-                      </>
+              <div className="flex gap-1.5">
+                {Array.isArray(c.species) &&
+                  c.species.slice(0, 3).map((s) => {
+                    const speciesData = ALL_SPECIES.find(
+                      (species) => species.id === s
                     );
-                  })()}
-                </span>
+                    const displayName = speciesData?.local_name || s;
+                    return (
+                      <span
+                        key={s}
+                        className="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200/60 text-blue-700 font-medium hover:border-blue-400 hover:bg-blue-100 transition-all duration-200"
+                      >
+                        {displayName}
+                      </span>
+                    );
+                  })}
               </div>
-            )}
+              {/* Techniques badges - Green theme */}
+              <div className="flex gap-1.5">
+                {Array.isArray(c.techniques) &&
+                  c.techniques.slice(0, 2).map((t) => (
+                    <span
+                      key={t}
+                      className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200/60 text-emerald-700 font-medium hover:border-emerald-400 hover:bg-emerald-100 transition-all duration-200"
+                    >
+                      {t}
+                    </span>
+                  ))}
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between pt-1.5 mt-auto border-t border-slate-200/60">
-            {typeof minPrice === "number" && (
-              <div className="flex flex-col">
-                <PriceTag price={minPrice} variant="from" size="lg" />
-              </div>
-            )}
-            <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white text-xs font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105">
-              View Details
-            </button>
+          <div className="flex flex-col items-center justify-between w-full h-full">
+            <StarRating
+              value={avg ?? 0}
+              size={16}
+              reviewCount={reviews.length}
+              textSize="text-[14px]"
+            />
+            <div className="flex flex-col items-center w-full gap-3 pl-3">
+              {typeof minPrice === "number" && (
+                <div className="flex flex-col transition-all duration-200 font-oswald group-hover:scale-105">
+                  <PriceTag price={minPrice} variant="per-day" size="lg" />
+                </div>
+              )}
+              <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white text-lg font-medium uppercase rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105 font-oswald">
+                Book Now
+              </button>
+            </div>
           </div>
         </div>
       </Link>

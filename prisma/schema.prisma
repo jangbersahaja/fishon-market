@@ -621,6 +621,23 @@ model NotificationPreferences {
   pushPaymentFailed       Boolean @default(true)
   pushSystemAnnouncement  Boolean @default(true)
 
+  // SMS notification preferences (per type) - NEW: SMS channel
+  smsBookingCreated      Boolean @default(true)
+  smsPaymentAuthorized   Boolean @default(true)
+  smsBookingApproved     Boolean @default(true)
+  smsPaymentCaptured     Boolean @default(true)
+  smsBookingRejected     Boolean @default(true)
+  smsPaymentReleased     Boolean @default(true)
+  smsBookingPaid         Boolean @default(true)
+  smsBookingCancelled    Boolean @default(true)
+  smsPaymentRefunded     Boolean @default(true)
+  smsReviewSubmitted     Boolean @default(true)
+  smsReviewApproved      Boolean @default(true)
+  smsReviewRejected      Boolean @default(true)
+  smsAccountVerified     Boolean @default(true)
+  smsPaymentFailed       Boolean @default(true)
+  smsSystemAnnouncement  Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -91,11 +91,11 @@ function MediaStrip({
   if (allMedia.length === 0) return null;
 
   return (
-    <div className="mt-3 flex gap-2 overflow-x-auto">
+    <div className="flex gap-2 mt-3 overflow-x-auto">
       {photos.map((url, index) => (
         <div
           key={`photo-${index}`}
-          className="relative h-15 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100"
+          className="relative w-20 overflow-hidden bg-gray-100 h-15 shrink-0 rounded-xl"
         >
           <Image
             src={url}
@@ -109,10 +109,10 @@ function MediaStrip({
       {videos.map((url, index) => (
         <div
           key={`video-${index}`}
-          className="relative h-15 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-900"
+          className="relative w-20 overflow-hidden bg-gray-900 h-15 shrink-0 rounded-xl"
         >
           <video
-            className="h-full w-full object-cover"
+            className="object-cover w-full h-full"
             controls
             preload="metadata"
             muted
@@ -137,11 +137,11 @@ function ReviewCard({ review }: { review: Review }) {
     .slice(0, 2);
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-black/10 bg-white/95 p-5 shadow-sm transition hover:shadow-md">
+    <article className="flex flex-col h-full p-5 transition border shadow-sm rounded-3xl border-black/10 bg-white/95 hover:shadow-md">
       <header className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           {review.user.image ? (
-            <div className="relative h-12 w-12 overflow-hidden rounded-full">
+            <div className="relative w-12 h-12 overflow-hidden rounded-full">
               <Image
                 src={review.user.image}
                 alt={reviewerName}
@@ -151,7 +151,7 @@ function ReviewCard({ review }: { review: Review }) {
               />
             </div>
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold uppercase text-gray-700">
+            <div className="flex items-center justify-center w-12 h-12 text-sm font-semibold text-gray-700 uppercase bg-gray-100 rounded-full">
               {reviewerInitials}
             </div>
           )}
@@ -177,20 +177,25 @@ function ReviewCard({ review }: { review: Review }) {
       <MediaStrip photos={review.photos} videos={review.videos} />
 
       {badges.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-dashed border-gray-200 pt-3">
+        <div className="flex flex-wrap gap-2 pt-3 mt-4 border-t border-gray-200 border-dashed">
           {badges.map((badge) => (
             <span
               key={`${review.id}-${badge.id}`}
-              className="group relative inline-flex"
+              className="relative inline-flex group"
             >
               <span
                 tabIndex={0}
-                className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1 text-xs font-medium text-gray-700 border rounded-full border-black/10 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400"
               >
-                <span>{badge.icon}</span>
+                <Image
+                  src={badge.iconUrl}
+                  alt={badge.label}
+                  width={24}
+                  height={24}
+                />
                 <span>{badge.label}</span>
               </span>
-              <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-44 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-center text-xs font-medium text-white shadow-lg group-hover:flex group-focus-within:flex">
+              <span className="absolute z-20 hidden px-3 py-2 mt-2 text-xs font-medium text-center text-white -translate-x-1/2 bg-gray-900 rounded-lg shadow-lg pointer-events-none left-1/2 top-full w-44 group-hover:flex group-focus-within:flex">
                 <span className="leading-snug">{badge.description}</span>
               </span>
             </span>
@@ -245,7 +250,7 @@ export default function EnhancedReviewsList({
 
   return (
     <section className="mt-6">
-      <div className="rounded-2xl border border-black/10 bg-white p-5 sm:p-6">
+      <div className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-semibold sm:text-lg">
@@ -259,7 +264,7 @@ export default function EnhancedReviewsList({
           <label className="text-xs font-medium text-gray-600">
             Sort by
             <select
-              className="ml-2 rounded-full border border-black/10 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700"
+              className="px-3 py-1 ml-2 text-xs font-semibold text-gray-700 border rounded-full border-black/10 bg-gray-50"
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
             >
@@ -272,7 +277,7 @@ export default function EnhancedReviewsList({
           </label>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-2">
           {featuredReviews.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
@@ -293,12 +298,12 @@ export default function EnhancedReviewsList({
 
       {showModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8"
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-black/60"
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="flex flex-col gap-3 border-b border-black/10 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex flex-col w-full h-full max-w-5xl overflow-hidden bg-white shadow-2xl rounded-3xl">
+            <div className="flex flex-col gap-3 px-6 py-5 border-b border-black/10 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h4 className="text-lg font-semibold">All reviews</h4>
                 <p className="text-xs text-gray-500">
@@ -310,7 +315,7 @@ export default function EnhancedReviewsList({
                 <label className="text-xs font-semibold text-gray-600">
                   Sort by
                   <select
-                    className="ml-2 rounded-full border border-black/10 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700"
+                    className="px-3 py-1 ml-2 text-xs font-semibold text-gray-700 border rounded-full border-black/10 bg-gray-50"
                     value={sortKey}
                     onChange={(event) =>
                       setSortKey(event.target.value as SortKey)
@@ -327,13 +332,13 @@ export default function EnhancedReviewsList({
                   type="button"
                   aria-label="Close reviews"
                   onClick={() => setShowModal(false)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-gray-500 transition hover:text-gray-800"
+                  className="inline-flex items-center justify-center text-gray-500 transition border rounded-full h-9 w-9 border-black/10 hover:text-gray-800"
                 >
                   <span className="text-xl">×</span>
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="flex-1 px-6 py-6 overflow-y-auto">
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {sortedReviews.map((review) => (
                   <ReviewCard key={`modal-${review.id}`} review={review} />

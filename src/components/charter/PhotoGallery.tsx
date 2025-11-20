@@ -105,12 +105,12 @@ export function PhotoGallery({
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,3fr)_minmax(0,1fr)] sm:auto-rows-[minmax(0,1fr)]">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,2fr)] sm:auto-rows-[minmax(0,1fr)]">
         {/* Main tile (left) */}
         <button
           type="button"
           onClick={() => openAt(0)}
-          className="relative w-full h-64 overflow-hidden bg-gray-100 group rounded-xl sm:row-span-2 sm:h-auto sm:min-h-[500px]"
+          className="relative w-full h-120 overflow-hidden bg-gray-100 group rounded-xl sm:row-span-2 sm:h-auto sm:min-h-[500px]"
           aria-label="Open gallery"
         >
           <Image
@@ -133,7 +133,7 @@ export function PhotoGallery({
             </div>
           </div>
           {/* View all button (bottom-right) */}
-          <div className="absolute bottom-0 right-0 z-10 m-3 pointer-events-none sm:m-4">
+          <div className="absolute bottom-0 left-0 z-10 m-3 pointer-events-none sm:m-4">
             <span className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-900 transition rounded-full shadow pointer-events-auto bg-white/80 backdrop-blur hover:bg-white">
               <svg
                 width="16"
@@ -163,7 +163,7 @@ export function PhotoGallery({
         </button>
 
         {/* Desktop right column (up to 4 extra tiles) */}
-        <div className="hidden sm:grid sm:row-span-2 sm:grid-cols-1 sm:grid-rows-4 sm:gap-3 sm:h-full">
+        <div className="hidden sm:grid sm:row-span-2 sm:grid-cols-2 sm:grid-rows-2 sm:gap-3 sm:h-full">
           {tiles.slice(1).map((m: (typeof media)[number], i: number) => {
             const idx = i + 1;
             const isLast =
@@ -206,7 +206,7 @@ export function PhotoGallery({
             onClick={() => openAt(idx)}
             aria-label={`Open item ${idx + 1}`}
             className={clsx(
-              "relative h-16 w-28 shrink-0 overflow-hidden rounded-lg border bg-gray-100",
+              "relative h-28 w-28 shrink-0 overflow-hidden rounded-lg border bg-gray-100",
               idx === activeIdx ? "border-[#ec2227]" : "border-transparent"
             )}
           >

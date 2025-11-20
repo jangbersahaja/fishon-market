@@ -365,6 +365,8 @@ export default async function CharterViewPage({
         <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-3">
           {/* Left column */}
           <div className="md:col-span-2">
+            <AboutSection description={desc} />
+
             {/* Video Gallery */}
             {charter?.videos && charter.videos.length > 0 && (
               <VideoGallery
@@ -375,7 +377,6 @@ export default async function CharterViewPage({
               />
             )}
 
-            <AboutSection description={desc} />
             {/* Operational Schedule */}
             {charter?.schedule && (
               <OperationalScheduleCard

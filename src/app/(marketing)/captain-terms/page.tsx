@@ -1,12 +1,20 @@
+import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import CaptainTermsInteractive from "./CaptainTermsInteractive";
 
-export const metadata: Metadata = {
-  title: "Captain Terms & Conditions | Fishon",
-  robots: { index: false, follow: false },
+export const metadata: Metadata = createMetadata({
+  title: "Captain Terms & Conditions",
   description:
-    "Captain & Charter Operator Terms and Conditions governing participation on Fishon.my.",
-};
+    "Terms and conditions for fishing charter captains and operators on Fishon.my platform",
+  keywords: [
+    "captain terms",
+    "charter operator",
+    "captain agreement",
+    "fishing charter business",
+  ],
+  canonicalUrl: "https://www.fishon.my/captain-terms",
+  // TODO: Add OG image for captain terms page
+});
 
 export default function CaptainTermsPage() {
   return (

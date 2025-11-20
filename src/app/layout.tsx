@@ -4,23 +4,36 @@ import Chrome from "@/components/layout/Chrome";
 import SessionProvider from "@/components/shared/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth/auth";
+import {
+  createOrganizationSchema,
+  createWebSiteSchema,
+  serializeSchema,
+} from "@/lib/seo";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Oswald } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-oswald",
+});
 
 export const metadata: Metadata = {
-  title: "Fishon — Malaysia’s Fishing & Charter Booking (Coming Soon)",
+  title: "Fishon — Malaysia's Fishing & Charter Booking",
   description:
-    "Fishon is Malaysia’s first fishing & charter booking platform. We’re reeling in something exciting — launching soon!",
-  metadataBase: new URL("https://your-domain-here.com"),
-  robots: { index: false, follow: false }, // keep out of search until launch
+    "Fishon is Malaysia's first fishing & charter booking platform. Discover and book fishing charters across Malaysia.",
+  metadataBase: new URL("https://www.fishon.my"),
+  robots: { index: true, follow: true },
   openGraph: {
-    title: "Fishon — Coming Soon",
+    title: "Fishon — Malaysia's Fishing & Charter Booking",
     description:
-      "Malaysia’s first fishing & charter booking platform. Launching soon.",
-    url: "https://your-domain-here.com",
+      "Discover and book fishing charters across Malaysia with Fishon.",
+    url: "https://www.fishon.my",
     siteName: "Fishon",
     images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
     type: "website",
@@ -28,6 +41,10 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
   icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
 };
+
+// Global structured data schemas
+const organizationSchema = createOrganizationSchema();
+const websiteSchema = createWebSiteSchema();
 
 export default async function RootLayout({
   children,
@@ -38,18 +55,24 @@ export default async function RootLayout({
   return (
     <html lang="ms">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
+        {/* Global JSON-LD: Organization schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeSchema(organizationSchema),
+          }}
         />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-          rel="stylesheet"
+        {/* Global JSON-LD: WebSite schema with search action */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeSchema(websiteSchema),
+          }}
         />
       </head>
-      <body className="flex flex-col font-sans">
+      <body
+        className={`flex flex-col font-sans ${inter.variable} ${oswald.variable}`}
+      >
         <SessionProvider session={session}>
           <AuthModalProvider>
             <Chrome>{children}</Chrome>

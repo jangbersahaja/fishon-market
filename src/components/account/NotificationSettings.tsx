@@ -51,6 +51,19 @@ interface NotificationPreferences {
   pushAccountVerified: boolean;
   pushPaymentFailed: boolean;
   pushSystemAnnouncement: boolean;
+
+  // SMS preferences
+  smsBookingCreated: boolean;
+  smsBookingApproved: boolean;
+  smsBookingRejected: boolean;
+  smsBookingPaid: boolean;
+  smsBookingCancelled: boolean;
+  smsReviewSubmitted: boolean;
+  smsReviewApproved: boolean;
+  smsReviewRejected: boolean;
+  smsAccountVerified: boolean;
+  smsPaymentFailed: boolean;
+  smsSystemAnnouncement: boolean;
 }
 
 const notificationTypes = [
@@ -194,6 +207,34 @@ export default function NotificationSettings() {
     notificationTypes.forEach(({ key }) => {
       const pushKey = `push${key}` as keyof NotificationPreferences;
       newPreferences[pushKey] = false;
+    });
+
+    setPreferences(newPreferences);
+    await saveAllPreferences(newPreferences);
+  };
+
+  // Enable all SMS notifications
+  const enableAllSMS = async () => {
+    if (!preferences) return;
+
+    const newPreferences = { ...preferences };
+    notificationTypes.forEach(({ key }) => {
+      const smsKey = `sms${key}` as keyof NotificationPreferences;
+      newPreferences[smsKey] = true;
+    });
+
+    setPreferences(newPreferences);
+    await saveAllPreferences(newPreferences);
+  };
+
+  // Disable all SMS notifications
+  const disableAllSMS = async () => {
+    if (!preferences) return;
+
+    const newPreferences = { ...preferences };
+    notificationTypes.forEach(({ key }) => {
+      const smsKey = `sms${key}` as keyof NotificationPreferences;
+      newPreferences[smsKey] = false;
     });
 
     setPreferences(newPreferences);
@@ -380,6 +421,56 @@ export default function NotificationSettings() {
                     id={pushKey}
                     checked={preferences[pushKey]}
                     onCheckedChange={() => handleToggle(pushKey)}
+                    disabled={isSaving}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SMS Notifications */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>SMS Notifications</CardTitle>
+              <CardDescription>
+                Receive SMS notifications to your phone
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={enableAllSMS}
+                disabled={isSaving}
+              >
+                Enable all
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={disableAllSMS}
+                disabled={isSaving}
+              >
+                Disable all
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {notificationTypes.map(({ key, label }) => {
+              const smsKey = `sms${key}` as keyof NotificationPreferences;
+              return (
+                <div key={smsKey} className="flex items-center justify-between">
+                  <Label htmlFor={smsKey}>{label}</Label>
+                  <Switch
+                    id={smsKey}
+                    checked={preferences[smsKey]}
+                    onCheckedChange={() => handleToggle(smsKey)}
                     disabled={isSaving}
                   />
                 </div>

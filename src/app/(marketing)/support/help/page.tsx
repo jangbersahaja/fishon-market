@@ -1,33 +1,78 @@
+import {
+  createFAQPageSchema,
+  createMetadata,
+  serializeSchema,
+} from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 /** SEO */
-export const metadata: Metadata = {
-  title: "Help Center | Fishon.my",
+export const metadata: Metadata = createMetadata({
+  title: "Help Center",
   description:
-    "Answers for bookings, payments, cancellations, account management, and safety on Fishon.my.",
-  alternates: { canonical: "https://www.fishon.my/help" },
-  openGraph: {
-    title: "Help Center | Fishon.my",
-    description:
-      "FAQs and guides for bookings, payments, captain onboarding, and safety.",
-    url: "https://www.fishon.my/help",
-    type: "website",
-    siteName: "Fishon.my",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Help Center | Fishon.my",
-    description:
-      "FAQs and guides for bookings, payments, captain onboarding, and safety.",
-  },
-};
+    "Find answers to common questions about booking fishing charters on Fishon.my",
+  keywords: ["help center", "faq", "booking help", "fishing charter questions"],
+  canonicalUrl: "https://www.fishon.my/support/help",
+  // TODO: Add OG image for help center page
+});
 
 const lastUpdated = "27 October 2025";
+
+// FAQ Schema data extracted from page content
+const faqItems = [
+  {
+    question: "Can I change my date after booking?",
+    answer:
+      "Date changes depend on captain availability and the listing's policy. Use your booking page or contact support.",
+  },
+  {
+    question: "Do trips go out in bad weather?",
+    answer:
+      "Safety first. Captains may reschedule or cancel according to sea conditions and local advisories.",
+  },
+  {
+    question: "How do deposits work?",
+    answer:
+      "Some listings require a deposit to secure your date. The policy is shown on the charter page and at checkout.",
+  },
+  {
+    question: "What if my card is charged but I have no confirmation?",
+    answer:
+      "Check spam/junk. If still missing after 10 minutes, contact us with the last four digits of the card and time of payment.",
+  },
+  {
+    question: "How do I modify my booking?",
+    answer:
+      "To modify your booking, please contact the captain directly or reach out to our support team. Modification policies vary by charter.",
+  },
+  {
+    question: "What is the cancellation policy?",
+    answer:
+      "Cancellation policies vary by charter. You can cancel PENDING or APPROVED bookings from your bookings page. Check the charter details for specific policies.",
+  },
+  {
+    question: "How long does captain approval take?",
+    answer:
+      "Captains typically respond within 6-24 hours. Your booking hold expires after 12 hours if not approved. You'll receive an email notification once the captain responds.",
+  },
+  {
+    question: "When will I be charged?",
+    answer:
+      "You're only charged after the captain approves your booking. Once approved, you'll receive a payment link to complete your booking confirmation.",
+  },
+];
+
+const faqSchema = createFAQPageSchema(faqItems);
 
 export default function HelpCenterPage() {
   return (
     <main className="flex flex-col min-h-screen bg-white">
+      {/* JSON-LD Schema for FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeSchema(faqSchema) }}
+      />
+
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,34,39,0.08),transparent_55%)]" />

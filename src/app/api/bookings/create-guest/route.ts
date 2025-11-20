@@ -14,6 +14,7 @@ import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 /**
@@ -636,6 +637,7 @@ export async function POST(req: Request) {
             id: booking.id,
             userId: guestUser.id,
             anglerName: `${firstName} ${lastName}`,
+            charterName: trip.charter.name,
             anglerEmail: guestUser.email,
             anglerPhone: phone,
             tripId: booking.tripId,
@@ -785,6 +787,29 @@ export async function POST(req: Request) {
         console.error("Failed to track guest booking submitted:", err);
       }
     })();
+
+    // Revalidate relevant pages after booking creation
+    try {
+      // Fetch conversation ID for this booking
+      const conversation = await prisma.conversation.findUnique({
+        where: { bookingId: booking.id },
+        select: { id: true },
+      });
+
+      // Revalidate confirmation page (guest doesn't have /account/bookings)
+      revalidatePath("/book/confirm");
+
+      // Revalidate message page if conversation exists
+      if (conversation) {
+        revalidatePath(`/account/messages/${conversation.id}`);
+      }
+    } catch (revalidateErr) {
+      console.warn(
+        "⚠️ Failed to revalidate paths after guest booking creation:",
+        revalidateErr
+      );
+      // Non-critical error - continue with response
+    }
 
     // Handle DIRECT flow redirect (AUTO flow only)
     if (

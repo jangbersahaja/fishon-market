@@ -1,12 +1,15 @@
+import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import RefundPolicyInteractive from "./RefundPolicyInteractive";
 
-export const metadata: Metadata = {
-  title: "Refund & Cancellation Policy | Fishon",
-  robots: { index: false, follow: false },
+export const metadata: Metadata = createMetadata({
+  title: "Refund & Cancellation Policy",
   description:
-    "Refund & Cancellation Policy for Fishon.my — how cancellations, rescheduling and refunds are handled.",
-};
+    "Understand our refund and cancellation policies for fishing charter bookings",
+  keywords: ["refund policy", "cancellation", "booking refund"],
+  canonicalUrl: "https://www.fishon.my/refund-policy",
+  // TODO: Add branded OG image (1200x630px) for social sharing
+});
 
 export default function RefundPolicyPage() {
   return (

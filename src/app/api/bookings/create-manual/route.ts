@@ -21,6 +21,7 @@ import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 /**
@@ -420,6 +421,24 @@ async function createManualBooking(session: any, body: any) {
       });
     } catch (analyticsErr) {
       console.error("Failed to track analytics:", analyticsErr);
+    }
+
+    // Revalidate relevant pages after booking creation
+    try {
+      // Revalidate booking list and confirmation page
+      revalidatePath("/account/bookings");
+      revalidatePath("/book/confirm");
+
+      // Revalidate message page if conversation exists
+      if (conversationId) {
+        revalidatePath(`/account/messages/${conversationId}`);
+      }
+    } catch (revalidateErr) {
+      console.warn(
+        "⚠️ Failed to revalidate paths after manual booking creation:",
+        revalidateErr
+      );
+      // Non-critical error - continue with response
     }
 
     // Return booking ID and conversation
