@@ -8,14 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Validate that this is development environment
+ * Environment check removed - endpoint available on all deployments
+ * Purpose: Test SMS delivery on production to verify IP whitelist
  */
-function isDevelopmentOnly() {
-  return (
-    process.env.NODE_ENV === "development" ||
-    process.env.VERCEL_ENV === "preview"
-  );
-}
 
 /**
  * Normalize Malaysian phone number
@@ -161,14 +156,6 @@ async function sendSMSViaExabytes(
  */
 export async function POST(request: NextRequest) {
   try {
-    // Allow in development/preview only
-    if (!isDevelopmentOnly()) {
-      return NextResponse.json(
-        { error: "SMS test endpoint only available in development" },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
     const { phone, notificationType, customMessage, templateData } = body;
 
