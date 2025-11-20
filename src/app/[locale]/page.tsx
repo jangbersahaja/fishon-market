@@ -1,7 +1,10 @@
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
+  const t = useTranslations("home");
+  const tFooter = useTranslations("footer");
   const year = new Date().getFullYear();
 
   return (
@@ -29,30 +32,26 @@ export default function Home() {
           </header>
 
           <p className="mt-5 text-lg md:text-xl/relaxed text-black/80">
-            Malaysia&apos;s first{" "}
-            <span className="font-semibold text-black">
-              fishing &amp; charter booking
-            </span>{" "}
-            platform. The marketplace experience is coming soon!
+            {t("subtitle")}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 mt-6 text-sm">
             <span
-              aria-label="Status: Marketplace in development"
+              aria-label={`Status: ${t("marketplaceStatus")}`}
               className="inline-flex items-center gap-2 rounded-full border border-[#ec2227]/20 bg-[#ec2227] px-3 py-1 text-white"
             >
               <span className="size-2 rounded-full bg-white shadow-[0_0_12px_2px_rgba(255,255,255,.6)]" />
-              Marketplace in development
+              {t("marketplaceStatus")}
             </span>
-            <span className="opacity-80 text-black/70">plan • book • fish</span>
+            <span className="opacity-80 text-black/70">{t("tagline")}</span>
           </div>
 
           <div className="p-5 mt-6 border rounded-2xl border-black/10 bg-gray-50">
             <h2 className="text-base font-semibold text-black md:text-lg">
-              Are you a Captain or Charter Operator?
+              {t("captainTitle")}
             </h2>
             <p className="mt-2 text-sm md:text-base text-black/80">
-              Captain and charter registration is now available at{" "}
+              {t("captainDescription")}{" "}
               <Link
                 href="https://fishon-captain.vercel.app/my/list-your-business"
                 target="_blank"
@@ -63,13 +62,12 @@ export default function Home() {
               </Link>
             </p>
             <p className="mt-2 text-xs md:text-sm text-black/60">
-              Register your charter, manage bookings, and reach anglers across
-              Malaysia.
+              {t("captainCta")}
             </p>
           </div>
 
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-white/90 bg-[#ec2227] border border-white/10 rounded-xl px-4 py-3">
-            <div>© {year} Fishon. All rights reserved.</div>
+            <div>© {year} Fishon. {tFooter("allRightsReserved")}.</div>
             <nav aria-label="Social links">
               <ul className="flex items-center gap-4">
                 {/* Add more links as they go live */}

@@ -100,7 +100,16 @@
     "bookingReference": "Rujukan Tempahan",
     "totalAmount": "Jumlah Keseluruhan",
     "deposit": "Wang Pendahuluan",
-    "remainingBalance": "Baki Tertunggak"
+    "remainingBalance": "Baki Tertunggak",
+    "yourBookings": "Tempahan Anda",
+    "bookingsSingular": "tempahan",
+    "bookingsPlural": "tempahan",
+    "storedLocally": "disimpan secara tempatan",
+    "createAccount": "Buat akaun untuk mengurus semua tempahan anda di satu tempat",
+    "createFreeAccount": "Buat Akaun Percuma",
+    "searchByEmail": "Cari Mengikut Emel",
+    "bookingsStoredDays": "Tempahan disimpan secara tempatan selama 30 hari",
+    "checkBookings": "Semak {count} tempahan anda"
   },
   "account": {
     "profile": "Profil",

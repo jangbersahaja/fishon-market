@@ -2,6 +2,7 @@
 
 import { useBookingStorage } from "@/hooks/useBookingStorage";
 import { Calendar, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -16,6 +17,7 @@ export function CheckYourBookings() {
   const { bookings } = useBookingStorage();
   const [showModal, setShowModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("nav");
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -32,10 +34,10 @@ export function CheckYourBookings() {
       <button
         onClick={() => setShowModal(true)}
         className="flex items-center gap-2 text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
-        aria-label={`Check your ${bookings.length} booking(s)`}
+        aria-label={t("myBookings")}
       >
         <Calendar className="w-4 h-4" />
-        <span>My Bookings</span>
+        <span>{t("myBookings")}</span>
         {bookings.length > 0 && (
           <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-[#ec2227] bg-white rounded-full">
             {bookings.length}
@@ -70,6 +72,7 @@ function CheckYourBookingsModal({
   onClose,
 }: CheckYourBookingsModalProps) {
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("booking");
 
   // Ensure we're only rendering on client
   useEffect(() => {
@@ -101,10 +104,10 @@ function CheckYourBookingsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Your Bookings</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t("yourBookings")}</h2>
             <p className="mt-1 text-sm text-gray-600">
-              {bookings.length} {bookings.length === 1 ? "booking" : "bookings"}{" "}
-              stored locally
+              {bookings.length} {bookings.length === 1 ? t("bookingsSingular") : t("bookingsPlural")}{" "}
+              {t("storedLocally")}
             </p>
           </div>
           <button
@@ -129,7 +132,7 @@ function CheckYourBookingsModal({
         <div className="p-6 border-t bg-gray-50">
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-700">
-              📌 Create an account to manage all your bookings in one place
+              📌 {t("createAccount")}
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
@@ -137,18 +140,18 @@ function CheckYourBookingsModal({
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold text-center text-white bg-[#ec2227] rounded-lg hover:bg-[#d01f24] transition-colors"
               >
-                Create Free Account
+                {t("createFreeAccount")}
               </Link>
               <Link
                 href="/find-booking"
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Search By Email
+                {t("searchByEmail")}
               </Link>
             </div>
             <p className="text-xs text-center text-gray-500">
-              Bookings are stored locally for 30 days
+              {t("bookingsStoredDays")}
             </p>
           </div>
         </div>

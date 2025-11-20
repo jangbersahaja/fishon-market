@@ -100,7 +100,16 @@
     "bookingReference": "Booking Reference",
     "totalAmount": "Total Amount",
     "deposit": "Deposit",
-    "remainingBalance": "Remaining Balance"
+    "remainingBalance": "Remaining Balance",
+    "yourBookings": "Your Bookings",
+    "bookingsSingular": "booking",
+    "bookingsPlural": "bookings",
+    "storedLocally": "stored locally",
+    "createAccount": "Create an account to manage all your bookings in one place",
+    "createFreeAccount": "Create Free Account",
+    "searchByEmail": "Search By Email",
+    "bookingsStoredDays": "Bookings are stored locally for 30 days",
+    "checkBookings": "Check your {count} booking(s)"
   },
   "account": {
     "profile": "Profile",
