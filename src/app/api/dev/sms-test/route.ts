@@ -156,6 +156,14 @@ async function sendSMSViaExabytes(
  */
 export async function POST(request: NextRequest) {
   try {
+    // Log request IP for debugging
+    const ip =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
+    console.log("[SMS Test] Request from IP:", ip);
+
     const body = await request.json();
     const { phone, notificationType, customMessage, templateData } = body;
 
@@ -197,6 +205,7 @@ export async function POST(request: NextRequest) {
             phone,
             messageLength: message.length,
             truncated: message.length > 160,
+            ip,
           },
         },
         { status: 200 }
@@ -207,6 +216,12 @@ export async function POST(request: NextRequest) {
           success: false,
           error: result.error,
           details: "Failed to send SMS via Exabytes",
+          ip,
+          debug: {
+            raw_error: result.error,
+            ip_info:
+              "If error is -1003 IP NOT ALLOWED, whitelist this IP in Exabytes account",
+          },
         },
         { status: 500 }
       );
