@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa6";
 
@@ -19,72 +22,74 @@ const socials = [
   },
 ];
 
-const abouts = [
-  {
-    name: "About Us",
-    link: "/about",
-  },
-  {
-    name: "Blog",
-    link: "/blog",
-  },
-  {
-    name: "Affiliate Program",
-    link: "",
-  },
-  {
-    name: "Contact Us",
-    link: "support/contact",
-  },
-];
-
-const discover = [
-  {
-    name: "Fishing Technique",
-    link: "/categories/techniques",
-  },
-  {
-    name: "Fishing Type",
-    link: "/categories/types",
-  },
-  {
-    name: "Fish Species",
-    link: "",
-  },
-  {
-    name: "Fish Near Me",
-    link: "",
-  },
-];
-
-const support = [
-  {
-    name: "Help Center",
-    link: "/support/help",
-  },
-  {
-    name: "Term of Services",
-    link: "/terms",
-  },
-  {
-    name: "Privacy Policy",
-    link: "/privacy",
-  },
-  {
-    name: "Refund & Cancellation",
-    link: "/refund-policy",
-  },
-];
-
 const Footer = () => {
+  const t = useTranslations("footer");
+
+  const abouts = [
+    {
+      key: "aboutUs",
+      link: "/about",
+    },
+    {
+      key: "blog",
+      link: "/blog",
+    },
+    {
+      key: "affiliateProgram",
+      link: "",
+    },
+    {
+      key: "contactUs",
+      link: "support/contact",
+    },
+  ];
+
+  const discover = [
+    {
+      key: "fishingTechnique",
+      link: "/categories/techniques",
+    },
+    {
+      key: "fishingType",
+      link: "/categories/types",
+    },
+    {
+      key: "fishSpecies",
+      link: "",
+    },
+    {
+      key: "fishNearMe",
+      link: "",
+    },
+  ];
+
+  const support = [
+    {
+      key: "helpCenter",
+      link: "/support/help",
+    },
+    {
+      key: "termsOfService",
+      link: "/terms",
+    },
+    {
+      key: "privacyPolicy",
+      link: "/privacy",
+    },
+    {
+      key: "refundCancellation",
+      link: "/refund-policy",
+    },
+  ];
+
   return (
     <main className="flex flex-col w-full bg-gray-100">
       <section className="grid w-full grid-cols-1 px-5 py-10 mx-auto max-w-7xl md:grid-cols-3 lg:grid-cols-5 gap-7">
         <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">About Fishon.my</span>
+          <span className="font-bold">{t("aboutFishon")}</span>
           <ul className="flex flex-col gap-2">
             {abouts.map((a) => (
-              <li key={a.name}>
+              <li key={a.key}>
                 <Link
                   href={a.link}
                   className={
@@ -93,17 +98,17 @@ const Footer = () => {
                       : "disabled cursor-not-allowed text-slate-500"
                   }
                 >
-                  {a.name}
+                  {t(a.key as any)}
                 </Link>
               </li>
             ))}
           </ul>
         </div>
         <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">Discover</span>
+          <span className="font-bold">{t("discover")}</span>
           <ul className="flex flex-col gap-2">
             {discover.map((a) => (
-              <li key={a.name}>
+              <li key={a.key}>
                 <Link
                   href={a.link}
                   className={
@@ -112,25 +117,25 @@ const Footer = () => {
                       : "disabled cursor-not-allowed text-slate-500"
                   }
                 >
-                  {a.name}
+                  {t(a.key as any)}
                 </Link>
               </li>
             ))}
           </ul>
         </div>
         <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">Site Map</span>
+          <span className="font-bold">{t("siteMap")}</span>
           <ul className="flex flex-col gap-2">
-            <li>All Destination</li>
+            <li>{t("allDestination")}</li>
             <li>Selangor</li>
             <li>Perak</li>
           </ul>
         </div>
         <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">Support</span>
+          <span className="font-bold">{t("support")}</span>
           <ul className="flex flex-col gap-2">
             {support.map((a) => (
-              <li key={a.name}>
+              <li key={a.key}>
                 <Link
                   href={a.link}
                   className={
@@ -139,18 +144,18 @@ const Footer = () => {
                       : "disabled cursor-not-allowed text-slate-500"
                   }
                 >
-                  {a.name}
+                  {t(a.key as any)}
                 </Link>
               </li>
             ))}
           </ul>
         </div>
         <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">Become a Captain</span>
+          <span className="font-bold">{t("becomeCaptain")}</span>
           <ul className="flex flex-col gap-2">
             <li>
               <Link href="https://fishon-captain.vercel.app/list-your-business">
-                List Your Boat
+                {t("listYourBoat")}
               </Link>
             </li>
           </ul>
@@ -158,7 +163,7 @@ const Footer = () => {
       </section>
       <section className="w-full bg-[#ec2227] ">
         <div className="flex flex-wrap items-center justify-between w-full h-24 gap-3 px-5 py-3 mx-auto max-w-7xl text-white/90">
-          <h3 className="font-bold">© 2025 Fishon. All rights reserved.</h3>
+          <h3 className="font-bold">© 2025 Fishon. {t("allRightsReserved")}.</h3>
           <nav aria-label="Social links">
             <ul className="flex items-center gap-4 text-xl">
               {/* Add more links as they go live */}

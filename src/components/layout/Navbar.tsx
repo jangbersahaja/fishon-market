@@ -3,7 +3,9 @@
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { CheckYourBookings } from "@/components/booking";
 import { NotificationBell } from "@/components/notifications";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { signOut, useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,6 +24,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user;
   const { openModal } = useAuthModal();
+  const t = useTranslations("nav");
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -75,7 +78,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                     : "hover:underline hover:decoration-white"
                 }`}
               >
-                Messages
+                {t("messages")}
               </Link>
               <Link
                 href="/account"
@@ -86,7 +89,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                     : "hover:underline hover:decoration-white"
                 }`}
               >
-                Account
+                {t("account")}
               </Link>
               <button
                 onClick={() =>
@@ -97,7 +100,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }
                 className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] hover:translate-y-px transition"
               >
-                Sign out
+                {t("signOut")}
               </button>
             </>
           ) : (
@@ -109,16 +112,20 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 onClick={() => openModal("signin", pathname)}
                 className="text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
               >
-                Sign in
+                {t("signIn")}
               </button>
               <button
                 onClick={() => openModal("register", pathname)}
                 className="text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
               >
-                Register
+                {t("register")}
               </button>
             </>
           )}
+          
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+          
           <Link
             href="https://fishon-captain.vercel.app/my/list-your-business"
             target="_blank"
@@ -130,7 +137,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 : "bg-white text-[#ec2227] hover:translate-y-px"
             }`}
           >
-            Register as Captain
+            {t("registerAsCaptain")}
           </Link>
         </nav>
 
@@ -171,7 +178,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }`}
                 onClick={() => setOpen(false)}
               >
-                Messages
+                {t("messages")}
               </Link>
               <Link
                 href="/account"
@@ -181,7 +188,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }`}
                 onClick={() => setOpen(false)}
               >
-                Account
+                {t("account")}
               </Link>
               <button
                 onClick={() => {
@@ -193,7 +200,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }}
                 className="mt-1 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-left"
               >
-                Sign out
+                {t("signOut")}
               </button>
             </>
           ) : (
@@ -210,7 +217,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }}
                 className="px-3 py-2 text-sm font-medium text-left rounded-md hover:bg-white/10"
               >
-                Sign in
+                {t("signIn")}
               </button>
               <button
                 onClick={() => {
@@ -219,17 +226,23 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }}
                 className="px-3 py-2 text-sm font-medium text-left rounded-md hover:bg-white/10"
               >
-                Register
+                {t("register")}
               </button>
             </>
           )}
+          
+          {/* Language Switcher - Mobile */}
+          <div className="py-2 my-2 border-t border-b border-white/20">
+            <LanguageSwitcher />
+          </div>
+          
           <Link
             href="https://fishon-captain.vercel.app/my/list-your-business"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-center hover:translate-y-px transition"
           >
-            List Your Charter
+            {t("listYourCharter")}
           </Link>
         </nav>
       </div>

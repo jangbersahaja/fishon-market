@@ -29,7 +29,9 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "register": "Register",
-    "myBookings": "My Bookings"
+    "myBookings": "My Bookings",
+    "registerAsCaptain": "Register as Captain",
+    "listYourCharter": "List Your Charter"
   },
   "footer": {
     "aboutFishon": "About Fishon.my",
@@ -48,7 +50,11 @@
     "privacyPolicy": "Privacy Policy",
     "refundCancellation": "Refund & Cancellation",
     "followUs": "Follow Us",
-    "allRightsReserved": "All rights reserved"
+    "allRightsReserved": "All rights reserved",
+    "siteMap": "Site Map",
+    "allDestination": "All Destination",
+    "becomeCaptain": "Become a Captain",
+    "listYourBoat": "List Your Boat"
   },
   "home": {
     "title": "Fishon — Malaysia's Fishing & Charter Booking",

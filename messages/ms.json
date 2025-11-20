@@ -29,7 +29,9 @@
     "signIn": "Log Masuk",
     "signOut": "Log Keluar",
     "register": "Daftar",
-    "myBookings": "Tempahan Saya"
+    "myBookings": "Tempahan Saya",
+    "registerAsCaptain": "Daftar sebagai Nakhoda",
+    "listYourCharter": "Senaraikan Sewa Bot Anda"
   },
   "footer": {
     "aboutFishon": "Tentang Fishon.my",
@@ -48,7 +50,11 @@
     "privacyPolicy": "Dasar Privasi",
     "refundCancellation": "Bayaran Balik & Pembatalan",
     "followUs": "Ikuti Kami",
-    "allRightsReserved": "Hak cipta terpelihara"
+    "allRightsReserved": "Hak cipta terpelihara",
+    "siteMap": "Peta Laman",
+    "allDestination": "Semua Destinasi",
+    "becomeCaptain": "Jadi Nakhoda",
+    "listYourBoat": "Senaraikan Bot Anda"
   },
   "home": {
     "title": "Fishon — Platform Tempahan Memancing & Sewa Bot Malaysia",
