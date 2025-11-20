@@ -157,89 +157,40 @@ export default function NotificationSettings() {
     }
   };
 
-  // Enable all email notifications
-  const enableAllEmail = async () => {
+  // Generic function to toggle all notifications for a specific channel
+  const toggleAllNotifications = async (
+    channel: "email" | "push" | "sms",
+    enabled: boolean
+  ) => {
     if (!preferences) return;
 
     const newPreferences = { ...preferences };
     notificationTypes.forEach(({ key }) => {
-      const emailKey = `email${key}` as keyof NotificationPreferences;
-      newPreferences[emailKey] = true;
+      const prefKey = `${channel}${key}` as keyof NotificationPreferences;
+      newPreferences[prefKey] = enabled;
     });
 
     setPreferences(newPreferences);
     await saveAllPreferences(newPreferences);
   };
+
+  // Enable all email notifications
+  const enableAllEmail = () => toggleAllNotifications("email", true);
 
   // Disable all email notifications
-  const disableAllEmail = async () => {
-    if (!preferences) return;
-
-    const newPreferences = { ...preferences };
-    notificationTypes.forEach(({ key }) => {
-      const emailKey = `email${key}` as keyof NotificationPreferences;
-      newPreferences[emailKey] = false;
-    });
-
-    setPreferences(newPreferences);
-    await saveAllPreferences(newPreferences);
-  };
+  const disableAllEmail = () => toggleAllNotifications("email", false);
 
   // Enable all push notifications
-  const enableAllPush = async () => {
-    if (!preferences) return;
-
-    const newPreferences = { ...preferences };
-    notificationTypes.forEach(({ key }) => {
-      const pushKey = `push${key}` as keyof NotificationPreferences;
-      newPreferences[pushKey] = true;
-    });
-
-    setPreferences(newPreferences);
-    await saveAllPreferences(newPreferences);
-  };
+  const enableAllPush = () => toggleAllNotifications("push", true);
 
   // Disable all push notifications
-  const disableAllPush = async () => {
-    if (!preferences) return;
-
-    const newPreferences = { ...preferences };
-    notificationTypes.forEach(({ key }) => {
-      const pushKey = `push${key}` as keyof NotificationPreferences;
-      newPreferences[pushKey] = false;
-    });
-
-    setPreferences(newPreferences);
-    await saveAllPreferences(newPreferences);
-  };
+  const disableAllPush = () => toggleAllNotifications("push", false);
 
   // Enable all SMS notifications
-  const enableAllSMS = async () => {
-    if (!preferences) return;
-
-    const newPreferences = { ...preferences };
-    notificationTypes.forEach(({ key }) => {
-      const smsKey = `sms${key}` as keyof NotificationPreferences;
-      newPreferences[smsKey] = true;
-    });
-
-    setPreferences(newPreferences);
-    await saveAllPreferences(newPreferences);
-  };
+  const enableAllSMS = () => toggleAllNotifications("sms", true);
 
   // Disable all SMS notifications
-  const disableAllSMS = async () => {
-    if (!preferences) return;
-
-    const newPreferences = { ...preferences };
-    notificationTypes.forEach(({ key }) => {
-      const smsKey = `sms${key}` as keyof NotificationPreferences;
-      newPreferences[smsKey] = false;
-    });
-
-    setPreferences(newPreferences);
-    await saveAllPreferences(newPreferences);
-  };
+  const disableAllSMS = () => toggleAllNotifications("sms", false);
 
   // Save all preferences at once
   const saveAllPreferences = async (
