@@ -1,4 +1,4 @@
-import BookingSummaryCard from "@/app/(marketplace)/book/[charterId]/ui/BookingSummaryCard";
+import BookingSummaryCard from "@/app/[locale]/(marketplace)/book/[charterId]/ui/BookingSummaryCard";
 import {
   BookingCountdown,
   BookingDetails,

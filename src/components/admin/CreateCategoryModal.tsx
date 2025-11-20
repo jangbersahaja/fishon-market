@@ -1,4 +1,4 @@
-import { createCategory } from "@/app/admin/blog/categories/actions";
+import { createCategory } from "@/app/[locale]/admin/blog/categories/actions";
 import CreateEntityModal from "./CreateEntityModal";
 
 interface CreateCategoryModalProps {
