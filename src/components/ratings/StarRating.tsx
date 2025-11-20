@@ -13,7 +13,7 @@ type Props = {
   reviewCount?: number;
   showValue?: boolean;
   textSize?: string;
-  variant?: "default" | "chrome";
+  variant?: "default" | "chrome" | "light";
 };
 
 export default function StarRating({
@@ -28,12 +28,16 @@ export default function StarRating({
   const half = value - full >= 0.5;
   const total = 5;
 
+  const textColorClass = {
+    default: "text-gray-600",
+    chrome: "text-gray-100",
+    light: "text-white",
+  };
+
   // If no rating, show "Just Listed"
   if (value === 0) {
     return (
-      <span
-        className={`${textSize} ${variant === "chrome" ? "text-gray-100" : "text-gray-500"}`}
-      >
+      <span className={`${textSize} ${textColorClass[variant]}`}>
         Just Listed
       </span>
     );
@@ -78,12 +82,14 @@ export default function StarRating({
 
       {/* Show review count or rating value */}
       {reviewCount !== undefined && reviewCount > 0 && (
-        <span className={`${textSize} text-gray-600`}>
+        <span className={`${textSize} ${textColorClass[variant]}`}>
           {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
         </span>
       )}
       {showValue && (
-        <span className={`${textSize} text-gray-600`}>{value.toFixed(1)}</span>
+        <span className={`${textSize} ${textColorClass[variant]}`}>
+          {value.toFixed(1)}
+        </span>
       )}
     </div>
   );

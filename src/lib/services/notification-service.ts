@@ -12,6 +12,17 @@ import {
   sendBookingApprovedEmail,
   sendBookingRejectedEmail,
 } from "@/lib/services/email-service";
+import {
+  sendBookingApprovedSMS,
+  sendBookingCancelledSMS,
+  sendBookingCreatedSMS,
+  sendBookingPaidSMS,
+  sendBookingRejectedSMS,
+  sendPaymentFailedSMS,
+  sendPaymentRefundedSMS,
+  sendReviewApprovedSMS,
+  sendReviewSubmittedSMS,
+} from "@/lib/services/sms-service";
 import type { NotificationType } from "@prisma/client";
 
 export interface CreateNotificationParams {
@@ -102,6 +113,18 @@ export async function createNotification(params: CreateNotificationParams) {
 
   if (shouldSendEmail) {
     await sendNotificationEmail(userId, notification);
+  }
+
+  // Check if user wants SMS notifications for this type
+  const smsKey = `sms${type
+    .split("_")
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+    .join("")}` as keyof typeof preferences;
+
+  const shouldSendSMS = preferences[smsKey] !== false; // Default to true if not set
+
+  if (shouldSendSMS) {
+    await sendNotificationSMS(userId, notification);
   }
 
   return notification;
@@ -270,7 +293,7 @@ export async function getUserPreferences(userId: string) {
     preferences = await prisma.notificationPreferences.create({
       data: {
         userId,
-        // All enabled by default
+        // Email preferences - all enabled by default
         emailBookingCreated: true,
         emailBookingApproved: true,
         emailBookingRejected: true,
@@ -282,6 +305,7 @@ export async function getUserPreferences(userId: string) {
         emailAccountVerified: true,
         emailPaymentFailed: true,
         emailSystemAnnouncement: true,
+        // Push preferences - all enabled by default
         pushBookingCreated: true,
         pushBookingApproved: true,
         pushBookingRejected: true,
@@ -293,6 +317,18 @@ export async function getUserPreferences(userId: string) {
         pushAccountVerified: true,
         pushPaymentFailed: true,
         pushSystemAnnouncement: true,
+        // SMS preferences - all enabled by default (opt-in)
+        smsBookingCreated: true,
+        smsBookingApproved: true,
+        smsBookingRejected: true,
+        smsBookingPaid: true,
+        smsBookingCancelled: true,
+        smsReviewSubmitted: true,
+        smsReviewApproved: true,
+        smsReviewRejected: true,
+        smsAccountVerified: true,
+        smsPaymentFailed: true,
+        smsSystemAnnouncement: true,
       },
     });
   }
@@ -328,6 +364,17 @@ export async function updateUserPreferences(
     pushAccountVerified: boolean;
     pushPaymentFailed: boolean;
     pushSystemAnnouncement: boolean;
+    smsBookingCreated: boolean;
+    smsBookingApproved: boolean;
+    smsBookingRejected: boolean;
+    smsBookingPaid: boolean;
+    smsBookingCancelled: boolean;
+    smsReviewSubmitted: boolean;
+    smsReviewApproved: boolean;
+    smsReviewRejected: boolean;
+    smsAccountVerified: boolean;
+    smsPaymentFailed: boolean;
+    smsSystemAnnouncement: boolean;
   }>
 ) {
   return prisma.notificationPreferences.upsert({
@@ -395,6 +442,144 @@ async function sendNotificationEmail(userId: string, notification: any) {
     }
   } catch (error) {
     console.error("[Notification] Failed to send email:", error);
+  }
+}
+
+/**
+ * Send notification SMS based on type
+ */
+async function sendNotificationSMS(userId: string, notification: any) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { phone: true, name: true },
+    });
+
+    // Skip SMS if user has no phone number
+    if (!user?.phone) {
+      console.log(
+        `[Notification] User ${userId} has no phone number, skipping SMS`
+      );
+      return;
+    }
+
+    // Send appropriate SMS based on notification type
+    switch (notification.type) {
+      case "BOOKING_CREATED":
+        if (
+          notification.metadata?.charterName &&
+          notification.metadata?.tripDate &&
+          notification.metadata?.totalPrice
+        ) {
+          await sendBookingCreatedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            tripDate: notification.metadata.tripDate,
+            totalPrice: notification.metadata.totalPrice,
+          });
+        }
+        break;
+
+      case "BOOKING_APPROVED":
+        if (
+          notification.metadata?.charterName &&
+          notification.metadata?.tripDate
+        ) {
+          await sendBookingApprovedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            tripDate: notification.metadata.tripDate,
+          });
+        }
+        break;
+
+      case "BOOKING_REJECTED":
+        if (notification.metadata?.charterName) {
+          await sendBookingRejectedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            reason: notification.metadata?.reason,
+          });
+        }
+        break;
+
+      case "BOOKING_PAID":
+        if (
+          notification.metadata?.charterName &&
+          notification.metadata?.tripDate
+        ) {
+          await sendBookingPaidSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            tripDate: notification.metadata.tripDate,
+            tripName: notification.metadata?.tripName,
+          });
+        }
+        break;
+
+      case "BOOKING_CANCELLED":
+        if (notification.metadata?.charterName) {
+          await sendBookingCancelledSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            tripDate: notification.metadata?.tripDate || "",
+            reason: notification.metadata?.reason,
+          });
+        }
+        break;
+
+      case "PAYMENT_REFUNDED":
+        if (
+          notification.metadata?.charterName &&
+          notification.metadata?.refundAmount
+        ) {
+          await sendPaymentRefundedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            refundAmount: notification.metadata.refundAmount,
+          });
+        }
+        break;
+
+      case "PAYMENT_FAILED":
+        if (
+          notification.metadata?.charterName &&
+          notification.metadata?.tripDate
+        ) {
+          await sendPaymentFailedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+            tripDate: notification.metadata.tripDate,
+          });
+        }
+        break;
+
+      case "REVIEW_SUBMITTED":
+        if (notification.metadata?.charterName) {
+          await sendReviewSubmittedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+          });
+        }
+        break;
+
+      case "REVIEW_APPROVED":
+        if (notification.metadata?.charterName) {
+          await sendReviewApprovedSMS({
+            phone: user.phone,
+            charterName: notification.metadata.charterName,
+          });
+        }
+        break;
+
+      // Add more SMS types as needed
+      default:
+        console.log(
+          `[Notification] No SMS handler for type: ${notification.type}`
+        );
+    }
+  } catch (error) {
+    console.error("[Notification] Failed to send SMS:", error);
   }
 }
 

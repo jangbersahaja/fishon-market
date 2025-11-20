@@ -8,7 +8,7 @@
 type Props = {
   price: number;
   variant?: "from" | "total" | "per-day";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   color?: "default" | "chrome";
 };
@@ -36,6 +36,11 @@ export default function PriceTag({
       price: "text-2xl",
       suffix: "text-base",
     },
+    xl: {
+      label: "text-lg",
+      price: "text-3xl",
+      suffix: "text-lg",
+    },
   };
 
   const currentSize = sizeClasses[size];
@@ -53,7 +58,7 @@ export default function PriceTag({
   };
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-end gap-1 ${className}`}>
       {labels[variant] && (
         <span
           className={`${currentSize.label} ${color === "chrome" ? "text-gray-100" : "text-gray-500"}`}

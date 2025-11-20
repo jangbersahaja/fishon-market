@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { ReviewBadgeId } from "@/utils/reviewBadges";
 import { resolveBadges } from "@/utils/reviewBadges";
 import { AlertCircle, Calendar, Edit2, MapPin, Trash2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -61,14 +62,14 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
 
   if (reviews.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="p-12 text-center bg-white border border-gray-200 rounded-lg">
+        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full">
           <AlertCircle className="w-8 h-8 text-gray-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="mb-2 text-lg font-semibold text-gray-900">
           No reviews yet
         </h3>
-        <p className="text-gray-600 mb-6">
+        <p className="mb-6 text-gray-600">
           You haven&apos;t written any reviews yet. After completing a trip, you
           can share your experience.
         </p>
@@ -82,8 +83,8 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+        <div className="flex items-center gap-2 p-4 text-red-800 border border-red-200 rounded-lg bg-red-50">
+          <AlertCircle className="flex-shrink-0 w-4 h-4" />
           <p className="text-sm">{error}</p>
         </div>
       )}
@@ -96,12 +97,12 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
           <div
             key={review.id}
             id={`review-${review.id}`}
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+            className="p-6 transition-shadow bg-white border border-gray-200 rounded-lg hover:shadow-md"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <h3 className="mb-1 text-lg font-semibold text-gray-900">
                   {review.charterName}
                 </h3>
                 <div className="flex items-center gap-2 mb-2">
@@ -112,15 +113,15 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
               {/* Status Badge */}
               <div>
                 {review.published ? (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                  <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-green-800 bg-green-100 border border-green-200 rounded-full">
                     Published
                   </span>
                 ) : review.approved ? (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                  <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-800 bg-blue-100 border border-blue-200 rounded-full">
                     Approved
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                  <span className="inline-flex items-center px-3 py-1 text-xs font-medium border rounded-full bg-amber-100 text-amber-800 border-amber-200">
                     Pending Approval
                   </span>
                 )}
@@ -128,7 +129,7 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
             </div>
 
             {/* Trip Date */}
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+            <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 <span>
@@ -151,10 +152,15 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
                   {badges.map((badge) => (
                     <span
                       key={badge.id}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-700 rounded-full bg-blue-50"
                       title={badge.description}
                     >
-                      <span>{badge.icon}</span>
+                      <Image
+                        src={badge.iconUrl}
+                        alt={badge.label}
+                        width={16}
+                        height={16}
+                      />
                       <span>{badge.label}</span>
                     </span>
                   ))}
@@ -165,7 +171,7 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
             {/* Comment */}
             {review.comment && (
               <div className="mb-4">
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <p className="text-sm leading-relaxed text-gray-700">
                   &quot;{review.comment}&quot;
                 </p>
               </div>
@@ -173,7 +179,7 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
 
             {/* Media count */}
             {(review.photos.length > 0 || review.videos.length > 0) && (
-              <div className="mb-4 flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-4 mb-4 text-xs text-gray-500">
                 {review.photos.length > 0 && (
                   <span>📷 {review.photos.length} photos</span>
                 )}

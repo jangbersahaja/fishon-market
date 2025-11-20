@@ -13,7 +13,10 @@ export default defineConfig({
       "src/**/__tests__/**/*.spec.{ts,tsx}",
     ],
     globals: true,
-    environmentMatchGlobs: [["src/app/**/book/payment/preview/**", "jsdom"]],
+    environmentMatchGlobs: [
+      ["src/app/**/book/payment/preview/**", "jsdom"],
+      ["src/components/**", "jsdom"],
+    ],
     coverage: {
       enabled: false,
     },

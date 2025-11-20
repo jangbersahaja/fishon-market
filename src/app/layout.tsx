@@ -10,10 +10,18 @@ import {
   serializeSchema,
 } from "@/lib/seo";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Oswald } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-oswald",
+});
 
 export const metadata: Metadata = {
   title: "Fishon — Malaysia's Fishing & Charter Booking",
@@ -61,18 +69,10 @@ export default async function RootLayout({
             __html: serializeSchema(websiteSchema),
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
       </head>
-      <body className="flex flex-col font-sans">
+      <body
+        className={`flex flex-col font-sans ${inter.variable} ${oswald.variable}`}
+      >
         <SessionProvider session={session}>
           <AuthModalProvider>
             <Chrome>{children}</Chrome>

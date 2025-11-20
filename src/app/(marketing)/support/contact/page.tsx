@@ -75,8 +75,8 @@ export default function ContactPage() {
           Contact <span className="text-[#EC2227]">Fishon.my</span>
         </h1>
         <p className="mt-4 text-neutral-700">
-          Questions about bookings, listing your charter, or partnerships? We'd
-          love to hear from you.
+          Questions about bookings, listing your charter, or partnerships?
+          We&apos;d love to hear from you.
         </p>
       </section>
 
@@ -99,7 +99,7 @@ export default function ContactPage() {
       <section className="p-6 border rounded-xl border-neutral-200">
         <h2 className="text-xl font-semibold">Send us a message</h2>
         <p className="mt-1 text-neutral-600">
-          Fill out the form and we'll get back to you. Required fields are
+          Fill out the form and we&apos;ll get back to you. Required fields are
           marked with *.
         </p>
 
@@ -207,9 +207,9 @@ export default function ContactPage() {
       <section className="grid gap-6 mt-12 sm:grid-cols-2">
         <Card title="What happens after I send a message?">
           <p>
-            We'll review your enquiry and respond via email. For urgent booking
-            issues, include your booking reference or charter URL for faster
-            handling.
+            We&apos;ll review your enquiry and respond via email. For urgent
+            booking issues, include your booking reference or charter URL for
+            faster handling.
           </p>
         </Card>
         <Card title="Prefer email?">
