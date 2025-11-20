@@ -1,12 +1,27 @@
 import { getToken } from "next-auth/jwt";
+import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { defaultLocale, locales } from "./src/i18n/config";
+
+// Create next-intl middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: "as-needed", // Don't show default locale in URL
+});
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Handle i18n routing first
+  const intlResponse = intlMiddleware(request);
+  
+  // Extract locale from pathname for protected routes check
+  const pathnameWithoutLocale = pathname.replace(/^\/(ms|en)/, '') || '/';
+
   // 1. Protect /admin routes (NextAuth with ADMIN role check)
-  if (pathname.startsWith("/admin")) {
+  if (pathnameWithoutLocale.startsWith("/admin")) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
@@ -24,7 +39,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Protect /account routes (NextAuth-based)
-  if (pathname.startsWith("/account")) {
+  if (pathnameWithoutLocale.startsWith("/account")) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
@@ -41,13 +56,16 @@ export async function middleware(request: NextRequest) {
 
   // 3. Allow /book/payment to handle its own authentication
   // (it will redirect to login with proper bookingId context)
-  if (pathname.startsWith("/book/payment")) {
-    return NextResponse.next();
+  if (pathnameWithoutLocale.startsWith("/book/payment")) {
+    return intlResponse;
   }
 
-  return NextResponse.next();
+  return intlResponse;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*", "/book/payment/:path*"],
+  // Match all pathnames except for
+  // - … if they start with `/api`, `/_next` or `/_vercel`
+  // - … the ones containing a dot (e.g. `favicon.ico`)
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

@@ -1,3 +1,7 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
 // Optionally tighten Blob image host via env (exact hostname, no protocol)
 const blobHost = process.env.NEXT_PUBLIC_BLOB_HOST?.replace(
   /^https?:\/\//,
@@ -11,16 +15,16 @@ const nextConfig = {
       ...(blobHost
         ? [
             // Tight, exact bucket host
-            { protocol: "https", hostname: blobHost },
+            { protocol: "https" as const, hostname: blobHost },
           ]
         : [
             // Fallback: allow any Vercel Blob host (dev convenience)
             {
-              protocol: "https",
+              protocol: "https" as const,
               hostname: "**.public.blob.vercel-storage.com",
             },
-            { protocol: "https", hostname: "**.blob.vercel-storage.com" },
-            { protocol: "https", hostname: "lh3.googleusercontent.com" },
+            { protocol: "https" as const, hostname: "**.blob.vercel-storage.com" },
+            { protocol: "https" as const, hostname: "lh3.googleusercontent.com" },
           ]),
     ],
   },
@@ -83,4 +87,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);
