@@ -1,18 +1,15 @@
 /**
- * ⚠️ LEGACY EMAIL SYSTEM - DEPRECATED ⚠️
+ * Legacy Email Helper - SMTP Transport Only
  *
- * This file contains the OLD email system with inline HTML templates.
- * It is kept for backward compatibility during migration only.
+ * This file contains the basic SMTP transport setup.
+ * It is kept for backward compatibility with auth routes that still use direct sendMail().
  *
- * NEW EMAIL SYSTEM: Use @fishon/email package instead
- * Location: src/lib/services/email-service.ts
+ * NEW EMAIL SYSTEM: Use @fishon/email package via src/lib/services/email-service.ts
  *
  * Migration Date: October 28, 2025
  * Package: @fishon/email (git+https://github.com/jangbersahaja/fishon-email)
  *
- * DO NOT ADD NEW EMAIL FUNCTIONS HERE - use the new email service instead.
- *
- * @deprecated Use src/lib/services/email-service.ts with @fishon/email package
+ * Note: Email template functions have been removed - use @fishon/email package instead.
  */
 
 import nodemailer from "nodemailer";
@@ -25,9 +22,6 @@ export type MailInput = {
 
 let transporter: any | null = null;
 
-/**
- * @deprecated Use email-service.ts - this is legacy SMTP setup
- */
 function getTransporter(): any {
   if (transporter) return transporter;
   const host = process.env.SMTP_HOST;
@@ -71,7 +65,10 @@ function getTransporter(): any {
 }
 
 /**
- * @deprecated Use email-service.ts sendBookingCreatedEmail() with @fishon/email package
+ * Send email using SMTP transport.
+ * Used by auth routes and email-service.ts as a low-level transport.
+ *
+ * For booking/notification emails, use email-service.ts functions instead.
  */
 export async function sendMail({ to, subject, html }: MailInput) {
   const from = process.env.SMTP_USER!;
@@ -86,60 +83,4 @@ export async function sendMail({ to, subject, html }: MailInput) {
     console.error("[email] send failed", { to, subject, err });
     throw err;
   }
-}
-
-/**
- * @deprecated Use email-service.ts renderBookingCreatedEmail() with @fishon/email package
- * This function generates inline HTML strings - the new system uses React Email components
- */
-export function renderBookingCreatedEmail(params: {
-  toName?: string;
-  charterName: string;
-  date: string;
-  days: number;
-  total: number;
-  startTime?: string | null;
-  confirmationUrl: string;
-}) {
-  const { toName, charterName, date, days, total, startTime, confirmationUrl } =
-    params;
-  return `
-  <div>
-    <p>Hi ${toName ?? "there"},</p>
-    <p>Your booking request for <strong>${charterName}</strong> was received.</p>
-    <ul>
-      <li>Date: ${date}</li>
-      <li>Days: ${days}</li>
-      ${startTime ? `<li>Start time: ${startTime}</li>` : ""}
-      <li>Total: RM ${total}</li>
-    </ul>
-    <p>You can view your booking here: <a href="${confirmationUrl}">${confirmationUrl}</a></p>
-    <p>We will notify you once the captain approves your booking.</p>
-  </div>`;
-}
-
-/**
- * @deprecated Use email-service.ts sendBookingApprovedEmail() or sendBookingRejectedEmail()
- * This function generates inline HTML strings - the new system uses React Email components
- */
-export function renderStatusEmail(params: {
-  toName?: string;
-  charterName: string;
-  status: "APPROVED" | "REJECTED";
-  paymentUrl?: string;
-  confirmationUrl: string;
-}) {
-  const { toName, charterName, status, paymentUrl, confirmationUrl } = params;
-  const isApproved = status === "APPROVED";
-  return `
-  <div>
-    <p>Hi ${toName ?? "there"},</p>
-    <p>Your booking for <strong>${charterName}</strong> was ${status.toLowerCase()}.</p>
-    ${
-      isApproved && paymentUrl
-        ? `<p>Please complete payment: <a href="${paymentUrl}">${paymentUrl}</a></p>`
-        : ""
-    }
-    <p>View booking: <a href="${confirmationUrl}">${confirmationUrl}</a></p>
-  </div>`;
 }
