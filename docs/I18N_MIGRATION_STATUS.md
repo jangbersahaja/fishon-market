@@ -11,7 +11,7 @@
 |-------|--------|------------|-------|
 | Phase 1: App Router | ✅ Complete | 100% | Commit 911ddf7 |
 | Phase 2: Layout Components | ✅ Complete | 100% | Commit 6126fac |
-| Phase 3: Common Components | ⏳ Pending | 0% | Ready to start |
+| Phase 3: Common Components | 🔄 In Progress | ~20% | Commit 439642b - Homepage + CheckYourBookings |
 | Phase 4: Page Content | ⏳ Pending | 0% | - |
 
 ---
@@ -152,11 +152,27 @@ const t = useTranslations('nav');
 
 ---
 
-## Phase 3: Common Components Migration ⏳
+## Phase 3: Common Components Migration 🔄
 
-**Status**: PENDING  
+**Status**: IN PROGRESS  
+**Commit**: 439642b  
+**Date**: November 20, 2024  
 **Priority**: MEDIUM  
 **Estimated Effort**: 2-3 days
+
+### Components Migrated
+
+- [x] **Homepage** (`src/app/[locale]/page.tsx`)
+  - ✅ All hero content translated
+  - ✅ Status badge translated
+  - ✅ Captain section translated
+  - ✅ Footer copyright translated
+
+- [x] **CheckYourBookings** component
+  - ✅ Button text in navbar translated
+  - ✅ Modal title and content translated
+  - ✅ Proper pluralization (singular/plural)
+  - ✅ All buttons and messages translated
 
 ### Components to Migrate
 
@@ -294,7 +310,7 @@ None - Phase 1 complete successfully
 |--------|--------|----------------|
 | App Router Migration | ✅ | Complete |
 | Layout Components | ✅ | Complete |
-| Common Components | ⏳ | Pending |
+| Common Components | 🔄 | In Progress (~20%) |
 | Page Content | ⏳ | Pending |
 | TypeScript Validation | ✅ | Passing |
 | Build Success | ⏳ | Not tested yet |
