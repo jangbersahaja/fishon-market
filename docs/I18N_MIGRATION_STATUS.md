@@ -10,8 +10,8 @@
 | Phase | Status | Completion | Notes |
 |-------|--------|------------|-------|
 | Phase 1: App Router | ✅ Complete | 100% | Commit 911ddf7 |
-| Phase 2: Layout Components | 🔄 In Progress | 0% | Ready to start |
-| Phase 3: Common Components | ⏳ Pending | 0% | - |
+| Phase 2: Layout Components | ✅ Complete | 100% | Commit 6126fac |
+| Phase 3: Common Components | ⏳ Pending | 0% | Ready to start |
 | Phase 4: Page Content | ⏳ Pending | 0% | - |
 
 ---
@@ -71,28 +71,30 @@
 
 ---
 
-## Phase 2: Layout Components Migration 🔄
+## Phase 2: Layout Components Migration ✅
 
-**Status**: IN PROGRESS  
-**Priority**: HIGH  
-**Estimated Effort**: 1 day
+**Status**: COMPLETE  
+**Commit**: 6126fac  
+**Date**: November 20, 2024
 
-### Components to Migrate
+### Components Migrated
 
-- [ ] `src/components/layout/Navbar.tsx`
-  - Navigation links
-  - Sign in/Sign out buttons
-  - Messages link
-  - Account link
-  - Add LanguageSwitcher component
+- [x] `src/components/layout/Navbar.tsx`
+  - ✅ Navigation links translated
+  - ✅ Sign in/Sign out buttons translated
+  - ✅ Messages link translated
+  - ✅ Account link translated
+  - ✅ LanguageSwitcher component added (desktop & mobile)
+  - ✅ All text supports Malay and English
 
-- [ ] `src/components/layout/Footer.tsx`
-  - Footer sections (About, Discover, Support)
-  - Link text
-  - Copyright notice
+- [x] `src/components/layout/Footer.tsx`
+  - ✅ Footer sections translated (About, Discover, Support, Site Map, Become a Captain)
+  - ✅ All link text translated
+  - ✅ Copyright notice translated
+  - ✅ Made client component for translations
 
-- [ ] `src/components/layout/Chrome.tsx` (if needed)
-  - Review for any hardcoded strings
+- [x] `src/components/layout/Chrome.tsx`
+  - ✅ Reviewed - no hardcoded strings found
 
 ### Translation Keys Available
 
@@ -238,15 +240,18 @@ From `common` category in translation files:
 - [ ] Protected routes still work
 - [ ] API routes still work
 
-### Phase 2 Testing (Upcoming)
+### Phase 2 Testing ✅
 
-- [ ] Navbar displays in Malay by default
-- [ ] Navbar switches to English on `/en` routes
-- [ ] Footer displays in Malay by default
-- [ ] Footer switches to English on `/en` routes
-- [ ] Language switcher works
-- [ ] Language preference persists
-- [ ] No layout breaks with different text lengths
+- [x] Navbar migrated to use translations
+- [x] Footer migrated to use translations
+- [x] LanguageSwitcher added to navigation
+- [ ] Runtime testing: Navbar displays in Malay by default
+- [ ] Runtime testing: Navbar switches to English on `/en` routes
+- [ ] Runtime testing: Footer displays in Malay by default
+- [ ] Runtime testing: Footer switches to English on `/en` routes
+- [ ] Runtime testing: Language switcher works
+- [ ] Runtime testing: Language preference persists
+- [ ] Runtime testing: No layout breaks with different text lengths
 
 ### Phase 3 Testing (Future)
 
@@ -288,7 +293,7 @@ None - Phase 1 complete successfully
 | Metric | Target | Current Status |
 |--------|--------|----------------|
 | App Router Migration | ✅ | Complete |
-| Layout Components | ⏳ | Pending |
+| Layout Components | ✅ | Complete |
 | Common Components | ⏳ | Pending |
 | Page Content | ⏳ | Pending |
 | TypeScript Validation | ✅ | Passing |
@@ -313,14 +318,14 @@ None - Phase 1 complete successfully
 ### Immediate (Today)
 
 1. ✅ Complete Phase 1 app restructuring
-2. Start Phase 2: Migrate Navbar component
-3. Migrate Footer component
-4. Add LanguageSwitcher to Navbar
-5. Test language switching
+2. ✅ Complete Phase 2: Migrate Navbar component
+3. ✅ Migrate Footer component
+4. ✅ Add LanguageSwitcher to Navbar
+5. Start Phase 3: Common components (if time permits)
 
 ### Short-term (This Week)
 
-1. Complete Phase 2 layout components
+1. ✅ Complete Phase 2 layout components
 2. Start Phase 3: Common components
 3. Test dev server with both locales
 4. Verify protected routes work
