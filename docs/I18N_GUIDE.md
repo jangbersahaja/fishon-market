@@ -273,11 +273,15 @@ t("booking.checkBookings", { count: 3 });
 
 ✅ Navbar - Full navigation with language switcher and locale-aware links
 ✅ Footer - All footer links and text with locale prefixes
-✅ Home page - Complete home page content
-✅ Language Switcher - Toggle between my/en
-✅ Check Your Bookings component
-✅ AuthModal - Login/register forms with locale-aware links
-✅ NotificationDropdown - Notification links with locale prefixes
+✅ **Home page** - Complete home page content with translations (`/[locale]/page.tsx`)
+
+- Subtitle, marketplace status, tagline
+- Captain registration section
+- Footer copyright text
+  ✅ Language Switcher - Toggle between my/en
+  ✅ Check Your Bookings component
+  ✅ AuthModal - Login/register forms with locale-aware links
+  ✅ NotificationDropdown - Notification links with locale prefixes
 
 ### Pages
 
@@ -348,11 +352,12 @@ t("booking.checkBookings", { count: 3 });
 
 ### High Priority
 
-1. Charter detail pages - Translate charter card content
-2. Booking flow - Translate all booking forms and steps
-3. Account pages - Translate dashboard and profile pages
-4. Search and filters - Translate search UI and filters
-5. Error pages - Translate 404, 500, etc.
+1. ~~Home page~~ ✅ **COMPLETE** - All content translated
+2. Charter detail pages - Translate charter card content
+3. Booking flow - Translate all booking forms and steps
+4. Account pages - Translate dashboard and profile pages
+5. Search and filters - Translate search UI and filters
+6. Error pages - Translate 404, 500, etc.
 
 ### Medium Priority
 
