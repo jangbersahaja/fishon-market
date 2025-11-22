@@ -143,7 +143,22 @@
     "relevance": "Relevan",
     "priceLowest": "Harga: Rendah ke Tinggi",
     "priceHighest": "Harga: Tinggi ke Rendah",
-    "rating": "Penilaian"
+    "rating": "Penilaian",
+    "pageTitle": "Temui Charter Memancing Yang Sempurna",
+    "showingTripsNear": "Menunjukkan trip berhampiran",
+    "exploreAllCharters": "Terokai semua charter memancing yang tersedia di Malaysia",
+    "forGuests": "untuk",
+    "adult": "dewasa",
+    "adults": "dewasa",
+    "child": "kanak-kanak",
+    "children": "kanak-kanak",
+    "onDate": "pada",
+    "budget": "bajet",
+    "chartersFound": "charter dijumpai",
+    "charterFound": "charter dijumpai",
+    "noChartersFoundTitle": "Tiada charter dijumpai",
+    "noChartersFoundDescription": "Kami tidak dapat menemui charter yang sesuai dengan kriteria anda. Cuba ubahsuai penapis atau luaskan kawasan carian anda.",
+    "clearAllFilters": "Kosongkan Semua Penapis"
   },
   "auth": {
     "signIn": "Log Masuk",
@@ -158,7 +173,10 @@
     "signInWithGoogle": "Log Masuk dengan Google",
     "signUpWithGoogle": "Daftar dengan Google",
     "or": "ATAU",
-    "continueAsGuest": "Teruskan sebagai Tetamu"
+    "continueAsGuest": "Teruskan sebagai Tetamu",
+    "loadingSignIn": "Memuatkan log masuk...",
+    "loadingRegistration": "Memuatkan pendaftaran...",
+    "adminAccessOnly": "Akses admin sahaja. Sila log masuk dengan akaun admin."
   },
   "validation": {
     "required": "Ruangan ini diperlukan",

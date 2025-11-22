@@ -1,10 +1,13 @@
 "use client";
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 export default function RegisterClient() {
   const { openModal } = useAuthModal();
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   useEffect(() => {
     openModal("register", undefined, { showHomeButton: true });
@@ -18,11 +21,11 @@ export default function RegisterClient() {
           role="status"
         >
           <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-            Loading...
+            {tCommon("loading")}
           </span>
         </div>
         <p className="mt-4 text-sm font-medium text-white">
-          Loading registration...
+          {t("loadingRegistration")}
         </p>
       </div>
     </main>

@@ -143,7 +143,22 @@
     "relevance": "Relevance",
     "priceLowest": "Price: Low to High",
     "priceHighest": "Price: High to Low",
-    "rating": "Rating"
+    "rating": "Rating",
+    "pageTitle": "Discover Your Perfect Fishing Charter",
+    "showingTripsNear": "Showing trips near",
+    "exploreAllCharters": "Explore all available fishing charters in Malaysia",
+    "forGuests": "for",
+    "adult": "adult",
+    "adults": "adults",
+    "child": "child",
+    "children": "children",
+    "onDate": "on",
+    "budget": "budget",
+    "chartersFound": "charters found",
+    "charterFound": "charter found",
+    "noChartersFoundTitle": "No charters found",
+    "noChartersFoundDescription": "We couldn't find any charters matching your criteria. Try adjusting your filters or expanding your search area.",
+    "clearAllFilters": "Clear All Filters"
   },
   "auth": {
     "signIn": "Sign In",
@@ -158,7 +173,10 @@
     "signInWithGoogle": "Sign In with Google",
     "signUpWithGoogle": "Sign Up with Google",
     "or": "OR",
-    "continueAsGuest": "Continue as Guest"
+    "continueAsGuest": "Continue as Guest",
+    "loadingSignIn": "Loading sign in...",
+    "loadingRegistration": "Loading registration...",
+    "adminAccessOnly": "Admin access only. Please sign in with an admin account."
   },
   "validation": {
     "required": "This field is required",

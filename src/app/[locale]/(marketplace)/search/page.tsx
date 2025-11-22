@@ -7,7 +7,7 @@ import { getCharters } from "@/lib/services/charter-service";
 import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 // Helpers
@@ -112,8 +112,10 @@ export default async function SearchResults({
     charter_style?: string;
   }>;
 }) {
-  // Get locale from next-intl server context
+  // Get locale and translations from next-intl server context
   const locale = await getLocale();
+  const t = await getTranslations("search");
+  const tCharter = await getTranslations("charter");
 
   // Await searchParams (Next.js 15 requirement)
   const params = await searchParams;
@@ -395,38 +397,37 @@ export default async function SearchResults({
               href={`/${locale}/home`}
               className="transition-colors hover:text-white hover:underline"
             >
-              Home
+              {tCharter("breadcrumbHome")}
             </Link>
             <span className="mx-2">/</span>
-            <span className="font-medium text-white">Search</span>
+            <span className="font-medium text-white">{t("searchCharters")}</span>
           </nav>
 
           {/* Header / Filters Summary */}
           <div className="flex flex-col gap-3">
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-              Discover Your Perfect Fishing Charter
+              {t("pageTitle")}
             </h1>
             <p className="max-w-3xl text-sm text-white/90 sm:text-lg">
               {destination ? (
                 <>
-                  Showing trips near{" "}
+                  {t("showingTripsNear")}{" "}
                   <span className="font-bold text-white">{destination}</span>
                 </>
               ) : (
-                <>Explore all available fishing charters in Malaysia</>
+                <>{t("exploreAllCharters")}</>
               )}
               {(adults > 0 || children > 0) && (
                 <>
                   {" "}
-                  • for
+                  • {t("forGuests")}
                   {adults > 0 && (
                     <>
                       {" "}
                       <span className="font-bold text-white">
                         {adults}
                       </span>{" "}
-                      adult
-                      {adults > 1 ? "s" : ""}
+                      {adults > 1 ? t("adults") : t("adult")}
                     </>
                   )}
                   {children > 0 && (
@@ -435,8 +436,7 @@ export default async function SearchResults({
                       + <span className="font-bold text-white">
                         {children}
                       </span>{" "}
-                      child
-                      {children > 1 ? "ren" : ""}
+                      {children > 1 ? t("children") : t("child")}
                     </>
                   )}
                 </>
@@ -444,13 +444,13 @@ export default async function SearchResults({
               {date && (
                 <>
                   {" "}
-                  • on <span className="font-bold text-white">{date}</span>
+                  • {t("onDate")} <span className="font-bold text-white">{date}</span>
                 </>
               )}
               {priceRange && (
                 <>
                   {" "}
-                  • budget{" "}
+                  • {t("budget")}{" "}
                   <span className="font-bold text-white">
                     {PRICE_BUCKETS.find((b) => b.key === priceRange)?.label}
                   </span>
@@ -461,8 +461,7 @@ export default async function SearchResults({
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full w-fit bg-white/20 backdrop-blur-sm">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-white">
-                  {filtered.length} charter{filtered.length === 1 ? "" : "s"}{" "}
-                  found
+                  {filtered.length} {filtered.length === 1 ? t("charterFound") : t("chartersFound")}
                 </span>
               </div>
             )}
@@ -513,18 +512,17 @@ export default async function SearchResults({
                 </div>
                 <div>
                   <h3 className="mb-2 text-xl font-bold text-slate-900">
-                    No charters found
+                    {t("noChartersFoundTitle")}
                   </h3>
                   <p className="max-w-md mx-auto text-sm text-slate-600">
-                    We couldn&apos;t find any charters matching your criteria.
-                    Try adjusting your filters or expanding your search area.
+                    {t("noChartersFoundDescription")}
                   </p>
                 </div>
                 <Link
                   href={`/${locale}/search`}
                   className="mt-4 inline-block px-6 py-3 bg-[#ec2227] hover:bg-[#d11f24] text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                 >
-                  Clear All Filters
+                  {t("clearAllFilters")}
                 </Link>
               </div>
             </div>

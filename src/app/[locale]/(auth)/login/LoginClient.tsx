@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -8,14 +9,16 @@ export default function LoginClient() {
   const { openModal } = useAuthModal();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   useEffect(() => {
     const errorParam = searchParams.get("error");
     if (errorParam === "admin_only") {
-      setError("Admin access only. Please sign in with an admin account.");
+      setError(t("adminAccessOnly"));
     }
     openModal("signin", undefined, { showHomeButton: true });
-  }, [openModal, searchParams]);
+  }, [openModal, searchParams, t]);
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-[#ec2227]">
@@ -46,11 +49,11 @@ export default function LoginClient() {
           role="status"
         >
           <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-            Loading...
+            {tCommon("loading")}
           </span>
         </div>
         <p className="mt-4 text-white text-sm font-medium">
-          Loading sign in...
+          {t("loadingSignIn")}
         </p>
       </div>
     </main>
