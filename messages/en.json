@@ -90,7 +90,11 @@
     "backToBook": "Back to Book",
     "availableTrips": "Available Trips",
     "breadcrumbHome": "Home",
-    "breadcrumbCharters": "Charters"
+    "breadcrumbCharters": "Charters",
+    "chartersTitle": "Charters",
+    "noChartersAvailable": "No charters available yet.",
+    "tryASampleCharter": "Try a sample charter:",
+    "view": "View"
   },
   "booking": {
     "title": "Book Your Charter",
@@ -115,7 +119,23 @@
     "createFreeAccount": "Create Free Account",
     "searchByEmail": "Search By Email",
     "bookingsStoredDays": "Bookings are stored locally for 30 days",
-    "checkBookings": "Check your {count} booking(s)"
+    "checkBookings": "Check your {count} booking(s)",
+    "paymentError": "Payment Error",
+    "invalidPaymentResponse": "Invalid payment response. Please try again or contact support.",
+    "invalidPaymentHash": "Payment verification failed. Please contact support if you were charged.",
+    "bookingNotFound": "Booking not found. Please check your booking ID and try again.",
+    "paymentGatewayError": "Payment gateway error. Please try again later.",
+    "paymentProcessingError": "Payment processing error. Please try again or use a different payment method.",
+    "paymentErrorGeneric": "An error occurred while processing your payment. Please try again.",
+    "returnHome": "Return Home",
+    "bookingNotFoundTitle": "Booking not found",
+    "bookingNotFoundDescription": "We couldn't find the booking you're looking for. Please check your booking ID or contact support.",
+    "cancelledTitle": "Booking Cancelled",
+    "cancelledDescription": "This booking has been cancelled.",
+    "goToSearch": "Go to Search",
+    "viewMyBookings": "View My Bookings",
+    "thankYouBooking": "Thank you for your booking",
+    "bookingDetails": "Booking Details"
   },
   "account": {
     "overview": "Overview",
@@ -130,7 +150,21 @@
     "changePassword": "Change Password",
     "notifications": "Notifications",
     "upcomingBookings": "Upcoming Bookings",
-    "pastBookings": "Past Bookings"
+    "pastBookings": "Past Bookings",
+    "noBookingsYet": "No bookings yet",
+    "noBookingsDescription": "You haven't made any bookings yet. Start exploring charters and book your first fishing trip!",
+    "browseCharters": "Browse Charters",
+    "bookingStatus": "Booking Status",
+    "bookingDate": "Booking Date",
+    "tripDate": "Trip Date",
+    "charterName": "Charter",
+    "guests": "Guests",
+    "total": "Total",
+    "actions": "Actions",
+    "viewDetails": "View Details",
+    "writeReview": "Write Review",
+    "contactHost": "Contact Host",
+    "cancelBooking": "Cancel Booking"
   },
   "search": {
     "searchCharters": "Search Charters",

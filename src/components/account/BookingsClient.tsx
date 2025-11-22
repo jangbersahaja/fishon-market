@@ -9,7 +9,7 @@ import {
 } from "@/lib/helpers/booking-status-helpers";
 import type { BookingWithDetails } from "@/lib/services/booking-service";
 import { Search } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 interface BookingsClientProps {
@@ -17,30 +17,32 @@ interface BookingsClientProps {
   reviewEligibility: Record<string, boolean>;
 }
 
-const tabs: { label: string; value: BookingTab; description: string }[] = [
-  {
-    label: "In Progress",
-    value: "in-progress",
-    description: "Pending, approved, and upcoming trips",
-  },
-  {
-    label: "Completed",
-    value: "completed",
-    description: "Finished trips",
-  },
-  {
-    label: "Cancelled",
-    value: "cancelled",
-    description: "Rejected, expired, or cancelled bookings",
-  },
-];
-
 export function BookingsClient({
   bookings,
   reviewEligibility,
 }: BookingsClientProps) {
   const locale = useLocale();
+  const t = useTranslations("account");
+  const tCommon = useTranslations("common");
   const [activeTab, setActiveTab] = useState<BookingTab>("in-progress");
+  
+  const tabs: { label: string; value: BookingTab; description: string }[] = [
+    {
+      label: t("upcomingBookings"),
+      value: "in-progress",
+      description: "Pending, approved, and upcoming trips",
+    },
+    {
+      label: t("pastBookings"),
+      value: "completed",
+      description: "Finished trips",
+    },
+    {
+      label: "Cancelled",
+      value: "cancelled",
+      description: "Rejected, expired, or cancelled bookings",
+    },
+  ];
   const [searchTerm, setSearchTerm] = useState("");
   const [reviews, setReviews] = useState<
     Map<string, { id: string; overallRating: number }>
@@ -115,7 +117,7 @@ export function BookingsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("bookings")}</h1>
           <p className="text-sm text-gray-500 mt-1">
             Manage your charter bookings and trips
           </p>
@@ -128,7 +130,7 @@ export function BookingsClient({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by charter name, location, or trip..."
+            placeholder={`${tCommon("search")} by charter name, location, or trip...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ec2227] focus:border-transparent"

@@ -90,7 +90,11 @@
     "backToBook": "Kembali ke Tempahan",
     "availableTrips": "Trip Yang Tersedia",
     "breadcrumbHome": "Laman Utama",
-    "breadcrumbCharters": "Charter"
+    "breadcrumbCharters": "Charter",
+    "chartersTitle": "Charter",
+    "noChartersAvailable": "Belum ada charter tersedia lagi.",
+    "tryASampleCharter": "Cuba charter contoh:",
+    "view": "Lihat"
   },
   "booking": {
     "title": "Tempah Charter Anda",
@@ -115,7 +119,23 @@
     "createFreeAccount": "Daftar Akaun Percuma",
     "searchByEmail": "Cari Mengikut Emel",
     "bookingsStoredDays": "Tempahan disimpan secara tempatan selama 30 hari",
-    "checkBookings": "Semak {count} tempahan anda"
+    "checkBookings": "Semak {count} tempahan anda",
+    "paymentError": "Ralat Bayaran",
+    "invalidPaymentResponse": "Respons bayaran tidak sah. Sila cuba lagi atau hubungi sokongan.",
+    "invalidPaymentHash": "Pengesahan bayaran gagal. Sila hubungi sokongan jika anda telah dicaj.",
+    "bookingNotFound": "Tempahan tidak dijumpai. Sila semak ID tempahan anda dan cuba lagi.",
+    "paymentGatewayError": "Ralat gateway bayaran. Sila cuba lagi kemudian.",
+    "paymentProcessingError": "Ralat pemprosesan bayaran. Sila cuba lagi atau gunakan kaedah pembayaran yang berbeza.",
+    "paymentErrorGeneric": "Ralat berlaku semasa memproses bayaran anda. Sila cuba lagi.",
+    "returnHome": "Kembali ke Laman Utama",
+    "bookingNotFoundTitle": "Tempahan tidak dijumpai",
+    "bookingNotFoundDescription": "Kami tidak dapat menemui tempahan yang anda cari. Sila semak ID tempahan anda atau hubungi sokongan.",
+    "cancelledTitle": "Tempahan Dibatalkan",
+    "cancelledDescription": "Tempahan ini telah dibatalkan.",
+    "goToSearch": "Pergi ke Carian",
+    "viewMyBookings": "Lihat Tempahan Saya",
+    "thankYouBooking": "Terima kasih atas tempahan anda",
+    "bookingDetails": "Butiran Tempahan"
   },
   "account": {
     "overview": "Ringkasan",
@@ -130,7 +150,21 @@
     "changePassword": "Tukar Kata Laluan",
     "notifications": "Pemberitahuan",
     "upcomingBookings": "Tempahan Akan Datang",
-    "pastBookings": "Tempahan Lepas"
+    "pastBookings": "Tempahan Lepas",
+    "noBookingsYet": "Belum ada tempahan lagi",
+    "noBookingsDescription": "Anda belum membuat sebarang tempahan lagi. Mula terokai charter dan tempah trip memancing pertama anda!",
+    "browseCharters": "Layari Charter",
+    "bookingStatus": "Status Tempahan",
+    "bookingDate": "Tarikh Tempahan",
+    "tripDate": "Tarikh Trip",
+    "charterName": "Charter",
+    "guests": "Pemancing",
+    "total": "Jumlah",
+    "actions": "Tindakan",
+    "viewDetails": "Lihat Butiran",
+    "writeReview": "Tulis Ulasan",
+    "contactHost": "Hubungi Tuan Rumah",
+    "cancelBooking": "Batal Tempahan"
   },
   "search": {
     "searchCharters": "Cari Charter",
