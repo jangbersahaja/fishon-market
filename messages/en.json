@@ -84,7 +84,13 @@
     "whatToExpect": "What to Expect",
     "availability": "Availability",
     "reviews": "Reviews",
-    "bookingPolicy": "Booking Policy"
+    "bookingPolicy": "Booking Policy",
+    "notFoundTitle": "Charter not found",
+    "notFoundDescription": "We couldn't find the charter with ID {id}. Please check the URL or return to the listings.",
+    "backToBook": "Back to Book",
+    "availableTrips": "Available Trips",
+    "breadcrumbHome": "Home",
+    "breadcrumbCharters": "Charters"
   },
   "booking": {
     "title": "Book Your Charter",

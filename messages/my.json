@@ -84,7 +84,13 @@
     "whatToExpect": "Apa Yang Dijangkakan",
     "availability": "Ketersediaan",
     "reviews": "Ulasan",
-    "bookingPolicy": "Polisi Tempahan"
+    "bookingPolicy": "Polisi Tempahan",
+    "notFoundTitle": "Charter tidak dijumpai",
+    "notFoundDescription": "Kami tidak dapat menemui charter dengan ID {id}. Sila semak URL atau kembali ke senarai.",
+    "backToBook": "Kembali ke Tempahan",
+    "availableTrips": "Trip Yang Tersedia",
+    "breadcrumbHome": "Laman Utama",
+    "breadcrumbCharters": "Charter"
   },
   "booking": {
     "title": "Tempah Charter Anda",

@@ -31,6 +31,7 @@ import {
 } from "@fishon/ui/charter";
 import { MapPin } from "lucide-react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 export const revalidate = 300; // ISR: refresh detail every 5 minutes
@@ -250,23 +251,25 @@ export default async function CharterViewPage({
         );
 
   if (!charter) {
+    const t = await getTranslations("charter");
     return (
       <main className="bg-white min-h-dvh">
         <section className="max-w-3xl px-4 py-12 mx-auto sm:px-6">
-          <h1 className="text-2xl font-bold">Charter not found</h1>
+          <h1 className="text-2xl font-bold">{t("notFoundTitle")}</h1>
           <p className="mt-2 text-gray-600">
-            We couldn&apos;t find the charter with ID <code>{id}</code>. Please
-            check the URL or return to the listings.
+            {t("notFoundDescription", { id })}
           </p>
           <div className="mt-4">
             <Link href={`/${locale}/home`} className="text-[#ec2227] underline">
-              Back to Book
+              {t("backToBook")}
             </Link>
           </div>
         </section>
       </main>
     );
   }
+
+  const t = await getTranslations("charter");
 
   return (
     <main className="bg-white min-h-dvh">
@@ -285,9 +288,9 @@ export default async function CharterViewPage({
           {/* Breadcrumbs */}
           <nav className="text-sm text-gray-100">
             <Link href={`/${locale}/home`} className="hover:underline">
-              Home
+              {t("breadcrumbHome")}
             </Link>{" "}
-            <span>/</span> <span className="">Charters</span> <span>/</span>{" "}
+            <span>/</span> <span className="">{t("breadcrumbCharters")}</span> <span>/</span>{" "}
             <Link
               href={`/${locale}/search?destination=${charter.location.split(",")[1]}`}
               className="capitalize hover:underline"
@@ -391,7 +394,7 @@ export default async function CharterViewPage({
 
               {/* Trip Cards - Under the map in left column */}
               <div className="mt-6">
-                <h2 className="mb-4 text-xl font-bold">Available Trips</h2>
+                <h2 className="mb-4 text-xl font-bold">{t("availableTrips")}</h2>
                 <div className="flex flex-col gap-3">
                   {trips.map((trip, idx) => {
                     // Since species and techniques are at charter level (not per-trip),
