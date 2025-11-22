@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -52,10 +53,13 @@ export async function createBlogPost(formData: FormData) {
     },
   });
 
-  revalidatePath("/blog");
-  revalidatePath("/admin/blog/posts");
+  // Get current locale for redirect
+  const locale = await getLocale();
 
-  redirect("/admin/blog/posts");
+  revalidatePath(`/${locale}/blog`);
+  revalidatePath(`/${locale}/admin/blog/posts`);
+
+  redirect(`/${locale}/admin/blog/posts`);
 }
 
 export async function updateBlogPost(postId: string, formData: FormData) {
@@ -104,9 +108,12 @@ export async function updateBlogPost(postId: string, formData: FormData) {
     },
   });
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${post.slug}`);
-  revalidatePath("/admin/blog/posts");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/blog`);
+  revalidatePath(`/${locale}/blog/${post.slug}`);
+  revalidatePath(`/${locale}/admin/blog/posts`);
 
   return { success: true, postId: post.id };
 }
@@ -122,8 +129,11 @@ export async function deleteBlogPost(postId: string) {
     where: { id: postId },
   });
 
-  revalidatePath("/blog");
-  revalidatePath("/admin/blog/posts");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/blog`);
+  revalidatePath(`/${locale}/admin/blog/posts`);
 
   return { success: true };
 }
@@ -157,9 +167,12 @@ export async function togglePublishBlogPost(postId: string) {
     },
   });
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${post.slug}`);
-  revalidatePath("/admin/blog/posts");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/blog`);
+  revalidatePath(`/${locale}/blog/${post.slug}`);
+  revalidatePath(`/${locale}/admin/blog/posts`);
 
   return { success: true, published: post.published };
 }

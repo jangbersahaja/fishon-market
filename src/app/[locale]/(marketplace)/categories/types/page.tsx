@@ -1,26 +1,28 @@
 // src/app/categories/types/page.tsx
 import CategoryCard from "@/components/marketing/CategoryCard";
-import { getCharters } from "@/lib/services/charter-service";
 import { getFishingTypeImage } from "@/lib/helpers/image-helpers";
 import { getFishingTypesWithCounts } from "@/lib/helpers/popularity-helpers";
+import { getCharters } from "@/lib/services/charter-service";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 export default async function TypesCategoriesPage() {
+  const locale = await getLocale();
   const charters = await getCharters();
   const types = getFishingTypesWithCounts(charters);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-5">
+    <div className="w-full px-4 py-8 mx-auto max-w-7xl md:px-5">
       {/* Breadcrumb */}
       <nav className="mb-4 text-sm text-gray-500">
-        <Link href="/home" className="hover:underline">
+        <Link href={`/${locale}/home`} className="hover:underline">
           Home
         </Link>{" "}
-        / <span className="text-gray-700 font-medium">Fishing Types</span>
+        / <span className="font-medium text-gray-700">Fishing Types</span>
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">All Fishing Types</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">All Fishing Types</h1>
         <p className="mt-1 text-sm text-gray-600">
           Browse every fishing type available on Fishon. Tap a type to see all
           charters.
@@ -36,7 +38,7 @@ export default async function TypesCategoriesPage() {
             return (
               <CategoryCard
                 key={t.key}
-                href={`/search/category/type/${t.key}`}
+                href={`/${locale}/search/category/type/${t.key}`}
                 label={t.label}
                 count={t.count}
                 image={image}
@@ -49,16 +51,16 @@ export default async function TypesCategoriesPage() {
       )}
 
       {/* Back / Secondary nav */}
-      <div className="mt-8 flex flex-wrap items-center gap-4 text-sm">
+      <div className="flex flex-wrap items-center gap-4 mt-8 text-sm">
         <Link
-          href="/home"
+          href={`/${locale}/home`}
           className="text-[#ec2227] hover:underline font-medium"
         >
           ← Back to Browse
         </Link>
         <span className="text-gray-300">•</span>
         <Link
-          href="/categories/techniques"
+          href={`/${locale}/categories/techniques`}
           className="text-[#ec2227] hover:underline font-medium"
         >
           See all fishing techniques

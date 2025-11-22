@@ -35,7 +35,7 @@ import Link from "next/link";
 
 export const revalidate = 300; // ISR: refresh detail every 5 minutes
 
-type RouteParams = Promise<{ id: string }>;
+type RouteParams = Promise<{ id: string; locale: string }>;
 type RouteSearchParams = Promise<{
   booking_persons?: string;
   booking_days?: string;
@@ -88,7 +88,7 @@ export default async function CharterViewPage({
   params: RouteParams;
   searchParams: RouteSearchParams;
 }) {
-  const { id } = await params;
+  const { id, locale } = await params;
   const resolvedSearchParams = await searchParams;
   const session = await auth();
 
@@ -259,7 +259,7 @@ export default async function CharterViewPage({
             check the URL or return to the listings.
           </p>
           <div className="mt-4">
-            <Link href="/home" className="text-[#ec2227] underline">
+            <Link href={`/${locale}/home`} className="text-[#ec2227] underline">
               Back to Book
             </Link>
           </div>
@@ -284,19 +284,19 @@ export default async function CharterViewPage({
         <div className="px-4 pt-5 mx-auto max-w-7xl sm:px-6">
           {/* Breadcrumbs */}
           <nav className="text-sm text-gray-100">
-            <Link href="/home" className="hover:underline">
+            <Link href={`/${locale}/home`} className="hover:underline">
               Home
             </Link>{" "}
             <span>/</span> <span className="">Charters</span> <span>/</span>{" "}
             <Link
-              href={`/search?destination=${charter.location.split(",")[1]}`}
+              href={`/${locale}/search?destination=${charter.location.split(",")[1]}`}
               className="capitalize hover:underline"
             >
               {charter.location.split(",")[1]}
             </Link>{" "}
             <span>/</span>{" "}
             <Link
-              href={`/search?destination=${charter.location}`}
+              href={`/${locale}/search?destination=${charter.location}`}
               className="capitalize hover:underline"
             >
               {charter.location.split(",")[0]}

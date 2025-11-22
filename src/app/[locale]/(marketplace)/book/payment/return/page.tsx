@@ -4,6 +4,7 @@ import { verifyReturnHash } from "@/lib/payment/senangpay";
 import { redirect } from "next/navigation";
 
 interface PageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     status_id?: string;
     order_id?: string;
@@ -13,9 +14,13 @@ interface PageProps {
   }>;
 }
 
-export default async function PaymentReturnPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const { status_id, order_id, transaction_id, msg, hash } = params;
+export default async function PaymentReturnPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const { locale } = await params;
+  const searchParamsData = await searchParams;
+  const { status_id, order_id, transaction_id, msg, hash } = searchParamsData;
 
   console.log("🔙 [PAYMENT RETURN] User returned from Senang Pay", {
     status_id,
@@ -34,7 +39,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       has_msg: !!msg,
       has_hash: !!hash,
     });
-    redirect("/book/confirm?error=invalid_payment_response");
+    redirect(`/${locale}/book/confirm?error=invalid_payment_response`);
   }
 
   // Verify hash to prevent tampering
@@ -43,7 +48,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
 
   if (!merchantId || !secretKey) {
     console.error("❌ [PAYMENT RETURN] Senang Pay not configured");
-    redirect("/book/confirm?error=payment_gateway_error");
+    redirect(`/${locale}/book/confirm?error=payment_gateway_error`);
   }
 
   const isValid = verifyReturnHash(
@@ -60,7 +65,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
         receivedHash: hash.substring(0, 16) + "...",
       }
     );
-    redirect("/book/confirm?error=invalid_payment_hash");
+    redirect(`/${locale}/book/confirm?error=invalid_payment_hash`);
   }
 
   console.log("✅ [PAYMENT RETURN] Hash verified successfully");
@@ -82,7 +87,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
     console.error("❌ [PAYMENT RETURN] Booking not found", {
       orderId: order_id,
     });
-    redirect("/book/confirm?error=booking_not_found");
+    redirect(`/${locale}/book/confirm?error=booking_not_found`);
   }
 
   // IDEMPOTENCY: Check if already processed by callback webhook
@@ -95,7 +100,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
 
     // Callback already processed payment and triggered revalidation
     // Just redirect to confirmation page
-    redirect(`/book/confirm?id=${order_id}&payment=success`);
+    redirect(`/${locale}/book/confirm?id=${order_id}&payment=success`);
   }
 
   // Check if booking is in PAYMENT_AUTHORIZED status (AUTO flow with FPX/E-wallet)
@@ -112,7 +117,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
 
     // Redirect to confirmation page - callback will update status to PAID
     // The confirmation page will show the current status
-    redirect(`/book/confirm?id=${order_id}&payment=success`);
+    redirect(`/${locale}/book/confirm?id=${order_id}&payment=success`);
   }
 
   // Process payment update (if callback hasn't processed it yet)
@@ -174,7 +179,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
         source: "return",
       });
 
-      redirect(`/book/confirm?id=${order_id}&payment=success`);
+      redirect(`/${locale}/book/confirm?id=${order_id}&payment=success`);
     } catch (error) {
       console.error("❌ [PAYMENT RETURN] Failed to update booking", {
         orderId: order_id,
@@ -189,7 +194,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
         "⚠️ [PAYMENT RETURN] Redirecting to booking despite error - callback should have processed",
         { orderId: order_id }
       );
-      redirect(`/book/confirm?id=${order_id}&payment=processing`);
+      redirect(`/${locale}/book/confirm?id=${order_id}&payment=processing`);
     }
   } else {
     // Payment failed
@@ -211,14 +216,14 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       });
 
       redirect(
-        `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`
+        `/${locale}/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`
       );
     } catch (error) {
       console.error("❌ [PAYMENT RETURN] Failed to record payment failure", {
         orderId: order_id,
         error,
       });
-      redirect(`/book/confirm?id=${order_id}&payment=failed`);
+      redirect(`/${locale}/book/confirm?id=${order_id}&payment=failed`);
     }
   }
 }

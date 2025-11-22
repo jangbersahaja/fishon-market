@@ -2,15 +2,15 @@
 
 ## Overview
 
-This document describes the internationalization (i18n) implementation for the fishon-market application, supporting both Malay (ms) and English (en) languages.
+This document describes the internationalization (i18n) implementation for the fishon-market application, supporting both Malay ((my)) and English (en) languages.
 
 ## Technology Stack
 
 - **Library**: next-intl v3.x
 - **Framework**: Next.js 15 (App Router)
-- **Default Language**: Malay (ms) - Malaysia's national language
+- **Default Language**: Malay ((my)) - Malaysia's national language
 - **Supported Languages**: 
-  - Malay (ms) - `Bahasa Melayu` 🇲🇾
+  - Malay ((my)) - `Bahasa Melayu` 🇲🇾
   - English (en) - `English` 🇬🇧
 
 ## Architecture
@@ -21,7 +21,7 @@ This document describes the internationalization (i18n) implementation for the f
 fishon-market/
 ├── messages/                    # Translation files
 │   ├── en.json                 # English translations
-│   └── ms.json                 # Malay translations
+│   └── (my).json                 # Malay translations
 ├── src/
 │   ├── i18n/
 │   │   ├── config.ts           # i18n configuration (locales, default locale)
@@ -40,9 +40,9 @@ fishon-market/
 Defines available locales, default locale, and locale metadata:
 
 ```typescript
-export const locales = ['ms', 'en'] as const;
+export const locale: "my"', 'en'] as const;
 export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = 'ms';
+export const defaultLocale: Locale = '(my)';
 ```
 
 #### 2. Request Configuration (`src/i18n/request.ts`)
@@ -64,7 +64,7 @@ export default getRequestConfig(async ({ locale }) => {
 Handles both locale routing and authentication:
 
 - Integrates next-intl middleware for locale detection and routing
-- Uses `localePrefix: "as-needed"` - default locale (ms) doesn't show in URL
+- Uses `locale: "my") doesn't show in URL
 - Maintains existing authentication logic for protected routes
 
 #### 4. Next.js Configuration (`next.config.ts`)
@@ -104,7 +104,7 @@ Translation files are organized by feature/domain in JSON format:
 ### Translation Categories
 
 - **common**: Common UI elements (buttons, actions, states)
-- **nav**: Navigation menu items
+- **nav**: Navigation menu ite(my)
 - **footer**: Footer links and content
 - **home**: Home page content
 - **charter**: Charter-related content (listings, details)
@@ -219,10 +219,10 @@ Update root layout to set proper `lang` attribute:
 ```typescript
 export default async function RootLayout({ 
   children,
-  params: { locale }
+  para(my): { locale }
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  para(my): { locale: string };
 }) {
   return (
     <html lang={locale}>
@@ -237,12 +237,12 @@ export default async function RootLayout({
 Add alternate language links in metadata:
 
 ```typescript
-export async function generateMetadata({ params: { locale } }) {
+export async function generateMetadata({ para(my): { locale } }) {
   return {
     alternates: {
       canonical: `/${locale}`,
       languages: {
-        'ms': '/ms',
+        '(my)': '/(my)',
         'en': '/en',
       },
     },
@@ -255,7 +255,7 @@ export async function generateMetadata({ params: { locale } }) {
 ### Adding New Translations
 
 1. **Identify translatable text** in components
-2. **Add to both translation files** (`messages/en.json` and `messages/ms.json`)
+2. **Add to both translation files** (`messages/en.json` and `messages/(my).json`)
 3. **Use appropriate category** (common, nav, etc.) or create new category
 4. **Replace hardcoded text** with translation function
 5. **Test in both languages**
@@ -273,7 +273,7 @@ export async function generateMetadata({ params: { locale } }) {
 }
 ```
 
-`messages/ms.json`:
+`messages/(my).json`:
 ```json
 {
   "charter": {
@@ -299,20 +299,20 @@ const t = useTranslations('charter');
 
 ### 2. Pluralization
 
-For items that require pluralization:
+For ite(my) that require pluralization:
 
 ```json
 {
-  "items": {
+  "ite(my)": {
     "one": "{count} item",
-    "other": "{count} items"
+    "other": "{count} ite(my)"
   }
 }
 ```
 
 ```typescript
-t('items', { count: 1 }); // "1 item"
-t('items', { count: 5 }); // "5 items"
+t('ite(my)', { count: 1 }); // "1 item"
+t('ite(my)', { count: 5 }); // "5 ite(my)"
 ```
 
 ### 3. Rich Text
@@ -350,10 +350,10 @@ format.number(1234.56, { style: 'currency', currency: 'MYR' });
 
 - [ ] Homepage loads in both languages
 - [ ] Language switcher works correctly
-- [ ] URLs are correct (no `/ms` prefix for Malay)
-- [ ] All navigation items are translated
+- [ ] URLs are correct (no `/(my)` prefix for Malay)
+- [ ] All navigation ite(my) are translated
 - [ ] Footer content is translated
-- [ ] Forms show translated labels and validation messages
+- [ ] For(my) show translated labels and validation messages
 - [ ] Error messages appear in correct language
 - [ ] User can switch language mid-session
 - [ ] Language preference persists across pages
@@ -433,7 +433,7 @@ test('renders translated text', () => {
 
 To add a new language (e.g., Chinese):
 
-1. Add locale to `src/i18n/config.ts`: `locales = ['ms', 'en', 'zh']`
+1. Add locale: "my"', 'en', 'zh']`
 2. Create `messages/zh.json` with translations
 3. Add label and flag to `localeLabels` and `localeFlags`
 4. Test thoroughly

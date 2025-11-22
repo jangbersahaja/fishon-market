@@ -26,12 +26,12 @@ Created complete i18n configuration:
 #### 3. **Translation Files**
 Created foundational translation files:
 - `messages/en.json` - 5,028 characters, 11 categories, ~150 keys
-- `messages/ms.json` - 5,259 characters, 11 categories, ~150 keys
+- `messages/(my).json` - 5,259 characters, 11 categories, ~150 keys
 - `messages/README.md` - Complete translation guidelines
 
 **Categories Created:**
 1. `common` - UI elements (buttons, states, actions)
-2. `nav` - Navigation menu items
+2. `nav` - Navigation menu ite(my)
 3. `footer` - Footer content
 4. `home` - Homepage content
 5. `charter` - Charter pages
@@ -119,7 +119,7 @@ Ready-to-use component featuring:
 fishon-market/
 ├── messages/                           # Translation files
 │   ├── en.json                        # English translations
-│   ├── ms.json                        # Malay translations
+│   ├── (my).json                        # Malay translations
 │   └── README.md                      # Translation guidelines
 ├── src/
 │   ├── i18n/                          # i18n infrastructure
@@ -240,7 +240,7 @@ Migrate components as features are developed:
 
 ### For Adding Translations:
 1. **Guidelines**: `messages/README.md`
-2. **Existing Keys**: Browse `messages/en.json` and `messages/ms.json`
+2. **Existing Keys**: Browse `messages/en.json` and `messages/(my).json`
 3. **Validation**: Use TypeScript autocomplete
 
 ### For Migration:
@@ -303,8 +303,8 @@ Migrate components as features are developed:
 ## 🔧 Technical Details
 
 ### Locale Configuration
-- **Default Locale**: `ms` (Malay)
-- **Supported Locales**: `ms`, `en`
+- **Default Locale**: `(my)` (Malay)
+- **Supported Locales**: `(my)`, `en`
 - **Locale Prefix Strategy**: `as-needed` (default locale has no prefix)
 
 ### URL Examples
@@ -325,7 +325,7 @@ Migrate components as features are developed:
 
 ### Type Definitions
 ```typescript
-type Locale = 'ms' | 'en';
+type Locale = '(my)' | 'en';
 type Messages = typeof import('../../messages/en.json');
 type TranslationNamespace = keyof Messages;
 ```

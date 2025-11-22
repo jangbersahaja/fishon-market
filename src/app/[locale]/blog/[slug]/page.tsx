@@ -15,7 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const post = await getBlogPostBySlug(slug);
 
   if (!post || !post.published) {
@@ -168,13 +168,13 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <ol className="flex items-center gap-2 text-sm text-gray-600">
             <li>
-              <Link href="/" className="hover:text-[#ec2227]">
+              <Link href={`/${locale}/home`} className="hover:text-[#ec2227]">
                 Home
               </Link>
             </li>
             <li>/</li>
             <li>
-              <Link href="/blog" className="hover:text-[#ec2227]">
+              <Link href={`/${locale}/blog`} className="hover:text-[#ec2227]">
                 Blog
               </Link>
             </li>

@@ -2,7 +2,7 @@
 
 import { useBookingStorage } from "@/hooks/useBookingStorage";
 import { Calendar, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -17,6 +17,7 @@ export function CheckYourBookings() {
   const { bookings } = useBookingStorage();
   const [showModal, setShowModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const locale = useLocale();
   const t = useTranslations("nav");
 
   // Prevent hydration mismatch
@@ -49,6 +50,7 @@ export function CheckYourBookings() {
       {showModal && (
         <CheckYourBookingsModal
           bookings={bookings}
+          locale={locale}
           onClose={() => setShowModal(false)}
         />
       )}
@@ -64,11 +66,13 @@ interface CheckYourBookingsModalProps {
     status: string;
     createdAt: number;
   }>;
+  locale: string;
   onClose: () => void;
 }
 
 function CheckYourBookingsModal({
   bookings,
+  locale,
   onClose,
 }: CheckYourBookingsModalProps) {
   const [mounted, setMounted] = useState(false);
@@ -104,9 +108,14 @@ function CheckYourBookingsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{t("yourBookings")}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {t("yourBookings")}
+            </h2>
             <p className="mt-1 text-sm text-gray-600">
-              {bookings.length} {bookings.length === 1 ? t("bookingsSingular") : t("bookingsPlural")}{" "}
+              {bookings.length}{" "}
+              {bookings.length === 1
+                ? t("bookingsSingular")
+                : t("bookingsPlural")}{" "}
               {t("storedLocally")}
             </p>
           </div>
@@ -136,14 +145,14 @@ function CheckYourBookingsModal({
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
-                href="/register"
+                href={`/${locale}/register`}
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold text-center text-white bg-[#ec2227] rounded-lg hover:bg-[#d01f24] transition-colors"
               >
                 {t("createFreeAccount")}
               </Link>
               <Link
-                href="/find-booking"
+                href={`/${locale}/find-booking`}
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >

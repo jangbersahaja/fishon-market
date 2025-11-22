@@ -1,19 +1,26 @@
+"use client";
 import CategoryCard from "@/components/marketing/CategoryCard";
 import { getFishingTypeImage } from "@/lib/helpers/image-helpers";
 import { getFishingTypesWithCounts } from "@/lib/helpers/popularity-helpers";
-import type { Charter } from "@fishon/ui";
+
+import { useLocale } from "next-intl";
 import Link from "next/link";
 
-export default function BrowseByType({ charters }: { charters: Charter[] }) {
+interface BrowseByTypeProps {
+  charters: any[];
+}
+
+export default function BrowseByType({ charters }: BrowseByTypeProps) {
+  const locale = useLocale();
   const types = getFishingTypesWithCounts(charters);
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-2 md:px-0">
+    <section className="w-full px-2 mx-auto max-w-7xl md:px-0">
       <div className="w-full px-5">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold">Browse By Type</h2>
           <Link
-            href="/categories/types"
+            href={`/${locale}/categories/types`}
             className="hidden text-sm font-medium text-[#ec2227] hover:underline md:inline"
           >
             See all fishing types
@@ -26,7 +33,7 @@ export default function BrowseByType({ charters }: { charters: Charter[] }) {
             return (
               <CategoryCard
                 key={t.key}
-                href={`/search/category/type/${t.key}`}
+                href={`/${locale}/search/category/type/${t.key}`}
                 label={t.label}
                 count={t.count}
                 subtitle={`Explore ${t.label.toLowerCase()} trips`}
@@ -36,9 +43,9 @@ export default function BrowseByType({ charters }: { charters: Charter[] }) {
             );
           })}
         </div>
-        <div className="mt-4 flex justify-start md:hidden">
+        <div className="flex justify-start mt-4 md:hidden">
           <Link
-            href="/categories/types"
+            href={`/${locale}/categories/types`}
             className="text-sm font-semibold text-[#ec2227] hover:underline"
           >
             See all fishing types

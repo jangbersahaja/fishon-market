@@ -1,6 +1,9 @@
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const locale = await getLocale();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
@@ -32,7 +35,7 @@ export default function NotFound() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/home"
+            href={`/${locale}/home`}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ec2227] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#c81e23]"
           >
             <svg
@@ -52,7 +55,7 @@ export default function NotFound() {
           </Link>
 
           <Link
-            href="/search"
+            href={`/${locale}/search`}
             className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
           >
             <svg

@@ -8,17 +8,18 @@ import { defaultLocale, locales } from "./src/i18n/config";
 const intlMiddleware = createMiddleware({
   locales,
   defaultLocale,
-  localePrefix: "as-needed", // Don't show default locale in URL
+  localePrefix: "always", // Always show locale in URL (temporary test)
+  localeDetection: true, // Enable locale detection
 });
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Handle i18n routing first
+  // Handle i18n routing first - this will rewrite /home to /my/home internally
   const intlResponse = intlMiddleware(request);
-  
+
   // Extract locale from pathname for protected routes check
-  const pathnameWithoutLocale = pathname.replace(/^\/(ms|en)/, '') || '/';
+  const pathnameWithoutLocale = pathname.replace(/^\/(my|en)/, "") || "/";
 
   // 1. Protect /admin routes (NextAuth with ADMIN role check)
   if (pathnameWithoutLocale.startsWith("/admin")) {

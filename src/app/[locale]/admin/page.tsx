@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 export default async function AdminHome() {
+  const locale = await getLocale();
   const [posts, categories, tags] = await Promise.all([
     prisma.blogPost.count(),
     prisma.blogCategory.count(),
@@ -29,7 +31,7 @@ export default async function AdminHome() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Manage Posts</h2>
           <Link
-            href="/admin/blog/posts/new"
+            href={`/${locale}/admin/blog/posts/new`}
             className="rounded bg-[#ec2227] px-3 py-2 text-sm font-semibold text-white"
           >
             New Post

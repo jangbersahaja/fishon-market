@@ -4,6 +4,8 @@ import Link from "next/link";
 interface ChatStatusNoticeProps {
   status: "LOCKED" | "CLOSED" | "RESTRICTED";
   reason?: string;
+  /** Locale for link generation */
+  locale: string;
 }
 
 /**
@@ -12,7 +14,11 @@ interface ChatStatusNoticeProps {
  * Displays a small, non-intrusive message explaining why chat is disabled
  * with a link to contact support for assistance.
  */
-export function ChatStatusNotice({ status, reason }: ChatStatusNoticeProps) {
+export function ChatStatusNotice({
+  status,
+  reason,
+  locale,
+}: ChatStatusNoticeProps) {
   const config = {
     LOCKED: {
       icon: Lock,
@@ -59,7 +65,7 @@ export function ChatStatusNotice({ status, reason }: ChatStatusNoticeProps) {
         <p className="text-gray-600 mt-0.5">
           {reason || message}{" "}
           <Link
-            href="/support"
+            href={`/${locale}/support`}
             className="underline transition-colors hover:text-gray-900"
           >
             Contact support

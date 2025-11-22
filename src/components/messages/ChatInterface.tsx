@@ -1,13 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { Conversation } from "@/lib/types/conversation";
 import { ArrowLeft } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface ChatInterfaceProps {
   conversationId: string;
+}
+
+interface Conversation {
+  id: string;
+  bookingId: string;
+  // Add other conversation properties as needed
 }
 
 /**
@@ -22,6 +28,7 @@ interface ChatInterfaceProps {
  * - Quick replies
  */
 export function ChatInterface({ conversationId }: ChatInterfaceProps) {
+  const locale = useLocale();
   const router = useRouter();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +75,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push("/account/messages")}
+              onClick={() => router.push(`/${locale}/account/messages`)}
               className="md:hidden"
             >
               <ArrowLeft className="h-5 w-5" />

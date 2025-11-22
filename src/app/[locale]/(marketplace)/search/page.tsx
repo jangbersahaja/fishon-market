@@ -7,6 +7,7 @@ import { getCharters } from "@/lib/services/charter-service";
 import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 // Helpers
@@ -111,6 +112,9 @@ export default async function SearchResults({
     charter_style?: string;
   }>;
 }) {
+  // Get locale from next-intl server context
+  const locale = await getLocale();
+
   // Await searchParams (Next.js 15 requirement)
   const params = await searchParams;
 
@@ -388,7 +392,7 @@ export default async function SearchResults({
         <div className="relative p-5 mx-auto max-w-7xl">
           <nav className="mb-4 text-sm text-white/80">
             <Link
-              href="/home"
+              href={`/${locale}/home`}
               className="transition-colors hover:text-white hover:underline"
             >
               Home
@@ -517,7 +521,7 @@ export default async function SearchResults({
                   </p>
                 </div>
                 <Link
-                  href="/search"
+                  href={`/${locale}/search`}
                   className="mt-4 inline-block px-6 py-3 bg-[#ec2227] hover:bg-[#d11f24] text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Clear All Filters

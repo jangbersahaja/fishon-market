@@ -1,7 +1,8 @@
 import CategoryCard from "@/components/marketing/CategoryCard";
-import { getCharters } from "@/lib/services/charter-service";
 import { getDestinationImage } from "@/lib/helpers/image-helpers";
 import { getPopularDestinations } from "@/lib/helpers/popularity-helpers";
+import { getCharters } from "@/lib/services/charter-service";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -12,6 +13,7 @@ export const metadata = {
 };
 
 async function DestinationsContent() {
+  const locale = await getLocale();
   const charters = await getCharters();
   // Get more destinations to filter
   const allDestinations = getPopularDestinations(charters, 100);
@@ -37,7 +39,7 @@ async function DestinationsContent() {
       {destinationsWithImages.map((dest) => (
         <CategoryCard
           key={dest.name}
-          href={`/search?destination=${encodeURIComponent(dest.name)}`}
+          href={`/${locale}/search?destination=${encodeURIComponent(dest.name)}`}
           label={dest.name}
           count={dest.count}
           subtitle={`${dest.count} charter${
@@ -71,7 +73,9 @@ function DestinationsSkeleton() {
   );
 }
 
-export default function PopularDestinationsPage() {
+export default async function PopularDestinationsPage() {
+  const locale = await getLocale();
+
   return (
     <div className="flex flex-col min-h-screen font-sans">
       <main className="flex-1 w-full">
@@ -87,7 +91,7 @@ export default function PopularDestinationsPage() {
                 </p>
               </div>
               <Link
-                href="/home"
+                href={`/${locale}/home`}
                 className="text-sm font-medium text-[#ec2227] hover:underline"
               >
                 ← Back to search

@@ -8,7 +8,7 @@ This document outlines the step-by-step plan to migrate the existing fishon-mark
 
 ✅ **COMPLETED**:
 - i18n infrastructure setup (next-intl)
-- Translation files created (en.json, ms.json)
+- Translation files created (en.json, (my).json)
 - Middleware configured for locale routing
 - LanguageSwitcher component created
 - Documentation written
@@ -60,16 +60,16 @@ This phase restructures the app directory to support locale parameters.
    import { NextIntlClientProvider } from 'next-intl';
    import { getMessages } from 'next-intl/server';
    
-   export function generateStaticParams() {
+   export function generateStaticPara(my)() {
      return locales.map((locale) => ({ locale }));
    }
    
    export default async function RootLayout({
      children,
-     params: { locale }
+     para(my): { locale }
    }: {
      children: React.ReactNode;
-     params: { locale: string };
+     para(my): { locale: string };
    }) {
      const messages = await getMessages();
      
@@ -193,7 +193,7 @@ Migrate page-specific content. This should be done incrementally as features are
 3. **Charter pages** (`src/app/[locale]/(marketplace)/charters/`)
    - Charter listing page
    - Charter detail page
-   - Booking forms
+   - Booking for(my)
 
 4. **Account pages** (`src/app/[locale]/(account)/account/`)
    - Profile page
@@ -203,7 +203,7 @@ Migrate page-specific content. This should be done incrementally as features are
 5. **Marketing pages** (`src/app/[locale]/(marketing)/`)
    - About page
    - Contact page
-   - Terms, Privacy pages
+   - Ter(my), Privacy pages
 
 6. **Blog** (`src/app/[locale]/blog/`)
    - Blog listing
@@ -229,7 +229,7 @@ Migrate page-specific content. This should be done incrementally as features are
 
 2. **Check if translation exists**
    - Look in `messages/en.json`
-   - If not, add to both `en.json` and `ms.json`
+   - If not, add to both `en.json` and `(my).json`
 
 3. **Import translation hook**
    ```typescript
@@ -266,7 +266,7 @@ When you need a translation that doesn't exist:
    }
    ```
    
-   **messages/ms.json:**
+   **messages/(my).json:**
    ```json
    {
      "charter": {
@@ -287,11 +287,11 @@ For Malay translations:
 1. **Use formal Malay** (Bahasa Melayu formal)
 2. **Localize, don't just translate**
    - Consider Malaysian context
-   - Use locally appropriate terms
+   - Use locally appropriate ter(my)
 3. **Keep length similar** to English to avoid layout issues
-4. **Technical terms**: 
-   - Consider using English for widely-known terms (e.g., "Charter", "Email")
-   - Translate common terms (e.g., "Search" → "Cari")
+4. **Technical ter(my)**: 
+   - Consider using English for widely-known ter(my) (e.g., "Charter", "Email")
+   - Translate common ter(my) (e.g., "Search" → "Cari")
 
 ---
 
@@ -347,7 +347,7 @@ test('renders in Malay', () => {
   const messages = { nav: { home: 'Laman Utama' } };
   
   render(
-    <NextIntlClientProvider messages={messages} locale="ms">
+    <NextIntlClientProvider messages={messages} locale: "my"">
       <MyComponent />
     </NextIntlClientProvider>
   );
@@ -360,11 +360,11 @@ test('renders in Malay', () => {
 
 For each migrated page:
 
-- [ ] Page loads at default locale (no `/ms`)
+- [ ] Page loads at default locale: "my"`)
 - [ ] Page loads at `/en` prefix
 - [ ] Language switcher changes content
 - [ ] All text is translated
-- [ ] Forms work correctly
+- [ ] For(my) work correctly
 - [ ] Validation messages appear in correct language
 - [ ] Error messages appear in correct language
 - [ ] Layout doesn't break (text length differences)
@@ -420,7 +420,7 @@ The migration is considered successful when:
 - ✅ All pages load in both languages
 - ✅ Language switcher works on all pages
 - ✅ No broken layouts due to text length differences
-- ✅ All forms and validation work in both languages
+- ✅ All for(my) and validation work in both languages
 - ✅ SEO is properly configured (lang tags, hreflang)
 - ✅ User language preference is remembered
 - ✅ All automated tests pass
@@ -455,7 +455,7 @@ After completing the migration:
 
 - **Quick Start Guide**: `docs/I18N_QUICKSTART.md`
 - **Full Documentation**: `docs/I18N_IMPLEMENTATION.md`
-- **Translation Files**: `messages/en.json`, `messages/ms.json`
+- **Translation Files**: `messages/en.json`, `messages/(my).json`
 - **Example Component**: `src/components/shared/I18nExample.tsx`
 - **next-intl Docs**: https://next-intl-docs.vercel.app/
 

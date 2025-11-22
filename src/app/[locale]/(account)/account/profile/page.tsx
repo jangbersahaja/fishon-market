@@ -1,6 +1,7 @@
 import { ProfileForm } from "@/components/account";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -12,7 +13,8 @@ export default async function ProfilePage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login?next=/account/profile");
+    const locale = await getLocale();
+    redirect(`/${locale}/login?next=/${locale}/account/profile`);
   }
 
   // Fetch complete user profile
@@ -34,7 +36,8 @@ export default async function ProfilePage() {
   });
 
   if (!user) {
-    redirect("/login?next=/account/profile");
+    const locale = await getLocale();
+    redirect(`/${locale}/login?next=/${locale}/account/profile`);
   }
 
   return (

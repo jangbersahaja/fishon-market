@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { getConversationEnriched } from "@/lib/services/message-service";
+import { getLocale } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { ChatDetail } from "./chat-detail";
 
@@ -20,7 +21,8 @@ export default async function ConversationDetailPage({ params }: PageProps) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login");
+    const locale = await getLocale();
+    redirect(`/${locale}/login`);
   }
 
   const { conversationId } = await params;

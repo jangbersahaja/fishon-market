@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 async function getDashboardStats() {
@@ -32,7 +33,8 @@ async function getDashboardStats() {
   };
 }
 
-export default async function AdminBlogDashboard() {
+export default async function AdminBlogPage() {
+  const locale = await getLocale();
   const stats = await getDashboardStats();
 
   const statCards = [

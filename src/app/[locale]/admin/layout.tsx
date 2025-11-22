@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth/auth";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
@@ -10,7 +11,8 @@ export default async function AdminLayout({
   const session = await auth();
 
   if (!session?.user?.id || (session.user as any).role !== "ADMIN") {
-    redirect("/login?error=admin_only");
+    const locale = await getLocale();
+    redirect(`/${locale}/login?error=admin_only`);
   }
 
   return (

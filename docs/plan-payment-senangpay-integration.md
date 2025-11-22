@@ -116,7 +116,7 @@ interface PaymentResponse {
   status_id: string; // "1" = success, "0" = failed
   order_id: string;
   transaction_id: string;
-  msg: string;
+  (my)g: string;
   hash: string;
 }
 
@@ -147,7 +147,7 @@ export function verifyReturnHash(
   const expectedHash = crypto
     .createHmac("sha256", secretKey)
     .update(
-      `${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+      `${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.(my)g}`
     )
     .digest("hex");
 
@@ -243,11 +243,11 @@ import {
 import { PaymentForm } from "./PaymentForm";
 
 interface PageProps {
-  params: Promise<{ bookingId: string }>;
+  para(my): Promise<{ bookingId: string }>;
 }
 
-export default async function PaymentPage({ params }: PageProps) {
-  const { bookingId } = await params;
+export default async function PaymentPage({ para(my) }: PageProps) {
+  const { bookingId } = await para(my);
 
   // Validate Senang Pay configuration
   try {
@@ -464,7 +464,7 @@ After payment completion (success or failure), Senang Pay redirects the user bac
 - `status_id`: "1" (success) or "0" (failed)
 - `order_id`: Booking ID
 - `transaction_id`: Senang Pay transaction ID
-- `msg`: Status message
+- `(my)g`: Status message
 - `hash`: Verification hash
 
 ### Completed Job Summary
@@ -484,21 +484,21 @@ import { prisma } from "@/lib/prisma";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
 
 interface PageProps {
-  searchParams: Promise<{
+  searchPara(my): Promise<{
     status_id?: string;
     order_id?: string;
     transaction_id?: string;
-    msg?: string;
+    (my)g?: string;
     hash?: string;
   }>;
 }
 
-export default async function PaymentReturnPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const { status_id, order_id, transaction_id, msg, hash } = params;
+export default async function PaymentReturnPage({ searchPara(my) }: PageProps) {
+  const para(my) = await searchPara(my);
+  const { status_id, order_id, transaction_id, (my)g, hash } = para(my);
 
   // Validate required parameters
-  if (!status_id || !order_id || !transaction_id || !msg || !hash) {
+  if (!status_id || !order_id || !transaction_id || !(my)g || !hash) {
     redirect("/book/confirm?error=invalid_payment_response");
   }
 
@@ -511,7 +511,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       status_id,
       order_id,
       transaction_id,
-      msg,
+      (my)g,
       hash,
     },
     secretKey,
@@ -533,7 +533,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
           paidAt: new Date(),
           paymentTransactionId: transaction_id,
           paymentMethod: "SENANGPAY",
-          paymentNote: msg,
+          paymentNote: (my)g,
         },
       });
 
@@ -543,13 +543,13 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
       await prisma.booking.update({
         where: { id: order_id },
         data: {
-          paymentNote: msg,
+          paymentNote: (my)g,
         },
       });
 
       redirect(
         `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(
-          msg
+          (my)g
         )}`
       );
     }
@@ -606,11 +606,11 @@ export async function POST(request: NextRequest) {
     const status_id = formData.get("status_id")?.toString();
     const order_id = formData.get("order_id")?.toString();
     const transaction_id = formData.get("transaction_id")?.toString();
-    const msg = formData.get("msg")?.toString();
+    const (my)g = formData.get("(my)g")?.toString();
     const hash = formData.get("hash")?.toString();
 
     // Validate required fields
-    if (!status_id || !order_id || !transaction_id || !msg || !hash) {
+    if (!status_id || !order_id || !transaction_id || !(my)g || !hash) {
       console.error("Missing required fields in callback");
       return new NextResponse("Bad Request", { status: 400 });
     }
@@ -624,7 +624,7 @@ export async function POST(request: NextRequest) {
         status_id,
         order_id,
         transaction_id,
-        msg,
+        (my)g,
         hash,
       },
       secretKey,
@@ -656,7 +656,7 @@ export async function POST(request: NextRequest) {
           paidAt: new Date(),
           paymentTransactionId: transaction_id,
           paymentMethod: "SENANGPAY",
-          paymentNote: msg,
+          paymentNote: (my)g,
         },
       });
 
@@ -669,13 +669,13 @@ export async function POST(request: NextRequest) {
       await prisma.booking.update({
         where: { id: order_id },
         data: {
-          paymentNote: `Payment Failed: ${msg}`,
+          paymentNote: `Payment Failed: ${(my)g}`,
         },
       });
 
       console.log("Payment failure callback processed:", {
         bookingId: order_id,
-        reason: msg,
+        reason: (my)g,
       });
     }
 
@@ -800,11 +800,11 @@ Update the booking confirmation page to:
 
 // Show payment error if failed
 {
-  searchParams.payment === "failed" && (
+  searchPara(my).payment === "failed" && (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
       <h3 className="font-semibold text-red-900 mb-2">Payment Failed</h3>
       <p className="text-sm text-red-700">
-        {searchParams.reason ||
+        {searchPara(my).reason ||
           "Payment could not be processed. Please try again."}
       </p>
       <Button href={`/book/payment/${booking.id}`} className="mt-4">
@@ -915,9 +915,9 @@ export function PaymentReceipt({ booking, user }: PaymentReceiptProps) {
   return (
     <section className="bg-white border-2 border-slate-200 rounded-2xl p-6 print:border-0">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 print:mb-4">
+      <div className="flex ite(my)-start justify-between mb-6 print:mb-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex ite(my)-center gap-2 mb-2">
             <Receipt className="h-5 w-5 text-[#ec2227]" />
             <h2 className="text-xl font-bold text-slate-900">
               Payment Receipt
@@ -930,7 +930,7 @@ export function PaymentReceipt({ booking, user }: PaymentReceiptProps) {
         <div className="flex gap-2 print:hidden">
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border-2 border-[#ec2227] text-[#ec2227] rounded-lg hover:bg-[#ec2227] hover:text-white transition-colors"
+            className="flex ite(my)-center gap-2 px-4 py-2 text-sm font-semibold border-2 border-[#ec2227] text-[#ec2227] rounded-lg hover:bg-[#ec2227] hover:text-white transition-colors"
           >
             <Download className="h-4 w-4" />
             Download
@@ -1014,7 +1014,7 @@ export function PaymentReceipt({ booking, user }: PaymentReceiptProps) {
           </div> */}
 
           <div className="pt-2 border-t border-slate-200">
-            <div className="flex justify-between items-baseline">
+            <div className="flex justify-between ite(my)-baseline">
               <span className="text-base font-bold text-slate-900">
                 Total Paid
               </span>
@@ -1055,11 +1055,11 @@ export function PaymentReceipt({ booking, user }: PaymentReceiptProps) {
 
       {/* Payment Method */}
       <div className="mb-6 pb-6 border-b border-slate-200">
-        <div className="flex justify-between items-center text-sm">
+        <div className="flex justify-between ite(my)-center text-sm">
           <span className="text-slate-600">Payment Method:</span>
           <span className="font-medium text-slate-900">Senang Pay</span>
         </div>
-        <div className="flex justify-between items-center text-sm mt-1">
+        <div className="flex justify-between ite(my)-center text-sm mt-1">
           <span className="text-slate-600">Transaction ID:</span>
           <span className="font-mono text-xs text-slate-900">
             {booking.paymentTransactionId}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa6";
 
@@ -24,15 +24,16 @@ const socials = [
 
 const Footer = () => {
   const t = useTranslations("footer");
+  const locale = useLocale();
 
   const abouts = [
     {
       key: "aboutUs",
-      link: "/about",
+      link: `/${locale}/about`,
     },
     {
       key: "blog",
-      link: "/blog",
+      link: `/${locale}/blog`,
     },
     {
       key: "affiliateProgram",
@@ -40,18 +41,18 @@ const Footer = () => {
     },
     {
       key: "contactUs",
-      link: "support/contact",
+      link: `/${locale}/support/contact`,
     },
   ];
 
   const discover = [
     {
       key: "fishingTechnique",
-      link: "/categories/techniques",
+      link: `/${locale}/categories/techniques`,
     },
     {
       key: "fishingType",
-      link: "/categories/types",
+      link: `/${locale}/categories/types`,
     },
     {
       key: "fishSpecies",
@@ -66,19 +67,19 @@ const Footer = () => {
   const support = [
     {
       key: "helpCenter",
-      link: "/support/help",
+      link: `/${locale}/support/help`,
     },
     {
       key: "termsOfService",
-      link: "/terms",
+      link: `/${locale}/terms`,
     },
     {
       key: "privacyPolicy",
-      link: "/privacy",
+      link: `/${locale}/privacy`,
     },
     {
       key: "refundCancellation",
-      link: "/refund-policy",
+      link: `/${locale}/refund-policy`,
     },
   ];
 
@@ -163,7 +164,9 @@ const Footer = () => {
       </section>
       <section className="w-full bg-[#ec2227] ">
         <div className="flex flex-wrap items-center justify-between w-full h-24 gap-3 px-5 py-3 mx-auto max-w-7xl text-white/90">
-          <h3 className="font-bold">© 2025 Fishon. {t("allRightsReserved")}.</h3>
+          <h3 className="font-bold">
+            © 2025 Fishon. {t("allRightsReserved")}.
+          </h3>
           <nav aria-label="Social links">
             <ul className="flex items-center gap-4 text-xl">
               {/* Add more links as they go live */}

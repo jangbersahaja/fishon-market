@@ -11,7 +11,12 @@ async function getFormData() {
   return { categories, tags };
 }
 
-export default async function NewBlogPostPage() {
+export default async function NewBlogPostPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const { categories, tags } = await getFormData();
 
   return (
@@ -27,6 +32,7 @@ export default async function NewBlogPostPage() {
         allCategories={categories}
         allTags={tags}
         onSubmit={createBlogPost}
+        locale={locale}
       />
     </div>
   );

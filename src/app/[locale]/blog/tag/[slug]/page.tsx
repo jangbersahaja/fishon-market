@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
   searchParams: Promise<{ page?: string }>;
 };
 
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogTagPage({ params, searchParams }: Props) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const { page: pageParam } = await searchParams;
   const page = Number(pageParam) || 1;
   const perPage = 12;
@@ -49,7 +49,7 @@ export default async function BlogTagPage({ params, searchParams }: Props) {
       <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
         <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <nav className="mb-4 text-sm text-white/80" aria-label="Breadcrumb">
-            <Link href="/blog" className="hover:text-white">
+            <Link href={`/${locale}/blog`} className="hover:text-white">
               Blog
             </Link>{" "}
             / <span className="text-white">#{tag.name}</span>
@@ -70,7 +70,7 @@ export default async function BlogTagPage({ params, searchParams }: Props) {
               No articles with this tag yet. Check back soon!
             </p>
             <Link
-              href="/blog"
+              href={`/${locale}/blog`}
               className="mt-4 inline-block text-[#ec2227] hover:underline"
             >
               ← Back to all articles

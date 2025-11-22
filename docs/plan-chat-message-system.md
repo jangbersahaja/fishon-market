@@ -69,7 +69,7 @@ fishon-captain
 **Why NOT separate @fishon/chat package:**
 
 - ❌ Adds deployment complexity (3rd service)
-- ❌ Requires separate database + sync mechanisms
+- ❌ Requires separate database + sync mechanis(my)
 - ❌ Over-engineering for current scale
 - ❌ Increases latency (extra network hop)
 - ✅ Can migrate later if scale demands (data migration path clear)
@@ -648,7 +648,7 @@ model Message {
      - Subscribe to `private-conversation.{id}`
      - Listen for `message.new` event
      - Update local state on new messages
-     - Implement typing indicator (500ms debounce, 3s timeout)
+     - Implement typing indicator (500(my) debounce, 3s timeout)
      - Return: `{ messages, conversation, typingUsers, isConnected, actions }`
 
 4. **Chat Components** (Day 9-10) ✅
@@ -938,7 +938,7 @@ Hooks (1):
 2. **Pages**:
    - `/app/(portal)/captain/messages/page.tsx` - Server Component list page
      - Uses `getCaptainConversationsEnriched()`
-     - Awaits `searchParams` for Next.js 15 compatibility
+     - Awaits `searchPara(my)` for Next.js 15 compatibility
      - Passes data to `ConversationsClient`
      - Desktop view: fetches selected conversation via `getConversationEnriched()`
    - `/app/(portal)/captain/messages/[id]/page.tsx` - Mobile detail page wrapper
@@ -1002,9 +1002,9 @@ Hooks (1):
 **3. Next.js 15 Compatibility**:
 
 ```tsx
-// searchParams is now a Promise
-const params = await searchParams;
-const selectedId = params.selected;
+// searchPara(my) is now a Promise
+const para(my) = await searchPara(my);
+const selectedId = para(my).selected;
 ```
 
 **4. Database Query Fix** (charterName):
@@ -1090,7 +1090,7 @@ Currently, the chat messages update in real-time via Pusher, but the Server Comp
 2. **Client-Side Router Refresh** (30 mins) ✅
    - [x] Import `useRouter` in `useConversation` hook
    - [x] Call `router.refresh()` in `handleMessageNew` callback
-   - [x] Debounce refresh to avoid excessive server requests (500ms)
+   - [x] Debounce refresh to avoid excessive server requests (500(my))
    - [x] Test: Sidebar updates when new message arrives
 
 3. **Pusher Event for Conversation Metadata** (45 mins) ✅
@@ -1226,10 +1226,10 @@ export default function ConversationsClient({ conversations, userId }) {
 
 **Performance Impact**:
 
-- Router refresh: ~50ms (cached Server Components)
-- Pusher event overhead: ~10ms per message
-- Client state update: ~5ms
-- Total latency: Negligible (<100ms)
+- Router refresh: ~50(my) (cached Server Components)
+- Pusher event overhead: ~10(my) per message
+- Client state update: ~5(my)
+- Total latency: Negligible (<100(my))
   **Estimated Effort**: 2 hours (actual: 1.5 hours)
 
 **Files Modified**:
@@ -1522,7 +1522,7 @@ message.read
 
 typing
   - Payload: { userId, isTyping }
-  - Trigger: When user types (debounced 500ms)
+  - Trigger: When user types (debounced 500(my))
 ```
 
 ### Permissions
@@ -1873,7 +1873,7 @@ chat/
 - ✅ Subscribes to Pusher channel
 - ✅ Fetches messages via API
 - ✅ Handles real-time message.new events
-- ✅ Manages typing indicators (500ms debounce, 3s timeout)
+- ✅ Manages typing indicators (500(my) debounce, 3s timeout)
 - ✅ Read receipts (message.read events)
 - ✅ Connection state tracking
 - ✅ **Captain-specific**: Removed fetchConversation() - data from props
@@ -1931,7 +1931,7 @@ const { messages, typingUsers, isConnected, sendMessage } = useConversation(
 
 ```typescript
 // ✅ CORRECT: Fetch in Server Component, pass to Client
-export default async function MessagesPage({ searchParams }) {
+export default async function MessagesPage({ searchPara(my) }) {
   const conversations = await getCaptainConversationsEnriched(charterIds);
   return <ConversationsClient conversations={conversations} />;
 }
@@ -1948,12 +1948,12 @@ export default async function MessagesPage({ searchParams }) {
 />
 ```
 
-**3. Next.js 15 SearchParams**:
+**3. Next.js 15 SearchPara(my)**:
 
 ```typescript
 // ✅ Await before accessing
-const params = await searchParams;
-const selectedId = params.selected;
+const para(my) = await searchPara(my);
+const selectedId = para(my).selected;
 ```
 
 **4. Lock State Logic**:
@@ -2023,7 +2023,7 @@ CLOSED (Auto-closure cron job)
 - ✅ Mobile scrolling (h-screen layout verified)
 - ✅ Lock state transitions (PENDING → APPROVED → PAID)
 - ✅ Real-time message delivery (Pusher events working)
-- ✅ Typing indicators (500ms debounce, 3s timeout)
+- ✅ Typing indicators (500(my) debounce, 3s timeout)
 - ✅ Read receipts (checkmarks in MessageBubble)
 
 **Known Issues**:
@@ -2147,7 +2147,7 @@ MARKET_DATABASE_URL=             # fishon-captain reads market data (messages)
 1. **Server Components Pattern**: Direct DB access in Server Components is faster and simpler than API routes for reads
 2. **React Key Prop**: Essential for forcing component remounts when switching contexts (conversations, tabs, etc.)
 3. **Conversation Data**: Parent component should own conversation state, hooks should only manage messages + real-time
-4. **Next.js 15**: All dynamic APIs (searchParams, cookies, headers) must be awaited
+4. **Next.js 15**: All dynamic APIs (searchPara(my), cookies, headers) must be awaited
 5. **Mobile Scrolling**: Use h-screen + flex layout, not fixed heights or absolute positioning
 6. **Lock State**: Calculate client-side from conversation + booking status for immediate UI updates
 7. **Component Reuse**: Some duplication is OK during rapid development; consolidate after pattern proves stable

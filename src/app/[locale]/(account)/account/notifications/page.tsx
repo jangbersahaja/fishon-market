@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Loader2, Settings } from "lucide-react";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,6 +20,7 @@ export default function NotificationsPage() {
 }
 
 function NotificationsContent() {
+  const locale = useLocale();
   const {
     notifications,
     unreadCount,
@@ -51,7 +53,7 @@ function NotificationsContent() {
         </div>
 
         <div className="flex gap-2">
-          <Link href="/account/notifications/settings">
+          <Link href={`/${locale}/account/notifications/settings`}>
             <Button variant="outline" size="sm">
               <Settings className="w-4 h-4 mr-2" />
               Settings

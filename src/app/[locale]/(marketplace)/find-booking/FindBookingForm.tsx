@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Calendar, Loader2, Mail, Phone } from "lucide-react";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -15,6 +16,7 @@ interface Booking {
 }
 
 export function FindBookingForm() {
+  const locale = useLocale();
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,7 +64,10 @@ export function FindBookingForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email Input */}
         <div className="space-y-2">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Email Address <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -81,7 +86,10 @@ export function FindBookingForm() {
 
         {/* Phone Input */}
         <div className="space-y-2">
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-gray-700"
+          >
             Phone Number <span className="text-gray-400">(Optional)</span>
           </label>
           <div className="relative">
@@ -129,11 +137,16 @@ export function FindBookingForm() {
       {results.length > 0 && (
         <div className="pt-6 mt-6 space-y-3 border-t">
           <h3 className="font-semibold text-gray-900">
-            Found {results.length} {results.length === 1 ? "booking" : "bookings"}
+            Found {results.length}{" "}
+            {results.length === 1 ? "booking" : "bookings"}
           </h3>
           <div className="space-y-2">
             {results.map((booking) => (
-              <BookingResultCard key={booking.id} booking={booking} />
+              <BookingResultCard
+                key={booking.id}
+                booking={booking}
+                locale={locale}
+              />
             ))}
           </div>
         </div>
@@ -142,7 +155,13 @@ export function FindBookingForm() {
   );
 }
 
-function BookingResultCard({ booking }: { booking: Booking }) {
+function BookingResultCard({
+  booking,
+  locale,
+}: {
+  booking: Booking;
+  locale: string;
+}) {
   const statusColors = {
     PENDING: "bg-yellow-100 text-yellow-800",
     APPROVED: "bg-blue-100 text-blue-800",
@@ -153,7 +172,9 @@ function BookingResultCard({ booking }: { booking: Booking }) {
     EXPIRED: "bg-gray-100 text-gray-800",
   };
 
-  const statusColor = statusColors[booking.status as keyof typeof statusColors] || "bg-gray-100 text-gray-800";
+  const statusColor =
+    statusColors[booking.status as keyof typeof statusColors] ||
+    "bg-gray-100 text-gray-800";
 
   const formattedDate = new Date(booking.date).toLocaleDateString("en-MY", {
     weekday: "short",
@@ -164,7 +185,7 @@ function BookingResultCard({ booking }: { booking: Booking }) {
 
   return (
     <Link
-      href={`/book/confirm?id=${booking.id}`}
+      href={`/${locale}/book/confirm?id=${booking.id}`}
       className="block p-4 transition-shadow bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300"
     >
       <div className="flex items-start justify-between gap-4">
@@ -177,7 +198,9 @@ function BookingResultCard({ booking }: { booking: Booking }) {
               <Calendar className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
               {formattedDate}
             </p>
-            <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${statusColor}`}>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${statusColor}`}
+            >
               {booking.status}
             </span>
           </div>

@@ -2,6 +2,7 @@ import { EmptyState } from "@/components/account";
 import BaseCharterCard from "@/components/charters/BaseCharterCard";
 import { auth } from "@/lib/auth/auth";
 import { getUserFavorites } from "@/lib/services/favorite-service";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -13,7 +14,8 @@ export default async function FavoritesPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login?next=/account/favorites");
+    const locale = await getLocale();
+    redirect(`/${locale}/login?next=/${locale}/account/favorites`);
   }
 
   const favorites = await getUserFavorites(session.user.id);

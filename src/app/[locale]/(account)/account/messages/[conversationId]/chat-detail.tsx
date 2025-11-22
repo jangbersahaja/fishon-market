@@ -8,6 +8,7 @@ import {
   TypingIndicator,
 } from "@/components/chat";
 import { useConversation } from "@/hooks/useConversation";
+import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
@@ -64,6 +65,7 @@ interface ChatDetailProps {
  * - Typing indicators
  */
 export function ChatDetail({ conversation, userId }: ChatDetailProps) {
+  const locale = useLocale();
   const router = useRouter();
 
   const { messages, typingUsers, isConnected, sendMessage } = useConversation(
@@ -127,7 +129,7 @@ export function ChatDetail({ conversation, userId }: ChatDetailProps) {
         <ChatHeader
           otherUserName={conversation.captain.name}
           otherUserAvatar={conversation.captain.avatar}
-          onBack={() => router.push("/account/messages")}
+          onBack={() => router.push(`/${locale}/account/messages`)}
           isOnline={isConnected}
           // Pass booking details for display
           booking={

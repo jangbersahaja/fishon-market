@@ -53,7 +53,7 @@ Go to: <https://app.senangpay.my/merchant/settings>
 - [ ] Hash verification enabled in both handlers (return + callback)
 - [ ] Idempotency checks in place
 - [ ] Side effects function (`triggerPaymentSideEffects`) used consistently
-- [ ] Error handling for all payment states (success, failure, missing params)
+- [ ] Error handling for all payment states (success, failure, missing para(my))
 - [ ] Availability check prevents race conditions
 - [ ] All 87 tests passing
 - [ ] TypeScript compiles without errors
@@ -194,7 +194,7 @@ Once deployed, check:
    - Check notifications (bell icon)
    - Should see "Payment Confirmed! ✅" notification
 
-**Expected Result**: ✅ Payment completes successfully, all systems updated
+**Expected Result**: ✅ Payment completes successfully, all syste(my) updated
 
 **If test fails, check:**
 
@@ -330,7 +330,7 @@ LIMIT 10;
 
 ### Issue: Mock payment still showing
 
-**Symptoms**: Payment page shows "Development Mode - Mock Payment" banner
+**Sympto(my)**: Payment page shows "Development Mode - Mock Payment" banner
 
 **Causes**:
 
@@ -350,7 +350,7 @@ vercel --prod
 
 ### Issue: Hash verification fails
 
-**Symptoms**: Logs show "Invalid hash detected"
+**Sympto(my)**: Logs show "Invalid hash detected"
 
 **Causes**:
 
@@ -368,7 +368,7 @@ vercel --prod
 
 ### Issue: Callback webhook not arriving
 
-**Symptoms**: Return handler works, but callback never arrives
+**Sympto(my)**: Return handler works, but callback never arrives
 
 **Causes**:
 
@@ -387,7 +387,7 @@ vercel --prod
 
 ### Issue: Side effects not triggering
 
-**Symptoms**: Payment succeeds, but captain webhook or notification missing
+**Sympto(my)**: Payment succeeds, but captain webhook or notification missing
 
 **Causes**:
 

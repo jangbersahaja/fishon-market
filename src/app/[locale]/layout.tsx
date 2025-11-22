@@ -3,6 +3,7 @@ import { AuthModalProvider } from "@/components/auth/AuthModalContext";
 import Chrome from "@/components/layout/Chrome";
 import SessionProvider from "@/components/shared/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { locales } from "@/i18n/config";
 import { auth } from "@/lib/auth/auth";
 import {
   createOrganizationSchema,
@@ -10,6 +11,21 @@ import {
   serializeSchema,
 } from "@/lib/seo";
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { Inter, Oswald } from "next/font/google";
+import { notFound } from "next/navigation";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-oswald",
+});
 
 export const metadata: Metadata = {
   title: "Fishon — Malaysia's Fishing & Charter Booking",
@@ -30,18 +46,36 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
 };
 
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
 // Global structured data schemas
 const organizationSchema = createOrganizationSchema();
 const websiteSchema = createWebSiteSchema();
 
 export default async function LocaleLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  // Await params as required by Next.js 15
+  const { locale } = await params;
+
+  // Validate that the incoming `locale` parameter is valid
+  if (!locales.includes(locale as any)) {
+    notFound();
+  }
+
+  // Providing all messages to the client side is the easiest way to get started
+  const messages = await getMessages();
+
   const session = await auth();
+
   return (
-    <>
+    <html lang={locale}>
       <head>
         {/* Global JSON-LD: Organization schema */}
         <script
@@ -58,13 +92,19 @@ export default async function LocaleLayout({
           }}
         />
       </head>
-      <SessionProvider session={session}>
-        <AuthModalProvider>
-          <Chrome>{children}</Chrome>
-          <AuthModal />
-          <Toaster />
-        </AuthModalProvider>
-      </SessionProvider>
-    </>
+      <body
+        className={`flex flex-col font-sans ${inter.variable} ${oswald.variable}`}
+      >
+        <NextIntlClientProvider messages={messages}>
+          <SessionProvider session={session}>
+            <AuthModalProvider>
+              <Chrome>{children}</Chrome>
+              <AuthModal />
+              <Toaster />
+            </AuthModalProvider>
+          </SessionProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
   );
 }

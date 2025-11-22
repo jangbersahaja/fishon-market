@@ -1,7 +1,8 @@
 // src/app/categories/techniques/page.tsx
 import CategoryCard from "@/components/marketing/CategoryCard";
-import { getCharters } from "@/lib/services/charter-service";
 import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
+import { getCharters } from "@/lib/services/charter-service";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 function normalizeLabel(s: string) {
@@ -13,6 +14,7 @@ function normalizeLabel(s: string) {
 }
 
 export default async function TechniquesCategoriesPage() {
+  const locale = await getLocale();
   const charters = await getCharters();
 
   // Build a unique list of techniques with counts (case-insensitive)
@@ -36,17 +38,17 @@ export default async function TechniquesCategoriesPage() {
     .sort((a, b) => b.count - a.count);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-8 md:px-5">
+    <div className="w-full px-5 py-8 mx-auto max-w-7xl md:px-5">
       {/* Breadcrumb */}
       <nav className="mb-4 text-sm text-gray-500">
-        <Link href="/home" className="hover:underline">
+        <Link href={`/${locale}/home`} className="hover:underline">
           Home
         </Link>{" "}
-        / <span className="text-gray-700 font-medium">Fishing Techniques</span>
+        / <span className="font-medium text-gray-700">Fishing Techniques</span>
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">
+        <h1 className="text-2xl font-bold md:text-3xl">
           All Fishing Techniques
         </h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -62,7 +64,7 @@ export default async function TechniquesCategoriesPage() {
           {items.map((t) => (
             <CategoryCard
               key={t.key}
-              href={`/search/category/technique/${encodeURIComponent(
+              href={`/${locale}/search/category/technique/${encodeURIComponent(
                 t.label.toLowerCase()
               )}`}
               label={t.label}
@@ -76,16 +78,16 @@ export default async function TechniquesCategoriesPage() {
       )}
 
       {/* Back / Secondary nav */}
-      <div className="mt-8 flex flex-wrap items-center gap-4 text-sm">
+      <div className="flex flex-wrap items-center gap-4 mt-8 text-sm">
         <Link
-          href="/home"
+          href={`/${locale}/home`}
           className="text-[#ec2227] hover:underline font-medium"
         >
           ← Back to Browse
         </Link>
         <span className="text-gray-300">•</span>
         <Link
-          href="/categories/types"
+          href={`/${locale}/categories/types`}
           className="text-[#ec2227] hover:underline font-medium"
         >
           See all fishing types

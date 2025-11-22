@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useLocale } from "next-intl";
 import BookingSummaryCard from "./BookingSummaryCard";
 import DateGuestsCard from "./DateGuestsCard";
 import EmergencyContactCard from "./EmergencyContactCard";
@@ -153,6 +154,7 @@ export default function CheckoutForm({
   };
   charterFlowType?: "MANUAL" | "AUTO";
 }) {
+  const locale = useLocale();
   const sp = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -543,7 +545,9 @@ export default function CheckoutForm({
                 date: formData.date,
                 status: "PENDING",
               });
-              router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+              router.push(
+                `/${locale}/book/confirm?id=${encodeURIComponent(bookingId)}`
+              );
             } else {
               setFormError("root", {
                 type: "manual",

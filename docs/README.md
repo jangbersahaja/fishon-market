@@ -26,7 +26,7 @@
 - 📋 **Complete TODO list** with file locations and time estimates
 - 🔍 **All TODOs from codebase** (grep results, 200+ matches)
 - 🎨 **Shared components needed** (StatusPill, PricingBreakdown, etc.)
-- 🗃️ **Database changes** (schema, migrations, enums)
+- 🗃️ **Database changes** (schema, migrations, enu(my))
 - 🔌 **Backend implementation** (payment gateway, refund service, API routes)
 - 🎨 **UI changes** (fishon-market and fishon-captain)
 - 📧 **Email templates** (5 missing, 1 needs update)
@@ -52,14 +52,14 @@
 **Start with**:
 
 1. Quick Reference (5 min) - Status, risks, timeline
-2. Architecture Diagrams (15 min) - Visual understanding of the system
+2. Architecture Diagra(my) (15 min) - Visual understanding of the system
 
 ### I'm a QA Tester
 
 **Start with**:
 
 1. Quick Reference → Testing Guide section
-2. Architecture Diagrams → Testing Infrastructure section
+2. Architecture Diagra(my) → Testing Infrastructure section
 3. Complete Migration Guide → Testing Infrastructure section
 
 ### I'm Auditing the Code / Reviewing PRs
@@ -67,7 +67,7 @@
 **Start with**:
 
 1. Complete Migration Guide - Full details of all changes
-2. Architecture Diagrams - Visual verification
+2. Architecture Diagra(my) - Visual verification
 3. TODO Checklist - Verify nothing critical was missed
 
 ---
@@ -129,7 +129,7 @@ See **Quick Reference** for full deployment blockers.
 
 **How do I test the booking flow?**  
 → Quick Reference → Testing Guide section  
-→ Architecture Diagrams → Testing Infrastructure section
+→ Architecture Diagra(my) → Testing Infrastructure section
 
 **How do I rollback if something breaks?**  
 → Complete Migration Guide → Rollback Plan section  
@@ -183,7 +183,7 @@ prisma/
 ├── schema.prisma                     ← Main schema (updated)
 └── migrations/
     ├── 20251114124931_add_dual_flow_payment_system/
-    └── 20251114130054_add_payment_analytics_enums/
+    └── 20251114130054_add_payment_analytics_enu(my)/
 ```
 
 ---
@@ -256,7 +256,7 @@ If you find errors or missing information in these docs:
 Refer to:
 
 - **Technical**: Complete Migration Guide → Implementation sections
-- **Business Logic**: Architecture Diagrams → Flow charts
+- **Business Logic**: Architecture Diagra(my) → Flow charts
 - **Tasks**: TODO Checklist
 
 ### Emergency Rollback
@@ -283,7 +283,7 @@ See:
 ### For Your First Time
 
 1. Read **Quick Reference** (5 min) - Get the big picture
-2. Skim **Architecture Diagrams** (5 min) - Visualize the system
+2. Skim **Architecture Diagra(my)** (5 min) - Visualize the system
 3. Read **Complete Migration Guide** (30 min) - Understand the details
 4. Refer to **TODO Checklist** when starting work
 
@@ -291,14 +291,14 @@ See:
 
 1. Check **TODO Checklist** for your tasks
 2. Reference **Complete Migration Guide** for implementation details
-3. Use **Architecture Diagrams** for visual reference
+3. Use **Architecture Diagra(my)** for visual reference
 4. Update **Quick Reference** if status changes
 
 ### For Code Reviews
 
 1. Use **Complete Migration Guide** to verify all changes documented
 2. Check **TODO Checklist** to ensure nothing critical missed
-3. Compare implementation against **Architecture Diagrams**
+3. Compare implementation against **Architecture Diagra(my)**
 
 ---
 

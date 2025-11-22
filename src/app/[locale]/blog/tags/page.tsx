@@ -11,7 +11,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function BlogTagsPage() {
+export default async function BlogTagsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const tags = await prisma.blogTag.findMany({
     include: {
       _count: {
@@ -30,7 +35,7 @@ export default async function BlogTagsPage() {
       <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <nav className="mb-4 text-sm text-white/80" aria-label="Breadcrumb">
-            <Link href="/blog" className="hover:text-white">
+            <Link href={`/${locale}/blog`} className="hover:text-white">
               Blog
             </Link>{" "}
             / <span className="text-white">Tags</span>
@@ -51,7 +56,7 @@ export default async function BlogTagsPage() {
               No tags with posts yet. Check back soon!
             </p>
             <Link
-              href="/blog"
+              href={`/${locale}/blog`}
               className="mt-4 inline-block text-[#ec2227] hover:underline"
             >
               ← Back to all articles

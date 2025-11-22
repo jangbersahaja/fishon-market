@@ -24,7 +24,7 @@ Successfully integrated the dual-flow payment system into both authenticated and
 ```typescript
 async function handleCallback(req: NextRequest);
 // Main callback handler
-// 1. Parse status_id, order_id, transaction_id, msg, hash
+// 1. Parse status_id, order_id, transaction_id, (my)g, hash
 // 2. Verify hash with verifyReturnHash()
 // 3. Find booking by order_id
 // 4. Update booking.status = "PAID", paymentTransactionId, paymentCapturedAt
@@ -480,14 +480,14 @@ All post-booking operations are non-blocking:
 ### Retry Logic
 
 - Payment gateway calls: No automatic retry (fail fast)
-- Webhook delivery: 3 attempts with 300ms base delay
-- Booking creation: 3 attempts with 100ms base delay (serializable transaction)
+- Webhook delivery: 3 attempts with 300(my) base delay
+- Booking creation: 3 attempts with 100(my) base delay (serializable transaction)
 
 ### Response Times
 
-- TOKENIZED flow: ~500-1000ms (token creation + booking creation)
-- DIRECT flow: ~300-500ms (booking creation + URL generation)
-- Callback processing: ~200-400ms (verification + update + notifications)
+- TOKENIZED flow: ~500-1000(my) (token creation + booking creation)
+- DIRECT flow: ~300-500(my) (booking creation + URL generation)
+- Callback processing: ~200-400(my) (verification + update + notifications)
 
 ## Monitoring Recommendations
 

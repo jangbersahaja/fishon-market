@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -34,6 +35,7 @@ export function ConversationListItem({
   isSelected = false,
   onSelect,
 }: ConversationListItemProps) {
+  const locale = useLocale();
   // Format time relative to now
   const formatTime = (dateString?: string | null) => {
     if (!dateString) return "";
@@ -58,7 +60,7 @@ export function ConversationListItem({
   };
 
   return (
-    <Link href={`/account/messages/${conversationId}`}>
+    <Link href={`/${locale}/account/messages/${conversationId}`}>
       <div
         onClick={handleClick}
         className={`px-4 py-3 border-b cursor-pointer transition-colors ${
@@ -75,10 +77,10 @@ export function ConversationListItem({
               alt={`${otherUserName}'s avatar`}
               width={48}
               height={48}
-              className="rounded-full flex-shrink-0"
+              className="flex-shrink-0 rounded-full"
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center text-lg font-semibold text-gray-600">
+            <div className="flex items-center justify-center flex-shrink-0 w-12 h-12 text-lg font-semibold text-gray-600 bg-gray-300 rounded-full">
               {otherUserName[0]?.toUpperCase()}
             </div>
           )}
@@ -113,7 +115,7 @@ export function ConversationListItem({
               )}
             </div>
 
-            <p className="text-xs text-gray-500 truncate mb-1">{charterName}</p>
+            <p className="mb-1 text-xs text-gray-500 truncate">{charterName}</p>
 
             <p className="text-sm text-gray-600 truncate line-clamp-2">
               {lastMessagePreview || "No messages yet"}
@@ -121,7 +123,7 @@ export function ConversationListItem({
           </div>
 
           {/* Right: Time */}
-          <div className="text-xs text-gray-500 flex-shrink-0">
+          <div className="flex-shrink-0 text-xs text-gray-500">
             {formatTime(lastMessageTime)}
           </div>
         </div>

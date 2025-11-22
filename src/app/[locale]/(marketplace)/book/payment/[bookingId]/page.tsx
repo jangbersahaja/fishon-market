@@ -26,9 +26,9 @@ import { redirect } from "next/navigation";
 export default async function PaymentPage({
   params,
 }: {
-  params: Promise<{ bookingId: string }>;
+  params: Promise<{ locale: string; bookingId: string }>;
 }) {
-  const { bookingId } = await params;
+  const { locale, bookingId } = await params;
   const session = await auth();
 
   const booking = await prisma.booking.findUnique({
@@ -45,7 +45,7 @@ export default async function PaymentPage({
   });
 
   if (!booking) {
-    redirect("/");
+    redirect(`/${locale}/`);
   }
 
   // Check authorization: User must be logged in and own the booking
@@ -54,7 +54,9 @@ export default async function PaymentPage({
 
   // Note: All bookings now have userId (including GUEST role)
   if (!isAuthenticatedOwner) {
-    redirect(`/login?next=${encodeURIComponent(`/book/payment/${bookingId}`)}`);
+    redirect(
+      `/${locale}/login?next=${encodeURIComponent(`/${locale}/book/payment/${bookingId}`)}`
+    );
   }
 
   // CHECK 1: Booking status must be AWAITING_PAYMENT
@@ -79,12 +81,13 @@ export default async function PaymentPage({
           },
         }}
         expirationType={expirationType as "PENDING" | "AWAITING_PAYMENT"}
+        locale={locale}
       />
     );
   }
 
   if (booking.status !== "AWAITING_PAYMENT") {
-    redirect(`/book/confirm?id=${bookingId}`);
+    redirect(`/${locale}/book/confirm?id=${bookingId}`);
   }
 
   // CHECK 2: Verify date is still available
@@ -118,6 +121,7 @@ export default async function PaymentPage({
           },
         }}
         alternativeDates={alternativeDates}
+        locale={locale}
       />
     );
   }

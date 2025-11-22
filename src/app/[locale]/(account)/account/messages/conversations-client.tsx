@@ -136,7 +136,7 @@ export function ConversationsClient({
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <MessageCircle className="w-12 h-12 text-gray-300" />
         <h2 className="text-lg font-semibold text-gray-700">No messages yet</h2>
-        <p className="text-gray-500 text-center max-w-sm">
+        <p className="max-w-sm text-center text-gray-500">
           Start booking charters to begin chatting with captains
         </p>
         <Button onClick={() => router.push("/charters")}>
@@ -149,10 +149,10 @@ export function ConversationsClient({
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
-      <div className="border-b px-4 py-4 bg-gray-50">
+      <div className="px-4 py-4 border-b bg-gray-50">
         <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
         {totalUnread > 0 && (
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="mt-1 text-sm text-gray-600">
             {totalUnread} unread message{totalUnread !== 1 ? "s" : ""}
           </p>
         )}

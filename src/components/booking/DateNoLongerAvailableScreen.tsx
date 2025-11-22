@@ -23,11 +23,14 @@ interface DateNoLongerAvailableScreenProps {
   };
   /** Alternative available dates for this charter (optional) */
   alternativeDates?: Date[];
+  /** Locale for link generation */
+  locale: string;
 }
 
 export function DateNoLongerAvailableScreen({
   booking,
   alternativeDates = [],
+  locale,
 }: DateNoLongerAvailableScreenProps) {
   const hasAlternatives = alternativeDates.length > 0;
 
@@ -176,7 +179,7 @@ export function DateNoLongerAvailableScreen({
         <p className="text-sm text-gray-600">
           Questions?{" "}
           <Link
-            href="/contact?subject=date-unavailable"
+            href={`/${locale}/contact?subject=date-unavailable`}
             className="font-medium text-blue-600 underline hover:text-blue-700"
           >
             Contact Support

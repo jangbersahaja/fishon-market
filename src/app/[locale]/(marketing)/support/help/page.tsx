@@ -64,7 +64,12 @@ const faqItems = [
 
 const faqSchema = createFAQPageSchema(faqItems);
 
-export default function HelpCenterPage() {
+export default async function HelpCenterPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   return (
     <main className="flex flex-col min-h-screen bg-white">
       {/* JSON-LD Schema for FAQPage */}
@@ -77,8 +82,8 @@ export default function HelpCenterPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,34,39,0.08),transparent_55%)]" />
         <div className="relative px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <nav className="text-sm text-neutral-500">
-            <Link href="/" className="hover:underline">
+          <nav className="flex items-center gap-2 text-sm mb-6">
+            <Link href={`/${locale}/home`} className="hover:underline">
               Home
             </Link>
             <span className="mx-2">/</span>
@@ -141,7 +146,7 @@ export default function HelpCenterPage() {
               </ul>
               <a
                 className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-[#EC2227] px-4 py-2 text-sm font-medium text-white shadow hover:opacity-95"
-                href="/contact"
+                href={`/${locale}/contact`}
               >
                 Contact Support
               </a>
@@ -231,7 +236,7 @@ export default function HelpCenterPage() {
               <p>
                 Share your booking reference at{" "}
                 <a href="mailto:support@fishon.my">support@fishon.my</a> or{" "}
-                <a href="/contact">Contact</a>.
+                <a href={`/${locale}/contact`}>Contact</a>.
               </p>
             </Section>
 

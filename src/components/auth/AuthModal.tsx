@@ -3,6 +3,7 @@ import PasswordInput from "@/components/ui/PasswordInput";
 import { feedbackTokens } from "@/config/designTokens";
 import { validatePassword } from "@/lib/auth/password";
 import { signIn } from "next-auth/react";
+import { useLocale } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useAuthModal } from "./AuthModalContext";
 
@@ -106,6 +107,7 @@ const baseButtonClass =
 export default function AuthModal() {
   const { isOpen, defaultTab, next, showHomeButton, closeModal } =
     useAuthModal();
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<"signin" | "register">("signin");
 
   // Google OAuth is always configured in fishon-market
@@ -134,7 +136,7 @@ export default function AuthModal() {
         {/* Close/Home button */}
         {showHomeButton ? (
           <a
-            href="/home"
+            href={`/${locale}/home`}
             className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition"
             aria-label="Go to home"
           >
@@ -209,6 +211,7 @@ export default function AuthModal() {
               next={next}
               oauthProviders={oauthProviders}
               onSwitchToSignUp={() => setActiveTab("register")}
+              locale={locale}
             />
           ) : (
             <SignUpForm next={next} oauthProviders={oauthProviders} />
@@ -224,10 +227,12 @@ function SignInForm({
   next,
   oauthProviders,
   onSwitchToSignUp,
+  locale,
 }: {
   next: string | undefined;
   oauthProviders: OAuthProviderInfo[];
   onSwitchToSignUp: () => void;
+  locale: string;
 }) {
   const [step, setStep] = useState<"email" | "auth">("email");
   const [authMode, setAuthMode] = useState<"password" | "tac">("password");
@@ -552,7 +557,7 @@ function SignInForm({
                     Password
                   </label>
                   <a
-                    href="/forgot-password"
+                    href={`/${locale}/forgot-password`}
                     className="text-[10px] text-slate-500 hover:text-[#ec2227] transition-colors"
                   >
                     Forgot password?
@@ -903,12 +908,13 @@ function SignUpForm({
                         passwordValidation.strength === "weak" && idx === 0
                           ? "bg-red-500"
                           : passwordValidation.strength === "medium" && idx <= 1
-                          ? "bg-amber-500"
-                          : passwordValidation.strength === "strong" && idx <= 2
-                          ? "bg-blue-500"
-                          : passwordValidation.strength === "very-strong"
-                          ? "bg-green-500"
-                          : "bg-slate-200"
+                            ? "bg-amber-500"
+                            : passwordValidation.strength === "strong" &&
+                                idx <= 2
+                              ? "bg-blue-500"
+                              : passwordValidation.strength === "very-strong"
+                                ? "bg-green-500"
+                                : "bg-slate-200"
                       }`}
                     />
                   )

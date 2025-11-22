@@ -3,6 +3,7 @@
 import CalendarPicker from "@/components/shared/CalendarPicker";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { Search } from "lucide-react";
+import { useLocale } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IoIosPin } from "react-icons/io";
@@ -15,6 +16,7 @@ import {
 } from "react-icons/io5";
 
 const SearchBox = ({ className = "" }: { className?: string }) => {
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -102,7 +104,6 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     charters.forEach((c) => {
       if (c.location) raw.push(c.location);
       if (c.name) raw.push(c.name);
-      if (c.address) raw.push(c.address);
     });
     // Dedupe and filter by query
     const seen = new Set<string>();
@@ -202,7 +203,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     if (days > 1) params.set("days", String(days));
     if (adults) params.set("adults", String(adults));
     if (children) params.set("children", String(children));
-    router.push(`/search?${params.toString()}`);
+    router.push(`/${locale}/search?${params.toString()}`);
   }
 
   return (
@@ -281,7 +282,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                   {destinationSuggestions.map((s) => (
                     <li
                       key={s}
-                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                      className="px-3 py-2 text-sm capitalize cursor-pointer hover:bg-gray-50"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setDestination(s);

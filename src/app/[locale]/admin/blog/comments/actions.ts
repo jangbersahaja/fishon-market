@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 
 export async function approveComment(formData: FormData) {
@@ -11,7 +12,10 @@ export async function approveComment(formData: FormData) {
     data: { approved: true },
   });
 
-  revalidatePath("/admin/blog/comments");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/comments`);
 }
 
 export async function deleteComment(formData: FormData) {
@@ -21,7 +25,10 @@ export async function deleteComment(formData: FormData) {
     where: { id: commentId },
   });
 
-  revalidatePath("/admin/blog/comments");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/comments`);
 }
 
 export async function createComment(formData: FormData) {
@@ -38,5 +45,8 @@ export async function createComment(formData: FormData) {
     },
   });
 
-  revalidatePath(`/blog/${postId}`);
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/blog/${postId}`);
 }

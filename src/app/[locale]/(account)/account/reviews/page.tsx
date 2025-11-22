@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/auth";
 import { getUserReviews } from "@/lib/services/review-service";
 import { ArrowLeft } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function UserReviewsPage() {
+  const locale = await getLocale();
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login?next=/account/reviews");
+    redirect(`/${locale}/login?next=/${locale}/account/reviews`);
   }
 
   const reviews = await getUserReviews(session.user.id);
@@ -26,7 +28,7 @@ export default async function UserReviewsPage() {
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
-          <Link href="/account/bookings">
+          <Link href={`/${locale}/account/bookings`}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Bookings
           </Link>

@@ -88,7 +88,7 @@ completed: 2025-10-28
 - ✅ Zero route duplication - OLD ROUTE ARCHIVED
 - ✅ All booking features available in `/book/confirm`
 - ✅ Email verification working for cancel/receipt
-- ✅ Account dashboard loads <500ms
+- ✅ Account dashboard loads <500(my)
 - ✅ Local storage tracking operational
 - ✅ All tests passing (TypeScript checks)
 
@@ -740,7 +740,7 @@ const tabs = [
 - ✅ Tabs work correctly
 - ✅ Empty states helpful and actionable
 - ✅ Mobile responsive
-- ✅ Fast loading (<500ms)
+- ✅ Fast loading (<500(my))
 
 **Estimated Time**: 2-3 hours
 
@@ -977,7 +977,7 @@ Phase 6 → Depends on ALL phases
 - ✅ Email verification secure and working
 - ✅ Local storage tracking operational
 - ✅ All tests passing
-- ✅ Performance: Pages load <500ms
+- ✅ Performance: Pages load <500(my)
 
 ### UX
 

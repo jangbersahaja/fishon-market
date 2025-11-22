@@ -1,13 +1,10 @@
-import { Metadata } from "next";
+"use client";
+
+import { useLocale } from "next-intl";
 import { FindBookingForm } from "./FindBookingForm";
 
-export const metadata: Metadata = {
-  title: "Find My Booking | Fishon.my",
-  description:
-    "Search for your fishing charter booking by email and phone number",
-};
-
 export default function FindBookingPage() {
+  const locale = useLocale();
   return (
     <div className="min-h-screen py-12 bg-gray-50">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -57,7 +54,7 @@ export default function FindBookingPage() {
                 <span className="mt-0.5">•</span>
                 <span>
                   <a
-                    href="/register"
+                    href={`/${locale}/register`}
                     className="font-medium underline hover:text-blue-600"
                   >
                     Create an account

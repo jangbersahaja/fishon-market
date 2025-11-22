@@ -25,9 +25,9 @@ async function getFormData() {
 export default async function EditBlogPostPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { id } = params;
+  const { locale, id } = await params;
   const post = await getPost(id);
 
   if (!post) {
@@ -53,6 +53,7 @@ export default async function EditBlogPostPage({
         allCategories={categories}
         allTags={tags}
         onSubmit={handleUpdate}
+        locale={locale}
       />
     </div>
   );

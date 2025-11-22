@@ -41,7 +41,7 @@
    - Validates locale
    - Integrates `NextIntlClientProvider`
    - Sets HTML `lang` attribute
-   - Generates static params for both locales
+   - Generates static para(my) for both locales
 
 4. ✅ Updated locale layout (`src/app/[locale]/layout.tsx`):
    - Removed `<html>` and `<body>` tags
@@ -98,7 +98,7 @@
 
 ### Translation Keys Available
 
-From `messages/en.json` and `messages/ms.json`:
+From `messages/en.json` and `messages/(my).json`:
 
 ```json
 {
@@ -214,7 +214,7 @@ From `common` category in translation files:
 3. **Charter pages** (`src/app/[locale]/(marketplace)/charters/`)
    - Charter listing page
    - Charter detail page
-   - Booking forms
+   - Booking for(my)
 
 4. **Account pages** (`src/app/[locale]/(account)/account/`)
    - Profile page
@@ -224,7 +224,7 @@ From `common` category in translation files:
 5. **Marketing pages** (`src/app/[locale]/(marketing)/`)
    - About page
    - Contact page
-   - Terms, Privacy pages
+   - Ter(my), Privacy pages
 
 6. **Blog** (`src/app/[locale]/blog/`)
    - Blog listing
@@ -272,7 +272,7 @@ From `common` category in translation files:
 ### Phase 3 Testing (Future)
 
 - [ ] All common components work in both languages
-- [ ] Forms validate in correct language
+- [ ] For(my) validate in correct language
 - [ ] Error messages display in correct language
 - [ ] Success messages display in correct language
 
@@ -300,7 +300,7 @@ None - Phase 1 complete successfully
 2. **API routes**: API routes are outside `[locale]` folder (as intended)
    - Ensure API routes don't depend on locale-specific imports
 
-3. **Static generation**: Test that `generateStaticParams` works correctly for both locales
+3. **Static generation**: Test that `generateStaticPara(my)` works correctly for both locales
 
 ---
 

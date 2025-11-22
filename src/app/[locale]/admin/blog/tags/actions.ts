@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import slugify from "slugify";
 
@@ -29,8 +30,11 @@ export async function createTag(formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/blog/tags");
-  revalidatePath("/admin/blog/posts");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/tags`);
+  revalidatePath(`/${locale}/admin/blog/posts`);
   return { success: true };
 }
 
@@ -55,7 +59,10 @@ export async function updateTag(tagId: string, formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/blog/tags");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/tags`);
   return { success: true };
 }
 
@@ -70,6 +77,9 @@ export async function deleteTag(tagId: string) {
     where: { id: tagId },
   });
 
-  revalidatePath("/admin/blog/tags");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/tags`);
   return { success: true };
 }

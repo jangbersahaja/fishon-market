@@ -43,14 +43,17 @@ async function searchPosts(query: string, category?: string, tag?: string) {
 }
 
 export default async function BlogSearchPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ q?: string; category?: string; tag?: string }>;
 }) {
-  const params = await searchParams;
-  const query = params.q || "";
-  const category = params.category;
-  const tag = params.tag;
+  const { locale } = await params;
+  const searchParamsResolved = await searchParams;
+  const query = searchParamsResolved.q || "";
+  const category = searchParamsResolved.category;
+  const tag = searchParamsResolved.tag;
 
   const posts = await searchPosts(query, category, tag);
 
@@ -82,7 +85,10 @@ export default async function BlogSearchPage({
         ) : (
           <div className="rounded-lg bg-gray-50 p-12 text-center">
             <p className="mb-4 text-lg text-gray-600">No posts found</p>
-            <Link href="/blog" className="text-[#EC2227] hover:underline">
+            <Link
+              href={`/${locale}/blog`}
+              className="text-[#EC2227] hover:underline"
+            >
               View all posts →
             </Link>
           </div>

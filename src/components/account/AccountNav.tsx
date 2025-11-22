@@ -10,43 +10,44 @@ import {
   Star,
   User,
 } from "lucide-react";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navigation = [
+const getNavigation = (locale: string) => [
   {
     name: "Overview",
-    href: "/account/overview",
+    href: `/${locale}/account/overview`,
     icon: LayoutDashboard,
   },
   {
     name: "Bookings",
-    href: "/account/bookings",
+    href: `/${locale}/account/bookings`,
     icon: Calendar,
   },
   {
     name: "Notifications",
-    href: "/account/notifications",
+    href: `/${locale}/account/notifications`,
     icon: Bell,
   },
   {
     name: "Reviews",
-    href: "/account/reviews",
+    href: `/${locale}/account/reviews`,
     icon: Star,
   },
   {
     name: "Favorites",
-    href: "/account/favorites",
+    href: `/${locale}/account/favorites`,
     icon: Heart,
   },
   {
     name: "Profile",
-    href: "/account/profile",
+    href: `/${locale}/account/profile`,
     icon: User,
   },
   {
     name: "Support",
-    href: "/support/help",
+    href: `/${locale}/support/help`,
     icon: HelpCircle,
   },
 ];
@@ -61,7 +62,9 @@ export function AccountNav({
 }: {
   transparentOnTop?: boolean;
 }) {
+  const locale = useLocale();
   const pathname = usePathname();
+  const navigation = getNavigation(locale);
 
   // Choose background based on transparent mode
   const bgClass = transparentOnTop

@@ -9,9 +9,9 @@ This guide helps you quickly get started with using translations in the fishon-m
 ### 1. Understanding the Setup
 
 We use **next-intl** with:
-- **Malay (ms)** as the default language (no `/ms` prefix in URL)
+- **Malay ((my))** as the default language (no `/(my)` prefix in URL)
 - **English (en)** as alternative (with `/en` prefix in URL)
-- Translation files in `messages/en.json` and `messages/ms.json`
+- Translation files in `messages/en.json` and `messages/(my).json`
 
 ### 2. Using Translations in Components
 
@@ -52,7 +52,7 @@ export default function MyPage() {
 |----------|---------|----------|
 | `common` | Common UI elements | save, cancel, loading, error |
 | `nav` | Navigation menu | home, charters, account, signIn |
-| `footer` | Footer links | aboutUs, contactUs, termsOfService |
+| `footer` | Footer links | aboutUs, contactUs, ter(my)OfService |
 | `home` | Homepage content | title, subtitle, captainTitle |
 | `charter` | Charter pages | bookNow, viewDetails, duration |
 | `booking` | Booking flow | selectDate, confirmBooking, totalAmount |
@@ -142,7 +142,7 @@ import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 export function Navbar() {
   return (
     <nav>
-      {/* Your navigation items */}
+      {/* Your navigation ite(my) */}
       <LanguageSwitcher />
     </nav>
   );
@@ -162,7 +162,7 @@ export function Navbar() {
 }
 ```
 
-**messages/ms.json:**
+**messages/(my).json:**
 ```json
 {
   "charter": {
@@ -254,13 +254,13 @@ See `src/components/shared/I18nExample.tsx` for a complete working example demon
 ## Need Help?
 
 - **Full Documentation**: See `docs/I18N_IMPLEMENTATION.md`
-- **Translation Files**: `messages/en.json` and `messages/ms.json`
+- **Translation Files**: `messages/en.json` and `messages/(my).json`
 - **Example Component**: `src/components/shared/I18nExample.tsx`
 - **next-intl Docs**: https://next-intl-docs.vercel.app/
 
 ## Tips
 
-1. **Always add to both files**: When adding new translations, update both `en.json` AND `ms.json`
+1. **Always add to both files**: When adding new translations, update both `en.json` AND `(my).json`
 2. **Use descriptive keys**: Use `bookNow` not `btn1`
 3. **Group related keys**: Keep related translations in the same category
 4. **Check TypeScript**: Let autocomplete guide you to available translations

@@ -68,7 +68,7 @@ The key insight: **Store the UTC equivalent, but ensure it represents the correc
 
 ```typescript
 // Calculate time slots with Malaysia timezone
-export function calculateTimeSlots(params: {
+export function calculateTimeSlots(para(my): {
   date: Date | string;
   startTime: string; // "08:00" format
   durationHours: number;

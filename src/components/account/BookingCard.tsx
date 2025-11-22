@@ -40,6 +40,7 @@ import { BookingStatusBadge } from "./BookingStatusBadge";
 
 interface BookingCardProps {
   booking: BookingWithDetails;
+  locale: string;
   userReview?: {
     id: string;
     overallRating: number;
@@ -49,6 +50,7 @@ interface BookingCardProps {
 
 export function BookingCard({
   booking,
+  locale,
   userReview,
   canReview = false,
 }: BookingCardProps) {
@@ -222,7 +224,11 @@ export function BookingCard({
         {/* PENDING: Cancel button */}
         {booking.status === "PENDING" && (
           <div className="flex gap-3">
-            <ViewDetailsButton bookingId={booking.id} fullWidth />
+            <ViewDetailsButton
+              bookingId={booking.id}
+              locale={locale}
+              fullWidth
+            />
             <CancelBookingAction bookingId={booking.id} fullWidth />
           </div>
         )}
@@ -231,7 +237,11 @@ export function BookingCard({
         {booking.status === "PAYMENT_AUTHORIZED" && (
           <>
             <div className="flex gap-3">
-              <ViewDetailsButton bookingId={booking.id} fullWidth />
+              <ViewDetailsButton
+                bookingId={booking.id}
+                locale={locale}
+                fullWidth
+              />
             </div>
             {/* Contact Actions */}
             <div className="p-3 space-y-2 rounded-md bg-blue-50">
@@ -279,7 +289,11 @@ export function BookingCard({
               )}
 
             <div className="flex gap-3">
-              <ViewDetailsButton bookingId={booking.id} fullWidth />
+              <ViewDetailsButton
+                bookingId={booking.id}
+                locale={locale}
+                fullWidth
+              />
               <CancelBookingAction bookingId={booking.id} fullWidth />
             </div>
             <PayNowButton bookingId={booking.id} fullWidth />
@@ -290,7 +304,11 @@ export function BookingCard({
         {isPaidInProgress && (
           <>
             <div className="flex gap-3">
-              <ViewDetailsButton bookingId={booking.id} fullWidth />
+              <ViewDetailsButton
+                bookingId={booking.id}
+                locale={locale}
+                fullWidth
+              />
             </div>
 
             {/* Trip Actions Section */}
@@ -331,7 +349,11 @@ export function BookingCard({
         {completed && (
           <div className="flex flex-col gap-3">
             <div className="flex gap-3">
-              <ViewDetailsButton bookingId={booking.id} fullWidth />
+              <ViewDetailsButton
+                bookingId={booking.id}
+                locale={locale}
+                fullWidth
+              />
               {/* Book Again */}
               <BookAgainButton charterId={booking.captainCharterId} fullWidth />
             </div>
@@ -354,7 +376,11 @@ export function BookingCard({
         {/* Cancelled: Try Book Again */}
         {cancelled && (
           <div className="flex gap-3">
-            <ViewDetailsButton bookingId={booking.id} fullWidth />
+            <ViewDetailsButton
+              bookingId={booking.id}
+              locale={locale}
+              fullWidth
+            />
             <Button asChild variant="outline" className="flex-1">
               <Link href={`/charters/${booking.captainCharterId}`}>
                 <RotateCcw className="w-4 h-4 mr-2" />
@@ -366,7 +392,13 @@ export function BookingCard({
 
         {/* REJECTED/EXPIRED: View Details only */}
         {(booking.status === "REJECTED" || booking.status === "EXPIRED") &&
-          !cancelled && <ViewDetailsButton bookingId={booking.id} fullWidth />}
+          !cancelled && (
+            <ViewDetailsButton
+              bookingId={booking.id}
+              locale={locale}
+              fullWidth
+            />
+          )}
       </div>
     </div>
   );

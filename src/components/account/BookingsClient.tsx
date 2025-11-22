@@ -9,6 +9,7 @@ import {
 } from "@/lib/helpers/booking-status-helpers";
 import type { BookingWithDetails } from "@/lib/services/booking-service";
 import { Search } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 interface BookingsClientProps {
@@ -38,6 +39,7 @@ export function BookingsClient({
   bookings,
   reviewEligibility,
 }: BookingsClientProps) {
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<BookingTab>("in-progress");
   const [searchTerm, setSearchTerm] = useState("");
   const [reviews, setReviews] = useState<
@@ -194,6 +196,7 @@ export function BookingsClient({
                     <div className="space-y-3">
                       {results.map((booking) => (
                         <BookingCard
+                          locale={locale}
                           key={booking.id}
                           booking={booking}
                           userReview={reviews.get(booking.id) || null}
@@ -218,6 +221,7 @@ export function BookingsClient({
         <div className="space-y-4">
           {displayBookings.map((booking) => (
             <BookingCard
+              locale={locale}
               key={booking.id}
               booking={booking}
               userReview={reviews.get(booking.id) || null}
@@ -233,8 +237,8 @@ export function BookingsClient({
             activeTab === "in-progress"
               ? "Start exploring and book your first fishing charter!"
               : activeTab === "completed"
-              ? "You haven't completed any trips yet"
-              : "No cancelled bookings"
+                ? "You haven't completed any trips yet"
+                : "No cancelled bookings"
           }
           action={
             activeTab === "in-progress"

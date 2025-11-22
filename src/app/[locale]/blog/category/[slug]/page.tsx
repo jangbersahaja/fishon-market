@@ -8,7 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
   searchParams: Promise<{ page?: string }>;
 };
 
@@ -46,7 +46,7 @@ export default async function BlogCategoryPage({
   params,
   searchParams,
 }: Props) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const { page: pageParam } = await searchParams;
   const page = Number(pageParam) || 1;
   const perPage = 12;
@@ -69,7 +69,7 @@ export default async function BlogCategoryPage({
       <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <nav className="mb-4 text-sm text-white/80" aria-label="Breadcrumb">
-            <Link href="/blog" className="hover:text-white">
+            <Link href={`/${locale}/blog`} className="hover:text-white">
               Blog
             </Link>{" "}
             / <span className="text-white">{category.name}</span>
@@ -92,7 +92,7 @@ export default async function BlogCategoryPage({
               No articles in this category yet. Check back soon!
             </p>
             <Link
-              href="/blog"
+              href={`/${locale}/blog`}
               className="mt-4 inline-block text-[#ec2227] hover:underline"
             >
               ← Back to all articles

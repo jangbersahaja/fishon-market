@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { getAnglerConversationsEnriched } from "@/lib/services/message-service";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { ConversationsClient } from "./conversations-client";
 
@@ -16,7 +17,8 @@ export default async function MessagesPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login");
+    const locale = await getLocale();
+    redirect(`/${locale}/login`);
   }
 
   // Fetch enriched conversations

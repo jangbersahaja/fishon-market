@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -7,11 +8,13 @@ export const metadata: Metadata = {
   robots: "noindex, nofollow",
 };
 
-export default function AdminBlogLayout({
+export default async function AdminBlogLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -23,37 +26,37 @@ export default function AdminBlogLayout({
               </Link>
               <nav className="flex gap-6">
                 <Link
-                  href="/admin/blog"
+                  href={`/${locale}/admin/blog`}
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >
                   Dashboard
                 </Link>
                 <Link
-                  href="/admin/blog/posts"
+                  href={`/${locale}/admin/blog/posts`}
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >
                   Posts
                 </Link>
                 <Link
-                  href="/admin/blog/categories"
+                  href={`/${locale}/admin/blog/categories`}
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >
                   Categories
                 </Link>
                 <Link
-                  href="/admin/blog/tags"
+                  href={`/${locale}/admin/blog/tags`}
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >
                   Tags
                 </Link>
                 <Link
-                  href="/admin/blog/comments"
+                  href={`/${locale}/admin/blog/comments`}
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >
                   Comments
                 </Link>
                 <Link
-                  href="/admin/blog/newsletter"
+                  href={`/${locale}/admin/blog/newsletter`}
                   className="text-sm font-medium text-gray-700 hover:text-[#EC2227]"
                 >
                   Newsletter
@@ -61,7 +64,7 @@ export default function AdminBlogLayout({
               </nav>
             </div>
             <Link
-              href="/blog"
+              href={`/${locale}/blog`}
               className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               View Blog →

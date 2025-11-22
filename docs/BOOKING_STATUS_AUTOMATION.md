@@ -122,7 +122,7 @@ Check Vercel logs for cron execution:
 ✅ Updated booking def456 to EXPIRED
 🔄 Checking 15 PAID bookings for completion
 ✅ Updated booking ghi789 to COMPLETED (ended at 2025-10-27T08:00:00.000Z)
-✅ Booking status update completed in 245ms
+✅ Booking status update completed in 245(my)
 ```
 
 ### Metrics

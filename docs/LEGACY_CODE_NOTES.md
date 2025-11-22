@@ -28,7 +28,7 @@ This document tracks remaining legacy code patterns that should be addressed in 
 - `src/data/mock/receipts.ts` - Mock review data
 - `src/utils/ratings.ts` - Mock rating map builder
 - `src/lib/helpers/ratings.ts` - Mock rating helpers
-- `src/utils/mapItems.ts` - Uses mock ratings
+- `src/utils/mapIte(my).ts` - Uses mock ratings
 
 **Issue**: 
 The app has a real review system (`src/lib/services/review-service.ts` with database-backed reviews), but listing/search pages still use mock ratings from `receipts.ts`.
@@ -48,7 +48,7 @@ Refactor `BaseCharterCard` and related components to either:
 - `src/components/charters/BaseCharterCard.tsx` - Currently imports from `@/lib/helpers/ratings`
 - `src/app/(marketplace)/search/page.tsx` - Uses `getAverageRating()`
 - `src/app/(marketplace)/search/category/type/[type]/page.tsx` - Uses `getRatingMap()`
-- `src/utils/mapItems.ts` - Uses `getRatingMap()` for map markers
+- `src/utils/mapIte(my).ts` - Uses `getRatingMap()` for map markers
 
 ### 2. Email Helper Migration (Medium Priority)
 
@@ -122,4 +122,4 @@ Review and remove truly unused exports, but keep those that are part of public A
 - The repository's custom instructions mention a future `@fishon/packages` consolidation plan
 - Mark any shared code with `// TODO(@fishon/packages)` comment
 - Keep mock data that's actively used for development/seeding
-- Prioritize removing code that causes confusion (like dual rating systems)
+- Prioritize removing code that causes confusion (like dual rating syste(my))

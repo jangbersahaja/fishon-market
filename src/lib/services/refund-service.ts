@@ -243,7 +243,7 @@ export async function initiateRefund(params: InitiateRefundParams) {
           refundAmount > 0
             ? `Your refund of RM${refundAmount.toFixed(2)} is being processed. It should appear in your account within 3-5 business days.`
             : refundReasonText,
-        actionUrl: `/account/bookings/${bookingId}`,
+        actionUrl: `/my/account/bookings/${bookingId}`,
         actionLabel: "View Details",
         bookingId: updatedBooking.id,
         metadata: {
@@ -348,7 +348,7 @@ export async function completeRefund(bookingId: string, transactionId: string) {
         type: "PAYMENT_REFUNDED",
         title: "Refund Completed ✓",
         message: `Your refund of RM${Number(updatedBooking.refundAmount).toFixed(2)} has been processed successfully.`,
-        actionUrl: `/account/bookings/${bookingId}`,
+        actionUrl: `/my/account/bookings/${bookingId}`,
         actionLabel: "View Booking",
         bookingId: updatedBooking.id,
         metadata: {

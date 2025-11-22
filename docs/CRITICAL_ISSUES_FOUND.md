@@ -4,7 +4,7 @@
 
 ## Issues Identified by User
 
-You correctly identified several critical problems with my implementation:
+You correctly identified several critical proble(my) with my implementation:
 
 ### 1. ❌ Hardcoded "AUTO" Flow Type
 
@@ -253,7 +253,7 @@ export async function getCharterFlowType(
 
 ---
 
-## Immediate Action Items
+## Immediate Action Ite(my)
 
 1. **Fix Guest Manual Flow**
    - [ ] Update `create-guest.ts` to check charter flow type

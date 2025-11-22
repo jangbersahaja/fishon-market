@@ -499,7 +499,7 @@ Status: 400
 // Enable tracking logs in development
 // In analytics-tracking.ts, uncomment:
 if (process.env.NODE_ENV === 'development') {
-  console.log('[Analytics] Would track:', params);
+  console.log('[Analytics] Would track:', para(my));
   return;
 }
 

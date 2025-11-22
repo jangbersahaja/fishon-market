@@ -1,7 +1,8 @@
 import CategoryCard from "@/components/marketing/CategoryCard";
 import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
 import { getPopularTechniques } from "@/lib/helpers/popularity-helpers";
-import type { Charter } from "@fishon/ui";
+
+import { useLocale } from "next-intl";
 import Link from "next/link";
 
 const TECHNIQUE_DEFS = [
@@ -15,7 +16,13 @@ const TECHNIQUE_DEFS = [
   "Squid/Eging",
 ] as const;
 
-export default function TopTechniques({ charters }: { charters: Charter[] }) {
+// Define TopTechniquesProps type
+interface TopTechniquesProps {
+  charters: any[];
+}
+
+export default function TopTechniques({ charters }: TopTechniquesProps) {
+  const locale = useLocale();
   const topTechniques = getPopularTechniques(
     charters,
     TECHNIQUE_DEFS as unknown as string[],
@@ -27,12 +34,12 @@ export default function TopTechniques({ charters }: { charters: Charter[] }) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-2 md:px-0">
+    <section className="w-full px-2 mx-auto max-w-7xl md:px-0">
       <div className="w-full px-5">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold">Top Fishing Techniques</h2>
           <Link
-            href="/categories/techniques"
+            href={`/${locale}/categories/techniques`}
             className="hidden text-sm font-medium text-[#ec2227] hover:underline md:inline"
           >
             See all fishing techniques
@@ -45,7 +52,7 @@ export default function TopTechniques({ charters }: { charters: Charter[] }) {
             return (
               <CategoryCard
                 key={name}
-                href={`/search/category/technique/${encodeURIComponent(
+                href={`/${locale}/search/category/technique/${encodeURIComponent(
                   name.toLowerCase()
                 )}`}
                 label={name}
@@ -58,9 +65,9 @@ export default function TopTechniques({ charters }: { charters: Charter[] }) {
           })}
         </div>
 
-        <div className="mt-4 flex justify-start md:hidden">
+        <div className="flex justify-start mt-4 md:hidden">
           <Link
-            href="/categories/techniques"
+            href={`/${locale}/categories/techniques`}
             className="text-sm font-semibold text-[#ec2227] hover:underline"
           >
             See all fishing techniques

@@ -312,7 +312,7 @@ export async function POST(req: Request) {
             type: "BOOKING_REJECTED",
             title: "Booking Update",
             message: notificationMessage,
-            actionUrl: `/search`,
+            actionUrl: `/my/search`,
             actionLabel: "Find Other Charters",
             bookingId: updated.id,
             charterId: updated.charterId,
@@ -340,7 +340,7 @@ export async function POST(req: Request) {
         if (trip) {
           const base =
             process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-          const searchUrl = `${base}/search`;
+          const searchUrl = `${base}/my/search`;
 
           await sendBookingRejectedEmail({
             to: email,
@@ -362,10 +362,13 @@ export async function POST(req: Request) {
       console.error("Failed to send booking rejected email:", err);
     }
 
-    // Revalidate angler pages
+    // Revalidate angler pages for all locales
     try {
-      revalidatePath("/book/confirm", "page");
-      revalidatePath("/account/bookings", "page");
+      const locales = ["my", "en"];
+      for (const locale of locales) {
+        revalidatePath(`/${locale}/book/confirm`, "page");
+        revalidatePath(`/${locale}/account/bookings`, "page");
+      }
 
       // Revalidate messages page if conversation exists
       const conversation = await prisma.conversation.findUnique({
@@ -373,7 +376,12 @@ export async function POST(req: Request) {
         select: { id: true },
       });
       if (conversation) {
-        revalidatePath(`/account/messages/${conversation.id}`, "page");
+        for (const locale of locales) {
+          revalidatePath(
+            `/${locale}/account/messages/${conversation.id}`,
+            "page"
+          );
+        }
       }
     } catch (error) {
       console.error("Revalidation failed:", error);

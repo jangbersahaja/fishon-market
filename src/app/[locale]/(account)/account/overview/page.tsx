@@ -5,14 +5,16 @@ import {
   getBookingStats,
   getUserBookings,
 } from "@/lib/services/booking-service";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function OverviewPage() {
+  const locale = await getLocale();
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login?next=/account/overview");
+    redirect(`/${locale}/login?next=/${locale}/account/overview`);
   }
 
   // Fetch booking statistics
@@ -53,7 +55,7 @@ export default async function OverviewPage() {
           </h2>
           {recentBookings.length > 0 && (
             <Button variant="outline" size="sm" asChild>
-              <Link href="/account/bookings">View All</Link>
+              <Link href={`/${locale}/account/bookings`}>View All</Link>
             </Button>
           )}
         </div>
@@ -65,13 +67,13 @@ export default async function OverviewPage() {
             description="Start exploring and book your first fishing charter!"
             action={{
               label: "Browse Charters",
-              href: "/charters",
+              href: `/${locale}/charters`,
             }}
           />
         ) : (
           <div className="space-y-4">
             {recentBookings.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
+              <BookingCard key={booking.id} booking={booking} locale={locale} />
             ))}
           </div>
         )}
@@ -87,7 +89,7 @@ export default async function OverviewPage() {
             Have questions about your bookings or need assistance?
           </p>
           <Button variant="outline" asChild>
-            <Link href="/support/help">Contact Support</Link>
+            <Link href={`/${locale}/support/help`}>Contact Support</Link>
           </Button>
         </div>
 
@@ -99,7 +101,7 @@ export default async function OverviewPage() {
             Discover new fishing charters and experiences.
           </p>
           <Button asChild>
-            <Link href="/charters">Browse Charters</Link>
+            <Link href={`/${locale}/charters`}>Browse Charters</Link>
           </Button>
         </div>
       </div>

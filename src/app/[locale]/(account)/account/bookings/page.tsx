@@ -3,6 +3,7 @@ import { BookingStatusGuide } from "@/components/account/BookingStatusGuide";
 import { auth } from "@/lib/auth/auth";
 import { getUserBookings } from "@/lib/services/booking-service";
 import { canReviewBooking } from "@/lib/services/review-service";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 // Force dynamic rendering to ensure revalidation works
@@ -12,7 +13,8 @@ export default async function BookingsPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login?next=/account/bookings");
+    const locale = await getLocale();
+    redirect(`/${locale}/login?next=/${locale}/account/bookings`);
   }
 
   const userId = session.user.id;

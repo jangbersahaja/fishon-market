@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import slugify from "slugify";
 
@@ -31,8 +32,11 @@ export async function createCategory(formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/blog/categories");
-  revalidatePath("/admin/blog/posts");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/categories`);
+  revalidatePath(`/${locale}/admin/blog/posts`);
   return { success: true };
 }
 
@@ -59,7 +63,10 @@ export async function updateCategory(categoryId: string, formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/blog/categories");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/categories`);
   return { success: true };
 }
 
@@ -74,6 +81,9 @@ export async function deleteCategory(categoryId: string) {
     where: { id: categoryId },
   });
 
-  revalidatePath("/admin/blog/categories");
+  // Get current locale for revalidation
+  const locale = await getLocale();
+
+  revalidatePath(`/${locale}/admin/blog/categories`);
   return { success: true };
 }

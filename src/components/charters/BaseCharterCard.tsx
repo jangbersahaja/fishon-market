@@ -15,6 +15,7 @@ import {
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
 import { Calendar, Clock, MapPin, ShipIcon } from "lucide-react";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 
 /**
@@ -67,6 +68,7 @@ export default function BaseCharterCard({
   initialIsFavorited = false,
   className = "",
 }: CharterCardProps) {
+  const locale = useLocale();
   const c = charter;
 
   // Image URLs - get all available images
@@ -113,7 +115,7 @@ export default function BaseCharterCard({
 
   // Prefer backendId for linking when available
   const idForLink = (c as any).backendId ?? String(c.id);
-  const href = `/charters/view/${idForLink}?${params.toString()}`;
+  const href = `/${locale}/charters/${idForLink}?${params.toString()}`;
 
   // Image height classes based on aspect ratio
   const imageHeightClasses = {
@@ -208,7 +210,7 @@ export default function BaseCharterCard({
             className={imageObjectFit}
           />
           {showFavoriteButton && (
-            <div className="absolute z-10 top-3 right-3">
+            <div className="absolute top-3 right-3">
               <FavoriteButton
                 captainCharterId={idForLink}
                 charterName={c.name}
@@ -219,7 +221,7 @@ export default function BaseCharterCard({
             </div>
           )}
           {distance !== undefined && (
-            <span className="absolute z-10 top-3 left-3 px-3 py-1.5 bg-white font-medium rounded-full text-xs">
+            <span className="absolute top-3 left-3 px-3 py-1.5 bg-white font-medium rounded-full text-xs">
               {distance.toFixed(1)} km from you
             </span>
           )}
@@ -337,7 +339,7 @@ export default function BaseCharterCard({
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Link href={`/book/${idForLink}`} className="flex-1">
+            <Link href={`/${locale}/book/${idForLink}`} className="flex-1">
               <button className="w-full px-4 py-2 bg-[#ec2227] hover:bg-[#d11f24] text-white rounded-lg font-medium transition-colors font-oswald uppercase">
                 Book Now
               </button>

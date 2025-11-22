@@ -5,7 +5,7 @@ import { CheckYourBookings } from "@/components/booking";
 import { NotificationBell } from "@/components/notifications";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { signOut, useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +21,7 @@ type NavbarProps = {
 export default function Navbar({ transparentOnTop = false }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname() || "/";
+  const locale = useLocale();
   const { data: session } = useSession();
   const isAuthed = !!session?.user;
   const { openModal } = useAuthModal();
@@ -44,7 +45,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
       <div className="flex items-center justify-between h-16 px-4 mx-auto max-w-7xl sm:px-6">
         {/* Logo */}
         <Link
-          href="/home"
+          href={`/${locale}/home`}
           className="flex items-center gap-2"
           aria-label="Fishon.my home"
         >
@@ -68,12 +69,12 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               <NotificationBell />
 
               <Link
-                href="/account/messages"
+                href={`/${locale}/account/messages`}
                 aria-current={
-                  isActive("/account/messages") ? "page" : undefined
+                  isActive(`/${locale}/account/messages`) ? "page" : undefined
                 }
                 className={`text-sm font-medium underline-offset-4 decoration-white/40 ${
-                  isActive("/account/messages")
+                  isActive(`/${locale}/account/messages`)
                     ? "underline"
                     : "hover:underline hover:decoration-white"
                 }`}
@@ -81,10 +82,12 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 {t("messages")}
               </Link>
               <Link
-                href="/account"
-                aria-current={isActive("/account") ? "page" : undefined}
+                href={`/${locale}/account`}
+                aria-current={
+                  isActive(`/${locale}/account`) ? "page" : undefined
+                }
                 className={`text-sm font-medium underline-offset-4 decoration-white/40 ${
-                  isActive("/account")
+                  isActive(`/${locale}/account`)
                     ? "underline"
                     : "hover:underline hover:decoration-white"
                 }`}
@@ -122,10 +125,10 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               </button>
             </>
           )}
-          
+
           {/* Language Switcher */}
           <LanguageSwitcher />
-          
+
           <Link
             href="https://fishon-captain.vercel.app/my/list-your-business"
             target="_blank"
@@ -167,12 +170,12 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
           {isAuthed ? (
             <>
               <Link
-                href="/account/messages"
+                href={`/${locale}/account/messages`}
                 aria-current={
-                  isActive("/account/messages") ? "page" : undefined
+                  isActive(`/${locale}/account/messages`) ? "page" : undefined
                 }
                 className={`rounded-md px-3 py-2 text-sm font-medium ${
-                  isActive("/account/messages")
+                  isActive(`/${locale}/account/messages`)
                     ? "bg-white/15"
                     : "hover:bg-white/10"
                 }`}
@@ -181,10 +184,14 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 {t("messages")}
               </Link>
               <Link
-                href="/account"
-                aria-current={isActive("/account") ? "page" : undefined}
+                href={`/${locale}/account`}
+                aria-current={
+                  isActive(`/${locale}/account`) ? "page" : undefined
+                }
                 className={`rounded-md px-3 py-2 text-sm font-medium ${
-                  isActive("/account") ? "bg-white/15" : "hover:bg-white/10"
+                  isActive(`/${locale}/account`)
+                    ? "bg-white/15"
+                    : "hover:bg-white/10"
                 }`}
                 onClick={() => setOpen(false)}
               >
@@ -230,12 +237,12 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               </button>
             </>
           )}
-          
+
           {/* Language Switcher - Mobile */}
           <div className="py-2 my-2 border-t border-b border-white/20">
             <LanguageSwitcher />
           </div>
-          
+
           <Link
             href="https://fishon-captain.vercel.app/my/list-your-business"
             target="_blank"

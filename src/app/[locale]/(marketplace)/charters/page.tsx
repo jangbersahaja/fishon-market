@@ -1,8 +1,10 @@
 // src/app/charters/view/page.tsx
 import { getCharters } from "@/lib/services/charter-service";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 export default async function ViewIndex() {
+  const locale = await getLocale();
   const charters = await getCharters();
   const first = charters[0];
 
@@ -15,7 +17,7 @@ export default async function ViewIndex() {
         <div className="mt-2">
           <p className="text-gray-700">Try a sample charter:</p>
           <Link
-            href={`/charters/view/${
+            href={`/${locale}/charters/${
               (first as any).backendId || String(first.id)
             }`}
             className="text-red-600 underline"

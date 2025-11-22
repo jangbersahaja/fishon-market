@@ -270,6 +270,7 @@ export function CancelBookingButton({
 // ============================================================================
 interface ViewDetailsButtonProps {
   bookingId: string;
+  locale: string;
   variant?: "default" | "outline";
   size?: "default" | "sm" | "lg";
   className?: string;
@@ -278,6 +279,7 @@ interface ViewDetailsButtonProps {
 
 export function ViewDetailsButton({
   bookingId,
+  locale,
   variant = "default",
   size = "default",
   className = "text-white bg-gray-700 hover:bg-gray-800",
@@ -290,7 +292,7 @@ export function ViewDetailsButton({
       className={`${fullWidth ? "w-full" : ""} ${className}`}
       asChild
     >
-      <Link href={`/book/confirm?id=${bookingId}`}>View Details</Link>
+      <Link href={`/${locale}/book/confirm?id=${bookingId}`}>View Details</Link>
     </Button>
   );
 }

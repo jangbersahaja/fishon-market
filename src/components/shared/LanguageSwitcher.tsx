@@ -7,7 +7,7 @@ import { useTransition } from "react";
 
 /**
  * Language Switcher Component
- * 
+ *
  * Allows users to switch between Malay (ms) and English (en) languages.
  * Maintains the current route when switching languages.
  */
@@ -22,11 +22,9 @@ export function LanguageSwitcher() {
 
     startTransition(() => {
       // Replace the locale in the pathname
-      const pathWithoutLocale = pathname.replace(/^\/(ms|en)/, '');
-      const newPath = newLocale === 'ms' 
-        ? pathWithoutLocale || '/' // Default locale doesn't need prefix
-        : `/${newLocale}${pathWithoutLocale || '/'}`;
-      
+      const pathWithoutLocale = pathname.replace(/^\/(my|en)/, "");
+      const newPath = `/${newLocale}${pathWithoutLocale || "/"}`;
+
       router.replace(newPath);
     });
   };

@@ -112,10 +112,12 @@
     "checkBookings": "Check your {count} booking(s)"
   },
   "account": {
+    "overview": "Overview",
     "profile": "Profile",
     "bookings": "Bookings",
     "favorites": "Favorites",
     "messages": "Messages",
+    "reviews": "Reviews",
     "settings": "Settings",
     "logout": "Logout",
     "editProfile": "Edit Profile",

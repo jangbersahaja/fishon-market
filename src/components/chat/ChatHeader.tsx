@@ -12,6 +12,7 @@ import {
   Phone,
   Users,
 } from "lucide-react";
+import { useLocale } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -53,6 +54,7 @@ export function ChatHeader({
   booking,
   captainContact,
 }: ChatHeaderProps) {
+  const locale = useLocale();
   const [showDetails, setShowDetails] = useState(false);
 
   // Status badge color
@@ -193,7 +195,10 @@ export function ChatHeader({
                   {booking.tripDurationHours}{" "}
                   {booking.tripDurationHours === 1 ? "hour" : "hours"}
                   {booking.startTime && (
-                    <span> - Starting at {convert24to12Hour(booking.startTime)}</span>
+                    <span>
+                      {" "}
+                      - Starting at {convert24to12Hour(booking.startTime)}
+                    </span>
                   )}
                 </div>
               </div>
@@ -276,7 +281,7 @@ export function ChatHeader({
             <span className="text-center">{booking.status?.toLowerCase()}</span>
           </div>
           <Link
-            href={`/account/bookings/${booking.id}`}
+            href={`/${locale}/book/confirm?id=${booking.id}`}
             className="inline-flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border-t border-gray-200 hover:bg-gray-50"
             prefetch={false}
           >

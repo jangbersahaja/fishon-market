@@ -116,7 +116,7 @@ The Fishon platform uses a **dual-channel communication system** combining email
 | **Acknowledge Step** | ❌ N/A                            | ✅ Required                            |
 | **Risk**             | Lower (captain decides first)     | Higher (captain must refund if reject) |
 
-### Flow Diagrams
+### Flow Diagra(my)
 
 #### MANUAL Flow
 
@@ -1141,7 +1141,7 @@ WHERE id = 'your-booking-id';
 ```typescript
 // Check Pusher connection
 
-window.Pusher.log = (msg) => console.log(msg);
+window.Pusher.log = ((my)g) => console.log((my)g);
 
 // Check user preferences
 const prefs = await getUserPreferences(userId);

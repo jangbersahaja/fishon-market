@@ -2,13 +2,13 @@
 
 ## What Was Created
 
-A complete development SMS testing interface at `/dev/sms-test` to test SMS notifications during deployment.
+A complete development SMS testing interface at `/dev/s(my)-test` to test SMS notifications during deployment.
 
 ## Files Created
 
 ### 1. SMS Test Page
 
-**File:** `/src/app/(dev)/dev/sms-test/page.tsx`
+**File:** `/src/app/(dev)/dev/s(my)-test/page.tsx`
 
 - React component for SMS testing interface
 - Real-time message preview
@@ -18,7 +18,7 @@ A complete development SMS testing interface at `/dev/sms-test` to test SMS noti
 
 ### 2. SMS Test API
 
-**File:** `/src/app/api/dev/sms-test/route.ts`
+**File:** `/src/app/api/dev/s(my)-test/route.ts`
 
 - POST endpoint for sending SMS
 - Phone validation
@@ -53,7 +53,7 @@ npm run dev
 ### 2. Navigate to SMS Test Page
 
 ```
-http://localhost:3001/dev/sms-test
+http://localhost:3001/dev/s(my)-test
 ```
 
 ### 3. Test SMS Notification
@@ -100,12 +100,12 @@ EXABYTES_SMS_PASSWORD=DrNJb6UM6L
 
 ### Development
 
-- URL: `http://localhost:3001/dev/sms-test`
+- URL: `http://localhost:3001/dev/s(my)-test`
 - Status: ✅ Available
 
 ### Preview/Staging
 
-- URL: `https://fishon.my/dev/sms-test`
+- URL: `https://fishon.my/dev/s(my)-test`
 - Status: ✅ Available
 
 ### Production
@@ -151,8 +151,8 @@ EXABYTES_SMS_PASSWORD=DrNJb6UM6L
 
 The SMS test page integrates with:
 
-- ✅ SMS Service Layer (`/src/lib/services/sms-service.ts`)
-- ✅ Exabytes API (`https://smsportal.exabytes.my/isms_send.php`)
+- ✅ SMS Service Layer (`/src/lib/services/s(my)-service.ts`)
+- ✅ Exabytes API (`https://s(my)portal.exabytes.my/is(my)_send.php`)
 - ✅ Dev Tools Index (`/dev` page)
 - ✅ Notification Service (tested with actual templates)
 
@@ -167,8 +167,8 @@ The SMS test page integrates with:
 
 | File                                   | Purpose                  | Status     |
 | -------------------------------------- | ------------------------ | ---------- |
-| `/src/app/(dev)/dev/sms-test/page.tsx` | SMS test UI component    | ✅ Created |
-| `/src/app/api/dev/sms-test/route.ts`   | SMS sending API endpoint | ✅ Created |
+| `/src/app/(dev)/dev/s(my)-test/page.tsx` | SMS test UI component    | ✅ Created |
+| `/src/app/api/dev/s(my)-test/route.ts`   | SMS sending API endpoint | ✅ Created |
 | `/src/app/(dev)/dev/page.tsx`          | Dev tools index          | ✅ Updated |
 | `/docs/SMS_TEST_INTERFACE_GUIDE.md`    | Complete documentation   | ✅ Created |
 

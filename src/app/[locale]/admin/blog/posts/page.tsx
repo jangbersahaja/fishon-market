@@ -1,6 +1,7 @@
 "use client";
 
 import BlogPostActions from "@/components/admin/BlogPostActions";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -43,6 +44,7 @@ interface PostsResponse {
 }
 
 export default function BlogPostsListPage() {
+  const locale = useLocale();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -146,7 +148,7 @@ export default function BlogPostsListPage() {
           </p>
         </div>
         <Link
-          href="/admin/blog/posts/new"
+          href={`/${locale}/admin/blog/posts/new`}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EC2227] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#c81e23] transition-colors"
         >
           <svg

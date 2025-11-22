@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/database/prisma";
 import { AlertCircle, Calendar, Clock } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { BookingStatusSelect } from "./BookingStatusSelect";
 
 export default async function BookingTestsPage() {
+  const locale = await getLocale();
   // Only allow in development
   if (process.env.NODE_ENV === "production") {
     redirect("/");
@@ -582,7 +584,7 @@ export default async function BookingTestsPage() {
 
                             {/* View Links */}
                             <a
-                              href={`/book/confirm?id=${booking.id}`}
+                              href={`/${locale}/book/confirm?id=${booking.id}`}
                               target="_blank"
                               className="px-2 py-1 text-xs text-blue-600 hover:underline"
                             >
@@ -590,7 +592,7 @@ export default async function BookingTestsPage() {
                             </a>
                             {booking.status === "AWAITING_PAYMENT" && (
                               <a
-                                href={`/book/payment/${booking.id}`}
+                                href={`/${locale}/book/payment/${booking.id}`}
                                 target="_blank"
                                 className="px-2 py-1 text-xs text-green-600 hover:underline"
                               >

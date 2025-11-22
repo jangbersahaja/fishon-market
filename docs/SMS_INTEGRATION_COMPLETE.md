@@ -34,28 +34,28 @@ SMS notifications have been successfully integrated into Fishon.my's booking not
 Added 15 SMS preference columns to `NotificationPreferences` model:
 
 ```prisma
-smsBookingCreated    Boolean @default(true)
-smsBookingApproved   Boolean @default(true)
-smsBookingRejected   Boolean @default(true)
-smsBookingPaid       Boolean @default(true)
-smsBookingCancelled  Boolean @default(true)
-smsReviewSubmitted   Boolean @default(true)
-smsReviewApproved    Boolean @default(true)
-smsReviewRejected    Boolean @default(true)
-smsAccountVerified   Boolean @default(true)
-smsPaymentFailed     Boolean @default(true)
-smsSystemAnnouncement Boolean @default(true)
-smsPaymentRefunded   Boolean @default(true)
-smsPaymentAuthorized Boolean @default(true)
-smsPaymentCaptured   Boolean @default(true)
-smsPaymentDeclined   Boolean @default(true)
+s(my)BookingCreated    Boolean @default(true)
+s(my)BookingApproved   Boolean @default(true)
+s(my)BookingRejected   Boolean @default(true)
+s(my)BookingPaid       Boolean @default(true)
+s(my)BookingCancelled  Boolean @default(true)
+s(my)ReviewSubmitted   Boolean @default(true)
+s(my)ReviewApproved    Boolean @default(true)
+s(my)ReviewRejected    Boolean @default(true)
+s(my)AccountVerified   Boolean @default(true)
+s(my)PaymentFailed     Boolean @default(true)
+s(my)SystemAnnouncement Boolean @default(true)
+s(my)PaymentRefunded   Boolean @default(true)
+s(my)PaymentAuthorized Boolean @default(true)
+s(my)PaymentCaptured   Boolean @default(true)
+s(my)PaymentDeclined   Boolean @default(true)
 ```
 
-**Migration:** `20251120_add_sms_notification_preferences` ✅ Applied
+**Migration:** `20251120_add_s(my)_notification_preferences` ✅ Applied
 
 ### Phase 2: SMS Service Layer ✅
 
-**File:** `/src/lib/services/sms-service.ts` (326 lines)
+**File:** `/src/lib/services/s(my)-service.ts` (326 lines)
 
 **Core Functions:**
 
@@ -106,7 +106,7 @@ Event triggered (e.g., booking.created)
   ↓
 createNotification() called
   ↓
-Check user SMS preferences (smsBookingCreated, etc.)
+Check user SMS preferences (s(my)BookingCreated, etc.)
   ↓
 If enabled: sendNotificationSMS(userId, notification)
   ↓
@@ -138,14 +138,14 @@ SMS sent to angler phone via Exabytes API
 
 **Test Files Created:**
 
-1. **`/scripts/test-sms-setup.js`** - Configuration & database tests
+1. **`/scripts/test-s(my)-setup.js`** - Configuration & database tests
    - ✅ Environment variables validation
    - ✅ Database connectivity
    - ✅ Test user creation
    - ✅ Notification preferences schema
    - ✅ Phone validation
 
-2. **`/scripts/test-sms-delivery.js`** - SMS delivery & API tests
+2. **`/scripts/test-s(my)-delivery.js`** - SMS delivery & API tests
    - ✅ Phone number normalization (4 formats tested)
    - ✅ Message truncation (160 char limit)
    - ✅ SMS template rendering (4 templates tested)
@@ -178,13 +178,13 @@ EXABYTES_SMS_PASSWORD=DrNJb6UM6L      # Exabytes account password
 ### API Integration
 
 - **Provider:** Exabytes Bulk SMS
-- **Endpoint:** `https://smsportal.exabytes.my/isms_send.php`
+- **Endpoint:** `https://s(my)portal.exabytes.my/is(my)_send.php`
 - **Auth Method:** URL parameters (un, pwd)
 - **Parameters:**
   - `un` - Username
   - `pwd` - Password
   - `dstno` - Destination number (60XXXXXXXXX format)
-  - `msg` - Message body (max 160 chars)
+  - `(my)g` - Message body (max 160 chars)
   - `type` - "1" for ASCII text
   - `agreedterm` - "YES" (required)
 
@@ -234,7 +234,7 @@ The Exabytes account has IP whitelisting enabled for security. This is working a
 1. **Deploy to Vercel:**
 
    ```bash
-   git push origin feat/sms-notifications
+   git push origin feat/s(my)-notifications
    ```
 
 2. **Verify SMS Delivery:**
@@ -254,12 +254,12 @@ The Exabytes account has IP whitelisting enabled for security. This is working a
 
 | File                                               | Type      | Lines | Status      |
 | -------------------------------------------------- | --------- | ----- | ----------- |
-| `/src/lib/services/sms-service.ts`                 | Service   | 326   | ✅ Complete |
+| `/src/lib/services/s(my)-service.ts`                 | Service   | 326   | ✅ Complete |
 | `/src/lib/services/notification-service.ts`        | Service   | +130  | ✅ Updated  |
 | `/src/components/account/NotificationSettings.tsx` | Component | +60   | ✅ Updated  |
 | `/prisma/schema.prisma`                            | Schema    | +15   | ✅ Updated  |
-| `/scripts/test-sms-setup.js`                       | Test      | 200   | ✅ Complete |
-| `/scripts/test-sms-delivery.js`                    | Test      | 250   | ✅ Complete |
+| `/scripts/test-s(my)-setup.js`                       | Test      | 200   | ✅ Complete |
+| `/scripts/test-s(my)-delivery.js`                    | Test      | 250   | ✅ Complete |
 
 ---
 
@@ -270,14 +270,14 @@ The Exabytes account has IP whitelisting enabled for security. This is working a
 ```bash
 EXABYTES_SMS_USERNAME="FISHON" EXABYTES_SMS_PASSWORD="DrNJb6UM6L" \
 DATABASE_URL="postgresql://..." \
-node scripts/test-sms-setup.js
+node scripts/test-s(my)-setup.js
 ```
 
 ### Delivery Test
 
 ```bash
 EXABYTES_SMS_USERNAME="FISHON" EXABYTES_SMS_PASSWORD="DrNJb6UM6L" \
-node scripts/test-sms-delivery.js
+node scripts/test-s(my)-delivery.js
 ```
 
 ---

@@ -101,13 +101,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { para(my) }: { para(my): { id: string } }
 ) {
   try {
     const { featured } = await request.json();
     
     const post = await prisma.blogPost.update({
-      where: { id: params.id },
+      where: { id: para(my).id },
       data: {
         featured,
         featuredAt: featured ? new Date() : null,
@@ -184,7 +184,7 @@ const featuredPosts = await getFeaturedPosts(3);
 ```tsx
 {post.featured && (
   <div className="absolute top-4 right-4">
-    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500 px-2 py-1 text-xs font-semibold text-white">
+    <span className="inline-flex ite(my)-center gap-1 rounded-full bg-yellow-500 px-2 py-1 text-xs font-semibold text-white">
       <svg>★</svg>
       Featured
     </span>

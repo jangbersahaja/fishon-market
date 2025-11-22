@@ -14,6 +14,7 @@ import {
   isTripInProgress,
 } from "@/lib/helpers/booking-status-helpers";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 import { BookingConfirmActions } from "./BookingConfirmActions";
 import { BookingStatusRefresh } from "./BookingStatusRefresh";
@@ -31,6 +32,7 @@ export default async function ConfirmationPage({
     error?: string;
   }>;
 }) {
+  const locale = await getLocale();
   const sp = await searchParams;
   // Handle case where id might be an array (multiple query params)
   const id = Array.isArray(sp.id) ? sp.id[0] : sp.id;
@@ -78,7 +80,7 @@ export default async function ConfirmationPage({
                 </p>
                 <div className="mt-4">
                   <Link
-                    href="/"
+                    href={`/${locale}/home`}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     Return Home
@@ -405,7 +407,7 @@ export default async function ConfirmationPage({
                 {booking.status === "AWAITING_PAYMENT" && (
                   <div className="mt-3">
                     <Link
-                      href={`/book/payment/${booking.id}`}
+                      href={`/${locale}/book/payment/${booking.id}`}
                       className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
                       Try Payment Again
@@ -729,21 +731,21 @@ export default async function ConfirmationPage({
         {/* Footer Actions */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-8 mt-8 border-t border-gray-200">
           <Link
-            href="/home"
+            href={`/${locale}/home`}
             className="text-sm font-medium text-[#ec2227] hover:underline"
           >
             Browse More Charters
           </Link>
           <span className="text-gray-300">•</span>
           <Link
-            href="/account/bookings"
+            href={`/${locale}/account/bookings`}
             className="text-sm font-medium text-gray-600 hover:underline"
           >
             View All Bookings
           </Link>
           <span className="text-gray-300">•</span>
           <Link
-            href="/help"
+            href={`/${locale}/help`}
             className="text-sm font-medium text-gray-600 hover:underline"
           >
             Need Help?

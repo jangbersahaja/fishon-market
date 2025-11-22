@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { ReviewBadgeId } from "@/utils/reviewBadges";
 import { resolveBadges } from "@/utils/reviewBadges";
 import { AlertCircle, Calendar, Edit2, MapPin, Trash2 } from "lucide-react";
+import { useLocale } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -31,6 +32,7 @@ interface UserReviewsListProps {
 }
 
 export function UserReviewsList({ reviews }: UserReviewsListProps) {
+  const locale = useLocale();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,7 +76,7 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
           can share your experience.
         </p>
         <Button asChild>
-          <Link href="/account/bookings">View My Bookings</Link>
+          <Link href={`/${locale}/account/bookings`}>View My Bookings</Link>
         </Button>
       </div>
     );

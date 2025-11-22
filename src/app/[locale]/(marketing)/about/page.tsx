@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
 // --- SEO metadata ---
@@ -51,7 +52,9 @@ const orgSchema = {
   ],
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const locale = await getLocale();
+
   return (
     <main className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
       {/* JSON-LD */}
@@ -324,7 +327,7 @@ export default function AboutPage() {
         </p>
         <div className="flex flex-wrap gap-3 mt-4">
           <Link
-            href="/home"
+            href={`/${locale}/home`}
             className="inline-flex items-center rounded-md bg-[#EC2227] px-4 py-2 text-white shadow hover:opacity-95"
           >
             Browse Charters
