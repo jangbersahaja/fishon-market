@@ -7,12 +7,18 @@
 
 ## Progress Overview
 
-| Phase | Status | Completion | Notes |
-|-------|--------|------------|-------|
-| Phase 1: App Router | ✅ Complete | 100% | Commit 911ddf7 |
-| Phase 2: Layout Components | ✅ Complete | 100% | Commit 6126fac |
-| Phase 3: Common Components | 🔄 In Progress | ~20% | Commit 439642b - Homepage + CheckYourBookings |
-| Phase 4: Page Content | ⏳ Pending | 0% | - |
+| Phase                      | Status         | Completion | Notes                                         |
+| -------------------------- | -------------- | ---------- | --------------------------------------------- |
+| Phase 1: App Router        | ✅ Complete    | 100%       | Commit 911ddf7                                |
+| Phase 2: Layout Components | ✅ Complete    | 100%       | Commit 6126fac                                |
+| Phase 3: Common Components | 🔄 In Progress | ~20%       | Commit 439642b - Homepage + CheckYourBookings |
+| Phase 4: Page Content      | ⏳ Pending     | 0%         | -                                             |
+
+### 🚨 Critical Update (November 23, 2025)
+
+**COMPREHENSIVE AUDIT COMPLETE**: 84 out of ~100 component files still contain hardcoded strings.
+
+See detailed analysis and migration plan in: [`I18N_COMPREHENSIVE_FIX_PLAN.md`](./I18N_COMPREHENSIVE_FIX_PLAN.md)
 
 ---
 
@@ -135,12 +141,14 @@ From `messages/en.json` and `messages/(my).json`:
 ### Example Migration
 
 **Before:**
+
 ```typescript
 <Link href="/charters">Charters</Link>
 <button>Sign In</button>
 ```
 
 **After:**
+
 ```typescript
 "use client";
 import { useTranslations } from 'next-intl';
@@ -157,8 +165,10 @@ const t = useTranslations('nav');
 **Status**: IN PROGRESS  
 **Commit**: 439642b  
 **Date**: November 20, 2024  
-**Priority**: MEDIUM  
-**Estimated Effort**: 2-3 days
+**Updated**: November 23, 2025 - **COMPREHENSIVE AUDIT COMPLETE**  
+**Priority**: 🔴 **CRITICAL**  
+**Actual Scope**: 84 components need migration (not 2-3 days!)  
+**Revised Effort**: 4 weeks (40-50 hours)
 
 ### Components Migrated
 
@@ -186,6 +196,7 @@ const t = useTranslations('nav');
 ### Translation Keys Available
 
 From `common` category in translation files:
+
 - loading, error, success, cancel, confirm
 - save, delete, edit, search, filter, clear
 - viewMore, viewLess, learnMore, readMore, seeAll
@@ -306,16 +317,16 @@ None - Phase 1 complete successfully
 
 ## Success Metrics
 
-| Metric | Target | Current Status |
-|--------|--------|----------------|
-| App Router Migration | ✅ | Complete |
-| Layout Components | ✅ | Complete |
-| Common Components | 🔄 | In Progress (~20%) |
-| Page Content | ⏳ | Pending |
-| TypeScript Validation | ✅ | Passing |
-| Build Success | ⏳ | Not tested yet |
-| Runtime Testing | ⏳ | Not tested yet |
-| Both Locales Working | ⏳ | Pending testing |
+| Metric                | Target | Current Status     |
+| --------------------- | ------ | ------------------ |
+| App Router Migration  | ✅     | Complete           |
+| Layout Components     | ✅     | Complete           |
+| Common Components     | 🔄     | In Progress (~20%) |
+| Page Content          | ⏳     | Pending            |
+| TypeScript Validation | ✅     | Passing            |
+| Build Success         | ⏳     | Not tested yet     |
+| Runtime Testing       | ⏳     | Not tested yet     |
+| Both Locales Working  | ⏳     | Pending testing    |
 
 ---
 

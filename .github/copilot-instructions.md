@@ -15,10 +15,33 @@ Fishon.my is the **customer-facing marketplace** where anglers discover, browse,
 - Please check on /docs/config/\* to see current system configuration file.
 - It's either in Fishon Captain or Fishon Market repository depending on where the main implementation is.
 - Treat this document as a living document and update it as necessary when you make changes to the system configuration.
-- Currently I have done configuration documentation for:
-  - Email Notification System
-  - Booking System
-- Other documents may not be correct or up to date.
+
+### Booking System (`docs/config/BOOKING_FLOW.md`)
+
+- **Dual Flows**:
+  - **MANUAL**: Request → Captain Approve → Pay. Best for lower risk.
+  - **AUTO**: Pay Upfront → Captain Acknowledge. Best for instant confirmation.
+- **Guest Checkout**: Supported for both flows via email verification (TAC).
+- **Payment**: SenangPay integration.
+  - **Card**: Tokenized (charged on approval/acknowledgment).
+  - **FPX/E-Wallet**: Direct charge (refunded if rejected).
+- **Data Sources**:
+  1. Direct DB View (`v_public_charters`)
+  2. Public API Fallback (`/api/public/v1/charters`)
+  3. Guest-safe fallback (defaults to MANUAL if data missing)
+
+### Chat System (`docs/config/CHAT_SYSTEM_CONFIGURATION.md`)
+
+- **Architecture**:
+  - **Storage**: fishon-market DB (`Conversation`, `Message` tables).
+  - **Access**: Anglers write directly; Captains write via API proxy.
+  - **Real-time**: Pusher websockets (`message:new`, `typing:start`, etc.).
+- **Lifecycle**:
+  - **LOCKED**: Before payment.
+  - **ACTIVE**: After payment (PAID/PAYMENT_AUTHORIZED).
+  - **CLOSED**: 24h after trip completion.
+- **System Messages**: Auto-generated for booking events (Created, Approved, Paid, Cancelled).
+- **Unread Counts**: Separate counts for Angler and Captain.
 
 ### Current Implementation Status
 
