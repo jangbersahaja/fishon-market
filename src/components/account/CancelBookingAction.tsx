@@ -33,6 +33,7 @@ export function CancelBookingAction({
     "Unable to travel",
     "Captain unresponsive",
     "Booking mistake",
+    "Personal reasons",
     "Other",
   ];
 

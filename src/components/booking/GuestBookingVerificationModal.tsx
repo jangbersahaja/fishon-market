@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 interface GuestBookingVerificationModalProps {
@@ -32,6 +33,7 @@ export function GuestBookingVerificationModal({
   lastName,
   phone,
 }: GuestBookingVerificationModalProps) {
+  const t = useTranslations("booking.checkout.guestVerification");
   const [step, setStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -72,13 +74,13 @@ export function GuestBookingVerificationModal({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to send verification code");
+        throw new Error(data.error || t("errorSendCode"));
       }
 
       setStep("code");
       setResendCooldown(60); // 60 second cooldown
     } catch (err: any) {
-      setError(err.message || "Failed to send verification code");
+      setError(err.message || t("errorSendCode"));
     } finally {
       setLoading(false);
     }
@@ -86,7 +88,7 @@ export function GuestBookingVerificationModal({
 
   async function handleVerifyCode() {
     if (code.length !== 6) {
-      setError("Please enter a 6-digit code");
+      setError(t("errorEnter6Digits"));
       return;
     }
 
@@ -103,14 +105,14 @@ export function GuestBookingVerificationModal({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Invalid verification code");
+        throw new Error(data.error || t("errorInvalidCode"));
       }
 
       // Success! Pass verification data to parent
       onVerified({ userId: data.userId, email: data.email });
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to verify code");
+      setError(err.message || t("errorVerifyCode"));
     } finally {
       setLoading(false);
     }
@@ -135,12 +137,10 @@ export function GuestBookingVerificationModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            {step === "email" ? "Verify Your Email" : "Enter Verification Code"}
+            {step === "email" ? t("titleEmail") : t("titleCode")}
           </DialogTitle>
           <DialogDescription>
-            {step === "email"
-              ? "We'll send a verification code to your email to complete your booking."
-              : "Enter the 6-digit code sent to your email."}
+            {step === "email" ? t("descriptionEmail") : t("descriptionCode")}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,7 +161,7 @@ export function GuestBookingVerificationModal({
                   <Mail className="flex-shrink-0 w-5 h-5 mt-0.5 text-blue-600" />
                   <div>
                     <p className="text-sm font-medium text-blue-900">
-                      Email Address
+                      {t("emailAddress")}
                     </p>
                     <p className="mt-1 text-sm text-blue-700">{email}</p>
                   </div>
@@ -170,14 +170,12 @@ export function GuestBookingVerificationModal({
 
               <div className="p-4 space-y-2 border rounded-lg bg-gray-50">
                 <p className="text-sm font-medium text-gray-900">
-                  What happens next?
+                  {t("whatHappensNext")}
                 </p>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li>We&apos;ll send a 6-digit code to your email</li>
-                  <li>Enter the code to verify your email address</li>
-                  <li>
-                    You&apos;ll receive a booking confirmation once approved
-                  </li>
+                  <li>{t("step1")}</li>
+                  <li>{t("step2")}</li>
+                  <li>{t("step3")}</li>
                 </ul>
               </div>
 
@@ -187,7 +185,7 @@ export function GuestBookingVerificationModal({
                 className="w-full"
                 size="lg"
               >
-                {loading ? "Sending Code..." : "Send Verification Code"}
+                {loading ? t("sendingCode") : t("sendVerificationCode")}
               </Button>
             </div>
           )}
@@ -200,11 +198,10 @@ export function GuestBookingVerificationModal({
                   <CheckCircle2 className="flex-shrink-0 w-5 h-5 mt-0.5 text-green-600" />
                   <div>
                     <p className="text-sm text-green-800">
-                      A verification code has been sent to{" "}
-                      <strong>{email}</strong>
+                      {t("codeSent")} <strong>{email}</strong>
                     </p>
                     <p className="mt-1 text-xs text-green-700">
-                      Please check your inbox and spam folder
+                      {t("checkInbox")}
                     </p>
                   </div>
                 </div>
@@ -212,7 +209,7 @@ export function GuestBookingVerificationModal({
 
               <div className="space-y-2">
                 <Label htmlFor="verification-code" className="text-sm">
-                  Verification Code
+                  {t("verificationCode")}
                 </Label>
                 <Input
                   id="verification-code"
@@ -227,9 +224,7 @@ export function GuestBookingVerificationModal({
                   autoComplete="one-time-code"
                   autoFocus
                 />
-                <p className="text-xs text-gray-500">
-                  Enter the 6-digit code from your email
-                </p>
+                <p className="text-xs text-gray-500">{t("enterCode")}</p>
               </div>
 
               <div className="flex gap-2">
@@ -239,17 +234,17 @@ export function GuestBookingVerificationModal({
                   className="flex-1"
                   size="lg"
                 >
-                  {loading ? "Verifying..." : "Verify & Continue"}
+                  {loading ? t("verifying") : t("verifyAndContinue")}
                 </Button>
               </div>
 
               {/* Resend Code */}
               <div className="pt-2 text-center border-t">
                 <p className="text-sm text-gray-600">
-                  Didn&apos;t receive the code?{" "}
+                  {t("didntReceiveCode")}{" "}
                   {resendCooldown > 0 ? (
                     <span className="text-gray-400">
-                      Resend in {resendCooldown}s
+                      {t("resendIn", { seconds: resendCooldown })}
                     </span>
                   ) : (
                     <button
@@ -257,7 +252,7 @@ export function GuestBookingVerificationModal({
                       className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
                       disabled={loading}
                     >
-                      Resend Code
+                      {t("resendCode")}
                     </button>
                   )}
                 </p>

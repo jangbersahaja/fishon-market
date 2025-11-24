@@ -3,7 +3,7 @@
 import CalendarPicker from "@/components/shared/CalendarPicker";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { Search } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IoIosPin } from "react-icons/io";
@@ -17,6 +17,7 @@ import {
 
 const SearchBox = ({ className = "" }: { className?: string }) => {
   const locale = useLocale();
+  const t = useTranslations("search");
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -103,7 +104,6 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     const raw: string[] = [];
     charters.forEach((c) => {
       if (c.location) raw.push(c.location);
-      if (c.name) raw.push(c.name);
     });
     // Dedupe and filter by query
     const seen = new Set<string>();
@@ -136,12 +136,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
     Number.isFinite(spChildren) && spChildren >= 0 ? spChildren : 0
   );
   const totalGuests = adults + children;
-  const guestSummary =
-    `${adults} Adult` +
-    (adults > 1 ? "s" : "") +
-    (children > 0
-      ? ` | ${children} Child` + (children > 1 ? "ren" : "")
-      : " | 0 Child");
+  const guestSummary = t("searchBox.guestSummary", { adults, children });
 
   function replaceQuery(next: {
     destination?: string;
@@ -224,7 +219,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
           <div className="flex w-full lg:flex-1">
             <div className="relative z-10 flex flex-col w-full px-3 pt-1 border-gray-300 lg:border-r hover:bg-gray-100/50">
               <label className="text-xs font-bold" htmlFor="destination">
-                Destination
+                {t("searchBox.destination")}
               </label>
               <div className="relative">
                 {/* left icon */}
@@ -235,7 +230,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                   name="search-destination" // non-standard name to avoid browser history/autofill
                   className="w-full px-8 py-2 text-sm bg-transparent outline-none"
                   type="text"
-                  placeholder="Search Destination"
+                  placeholder={t("searchBox.destinationPlaceholder")}
                   value={destination}
                   onChange={(e) => {
                     const v = e.target.value;
@@ -268,7 +263,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                     type="button"
                     onClick={() => setDestination("")}
                     className="absolute text-gray-400 -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
-                    aria-label="Clear destination"
+                    aria-label={t("searchBox.clearDestination")}
                   >
                     ×
                   </button>
@@ -311,10 +306,10 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
             {/* Date (custom popover) */}
             <div className="relative flex flex-col w-full px-3 pt-1 border-gray-300 lg:flex-1 lg:border-r hover:bg-gray-100/50">
               <label className="text-xs font-bold" htmlFor="date">
-                Date{days > 1 ? " Range " : " "}
+                {days > 1 ? t("searchBox.dateRange") : t("searchBox.date")}
                 {days > 1 && (
                   <span className="text-[10px] text-gray-500 mt-0.5">
-                    ({days} days selected)
+                    ({t("searchBox.daysSelected", { days })})
                   </span>
                 )}
               </label>
@@ -349,7 +344,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
 
             {/* Guests */}
             <div className="relative flex flex-col w-full px-3 pt-1 rounded lg:flex-1 hover:bg-gray-100/50">
-              <span className="text-xs font-bold">No Of Guest</span>
+              <span className="text-xs font-bold">{t("searchBox.guests")}</span>
               <div className="relative">
                 {/* left icon */}
                 <IoPerson className="absolute text-gray-600 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
@@ -362,7 +357,9 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                   aria-expanded={guestsOpen}
                 >
                   <span className={totalGuests > 0 ? "" : "text-gray-500"}>
-                    {totalGuests > 0 ? guestSummary : "Select guests"}
+                    {totalGuests > 0
+                      ? guestSummary
+                      : t("searchBox.selectGuests")}
                   </span>
                 </button>
 
@@ -377,13 +374,13 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
               {guestsOpen && (
                 <div className="absolute left-0 z-20 p-3 mt-2 bg-white border border-gray-200 rounded-md shadow-lg top-full w-72">
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-sm">Adults</span>
+                    <span className="text-sm">{t("searchBox.adults")}</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setAdults((a) => Math.max(1, a - 1))}
-                        aria-label="Decrease adults"
+                        aria-label={t("searchBox.decreaseAdults")}
                       >
                         <IoRemove />
                       </button>
@@ -392,7 +389,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                         type="button"
                         className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setAdults((a) => a + 1)}
-                        aria-label="Increase adults"
+                        aria-label={t("searchBox.increaseAdults")}
                       >
                         <IoAdd />
                       </button>
@@ -400,13 +397,13 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                   </div>
 
                   <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                    <span className="text-sm">Children</span>
+                    <span className="text-sm">{t("searchBox.children")}</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setChildren((c) => Math.max(0, c - 1))}
-                        aria-label="Decrease children"
+                        aria-label={t("searchBox.decreaseChildren")}
                       >
                         <IoRemove />
                       </button>
@@ -417,7 +414,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                         type="button"
                         className="grid border border-gray-300 rounded size-7 place-items-center hover:bg-gray-100"
                         onClick={() => setChildren((c) => c + 1)}
-                        aria-label="Increase children"
+                        aria-label={t("searchBox.increaseChildren")}
                       >
                         <IoAdd />
                       </button>
@@ -430,7 +427,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
                       className="rounded-lg bg-gradient-to-r from-[#ec2227] to-[#d11f24] px-4 py-2 text-sm font-bold text-white hover:from-[#d11f24] hover:to-[#b01a1f] transition-all duration-200 shadow-md hover:shadow-lg"
                       onClick={() => setGuestsOpen(false)}
                     >
-                      Done
+                      {t("searchBox.done")}
                     </button>
                   </div>
                 </div>
@@ -440,7 +437,9 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
             {/* Submit */}
             <button className="flex mt-4 lg:mt-0 justify-center items-center w-full lg:w-14 py-3 gap-2 bg-gradient-to-r from-[#ec2227] to-[#d11f24] text-white rounded-xl hover:from-[#d11f24] hover:to-[#b01a1f] transition-all duration-300 font-bold shadow-lg hover:shadow-xl hover:scale-101">
               <Search />
-              <span className="contents lg:hidden">Search</span>
+              <span className="contents lg:hidden">
+                {t("searchBox.search")}
+              </span>
             </button>
           </div>
         </div>

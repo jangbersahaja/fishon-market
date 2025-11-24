@@ -17,6 +17,7 @@ interface BookingConfirmActionsProps {
   conversationStatus?: string;
   tripDate?: Date;
   finalPrice?: number;
+  locale: string;
 }
 
 /**
@@ -38,6 +39,7 @@ export function BookingConfirmActions({
   conversationStatus,
   tripDate,
   finalPrice,
+  locale,
 }: BookingConfirmActionsProps) {
   // Determine if current user is the logged-in owner
   const isLoggedInOwner = !!userId;
@@ -57,6 +59,7 @@ export function BookingConfirmActions({
       conversationStatus={conversationStatus}
       tripDate={tripDate}
       finalPrice={finalPrice}
+      locale={locale}
     />
   );
 }

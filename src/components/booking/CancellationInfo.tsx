@@ -1,4 +1,7 @@
+"use client";
+
 import { AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface CancellationInfoProps {
   cancellationReason?: string | null;
@@ -9,6 +12,8 @@ export function CancellationInfo({
   cancellationReason,
   cancellationSource = "customer",
 }: CancellationInfoProps) {
+  const t = useTranslations("booking.cancellationInfo");
+
   if (!cancellationReason) {
     return null;
   }
@@ -22,15 +27,12 @@ export function CancellationInfo({
         <div className="flex-1">
           <h4 className="mb-1 font-semibold text-red-900">
             {isCaptainCancellation
-              ? "Cancelled by Captain"
-              : "Booking Cancelled"}
+              ? t("cancelledByCaptain")
+              : t("bookingCancelled")}
           </h4>
           <p className="text-sm text-red-800">{cancellationReason}</p>
           {isCaptainCancellation && (
-            <p className="mt-2 text-xs text-red-700">
-              If payment was made, a full refund will be processed within 7
-              business days.
-            </p>
+            <p className="mt-2 text-xs text-red-700">{t("refundNotice")}</p>
           )}
         </div>
       </div>

@@ -9,12 +9,19 @@ import {
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import {
+  getBookingHeroContent,
+  getPaymentStatusConfig,
+  getPaymentStatusContent,
+  getWhatHappensNextSteps,
+} from "@/lib/helpers/booking-hero-helpers";
+import {
   isCancelled,
   isTripCompleted,
   isTripInProgress,
 } from "@/lib/helpers/booking-status-helpers";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
-import { getLocale } from "next-intl/server";
+import type { BookingStatus } from "@/lib/services/booking-service";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { BookingConfirmActions } from "./BookingConfirmActions";
 import { BookingStatusRefresh } from "./BookingStatusRefresh";
@@ -23,8 +30,10 @@ import { BookingStatusRefresh } from "./BookingStatusRefresh";
 export const dynamic = "force-dynamic";
 
 export default async function ConfirmationPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     id?: string | string[];
     payment?: string;
@@ -32,7 +41,8 @@ export default async function ConfirmationPage({
     error?: string;
   }>;
 }) {
-  const locale = await getLocale();
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "booking.confirm" });
   const sp = await searchParams;
   // Handle case where id might be an array (multiple query params)
   const id = Array.isArray(sp.id) ? sp.id[0] : sp.id;
@@ -44,48 +54,46 @@ export default async function ConfirmationPage({
   // Handle error-only pages (no booking ID required)
   if (!id && errorType) {
     return (
-      <main className="bg-slate-50">
-        <div className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6">
-          <div className="p-3 border border-yellow-200 rounded-lg bg-yellow-50">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg
-                  className="w-5 h-5 text-yellow-600"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
+      <main className="w-full px-4 py-6 mx-auto h-150 max-w-7xl sm:px-6">
+        <div className="p-3 border border-yellow-200 rounded-lg bg-yellow-50">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg
+                className="w-5 h-5 text-yellow-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-yellow-900">
+                {t("paymentStatus.paymentErrorTitle")}
+              </h3>
+              <p className="mt-1 text-sm text-yellow-700">
+                {errorType &&
+                errorType in
+                  {
+                    invalid_payment_response: 1,
+                    invalid_payment_hash: 1,
+                    booking_not_found: 1,
+                    payment_gateway_error: 1,
+                    payment_processing_error: 1,
+                  }
+                  ? t(`paymentErrors.${errorType}`)
+                  : t("paymentErrors.default")}
+              </p>
+              <div className="mt-4">
+                <Link
+                  href={`/${locale}/home`}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-yellow-900">
-                  Payment Error
-                </h3>
-                <p className="mt-1 text-sm text-yellow-700">
-                  {errorType === "invalid_payment_response"
-                    ? "Invalid payment response received. Please contact support."
-                    : errorType === "invalid_payment_hash"
-                      ? "Payment verification failed. Please contact support."
-                      : errorType === "booking_not_found"
-                        ? "Booking not found. Please contact support."
-                        : errorType === "payment_gateway_error"
-                          ? "Payment gateway error. Please contact support."
-                          : errorType === "payment_processing_error"
-                            ? "Payment processing error. Please try again."
-                            : "An error occurred during payment processing."}
-                </p>
-                <div className="mt-4">
-                  <Link
-                    href={`/${locale}/home`}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    Return Home
-                  </Link>
-                </div>
+                  {t("returnHome")}
+                </Link>
               </div>
             </div>
           </div>
@@ -96,9 +104,9 @@ export default async function ConfirmationPage({
 
   if (!id) {
     return (
-      <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6">
-        <h1 className="text-2xl font-bold">Booking not found</h1>
-        <p className="mt-2 text-gray-600">Missing booking id.</p>
+      <main className="w-full px-4 py-6 mx-auto h-150 max-w-7xl sm:px-6">
+        <h1 className="text-2xl font-bold">{t("bookingNotFoundTitle")}</h1>
+        <p className="mt-2 text-gray-600">{t("missingBookingId")}</p>
       </main>
     );
   }
@@ -118,10 +126,13 @@ export default async function ConfirmationPage({
 
   if (!booking) {
     return (
-      <main className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6">
-        <h1 className="text-2xl font-bold">Booking not found</h1>
+      <main className="w-full px-4 py-6 mx-auto h-150 max-w-7xl sm:px-6">
+        <h1 className="text-2xl font-bold">{t("bookingNotFoundTitle")}</h1>
         <p className="mt-2 text-gray-600">
-          We couldn&apos;t find booking <code>{id}</code>.
+          {t.rich("bookingNotFoundMessage", {
+            id,
+            code: (chunks) => <code>{chunks}</code>,
+          })}
         </p>
       </main>
     );
@@ -196,6 +207,15 @@ export default async function ConfirmationPage({
   const shouldShowTripPreparation =
     booking.status === "PAID" && !tripCompleted && !tripCancelled;
 
+  // Get hero section content (translated)
+  const heroContent = getBookingHeroContent(
+    booking.status as BookingStatus,
+    booking.paymentFlow,
+    tripInProgress,
+    tripCompleted,
+    t
+  );
+
   // Debug: Log TripPreparation data
   console.log("📋 TripPreparation Debug:", {
     bookingStatus: booking.status,
@@ -219,166 +239,117 @@ export default async function ConfirmationPage({
       <div className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
         {/* Payment Status Notifications */}
         {/* PAYMENT_AUTHORIZED Status - Show authorization/payment details */}
-        {booking.status === "PAYMENT_AUTHORIZED" && booking.paymentFlow && (
-          <div
-            className={`p-3 mb-6 border rounded-lg ${
-              booking.paymentFlow === "TOKENIZED"
-                ? "border-blue-200 bg-blue-50"
-                : "border-green-200 bg-green-50"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg
-                  className={`w-5 h-5 ${
-                    booking.paymentFlow === "TOKENIZED"
-                      ? "text-blue-600"
-                      : "text-green-600"
-                  }`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3
-                  className={`text-sm font-medium ${
-                    booking.paymentFlow === "TOKENIZED"
-                      ? "text-blue-900"
-                      : "text-green-900"
-                  }`}
-                >
-                  {booking.paymentFlow === "TOKENIZED"
-                    ? "Card Authorized!"
-                    : "Payment Received!"}
-                </h3>
-                <p
-                  className={`mt-1 text-sm ${
-                    booking.paymentFlow === "TOKENIZED"
-                      ? "text-blue-700"
-                      : "text-green-700"
-                  }`}
-                >
-                  {booking.paymentFlow === "TOKENIZED" ? (
-                    <>
-                      Your card has been authorized for{" "}
-                      <strong>
-                        RM {Number(booking.finalPrice).toFixed(2)}
-                      </strong>
-                      . No charge will be made until the captain approves your
-                      booking within 12 hours. Your card will only be charged if
-                      the captain accepts your request.
-                      {booking.paymentAuthorizedAt && (
+        {booking.status === "PAYMENT_AUTHORIZED" &&
+          booking.paymentFlow &&
+          (() => {
+            const config = getPaymentStatusConfig(
+              booking.paymentFlow as "TOKENIZED" | "DIRECT"
+            );
+            const content = getPaymentStatusContent(
+              booking.paymentFlow as "TOKENIZED" | "DIRECT",
+              Number(booking.finalPrice),
+              locale,
+              booking.paymentAuthorizedAt
+            );
+
+            return (
+              <div
+                className={`p-3 mb-6 border rounded-lg ${config.colorClasses.container}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className={`w-5 h-5 ${config.colorClasses.icon}`}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3
+                      className={`text-sm font-medium ${config.colorClasses.title}`}
+                    >
+                      {t(content.titleKey)}
+                    </h3>
+                    <p
+                      className={`mt-1 text-sm ${config.colorClasses.message}`}
+                    >
+                      {t.rich(content.messageKey, {
+                        ...content.messageValues,
+                        strong: (chunks) => <strong>{chunks}</strong>,
+                      })}
+                      {content.showExpiry && (
                         <>
                           <br />
                           <span className="block mt-1 text-xs">
-                            Authorization expires:{" "}
-                            {new Date(
-                              new Date(booking.paymentAuthorizedAt).getTime() +
-                                7 * 24 * 60 * 60 * 1000
-                            ).toLocaleDateString("en-MY", {
-                              dateStyle: "medium",
-                            })}
+                            {t("paymentStatus.authorizationExpires")}{" "}
+                            {content.expiryDate}
                           </span>
                         </>
                       )}
-                    </>
-                  ) : (
-                    <>
-                      Your payment of{" "}
-                      <strong>
-                        RM {Number(booking.finalPrice).toFixed(2)}
-                      </strong>{" "}
-                      has been received. The captain has 12 hours to approve
-                      your booking. If the captain declines or doesn&apos;t
-                      respond, you&apos;ll receive a full refund automatically.
-                    </>
-                  )}
-                </p>
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            );
+          })()}
         {/* Success after redirect from payment gateway */}
         {paymentStatus === "success" &&
           booking.status !== "PAYMENT_AUTHORIZED" &&
-          booking.paymentFlow && (
-            <div
-              className={`p-3 mb-6 border rounded-lg ${
-                booking.paymentFlow === "TOKENIZED"
-                  ? "border-blue-200 bg-blue-50"
-                  : "border-green-200 bg-green-50"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg
-                    className={`w-5 h-5 ${
-                      booking.paymentFlow === "TOKENIZED"
-                        ? "text-blue-600"
-                        : "text-green-600"
-                    }`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3
-                    className={`text-sm font-medium ${
-                      booking.paymentFlow === "TOKENIZED"
-                        ? "text-blue-900"
-                        : "text-green-900"
-                    }`}
-                  >
-                    {booking.paymentFlow === "TOKENIZED"
-                      ? "Card Authorized!"
-                      : "Payment Received!"}
-                  </h3>
-                  <p
-                    className={`mt-1 text-sm ${
-                      booking.paymentFlow === "TOKENIZED"
-                        ? "text-blue-700"
-                        : "text-green-700"
-                    }`}
-                  >
-                    {booking.paymentFlow === "TOKENIZED" ? (
-                      <>
-                        Your card has been authorized for{" "}
-                        <strong>
-                          RM {Number(booking.finalPrice).toFixed(2)}
-                        </strong>
-                        . No charge will be made until the captain approves your
-                        booking within 12 hours. Your card will only be charged
-                        if the captain accepts your request.
-                      </>
-                    ) : (
-                      <>
-                        Your payment of{" "}
-                        <strong>
-                          RM {Number(booking.finalPrice).toFixed(2)}
-                        </strong>{" "}
-                        has been received. The captain has 12 hours to approve
-                        your booking. If the captain declines or doesn&apos;t
-                        respond, you&apos;ll receive a full refund
-                        automatically.
-                      </>
-                    )}
-                  </p>
+          booking.paymentFlow &&
+          (() => {
+            const config = getPaymentStatusConfig(
+              booking.paymentFlow as "TOKENIZED" | "DIRECT"
+            );
+            const content = getPaymentStatusContent(
+              booking.paymentFlow as "TOKENIZED" | "DIRECT",
+              Number(booking.finalPrice),
+              locale,
+              null
+            );
+
+            return (
+              <div
+                className={`p-3 mb-6 border rounded-lg ${config.colorClasses.container}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className={`w-5 h-5 ${config.colorClasses.icon}`}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3
+                      className={`text-sm font-medium ${config.colorClasses.title}`}
+                    >
+                      {t(content.titleKey)}
+                    </h3>
+                    <p
+                      className={`mt-1 text-sm ${config.colorClasses.message}`}
+                    >
+                      {t.rich(content.messageKey, {
+                        ...content.messageValues,
+                        strong: (chunks) => <strong>{chunks}</strong>,
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
         {paymentStatus === "failed" && (
           <div className="p-3 mb-6 border border-red-200 rounded-lg bg-red-50">
@@ -398,11 +369,10 @@ export default async function ConfirmationPage({
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-red-900">
-                  Payment Failed
+                  {t("paymentStatus.paymentFailedTitle")}
                 </h3>
                 <p className="mt-1 text-sm text-red-700">
-                  {paymentReason ||
-                    "Your payment could not be processed. Please try again."}
+                  {paymentReason || t("paymentStatus.paymentFailedMessage")}
                 </p>
                 {booking.status === "AWAITING_PAYMENT" && (
                   <div className="mt-3">
@@ -410,7 +380,7 @@ export default async function ConfirmationPage({
                       href={`/${locale}/book/payment/${booking.id}`}
                       className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
-                      Try Payment Again
+                      {t("tryPaymentAgain")}
                     </Link>
                   </div>
                 )}
@@ -437,20 +407,19 @@ export default async function ConfirmationPage({
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-yellow-900">
-                  Payment Error
+                  {t("paymentStatus.paymentErrorTitle")}
                 </h3>
                 <p className="mt-1 text-sm text-yellow-700">
-                  {errorType === "invalid_payment_response"
-                    ? "Invalid payment response received. Please contact support."
-                    : errorType === "invalid_payment_hash"
-                      ? "Payment verification failed. Please contact support."
-                      : errorType === "booking_not_found"
-                        ? "Booking not found. Please contact support."
-                        : errorType === "payment_gateway_error"
-                          ? "Payment gateway error. Please contact support."
-                          : errorType === "payment_processing_error"
-                            ? "Payment processing error. Please try again."
-                            : "An error occurred during payment processing."}
+                  {errorType &&
+                  [
+                    "invalid_payment_response",
+                    "invalid_payment_hash",
+                    "booking_not_found",
+                    "payment_gateway_error",
+                    "payment_processing_error",
+                  ].includes(errorType)
+                    ? t(`paymentErrors.${errorType}`)
+                    : t("paymentErrors.default")}
                 </p>
               </div>
             </div>
@@ -461,52 +430,10 @@ export default async function ConfirmationPage({
         <div className="pb-10 space-y-6">
           <div className="flex flex-col gap-3">
             <h1 className="text-2xl font-bold sm:text-3xl">
-              {booking.status === "COMPLETED"
-                ? "Trip Completed!"
-                : booking.status === "PAID" && tripInProgress
-                  ? "Trip In Progress!"
-                  : booking.status === "PAID"
-                    ? "Booking Confirmed!"
-                    : booking.status === "PAYMENT_AUTHORIZED"
-                      ? booking.paymentFlow === "TOKENIZED"
-                        ? "Card Authorized - Awaiting Approval"
-                        : "Payment Received - Awaiting Approval"
-                      : booking.status === "AWAITING_PAYMENT"
-                        ? "Approved! Complete Payment"
-                        : booking.status === "PENDING"
-                          ? "Waiting For Captain Approval"
-                          : booking.status === "REJECTED"
-                            ? "Request Declined"
-                            : booking.status === "EXPIRED"
-                              ? "Booking Expired"
-                              : booking.status === "CANCELLED"
-                                ? "Booking Cancelled"
-                                : "Booking Status"}
+              {heroContent.title}
             </h1>
 
-            <p className="max-w-2xl text-gray-600">
-              {booking.status === "COMPLETED"
-                ? "Your fishing trip has been completed. We hope you had an amazing experience! Please share your feedback."
-                : booking.status === "PAID" && tripInProgress
-                  ? "Your fishing trip is currently in progress. Have a great time and stay safe!"
-                  : booking.status === "PAID"
-                    ? "Your fishing trip is confirmed. Get ready for an amazing experience!"
-                    : booking.status === "PAYMENT_AUTHORIZED"
-                      ? booking.paymentFlow === "TOKENIZED"
-                        ? "Your card has been authorized. Awaiting captain approval within 12 hours. No charge until approved."
-                        : "Your payment has been received. Awaiting captain approval within 12 hours. Full refund if declined."
-                      : booking.status === "AWAITING_PAYMENT"
-                        ? "The captain has approved your request. Complete payment to confirm your booking."
-                        : booking.status === "PENDING"
-                          ? "Your booking request has been sent to the captain for review."
-                          : booking.status === "REJECTED"
-                            ? "The captain was unable to accommodate your request."
-                            : booking.status === "EXPIRED"
-                              ? "This booking hold has expired."
-                              : booking.status === "CANCELLED"
-                                ? "This booking has been cancelled."
-                                : "View your booking details below."}
-            </p>
+            <p className="max-w-2xl text-gray-600">{heroContent.description}</p>
 
             {/* Countdown Timer for PENDING/PAYMENT_AUTHORIZED/AWAITING_PAYMENT bookings */}
             {(booking.status === "PENDING" ||
@@ -523,108 +450,64 @@ export default async function ConfirmationPage({
               )}
 
             {/* Payment Flow Info for PAYMENT_AUTHORIZED status */}
-            {booking.status === "PAYMENT_AUTHORIZED" && booking.paymentFlow && (
-              <div className="p-3 mt-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+            {booking.status === "PAYMENT_AUTHORIZED" &&
+              booking.paymentFlow &&
+              (() => {
+                const steps = getWhatHappensNextSteps(
+                  booking.paymentFlow as "TOKENIZED" | "DIRECT",
+                  Number(booking.finalPrice)
+                );
+
+                return (
+                  <div className="p-3 mt-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="w-5 h-5 text-gray-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900">
+                          {t("whatHappensNext.title")}
+                        </h4>
+                        <ul className="mt-2 space-y-2 text-sm text-gray-600">
+                          {steps.map((step, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className={step.icon}>•</span>
+                              <span>
+                                {step.values
+                                  ? t.rich(step.key, {
+                                      ...step.values,
+                                      strong: (chunks) => (
+                                        <strong>{chunks}</strong>
+                                      ),
+                                    })
+                                  : t(step.key)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-gray-900">
-                      What happens next?
-                    </h4>
-                    <ul className="mt-2 space-y-2 text-sm text-gray-600">
-                      {booking.paymentFlow === "TOKENIZED" ? (
-                        <>
-                          <li className="flex items-start gap-2">
-                            <span className="text-blue-600">•</span>
-                            <span>
-                              Your card is{" "}
-                              <strong>authorized but not charged</strong> (RM{" "}
-                              {Number(booking.finalPrice).toFixed(2)} on hold)
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-blue-600">•</span>
-                            <span>
-                              Captain has <strong>12 hours</strong> to approve
-                              or decline your request
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-blue-600">•</span>
-                            <span>
-                              If approved: Your card will be charged and trip is
-                              confirmed
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-blue-600">•</span>
-                            <span>
-                              If declined or no response: Authorization is
-                              released, <strong>no charge</strong> to your card
-                            </span>
-                          </li>
-                        </>
-                      ) : (
-                        <>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">•</span>
-                            <span>
-                              Your payment of{" "}
-                              <strong>
-                                RM {Number(booking.finalPrice).toFixed(2)}
-                              </strong>{" "}
-                              has been received
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">•</span>
-                            <span>
-                              Captain has <strong>12 hours</strong> to approve
-                              or decline your request
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">•</span>
-                            <span>
-                              If approved: Your trip is confirmed, no further
-                              action needed
-                            </span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">•</span>
-                            <span>
-                              If declined or no response:{" "}
-                              <strong>Full refund</strong> will be processed
-                              automatically
-                            </span>
-                          </li>
-                        </>
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
+                );
+              })()}
           </div>
         </div>
 
         <div className="flex items-end justify-between mb-2">
           <div className="flex flex-col text-sm text-gray-500 sm:flex-row">
-            <span>Booking reference:</span>
+            <span>{t("bookingReference")}</span>
             <code className="px-2 py-0.5 text-xs font-mono bg-gray-100 rounded">
               {booking.id}
             </code>
@@ -718,6 +601,7 @@ export default async function ConfirmationPage({
               conversationStatus={conversation?.status}
               tripDate={enrichedBooking.date}
               finalPrice={Number(booking.finalPrice)}
+              locale={locale}
             />
           </div>
 
@@ -734,21 +618,21 @@ export default async function ConfirmationPage({
             href={`/${locale}/home`}
             className="text-sm font-medium text-[#ec2227] hover:underline"
           >
-            Browse More Charters
+            {t("browseMoreCharters")}
           </Link>
           <span className="text-gray-300">•</span>
           <Link
             href={`/${locale}/account/bookings`}
             className="text-sm font-medium text-gray-600 hover:underline"
           >
-            View All Bookings
+            {t("viewAllBookings")}
           </Link>
           <span className="text-gray-300">•</span>
           <Link
             href={`/${locale}/help`}
             className="text-sm font-medium text-gray-600 hover:underline"
           >
-            Need Help?
+            {t("needHelp")}
           </Link>
         </div>
       </div>

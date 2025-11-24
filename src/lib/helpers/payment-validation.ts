@@ -1,4 +1,4 @@
-import { checkDateAvailability } from "@/lib/helpers/availability-helpers";
+import { checkDateAvailability } from "@/lib/helpers/availability-helpers.server";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
 

@@ -182,6 +182,9 @@ function convertUnavailability(
     startDate: string;
     endDate: string;
     reason: string | null;
+    isAllDay?: boolean;
+    startTime?: string;
+    endTime?: string;
   }> | null
 ) {
   if (!backendUnavailability || backendUnavailability.length === 0) {
@@ -192,6 +195,9 @@ function convertUnavailability(
     startDate: period.startDate,
     endDate: period.endDate,
     reason: period.reason,
+    isAllDay: period.isAllDay,
+    startTime: period.startTime,
+    endTime: period.endTime,
   }));
 }
 

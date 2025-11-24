@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookingStorage } from "@/hooks/useBookingStorage";
 import type { Charter, Trip } from "@fishon/ui";
 import { Loader2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -60,10 +61,12 @@ export function PaymentPreviewForm({
   sessionExpiresAt,
   enableMockPayment = false,
 }: PaymentPreviewFormProps) {
+  const locale = useLocale();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("FPX");
   const { addBooking } = useBookingStorage();
+  const t = useTranslations("booking.paymentPreview.completePayment");
 
   // Card details for TOKENIZED flow
   const [cardNumber, setCardNumber] = useState("");
@@ -94,7 +97,7 @@ export function PaymentPreviewForm({
         if (validation.code === "SESSION_EXPIRED") {
           toast.error("Payment session expired. Redirecting...");
           router.push(
-            `/book/${bookingData.charterId}?error=session_expired&message=${encodeURIComponent(
+            `/${locale}/book/${bookingData.charterId}?error=session_expired&message=${encodeURIComponent(
               validation.error || "Session expired"
             )}`
           );
@@ -103,7 +106,7 @@ export function PaymentPreviewForm({
 
         if (validation.code === "DATE_UNAVAILABLE") {
           toast.error(validation.error || "Date no longer available");
-          router.push(`/book/${bookingData.charterId}`);
+          router.push(`/${locale}/book/${bookingData.charterId}`);
           return;
         }
 
@@ -111,7 +114,7 @@ export function PaymentPreviewForm({
           toast.error(
             `Price changed to RM ${validation.newPrice?.toFixed(2)}. Please review and try again.`
           );
-          router.push(`/book/${bookingData.charterId}`);
+          router.push(`/${locale}/book/${bookingData.charterId}`);
           return;
         }
 
@@ -202,12 +205,12 @@ export function PaymentPreviewForm({
           date: bookingData.date,
           status: result.booking.status ?? "PAYMENT_AUTHORIZED",
         });
-        router.push(`/book/confirm?id=${result.booking.id}`);
+        router.push(`/${locale}/book/confirm?id=${result.booking.id}`);
         return;
       }
 
       toast.success("Booking created successfully!");
-      router.push(`/book/${bookingData.charterId}`);
+      router.push(`/${locale}/book/${bookingData.charterId}`);
       return;
     } catch (error: any) {
       console.error("Payment error:", error);
@@ -247,10 +250,10 @@ export function PaymentPreviewForm({
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
+                {t("processing")}
               </>
             ) : (
-              <>Pay RM {pricing.finalPrice.toFixed(2)}</>
+              <>{t("payButton", { amount: pricing.finalPrice.toFixed(2) })}</>
             )}
           </Button>
         </CardContent>

@@ -1,11 +1,16 @@
 "use client";
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
-import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import {
+  calculateBlockedDates,
+  calculatePartialAvailability,
+  type PartialAvailability,
+} from "@/lib/helpers/availability-helpers";
 import { getMinimumBookableDate } from "@/lib/helpers/booking-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
 import { ChevronDown, Minus, Plus, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 export default function DateGuestsCard({
@@ -23,6 +28,8 @@ export default function DateGuestsCard({
   onChildrenChange,
   maxGuests,
   blockedDatesSet,
+  partialAvailability,
+  onPartialAvailabilityChange,
   dateError,
 }: {
   schedule?: CharterSchedule;
@@ -39,10 +46,25 @@ export default function DateGuestsCard({
   onChildrenChange: (v: number) => void;
   maxGuests?: number;
   blockedDatesSet?: Set<string>;
+  partialAvailability?: Map<string, PartialAvailability>;
+  onPartialAvailabilityChange?: (
+    partial: Map<string, PartialAvailability>
+  ) => void;
   dateError?: string;
 }) {
+  console.log("[DateGuestsCard] Component rendered", { charterId });
+
+  const t = useTranslations("booking.checkout.dateGuests");
   const [open, setOpen] = useState<null | "days" | "guests">(null);
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [bookedDatesData, setBookedDatesData] = useState<{
+    fullDayBlocks: string[];
+    timeBasedBlocks: Array<{
+      date: string;
+      startTime: string;
+      endTime: string;
+      isFullDay: boolean;
+    }>;
+  } | null>(null);
 
   // Calculate minimum bookable date based on charter type
   const minBookableDate = useMemo(
@@ -53,9 +75,22 @@ export default function DateGuestsCard({
   // If blockedDatesSet is not provided, fetch and calculate it locally
   const shouldFetchLocally = !blockedDatesSet;
 
+  console.log("[DateGuestsCard] Fetch decision:", {
+    blockedDatesSet: !!blockedDatesSet,
+    shouldFetchLocally,
+    charterId,
+  });
+
   // Fetch booked dates from API (only if not provided by parent)
   useEffect(() => {
-    if (!shouldFetchLocally) return;
+    console.log("[DateGuestsCard] useEffect triggered", {
+      shouldFetchLocally,
+      charterId,
+    });
+    if (!shouldFetchLocally) {
+      console.log("[DateGuestsCard] Skipping fetch - parent provided data");
+      return;
+    }
 
     async function fetchBookedDates() {
       if (!charterId) return;
@@ -79,7 +114,24 @@ export default function DateGuestsCard({
 
         if (response.ok) {
           const data = await response.json();
-          setBookedDates(data.bookedDates || []);
+          console.log("[DateGuestsCard] Booked dates API response:", {
+            fullDayBlocks: data.fullDayBlocks?.length || 0,
+            timeBasedBlocks: data.timeBasedBlocks?.length || 0,
+            sample: data.timeBasedBlocks?.slice(0, 3),
+          });
+          // Support both new format and legacy format
+          if (data.fullDayBlocks) {
+            setBookedDatesData({
+              fullDayBlocks: data.fullDayBlocks,
+              timeBasedBlocks: data.timeBasedBlocks || [],
+            });
+          } else if (data.bookedDates) {
+            // Legacy format: convert to new structure
+            setBookedDatesData({
+              fullDayBlocks: data.bookedDates,
+              timeBasedBlocks: [],
+            });
+          }
         }
       } catch (error) {
         console.error("[DateGuestsCard] Failed to fetch booked dates:", error);
@@ -98,14 +150,63 @@ export default function DateGuestsCard({
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 3);
 
-    return calculateBlockedDates(
+    const blocked = calculateBlockedDates(
       schedule,
       unavailability,
-      bookedDates,
+      bookedDatesData,
       startDate,
       endDate
     );
-  }, [schedule, unavailability, bookedDates, shouldFetchLocally]);
+
+    console.log("[DateGuestsCard] Blocked dates calculated:", {
+      count: blocked.size,
+      sample: Array.from(blocked).slice(0, 5),
+    });
+
+    return blocked;
+  }, [schedule, unavailability, bookedDatesData, shouldFetchLocally]);
+
+  // Calculate partial availability (time-based unavailability)
+  // Only calculate if not provided by parent
+  const localPartialAvailability = useMemo(() => {
+    console.log("[DateGuestsCard] Calculating partial availability:", {
+      hasParentPartialAvailability: !!partialAvailability,
+      hasUnavailability: !!unavailability,
+      hasBookedDatesData: !!bookedDatesData,
+      bookedDatesDataKeys: bookedDatesData
+        ? Object.keys(bookedDatesData)
+        : null,
+    });
+
+    if (partialAvailability) return new Map();
+    if (!unavailability && !bookedDatesData) return new Map();
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+
+    const partial = calculatePartialAvailability(
+      unavailability,
+      bookedDatesData,
+      startDate,
+      endDate
+    );
+
+    console.log("[DateGuestsCard] Partial availability calculated:", {
+      count: partial.size,
+      dates: Array.from(partial.keys()).slice(0, 5),
+      sample: Array.from(partial.entries()).slice(0, 2),
+    });
+
+    return partial;
+  }, [unavailability, bookedDatesData, partialAvailability]);
+
+  // Notify parent when partial availability changes
+  useEffect(() => {
+    if (onPartialAvailabilityChange && localPartialAvailability.size > 0) {
+      onPartialAvailabilityChange(localPartialAvailability);
+    }
+  }, [localPartialAvailability, onPartialAvailabilityChange]);
 
   // Use provided blockedDatesSet or fallback to local calculation
   const blockedDates = useMemo(() => {
@@ -150,9 +251,7 @@ export default function DateGuestsCard({
 
   return (
     <section className="relative pb-5 border-b border-black/10">
-      <h2 className="mb-4 text-base font-semibold sm:text-lg">
-        Trip Date & Guests
-      </h2>
+      <h2 className="mb-4 text-base font-semibold sm:text-lg">{t("title")}</h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-9">
         {/* Date field (uses shared CalendarPicker with built-in dropdown) */}
@@ -178,6 +277,9 @@ export default function DateGuestsCard({
             enableModeToggle={true}
             mode="single"
             blockedDates={blockedDates}
+            partialAvailability={
+              partialAvailability || localPartialAvailability
+            }
             buttonClassName={
               dateError
                 ? "border-red-500 hover:border-red-600"
@@ -189,14 +291,14 @@ export default function DateGuestsCard({
           )}
           {!dateError && days > 1 && (
             <p className="mt-1 text-[10px] text-gray-500">
-              {days} consecutive days selected
+              {t("consecutiveDays", { days })}
             </p>
           )}
           {!dateError && (
             <p className="mt-1 text-[10px] text-gray-600">
               {charterType?.toUpperCase() === "OFFSHORE"
-                ? "Offshore trips require 36 hours advance booking"
-                : "Bookings must be made 24 hours in advance"}
+                ? t("offshoreNotice")
+                : t("standardNotice")}
             </p>
           )}
         </div>
@@ -210,7 +312,9 @@ export default function DateGuestsCard({
             aria-haspopup="dialog"
             aria-expanded={open === "days"}
           >
-            <span className="text-xs font-medium text-gray-700">Days</span>
+            <span className="text-xs font-medium text-gray-700">
+              {t("days")}
+            </span>
             <span className="text-sm text-gray-900">{days}</span>
             <ChevronDown className="w-4 h-4 ml-2 text-gray-500" />
           </button>
@@ -270,7 +374,7 @@ export default function DateGuestsCard({
               <div className="flex items-center justify-between gap-4">
                 {/* Adults */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">Adults</span>
+                  <span className="text-xs text-gray-600">{t("adults")}</span>
                   <button
                     type="button"
                     onClick={() => onAdultsChange(clampAdults(adults - 1))}
@@ -296,7 +400,7 @@ export default function DateGuestsCard({
 
                 {/* Children */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">Children</span>
+                  <span className="text-xs text-gray-600">{t("children")}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -326,12 +430,12 @@ export default function DateGuestsCard({
               </div>
               {typeof maxGuests === "number" && (
                 <p className="mt-2 text-[11px] text-gray-500">
-                  Max {maxGuests} guests.
+                  {t("maxGuests", { max: maxGuests })}
                 </p>
               )}
               {overMax && (
                 <p className="mt-1 text-[11px] text-red-600">
-                  You’ve exceeded the maximum capacity.
+                  {t("exceededCapacity")}
                 </p>
               )}
               <div className="flex justify-end mt-3">
@@ -340,7 +444,7 @@ export default function DateGuestsCard({
                   onClick={() => setOpen(null)}
                   className="px-3 py-1.5 text-sm font-medium text-white rounded-md bg-[#ec2227]"
                 >
-                  Done
+                  {t("done")}
                 </button>
               </div>
             </div>

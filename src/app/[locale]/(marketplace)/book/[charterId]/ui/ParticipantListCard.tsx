@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2, User } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   FieldErrors,
   UseFormRegister,
@@ -30,6 +31,7 @@ export default function ParticipantListCard({
   setValue,
   guests,
 }: ParticipantListCardProps) {
+  const t = useTranslations("booking.checkout.participants");
   const participants = watch("participants") || [];
   const firstName = watch("firstName");
   const lastName = watch("lastName");
@@ -64,10 +66,9 @@ export default function ParticipantListCard({
   return (
     <section className="">
       <div className="mb-4">
-        <h2 className="text-base font-semibold sm:text-lg">Participant List</h2>
+        <h2 className="text-base font-semibold sm:text-lg">{t("title")}</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Add all participants for this trip (maximum {guests} based on your
-          guest selection). At least one participant is required.
+          {t("description", { guests })}
         </p>
       </div>
 
@@ -81,7 +82,7 @@ export default function ParticipantListCard({
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700">
-                  Participant {index + 1}
+                  {t("participantN", { number: index + 1 })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -89,12 +90,11 @@ export default function ParticipantListCard({
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
-                      defaultChecked
                       checked={participant.isBooker || false}
                       onChange={() => toggleIsBooker(index)}
                       className="w-4 h-4 text-[#ec2227] border-gray-300 rounded focus:ring-[#ec2227]"
                     />
-                    <span className="text-gray-700">This is me</span>
+                    <span className="text-gray-700">{t("thisIsMe")}</span>
                   </label>
                 )}
                 {participants.length > 1 && (
@@ -113,12 +113,12 @@ export default function ParticipantListCard({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
                 <span className="block mb-2 font-medium text-slate-800">
-                  Name <span className="text-red-500">*</span>
+                  {t("name")} <span className="text-red-500">*</span>
                 </span>
                 <input
                   type="text"
                   {...register(`participants.${index}.name`)}
-                  placeholder="Participant name"
+                  placeholder={t("namePlaceholder")}
                   disabled={participant.isBooker}
                   className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow disabled:bg-gray-100 disabled:cursor-not-allowed ${
                     errors.participants?.[index]?.name
@@ -135,12 +135,12 @@ export default function ParticipantListCard({
 
               <label className="block text-sm">
                 <span className="block mb-2 font-medium text-slate-800">
-                  Phone <span className="text-red-500">*</span>
+                  {t("phone")} <span className="text-red-500">*</span>
                 </span>
                 <input
                   type="tel"
                   {...register(`participants.${index}.phone`)}
-                  placeholder="+60 12-345 6789"
+                  placeholder={t("phonePlaceholder")}
                   disabled={participant.isBooker}
                   className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow disabled:bg-gray-100 disabled:cursor-not-allowed ${
                     errors.participants?.[index]?.phone
@@ -173,10 +173,13 @@ export default function ParticipantListCard({
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#ec2227] border-2 border-[#ec2227] rounded-lg hover:bg-[#ec2227] hover:text-white transition-colors disabled:opacity-50 bg-slate-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#ec2227]"
           >
             <Plus className="w-4 h-4" />
-            Add Participant
+            {t("addButton")}
             {!canAddMore && (
               <span className="text-xs text-gray-500">
-                ({participants.length}/{guests} max)
+                {t("maxCapacity", {
+                  current: participants.length,
+                  max: guests,
+                })}
               </span>
             )}
           </button>

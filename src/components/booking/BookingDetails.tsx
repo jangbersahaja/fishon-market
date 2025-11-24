@@ -1,8 +1,9 @@
+"use client";
+
 import {
   convert24to12Hour,
   formatBookingDate,
   formatCurrency,
-  getBookingStatusMessage,
 } from "@/lib/helpers/booking-helpers";
 import type {
   EmergencyContact,
@@ -19,6 +20,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface BookingDetailsProps {
   booking: {
@@ -54,6 +56,8 @@ const tax = GST_TAX || 0;
 const discount: number = 0;
 
 export function BookingDetails({ booking }: BookingDetailsProps) {
+  const t = useTranslations("booking.details");
+
   return (
     <div className="p-3 bg-white border border-gray-200 rounded-lg sm:p-5">
       {/* Header */}
@@ -72,19 +76,14 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
         </div>
       </div>
 
-      {/* Status Message */}
-      <div className="p-4 mb-6 rounded-lg bg-gray-50">
-        <p className="text-sm text-gray-700">
-          {getBookingStatusMessage(booking.status)}
-        </p>
-      </div>
-
       {/* Details Grid */}
       <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
         <div className="flex items-start gap-3">
           <User className="w-5 h-5 text-gray-400 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-gray-900">Guest Name</p>
+            <p className="text-sm font-medium text-gray-900">
+              {t("guestName")}
+            </p>
             <p className="text-sm text-gray-600 capitalize">
               {booking.guestName}
             </p>
@@ -95,7 +94,9 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
         <div className="flex items-start gap-3">
           <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-gray-900">Booking ID</p>
+            <p className="text-sm font-medium text-gray-900">
+              {t("bookingId")}
+            </p>
             <p className="font-mono text-sm text-gray-600">{booking.id}</p>
           </div>
         </div>
@@ -106,8 +107,8 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
             <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
             <div className="flex-1">
               <p className="mb-2 text-sm font-medium text-gray-900">
-                Trip Schedule ({booking.timeSlots.length}{" "}
-                {booking.timeSlots.length === 1 ? "session" : "sessions"})
+                {t("tripSchedule")} ({booking.timeSlots.length}{" "}
+                {t("session", { count: booking.timeSlots.length })})
               </p>
               <div className="space-y-2">
                 {booking.timeSlots.map((slot, index) => (
@@ -116,7 +117,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
                     className="flex items-center gap-2 p-2 text-sm text-gray-600 rounded bg-gray-50"
                   >
                     <span className="font-medium text-gray-900">
-                      Day {slot.day}:
+                      {t("day", { number: slot.day })}:
                     </span>
                     <span>
                       {new Date(slot.date).toLocaleDateString("en-MY", {
@@ -157,10 +158,10 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
             <div className="flex items-start gap-3">
               <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Date</p>
+                <p className="text-sm font-medium text-gray-900">{t("date")}</p>
                 <p className="text-sm text-gray-600">
                   {formatBookingDate(booking.date)} • {booking.days}{" "}
-                  {booking.days === 1 ? "day" : "days"}
+                  {t("day", { count: booking.days })}
                 </p>
               </div>
             </div>
@@ -168,12 +169,14 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
             <div className="flex items-start gap-3">
               <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Duration</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {t("duration")}
+                </p>
                 <p className="text-sm text-gray-600">
                   {booking.durationHour}{" "}
-                  {Number(booking.durationHour) === 1 ? "hour" : "hours"}{" "}
+                  {t("hour", { count: Number(booking.durationHour) })}{" "}
                   {booking.startTime &&
-                    ` • Starting at ${convert24to12Hour(booking.startTime)}`}
+                    ` • ${t("startingAt")} ${convert24to12Hour(booking.startTime)}`}
                 </p>
               </div>
             </div>
@@ -183,13 +186,15 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
         <div className="flex items-start gap-3">
           <Users className="w-5 h-5 text-gray-400 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-gray-900">Total Guests</p>
+            <p className="text-sm font-medium text-gray-900">
+              {t("totalGuests")}
+            </p>
             <p className="text-sm text-gray-600">
-              {booking.adults} {booking.adults === 1 ? "adult" : "adults"}
+              {booking.adults} {t("adult", { count: booking.adults })}
               {booking.children > 0 &&
-                `, ${booking.children} ${
-                  booking.children === 1 ? "child" : "children"
-                }`}
+                `, ${booking.children} ${t("child", {
+                  count: booking.children,
+                })}`}
             </p>
           </div>
         </div>
@@ -200,7 +205,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
             <Users className="w-5 h-5 text-gray-400 mt-0.5" />
             <div className="flex-1">
               <p className="mb-2 text-sm font-medium text-gray-900">
-                Participants
+                {t("participants")}
               </p>
               <div className="space-y-1.5">
                 {booking.participants.map((participant, index) => (
@@ -222,7 +227,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
                     )}
                     {participant.isBooker && (
                       <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                        Booker
+                        {t("booker")}
                       </span>
                     )}
                   </div>
@@ -237,7 +242,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
             <AlertCircle className="w-5 h-5 text-gray-400 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-gray-900">
-                Emergency Contact
+                {t("emergencyContact")}
               </p>
               <div className="flex gap-2 text-sm text-gray-600">
                 <p className="capitalize">{booking.emergencyContact.name}</p>
@@ -261,7 +266,9 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
       {/* Note */}
       {booking.note && (
         <div className="p-4 mb-6 border border-blue-200 rounded-lg bg-blue-50">
-          <p className="mb-1 text-sm font-medium text-blue-900">Your Note</p>
+          <p className="mb-1 text-sm font-medium text-blue-900">
+            {t("yourNote")}
+          </p>
           <p className="text-sm text-blue-800">{booking.note}</p>
         </div>
       )}
@@ -270,7 +277,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
       {booking.status === "REJECTED" && booking.rejectionReason && (
         <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
           <p className="mb-1 text-sm font-medium text-red-900">
-            Rejection Reason
+            {t("rejectionReason")}
           </p>
           <p className="text-sm text-red-800">{booking.rejectionReason}</p>
         </div>
@@ -280,7 +287,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
       {booking.status === "CANCELLED" && booking.cancellationReason && (
         <div className="p-4 mb-6 border border-gray-200 rounded-lg bg-gray-50">
           <p className="mb-1 text-sm font-medium text-gray-900">
-            Cancellation Reason
+            {t("cancellationReason")}
           </p>
           <p className="text-sm text-gray-700">{booking.cancellationReason}</p>
         </div>
@@ -293,10 +300,10 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           <div className="absolute z-10 pointer-events-none top-15 right-20">
             <div className="relative">
               <div className="px-6 py-3 text-3xl font-black tracking-wider text-green-600 uppercase border-4 border-green-600 rounded-lg rotate-12 bg-white/90">
-                PAID
+                {t("paid")}
               </div>
               <div className="absolute inset-0 px-6 py-3 text-3xl font-black tracking-wider uppercase border-4 rounded-lg text-green-600/30 border-green-600/30 rotate-12 blur-sm">
-                PAID
+                {t("paid")}
               </div>
             </div>
           </div>
@@ -305,17 +312,17 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
         <div className="space-y-2">
           {/* Trip Price Calculation */}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Trip Price (per day)</span>
+            <span className="text-gray-600">{t("tripPrice")}</span>
             <span className="text-gray-900">
               {formatCurrency(booking.unitPrice)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Number of Days</span>
+            <span className="text-gray-600">{t("numberOfDays")}</span>
             <span className="text-gray-900">× {booking.days}</span>
           </div>
           <div className="flex justify-between pt-2 text-sm border-t border-gray-100">
-            <span className="text-gray-600">Subtotal</span>
+            <span className="text-gray-600">{t("subtotal")}</span>
             <span className="text-gray-900">
               {formatCurrency(booking.subtotal)}
             </span>
@@ -324,7 +331,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           {/* Discount */}
           {discount > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Discount/Promo</span>
+              <span className="text-gray-600">{t("discount")}</span>
               <span className="text-green-600">
                 - {formatCurrency(discount)}
               </span>
@@ -334,7 +341,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           {/* Platform Fee */}
           {booking.platformFee && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Commission (10%)</span>
+              <span className="text-gray-600">{t("commission")}</span>
               <span className="text-gray-900">
                 {formatCurrency(booking.platformFee)}
               </span>
@@ -344,7 +351,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           {/* Service Fee (Payment Gateway) */}
           {booking.serviceFee && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Service Fee (1.5%)</span>
+              <span className="text-gray-600">{t("serviceFee")}</span>
               <span className="text-gray-900">
                 {formatCurrency(booking.serviceFee)}
               </span>
@@ -354,7 +361,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           {/* Tax (if applicable) */}
           {tax > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Tax</span>
+              <span className="text-gray-600">{t("tax")}</span>
               <span className="text-gray-900">
                 {formatCurrency(tax * booking.totalPrice)}
               </span>
@@ -365,8 +372,8 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           <div className="flex justify-between pt-3 text-lg font-bold border-t border-gray-200">
             <span className="text-gray-900">
               {booking.status === "PAID" || booking.status === "COMPLETED"
-                ? "Total Paid"
-                : "Total"}
+                ? t("totalPaid")
+                : t("total")}
             </span>
             <span className="text-gray-900">
               {formatCurrency(booking.totalPrice)}

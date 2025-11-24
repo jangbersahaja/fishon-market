@@ -16,7 +16,13 @@
     "learnMore": "Learn More",
     "readMore": "Read More",
     "seeAll": "See All",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "justListed": "Just Listed",
+    "reviewCount": "{count, plural, =1 {# review} other {# reviews}}",
+    "from": "From",
+    "total": "Total",
+    "perDay": "/Day",
+    "perTrip": "/Trip"
   },
   "nav": {
     "home": "Home",
@@ -62,13 +68,12 @@
     "marketplaceStatus": "Marketplace in development",
     "tagline": "plan • book • fish",
     "captainTitle": "Are you a Captain or Charter Operator?",
-    "captainDescription": "Captain and charter registration is now available at Fishon Captain App",
+    "captainDescription": "Captain and charter registration is now available at",
     "captainCta": "Register your charter, manage bookings, and reach anglers across Malaysia.",
     "discoverTitle": "Discover top-rated",
     "discoverTitleBreak": "fishing charters",
     "bookYourNext": "Book your next fishing trip",
     "exploreCharters": "Explore Charters",
-    "popularDestinations": "Popular Destinations",
     "viewAll": "View All",
     "featuredCharters": "Featured Charters",
     "howItWorks": "How It Works",
@@ -77,7 +82,38 @@
     "bookSecurely": "Book Securely",
     "bookDescription": "Easy and secure booking process with instant confirmation",
     "enjoyYourTrip": "Enjoy Your Trip",
-    "enjoyDescription": "Have an amazing fishing experience with professional captains"
+    "enjoyDescription": "Have an amazing fishing experience with professional captains",
+    "brandTitle": "Fishon.my — Malaysia's first online fishing booking platform",
+    "brandDescription": "Fishon.my is Malaysia's first online fishing booking platform and marketplace helping anglers find and book fishing charters. Explore trips across lakes, rivers, inshore and offshore destinations around Malaysia — plan, book, fish.",
+    "listYourBusiness": "List your business on Fishon",
+    "findCustomers": "Find customers and earn more",
+    "listWithUs": "List With Us",
+    "tripsNearby": {
+      "title": "Discover Trip Near You",
+      "detectingLocation": "Detecting your location…",
+      "locationError": "Unable to fetch your location: {error}.",
+      "browseTripsBelowFallback": "You can still browse trips below.",
+      "noTripsNearby": "No trips within 15 km of your current location."
+    },
+    "browseByType": {
+      "title": "Browse By Type",
+      "seeAll": "See all fishing types",
+      "exploreTrips": "Explore {type} trips",
+      "altText": "{type} fishing"
+    },
+    "topTechniques": {
+      "title": "Top Fishing Techniques",
+      "seeAll": "See all fishing techniques",
+      "chartersUsing": "Charters using {technique}",
+      "altText": "{technique} technique"
+    },
+    "popularDestinations": {
+      "title": "Popular Destinations",
+      "seeAll": "See all destinations",
+      "findChartersIn": "Find charters in {destination}",
+      "altText": "{destination} fishing destination",
+      "chartersAvailable": "{count, plural, =1 {# Charter Available} other {# Charters Available}}"
+    }
   },
   "charter": {
     "viewDetails": "View Details",
@@ -108,7 +144,173 @@
     "chartersTitle": "Charters",
     "noChartersAvailable": "No charters available yet.",
     "tryASampleCharter": "Try a sample charter:",
-    "view": "View"
+    "view": "View",
+    "distanceFromYou": "{distance} km from you",
+    "experienceYears": "{years, plural, =1 {# year} other {# years}}",
+    "bookTrip": "Book Trip",
+    "savedOn": "Saved on {date}",
+    "details": "Details",
+    "trips": "Trips",
+    "moreTrips": "+ {count} more",
+    "yearsExp": "{years} yrs exp",
+    "capacity": "{count} pax",
+    "defaultDescription": "A great fishing charter operating in Malaysia. Trips available for lakes, rivers, inshore and offshore.",
+    "gallery": {
+      "viewAll": "View all",
+      "items": "{count, plural, =1 {# item} other {# items}}",
+      "openGallery": "Open gallery",
+      "openItem": "Open item {number}",
+      "seeMore": "+{count} more",
+      "close": "Close",
+      "fullscreen": "Fullscreen",
+      "previous": "Previous",
+      "next": "Next",
+      "counter": "{current} / {total}",
+      "goToItem": "Go to item {number}",
+      "shareCharter": "Share charter"
+    },
+    "trip": {
+      "perDay": "/Day",
+      "upToAnglers": "Up to {count} anglers",
+      "startTimes": "Start Times:"
+    },
+    "share": {
+      "whatsapp": "Share on WhatsApp",
+      "telegram": "Share on Telegram",
+      "facebook": "Share on Facebook",
+      "twitter": "Share on X (Twitter)",
+      "linkedin": "Share on LinkedIn",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link Copied!"
+    },
+    "about": {
+      "title": "About this charter"
+    },
+    "amenities": {
+      "title": "Amenities",
+      "included": "{count} included",
+      "includedLabel": "Included"
+    },
+    "boat": {
+      "title": "Boat",
+      "name": "Name",
+      "type": "Type",
+      "length": "Length",
+      "ft": "ft",
+      "capacity": "Capacity",
+      "pax": "pax",
+      "features": "Features"
+    },
+    "captain": {
+      "title": "Charter Operator",
+      "experience": "{years} yrs experience",
+      "crew": "{count} crew",
+      "fishing": "fishing"
+    },
+    "schedule": {
+      "title": "Operational Schedule",
+      "everyday": {
+        "prefix": "Available",
+        "highlight": "7 days a week"
+      },
+      "weekdays": {
+        "prefix": "Available",
+        "highlight": "Monday through Friday"
+      },
+      "weekends": {
+        "prefix": "Available",
+        "highlight": "Saturday and Sunday"
+      },
+      "custom": {
+        "contact": "Custom schedule (contact captain for details)",
+        "prefix": "Available on specific days:",
+        "operatingDays": "Operating days"
+      },
+      "days": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      }
+    },
+    "policies": {
+      "title": "Policies & info",
+      "catchKeep": "Catch & keep",
+      "catchRelease": "Catch & release",
+      "childFriendly": "Child friendly",
+      "wheelchairAccessible": "Wheelchair accessible",
+      "alcohol": "Alcohol",
+      "smoking": "Smoking",
+      "pickup": "Pickup",
+      "pickupFee": "Pickup fee",
+      "areas": "Areas",
+      "notes": "Notes",
+      "yes": "Yes",
+      "no": "No",
+      "allowed": "Allowed",
+      "notAllowed": "Not allowed",
+      "available": "Available",
+      "notAvailable": "Not available"
+    },
+    "location": {
+      "title": "Location map",
+      "subtitle": "Centered on the meeting point.",
+      "mapTitle": "Map of {title}"
+    },
+    "feedback": {
+      "title": "Guest feedback",
+      "subtitle": "Based on recent verified trips",
+      "reviewCount": "{count, plural, =1 {# review} other {# reviews}}",
+      "badgeHighlights": "Badge highlights",
+      "badgeExplanation": "Badges surface what guests called out most often after their trips.",
+      "noBadges": "No badge highlights yet — check back after the next trip.",
+      "atAGlance": "At a glance",
+      "avgRating": "Avg. rating",
+      "totalBadges": "Total badges",
+      "recentActivity": "Recent activity",
+      "guestsPraise": "Guests most often praise"
+    },
+    "species": {
+      "title": "Target Species"
+    },
+    "techniques": {
+      "title": "Techniques"
+    },
+    "reviews": {
+      "title": "Anglers' reviews",
+      "subtitle": "{count} review{plural} from verified trips",
+      "sortBy": "Sort by",
+      "sortRelevant": "Most relevant",
+      "sortRecent": "Most recent",
+      "sortHighest": "Highest rated",
+      "sortLowest": "Lowest rated",
+      "seeAllReviews": "See all reviews",
+      "allReviews": "All reviews",
+      "reviewsCount": "{count} review{plural}",
+      "tripOn": "Trip on",
+      "close": "Close reviews"
+    },
+    "bookingWidget": {
+      "date": "Date",
+      "dateRange": "Date Range",
+      "daysSelected": "{count} consecutive days selected",
+      "offshoreNotice": "Offshore trips require 72 hours (3 days) advance booking",
+      "standardNotice": "Bookings must be made 48 hours (2 days) in advance",
+      "adults": "Adults",
+      "children": "Children",
+      "notChildFriendly": "Not child friendly",
+      "maxGuests": "Max {count} guests.",
+      "exceededCapacity": "You've exceeded the maximum capacity.",
+      "selectTrip": "Select Trip",
+      "forDays": "for {count} day{plural}",
+      "startTimes": "Start Times:",
+      "seeDetails": "See Trip Details",
+      "checkAvailability": "Check Availability",
+      "upToAnglers": "Up to {count} anglers"
+    }
   },
   "booking": {
     "title": "Book Your Charter",
@@ -149,7 +351,601 @@
     "goToSearch": "Go to Search",
     "viewMyBookings": "View My Bookings",
     "thankYouBooking": "Thank you for your booking",
-    "bookingDetails": "Booking Details"
+    "bookingDetails": "Booking Details",
+    "checkout": {
+      "pageTitle": "Complete Your Booking",
+      "pageSubtitle": "Review your trip details and tell the captain about yourself",
+      "manualNoticeTitle": "Captain approval required — no upfront payment",
+      "manualNoticeDescription": "Submit your request now and pay only after the captain approves (typically within 48 hours).",
+      "manualNoticeGuestNote": "Guests will verify their email with a TAC code before the request is sent.",
+      "manualNoticeAuthNote": "We'll email you as soon as the captain responds so you can complete payment.",
+      "yourDetails": {
+        "title": "Your Details",
+        "accountFilled": "Account details filled",
+        "signInPrompt": "to autofill your details and track your bookings, or continue as a guest.",
+        "signIn": "Sign in",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone number",
+        "firstNamePlaceholder": "Your first name",
+        "lastNamePlaceholder": "Your last name",
+        "emailPlaceholder": "you@example.com",
+        "phonePlaceholder": "+60 12-345 6789"
+      },
+      "emergencyContact": {
+        "title": "Emergency Contact",
+        "description": "Provide an emergency contact for safety purposes (optional but recommended).",
+        "contactName": "Contact Name",
+        "contactPhone": "Contact Phone",
+        "relationship": "Relationship",
+        "namePlaceholder": "Full name",
+        "phonePlaceholder": "+60 12-345 6789",
+        "relationshipPlaceholder": "e.g., Spouse, Parent, Sibling"
+      },
+      "startConversation": {
+        "title": "Say hello to captain",
+        "yearsExperience": "{years} years experience",
+        "crew": "{count} crew",
+        "greeting": "Hello, welcome to {charterName}. Thanks for your interest! Let me know who'll be joining the trip, what fish you're aiming to catch, and any special requests — I'll make sure everything's ready for you.",
+        "placeholder": "Introduce yourself to {captainFirstName}. Share your fishing experience, what you hope to catch, or any special requests...",
+        "note": "This message will be sent to the captain with your booking request."
+      },
+      "summary": {
+        "title": "Charter Summary",
+        "captain": "Captain:",
+        "vessel": "Vessel",
+        "moreFeatures": "+{count} more",
+        "startingPoint": "Starting Point",
+        "included": "Included",
+        "tripPrice": "Trip Price ({days, plural, =1 {# day} other {# days}})",
+        "commission": "Commission (10%)",
+        "discount": "Discount",
+        "serviceFee": "Service Fee (1.5%)",
+        "sst": "SST",
+        "total": "Total",
+        "totalEstimate": "Total (est.)",
+        "paymentInfo": "Payment information",
+        "paymentInfoManual": "No payment is required now. Once your booking is confirmed, the captain will send you a secure payment link.",
+        "paymentInfoAuto": "For card payments: Your card will be authorized (not charged) when you submit. If the captain confirms your booking, your card will be charged automatically. If rejected, the authorization will be released.",
+        "cancellationNotes": "Cancellation notes",
+        "cancellationPolicy1": "More than 30 days before trip: 80% refund",
+        "cancellationPolicy2": "15-30 days before trip: 50% refund",
+        "cancellationPolicy3": "Less than 15 days before trip: No refund",
+        "cancellationRefund": "If the captain rejects your booking, you'll receive a full refund",
+        "refundTiming": "Refunds typically take 5-7 business days"
+      },
+      "validation": {
+        "fixErrors": "Please fix the following errors:",
+        "fieldLabels": {
+          "firstName": "First name",
+          "lastName": "Last name",
+          "email": "Email",
+          "phone": "Phone number",
+          "date": "Date",
+          "days": "Number of days",
+          "adults": "Number of adults",
+          "startTime": "Start time",
+          "emergencyName": "Emergency contact name",
+          "emergencyPhone": "Emergency contact phone",
+          "emergencyRelation": "Emergency contact relationship",
+          "participants": "Participants",
+          "note": "Note to captain"
+        },
+        "participantError": "Participant {number} {field}:",
+        "dateNotAvailable": "This date is not available. It may be outside operational days, marked as unavailable, or already fully booked.",
+        "dateRangeInvalid": "The selected date range includes unavailable dates. Please select a different date or reduce the number of days.",
+        "errorMessages": {
+          "startTimeRequired": "Start time is required",
+          "firstNameRequired": "First name is required",
+          "lastNameRequired": "Last name is required",
+          "emailInvalid": "Invalid email address",
+          "phoneRequired": "Phone number is required",
+          "phoneInvalid": "Please enter a valid phone number",
+          "emergencyNameRequired": "Emergency contact name is required",
+          "emergencyPhoneRequired": "Emergency contact phone is required",
+          "emergencyRelationRequired": "Emergency contact relation is required",
+          "participantNameRequired": "At least one participant name is required",
+          "participantPhoneRequired": "Phone is required",
+          "participantsRequired": "At least one participant is required",
+          "participantsExceedGuests": "Number of participants cannot exceed total guests"
+        }
+      },
+      "buttons": {
+        "submitting": "Submitting...",
+        "requestBooking": "Request Booking",
+        "proceedToPayment": "Proceed to Payment"
+      },
+      "guestBenefits": {
+        "title": "Have an account? Sign in for faster bookings",
+        "autofill": "Auto-fill your details",
+        "trackBookings": "Track all your bookings in one place",
+        "saveFavorites": "Save favorites and preferences",
+        "signIn": "Sign in",
+        "or": "or",
+        "createAccount": "Create account"
+      },
+      "participants": {
+        "title": "Participant List",
+        "description": "Add all participants for this trip (maximum {guests} based on your guest selection). At least one participant is required.",
+        "participantN": "Participant {number}",
+        "thisIsMe": "This is me",
+        "name": "Name",
+        "phone": "Phone",
+        "namePlaceholder": "Participant name",
+        "phonePlaceholder": "+60 12-345 6789",
+        "addButton": "Add Participant",
+        "maxCapacity": "({current}/{max} max)"
+      },
+      "tripSelection": {
+        "title": "Confirm Trips",
+        "upToAnglers": "Up to {count} anglers",
+        "forDays": "for {days, plural, =1 {# day} other {# days}}",
+        "targetSpecies": "Target Species",
+        "techniques": "Techniques",
+        "unavailable": "Unavailable",
+        "limitedAvailability": "Limited",
+        "availableTimes": "Available Times"
+      },
+      "dateGuests": {
+        "title": "Trip Date & Guests",
+        "days": "Days",
+        "adults": "Adults",
+        "children": "Children",
+        "done": "Done",
+        "maxGuests": "Max {max} guests.",
+        "exceededCapacity": "You've exceeded the maximum capacity.",
+        "consecutiveDays": "{days, plural, =1 {# consecutive day selected} other {# consecutive days selected}}",
+        "offshoreNotice": "Offshore trips require 72 hours (3 days) advance booking",
+        "standardNotice": "Bookings must be made 48 hours (2 days) in advance"
+      },
+      "startTime": {
+        "title": "Select start time",
+        "warningMessage": "Please select a start time to continue"
+      },
+      "guestVerification": {
+        "titleEmail": "Verify Your Email",
+        "titleCode": "Enter Verification Code",
+        "descriptionEmail": "We'll send a verification code to your email to complete your booking.",
+        "descriptionCode": "Enter the 6-digit code sent to your email.",
+        "emailAddress": "Email Address",
+        "whatHappensNext": "What happens next?",
+        "step1": "We'll send a 6-digit code to your email",
+        "step2": "Enter the code to verify your email address",
+        "step3": "You'll receive a booking confirmation once approved",
+        "sendingCode": "Sending Code...",
+        "sendVerificationCode": "Send Verification Code",
+        "codeSent": "A verification code has been sent to",
+        "checkInbox": "Please check your inbox and spam folder",
+        "verificationCode": "Verification Code",
+        "enterCode": "Enter the 6-digit code from your email",
+        "verifying": "Verifying...",
+        "verifyAndContinue": "Verify & Continue",
+        "didntReceiveCode": "Didn't receive the code?",
+        "resendIn": "Resend in {seconds}s",
+        "resendCode": "Resend Code",
+        "errorSendCode": "Failed to send verification code",
+        "errorInvalidCode": "Invalid verification code",
+        "errorEnter6Digits": "Please enter a 6-digit code",
+        "errorVerifyCode": "Failed to verify code"
+      }
+    },
+    "confirm": {
+      "pageTitle": {
+        "completed": "Trip Completed!",
+        "inProgress": "Trip In Progress!",
+        "confirmed": "Booking Confirmed!",
+        "cardAuthorized": "Card Authorized - Awaiting Approval",
+        "paymentReceived": "Payment Received - Awaiting Approval",
+        "approvedPaymentDue": "Approved! Complete Payment",
+        "pending": "Waiting For Captain Approval",
+        "rejected": "Request Declined",
+        "expired": "Booking Expired",
+        "cancelled": "Booking Cancelled",
+        "default": "Booking Status"
+      },
+      "pageDescription": {
+        "completed": "Your fishing trip has been completed. We hope you had an amazing experience! Please share your feedback.",
+        "inProgress": "Your fishing trip is currently in progress. Have a great time and stay safe!",
+        "confirmed": "Your fishing trip is confirmed. Get ready for an amazing experience!",
+        "cardAuthorized": "Your card has been authorized. Awaiting captain approval within 12 hours. No charge until approved.",
+        "paymentReceived": "Your payment has been received. Awaiting captain approval within 12 hours. Full refund if declined.",
+        "approvedPaymentDue": "The captain has approved your request. Complete payment to confirm your booking.",
+        "pending": "Your booking request has been sent to the captain for review.",
+        "rejected": "The captain was unable to accommodate your request.",
+        "expired": "This booking hold has expired.",
+        "cancelled": "This booking has been cancelled.",
+        "default": "View your booking details below."
+      },
+      "paymentStatus": {
+        "cardAuthorized": "Card Authorized!",
+        "paymentReceived": "Payment Received!",
+        "tokenizedAuthMessage": "Your card is authorized for <strong>RM {amount}</strong>. No charge until captain approves within 12 hours.",
+        "directPaymentMessage": "Payment of <strong>RM {amount}</strong> received. Captain has 12 hours to approve. Full refund if declined.",
+        "authorizationExpires": "Authorization expires",
+        "cardAuthorizedTitle": "Card Authorized!",
+        "paymentReceivedTitle": "Payment Received!",
+        "cardAuthorizedMessage": "Your card has been authorized for <strong>RM {amount}</strong>. No charge will be made until the captain approves your booking within 12 hours. Your card will only be charged if the captain accepts your request.",
+        "paymentReceivedMessage": "Your payment of <strong>RM {amount}</strong> has been received. The captain has 12 hours to approve your booking. If the captain declines or doesn't respond, you'll receive a full refund automatically.",
+        "paymentFailedTitle": "Payment Failed",
+        "paymentFailedMessage": "Your payment could not be processed. Please try again.",
+        "tryPaymentAgain": "Try Payment Again",
+        "paymentErrorTitle": "Payment Error"
+      },
+      "paymentErrors": {
+        "invalid_payment_response": "Invalid payment response received. Please contact support.",
+        "invalid_payment_hash": "Payment verification failed. Please contact support.",
+        "booking_not_found": "Booking not found. Please contact support.",
+        "payment_gateway_error": "Payment gateway error. Please contact support.",
+        "payment_processing_error": "Payment processing error. Please try again.",
+        "default": "An error occurred during payment processing."
+      },
+      "whatHappensNext": {
+        "title": "What happens next?",
+        "tokenized": {
+          "step1": "Your card is <strong>authorized but not charged</strong> (RM {amount} on hold)",
+          "step2": "Captain has <strong>12 hours</strong> to approve or decline your request",
+          "step3": "If approved: Your card will be charged and trip is confirmed",
+          "step4": "If declined or no response: Authorization is released, <strong>no charge</strong> to your card"
+        },
+        "direct": {
+          "step1": "Your payment of <strong>RM {amount}</strong> has been received",
+          "step2": "Captain has <strong>12 hours</strong> to approve or decline your request",
+          "step3": "If approved: Your trip is confirmed, no further action needed",
+          "step4": "If declined or no response: <strong>Full refund</strong> will be processed automatically"
+        }
+      },
+      "bookingReference": "Booking reference:",
+      "browseMoreCharters": "Browse More Charters",
+      "viewAllBookings": "View All Bookings",
+      "needHelp": "Need Help?",
+      "returnHome": "Return Home",
+      "bookingNotFoundTitle": "Booking not found",
+      "bookingNotFoundMessage": "We couldn't find booking <code>{id}</code>.",
+      "missingBookingId": "Missing booking id."
+    },
+    "paymentPreview": {
+      "pageTitle": "Review & Complete Payment",
+      "pageSubtitle": "Double-check your itinerary, traveling party, and policies before submitting payment.",
+      "header": {
+        "badge": "Review & Pay",
+        "title": "Review & Complete Payment",
+        "description": "Double-check your itinerary, traveling party, and policies before submitting payment.",
+        "sessionActive": "Session active",
+        "holdEnds": "Hold ends {date}"
+      },
+      "tripSummary": {
+        "title": "Trip Summary",
+        "description": "Matches what you'll see on the confirmation screen.",
+        "charter": "Charter",
+        "trip": "Trip",
+        "schedule": "Schedule",
+        "guests": "Guests",
+        "specialRequests": "Special requests"
+      },
+      "pricingSnapshot": {
+        "title": "Pricing Snapshot",
+        "description": "We'll re-validate these totals right before the charge.",
+        "day": "{tripName} × {count} {count, plural, =1 {day} other {days}}",
+        "tripDays": "{tripName} × {days} {days, plural, =1 {day} other {days}}",
+        "platformFee": "Platform fee (10%)",
+        "paymentGatewayFee": "Payment gateway fee (1.5%)",
+        "total": "Total",
+        "validationNote": "Availability, pricing, and card authorization are checked again before your payment is sent to the captain.",
+        "revalidationNote": "Availability, pricing, and card authorization are checked again before your payment is sent to the captain."
+      },
+      "completePayment": {
+        "title": "Complete Payment",
+        "description": "Charges remain pending until the captain confirms your trip.",
+        "securityNote": "Payments are encrypted and never stored on Fishon servers.",
+        "encryptionNote": "Payments are encrypted and never stored on Fishon servers.",
+        "metadataNote": "We attach this session metadata (participants, pricing snapshot, and contact details) to the payment so the captain can review before authorizing.",
+        "sessionMetadataNote": "We attach this session metadata (participants, pricing snapshot, and contact details) to the payment so the captain can review before authorizing.",
+        "payButton": "Pay RM {amount}",
+        "processing": "Processing..."
+      },
+      "contacts": {
+        "title": "Contacts",
+        "description": "We'll send confirmations, reminders, and hold updates to this person.",
+        "primaryContact": "Primary contact",
+        "guestVerified": "Guest verified",
+        "signedIn": "Signed in",
+        "guestCheckout": "Guest checkout",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "guest": "Guest",
+        "emergencyContact": "Emergency contact",
+        "relationship": "Relationship",
+        "notProvided": "Not provided",
+        "verificationLock": "Guest verification lock: {email}",
+        "signedInAs": "Signed in as {email}",
+        "payingAsGuest": "Paying as guest ({email})"
+      },
+      "participants": {
+        "title": "Participants",
+        "description": "Verify everyone on board. Edit participants before paying if anything changed.",
+        "booker": "Booker",
+        "participant": "Participant",
+        "participantN": "Participant {number}",
+        "noPhone": "No phone provided"
+      },
+      "cancellationPolicy": {
+        "title": "Cancellation Policy",
+        "description": "Highlights from the captain's policy. Full terms arrive in your receipt.",
+        "freeUntil": "Free cancellation up to {hours} hours before departure",
+        "flexible": "Flexible cancellation before departure",
+        "afterWindow": "After this window: {policy}",
+        "afterWindowDefault": "After this window: Refunds follow captain policy and processing fees.",
+        "childFriendly": "Child-friendly crew and gear options available.",
+        "catchAndKeep": "Catch & keep allowed within local regulations.",
+        "catchAndRelease": "Catch & release encouraged for trophy species.",
+        "safetyBrief": "Captain will brief everyone on safety and catch policies at the dock."
+      }
+    },
+    "payment": {
+      "pageTitle": "Complete Your Payment",
+      "pageSubtitle": "Your booking has been approved by the captain. Complete payment to confirm your trip.",
+      "deadlineTimer": {
+        "title": "Payment Due",
+        "description": "Complete payment before this deadline to confirm your booking"
+      },
+      "header": {
+        "badge": "Captain Approved",
+        "title": "Complete Your Payment",
+        "description": "Your booking has been approved by the captain. Complete payment to confirm your trip.",
+        "captainApproved": "Captain Approved",
+        "paymentRequired": "Payment Required"
+      },
+      "captainApproved": "Captain Approved",
+      "paymentRequired": "Payment Required",
+      "paymentDue": "Payment Due: {date}",
+      "paymentDueNote": "Complete payment before this deadline to confirm your booking",
+      "paymentBreakdown": {
+        "title": "Payment Breakdown",
+        "description": "Total amount due for your booking",
+        "day": "{count, plural, =1 {day} other {days}}",
+        "tripDays": "{tripName} × {days} {days, plural, =1 {day} other {days}}",
+        "platformFee": "Platform fee",
+        "paymentGatewayFee": "Payment gateway fee",
+        "total": "Total",
+        "approvalNote": "This booking has been approved by the captain. Your payment will be processed immediately upon submission."
+      },
+      "completePayment": {
+        "title": "Complete Payment",
+        "description": "Select your payment method and submit",
+        "securityNote": "Payments are encrypted and secured by Senang Pay",
+        "securedBy": "Payments are encrypted and secured by Senang Pay",
+        "bookingFor": "Booking for: {email}",
+        "payButton": "Pay RM {amount}",
+        "processing": "Processing Payment...",
+        "backButton": "← Back to booking details"
+      },
+      "participants": {
+        "title": "Participants",
+        "description": "Anglers joining this trip",
+        "booker": "Booker",
+        "guest": "Guest"
+      },
+      "emergencyContact": {
+        "title": "Emergency Contact",
+        "description": "In case of emergency",
+        "phoneNumber": "Phone Number"
+      },
+      "cancellationPolicy": {
+        "title": "Cancellation Policy"
+      },
+      "bookingReference": {
+        "title": "Booking Reference",
+        "saveNote": "Save this reference for your records"
+      },
+      "tripSummary": {
+        "title": "Trip Summary",
+        "description": "Your booking details",
+        "charter": "Charter",
+        "trip": "Trip",
+        "schedule": "Schedule",
+        "guests": "Guests",
+        "guestCount": "{count, plural, =1 {# Guest} other {# Guests}}",
+        "specialRequests": "Special requests"
+      },
+      "contactDetails": {
+        "title": "Contact Details",
+        "description": "Booking confirmation will be sent here",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone"
+      },
+      "paymentMethod": {
+        "card": {
+          "title": "Credit/Debit Card",
+          "description": "Visa, Mastercard"
+        },
+        "fpx": {
+          "title": "Online Banking & E-Wallet",
+          "description": "FPX, Touch 'n Go, GrabPay, etc."
+        },
+        "mock": {
+          "title": "Mock Payment (Dev Only)",
+          "description": "Skips gateway for local testing"
+        },
+        "cardForm": {
+          "cardNumber": "Card Number",
+          "month": "Month",
+          "year": "Year",
+          "cvv": "CVV"
+        }
+      }
+    },
+    "calendar": {
+      "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+      },
+      "days": {
+        "sun": "Su",
+        "mon": "Mo",
+        "tue": "Tu",
+        "wed": "We",
+        "thu": "Th",
+        "fri": "Fr",
+        "sat": "Sa"
+      },
+      "selectDate": "Select date",
+      "selectDateRange": "Select date range",
+      "singleDay": "Single Day",
+      "multiDay": "Multi Day",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "chooseDate": "Choose date",
+      "notAvailable": "Not available",
+      "partialAvailability": "Some trips available",
+      "today": "Today",
+      "close": "Close",
+      "clear": "Clear",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "details": {
+      "guestName": "Guest Name",
+      "bookingId": "Booking ID",
+      "tripSchedule": "Trip Schedule",
+      "session": "{count, plural, =1 {session} other {sessions}}",
+      "day": "Day",
+      "date": "Date",
+      "duration": "Duration",
+      "hour": "{count, plural, =1 {hour} other {hours}}",
+      "startingAt": "Starting at",
+      "totalGuests": "Total Guests",
+      "adult": "{count, plural, =1 {adult} other {adults}}",
+      "child": "{count, plural, =1 {child} other {children}}",
+      "participants": "Participants",
+      "booker": "Booker",
+      "emergencyContact": "Emergency Contact",
+      "yourNote": "Your Note",
+      "rejectionReason": "Rejection Reason",
+      "cancellationReason": "Cancellation Reason",
+      "paid": "PAID",
+      "tripPrice": "Trip Price (per day)",
+      "numberOfDays": "Number of Days",
+      "subtotal": "Subtotal",
+      "discount": "Discount/Promo",
+      "commission": "Commission (10%)",
+      "serviceFee": "Service Fee (1.5%)",
+      "tax": "Tax",
+      "total": "Total",
+      "totalPaid": "Total Paid"
+    },
+    "cancellationInfo": {
+      "cancelledByCaptain": "Cancelled by Captain",
+      "bookingCancelled": "Booking Cancelled",
+      "refundNotice": "If payment was made, a full refund will be processed within 7 business days."
+    },
+    "tripPreparation": {
+      "title": "Trip Preparation",
+      "navigateToStartingPoint": "Navigate to Starting Point",
+      "beforeYouGo": "Before You Go:",
+      "tip1": "Arrive 15 minutes before start time",
+      "tip2": "Bring sunscreen and hat for sun protection",
+      "tip3": "Wear comfortable non-slip footwear",
+      "tip4": "Contact captain if running late"
+    },
+    "review": {
+      "leaveReview": "Leave a Review",
+      "yourReview": "Your Review",
+      "guestMessage": "Want to share your experience? Create an account to leave a review and help other anglers!",
+      "description": "Share your experience and help other anglers make informed decisions.",
+      "createAccount": "Create Account",
+      "signIn": "Sign In"
+    },
+    "actions": {
+      "title": "Actions",
+      "contactCaptain": "Contact {captainName}",
+      "call": "Call",
+      "callCaptain": "Call Captain",
+      "email": "Email",
+      "chat": "Chat",
+      "chatCaptain": "Chat Captain",
+      "chatNotAvailable": "Chat not available",
+      "chatWithCaptain": "Chat with captain",
+      "registerToChat": "Register to Chat",
+      "chatDisabledTooltip": "Chat will be enabled after captain approval",
+      "chatEnabledTooltip": "Chat with captain",
+      "payNow": "Pay Now",
+      "cancel": "Cancel Booking",
+      "bookAgain": "Book Again",
+      "viewDetails": "View Details",
+      "writeReview": "Write Review",
+      "viewReview": "View Review",
+      "yourRating": "Your Rating:",
+      "waze": "Waze",
+      "maps": "Maps",
+      "downloadConfirmation": "Download Confirmation",
+      "downloading": "Downloading...",
+      "cancellationRefund": {
+        "title": "Cancellation Refund",
+        "estimatedRefund": "Estimated refund amount:",
+        "noRefundTitle": "No refund available",
+        "noRefundMessage": "Your trip is less than 15 days away. According to our cancellation policy, no refund is available for cancellations within this period.",
+        "policyTitle": "Cancellation Policy:",
+        "policy30Days": "More than 30 days before trip: 80% refund",
+        "policy15Days": "15-30 days before trip: 50% refund",
+        "policyUnder15": "Less than 15 days before trip: No refund",
+        "processingTime": "Refunds are typically processed within 5-7 business days.",
+        "continueCancel": "Continue to Cancel",
+        "nevermind": "Nevermind",
+        "stillCancelMessage": "You can still cancel your booking, but no refund will be issued."
+      },
+      "emailVerification": {
+        "title": "Verify Your Email",
+        "actionCancel": "cancel this booking",
+        "actionDownload": "download the receipt",
+        "actionModify": "modify this booking",
+        "description": "To {action}, please verify that you have access to the email address used for this booking.",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "Enter email (e.g., {maskedEmail})",
+        "emailHint": "This must match the email used when creating the booking.",
+        "verifying": "Verifying...",
+        "verifyAndContinue": "Verify & Continue",
+        "tooManyAttempts": "Too many attempts. Please try again in {minutes} minute(s).",
+        "attemptsRemaining": "{count} attempt(s) remaining",
+        "lockedOut": "Too many failed attempts. Please wait before trying again or contact support if you need help.",
+        "verificationFailed": "Verification failed",
+        "close": "Close"
+      },
+      "cancellationDialog": {
+        "title": "Cancel Booking?",
+        "description": "Are you sure you want to cancel this booking?",
+        "warningMessage": "This action cannot be undone.",
+        "reasonLabel": "Reason for cancellation",
+        "reasonSelectPrompt": "Select a reason",
+        "otherPlaceholder": "Please specify your reason...",
+        "confirmButton": "Yes, Cancel",
+        "cancelling": "Cancelling...",
+        "cancelButton": "Nevermind",
+        "errorNoReason": "Please select or enter a cancellation reason",
+        "commonReasons": {
+          "changeOfPlans": "Change of plans",
+          "foundBetterOffer": "Found a better offer",
+          "weatherConcerns": "Weather concerns",
+          "unableToTravel": "Unable to travel",
+          "captainUnresponsive": "Captain unresponsive",
+          "bookingMistake": "Booking mistake",
+          "personalReasons": "Personal reasons",
+          "other": "Other"
+        }
+      }
+    }
   },
   "account": {
     "overview": "Overview",
@@ -188,6 +984,25 @@
     "priceRange": "Price Range",
     "date": "Date",
     "sortBy": "Sort By",
+    "searchBox": {
+      "destination": "Destination",
+      "destinationPlaceholder": "Search Destination",
+      "clearDestination": "Clear destination",
+      "date": "Date",
+      "dateRange": "Date Range",
+      "daysSelected": "{days} days selected",
+      "guests": "No Of Guest",
+      "selectGuests": "Select guests",
+      "guestSummary": "{adults, plural, =1 {# Adult} other {# Adults}}{children, plural, =0 {} other { | {children, plural, =1 {# Child} other {# Children}}}}",
+      "adults": "Adults",
+      "children": "Children",
+      "decreaseAdults": "Decrease adults",
+      "increaseAdults": "Increase adults",
+      "decreaseChildren": "Decrease children",
+      "increaseChildren": "Increase children",
+      "done": "Done",
+      "search": "Search"
+    },
     "relevance": "Relevance",
     "priceLowest": "Price: Low to High",
     "priceHighest": "Price: High to Low",

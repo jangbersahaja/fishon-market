@@ -3,7 +3,7 @@
 import { getDestinationImage } from "@/lib/helpers/image-helpers";
 import { getPopularDestinations } from "@/lib/helpers/popularity-helpers";
 import type { Charter } from "@fishon/ui";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,34 +15,36 @@ type Destination = {
   locale: string;
 };
 
-const Card = ({ name, count, image, locale }: Destination) => (
-  <Link
-    href={`/${locale}/search?destination=${encodeURIComponent(name)}`}
-    className="flex flex-col gap-2 group"
-    title={`Find charters in ${name}`}
-  >
-    <div className="h-48 bg-gray-200 relative rounded-lg overflow-hidden">
-      {image ? (
-        <Image
-          src={image}
-          alt={`${name} fishing destination`}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-          priority={false}
-        />
-      ) : (
-        <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
-      )}
-    </div>
-    <div className="flex flex-col">
-      <span className="text-sm font-bold">{name}</span>
-      <span className="text-xs">
-        {count} Charter{count === 1 ? "" : "s"} Available
-      </span>
-    </div>
-  </Link>
-);
+const Card = ({ name, count, image, locale }: Destination) => {
+  const t = useTranslations("home.popularDestinations");
+
+  return (
+    <Link
+      href={`/${locale}/search?destination=${encodeURIComponent(name)}`}
+      className="flex flex-col gap-2 group"
+      title={t("findChartersIn", { destination: name })}
+    >
+      <div className="h-48 bg-gray-200 relative rounded-lg overflow-hidden">
+        {image ? (
+          <Image
+            src={image}
+            alt={t("altText", { destination: name })}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+            priority={false}
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
+        )}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-sm font-bold">{name}</span>
+        <span className="text-xs">{t("chartersAvailable", { count })}</span>
+      </div>
+    </Link>
+  );
+};
 
 interface PopularDestinationProps {
   charters: Charter[];
@@ -50,6 +52,7 @@ interface PopularDestinationProps {
 
 const PopularDestination = ({ charters }: PopularDestinationProps) => {
   const locale = useLocale();
+  const t = useTranslations("home.popularDestinations");
   // Get all popular destinations
   const allDestinations = getPopularDestinations(charters, 50); // Get more to filter
 
@@ -70,12 +73,12 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
     <div className="flex px-2 md:px-0 w-full max-w-7xl items-center justify-center mx-auto">
       <div className="w-full flex flex-col px-5">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold">Popular Destinations</h2>
+          <h2 className="text-xl font-bold">{t("title")}</h2>
           <Link
             href={`/${locale}/categories/destinations`}
             className="hidden text-sm font-medium text-[#ec2227] hover:underline md:inline"
           >
-            See all destinations
+            {t("seeAll")}
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -95,7 +98,7 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
             href={`/${locale}/categories/destinations`}
             className="text-sm font-semibold text-[#ec2227] hover:underline"
           >
-            See all destinations
+            {t("seeAll")}
           </Link>
         </div>
       </div>

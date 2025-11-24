@@ -104,6 +104,9 @@ export type BackendCharter = {
     startDate: string;
     endDate: string;
     reason: string | null;
+    isAllDay?: boolean; // NEW: If false, startTime/endTime define specific hours
+    startTime?: string; // NEW: Start time in HH:MM format (e.g., "08:00")
+    endTime?: string; // NEW: End time in HH:MM format (e.g., "12:00")
   }> | null;
 };
 

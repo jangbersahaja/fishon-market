@@ -70,7 +70,7 @@ export default async function LocaleLayout({
   }
 
   // Providing all messages to the client side is the easiest way to get started
-  const messages = await getMessages();
+  const messages = await getMessages({ locale });
 
   const session = await auth();
 
@@ -95,7 +95,7 @@ export default async function LocaleLayout({
       <body
         className={`flex flex-col font-sans ${inter.variable} ${oswald.variable}`}
       >
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <SessionProvider session={session}>
             <AuthModalProvider>
               <Chrome>{children}</Chrome>

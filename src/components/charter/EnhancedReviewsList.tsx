@@ -2,6 +2,7 @@
 
 import StarRating from "@/components/ratings/StarRating";
 import { resolveBadges, type ReviewBadgeId } from "@/utils/reviewBadges";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -39,13 +40,6 @@ function formatDate(date: Date): string {
 }
 
 type SortKey = "relevant" | "recent" | "highest" | "lowest";
-
-const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
-  { value: "relevant", label: "Most relevant" },
-  { value: "recent", label: "Most recent" },
-  { value: "highest", label: "Highest rated" },
-  { value: "lowest", label: "Lowest rated" },
-];
 
 function sortReviews(list: Review[], sort: SortKey): Review[] {
   const reviews = [...list];
@@ -126,7 +120,13 @@ function MediaStrip({
   );
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({
+  review,
+  t,
+}: {
+  review: Review;
+  t: ReturnType<typeof useTranslations>;
+}) {
   const badges = resolveBadges(review.badges as ReviewBadgeId[]);
   const reviewerName = review.user.name || "Anonymous";
   const reviewerInitials = reviewerName
@@ -160,7 +160,7 @@ function ReviewCard({ review }: { review: Review }) {
               {reviewerName}
             </div>
             <div className="text-xs text-gray-500">
-              {formatDate(review.createdAt)} · Trip on{" "}
+              {formatDate(review.createdAt)} · {t("tripOn")}{" "}
               {formatDate(review.tripDate)}
             </div>
           </div>
@@ -211,8 +211,16 @@ export default function EnhancedReviewsList({
 }: {
   reviews: Review[];
 }) {
+  const t = useTranslations("charter.reviews");
   const [sortKey, setSortKey] = useState<SortKey>("relevant");
   const [showModal, setShowModal] = useState(false);
+
+  const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+    { value: "relevant", label: t("sortRelevant") },
+    { value: "recent", label: t("sortRecent") },
+    { value: "highest", label: t("sortHighest") },
+    { value: "lowest", label: t("sortLowest") },
+  ];
 
   const sortedReviews = useMemo(
     () => sortReviews(reviews, sortKey),
@@ -253,16 +261,16 @@ export default function EnhancedReviewsList({
       <div className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-base font-semibold sm:text-lg">
-              Anglers&apos; reviews
-            </h3>
+            <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>
             <p className="text-xs text-gray-500 sm:text-sm">
-              {reviews.length} review{reviews.length === 1 ? "" : "s"} from
-              verified trips
+              {t("subtitle", {
+                count: reviews.length,
+                plural: reviews.length === 1 ? "" : "s",
+              })}
             </p>
           </div>
           <label className="text-xs font-medium text-gray-600">
-            Sort by
+            {t("sortBy")}
             <select
               className="px-3 py-1 ml-2 text-xs font-semibold text-gray-700 border rounded-full border-black/10 bg-gray-50"
               value={sortKey}
@@ -279,7 +287,7 @@ export default function EnhancedReviewsList({
 
         <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-2">
           {featuredReviews.map((review) => (
-            <ReviewCard key={review.id} review={review} />
+            <ReviewCard key={review.id} review={review} t={t} />
           ))}
         </div>
 
@@ -290,7 +298,7 @@ export default function EnhancedReviewsList({
               onClick={() => setShowModal(true)}
               className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#ec2227] shadow-sm transition hover:border-[#ec2227]/40 hover:bg-[#ec2227]/5"
             >
-              See all reviews
+              {t("seeAllReviews")}
             </button>
           </div>
         )}
@@ -305,15 +313,17 @@ export default function EnhancedReviewsList({
           <div className="relative flex flex-col w-full h-full max-w-5xl overflow-hidden bg-white shadow-2xl rounded-3xl">
             <div className="flex flex-col gap-3 px-6 py-5 border-b border-black/10 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h4 className="text-lg font-semibold">All reviews</h4>
+                <h4 className="text-lg font-semibold">{t("allReviews")}</h4>
                 <p className="text-xs text-gray-500">
-                  {sortedReviews.length} review
-                  {sortedReviews.length === 1 ? "" : "s"}
+                  {t("reviewsCount", {
+                    count: sortedReviews.length,
+                    plural: sortedReviews.length === 1 ? "" : "s",
+                  })}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <label className="text-xs font-semibold text-gray-600">
-                  Sort by
+                  {t("sortBy")}
                   <select
                     className="px-3 py-1 ml-2 text-xs font-semibold text-gray-700 border rounded-full border-black/10 bg-gray-50"
                     value={sortKey}
@@ -341,7 +351,11 @@ export default function EnhancedReviewsList({
             <div className="flex-1 px-6 py-6 overflow-y-auto">
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {sortedReviews.map((review) => (
-                  <ReviewCard key={`modal-${review.id}`} review={review} />
+                  <ReviewCard
+                    key={`modal-${review.id}`}
+                    review={review}
+                    t={t}
+                  />
                 ))}
               </div>
             </div>

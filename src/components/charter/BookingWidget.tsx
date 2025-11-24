@@ -8,7 +8,7 @@ import {
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { Trip } from "@fishon/ui";
 import { ArrowRight } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 interface BookingWidgetProps {
@@ -37,6 +37,7 @@ function BookingWidget({
   defaultPersons = 2,
 }: BookingWidgetProps) {
   const locale = useLocale();
+  const t = useTranslations("charter.bookingWidget");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   // Format in local time (Malaysia GMT+8), not UTC
@@ -71,7 +72,7 @@ function BookingWidget({
     <div className={containerClassName}>
       <div className="">
         <label className="block text-xs font-medium text-gray-700">
-          Date{days > 1 ? " Range" : ""}
+          {days > 1 ? t("dateRange") : t("date")}
         </label>
         <div className="mt-1">
           <CalendarPicker
@@ -102,20 +103,20 @@ function BookingWidget({
         </div>
         {days > 1 && (
           <p className="mt-1 text-xs text-gray-500">
-            {days} consecutive days selected
+            {t("daysSelected", { count: days })}
           </p>
         )}
         <p className="mt-1 text-[10px] text-gray-600">
           {charterType?.toUpperCase() === "OFFSHORE"
-            ? "Offshore trips require 36 hours advance booking"
-            : "Bookings must be made 24 hours in advance"}
+            ? t("offshoreNotice")
+            : t("standardNotice")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 mt-3 sm:grid-cols-2">
         <div>
           <label className="block text-xs font-medium text-gray-700">
-            Adults
+            {t("adults")}
           </label>
           <div className="flex items-center justify-between h-10 px-3 mt-1 border border-gray-300 rounded-lg">
             <button
@@ -147,11 +148,11 @@ function BookingWidget({
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-xs font-medium text-gray-700">
-              Children
+              {t("children")}
             </label>
             {!childFriendly && (
               <span className="text-[10px] text-gray-500">
-                Not child friendly
+                {t("notChildFriendly")}
               </span>
             )}
           </div>
@@ -189,12 +190,12 @@ function BookingWidget({
 
         {personsMax !== undefined && (
           <p className="-mt-1 text-[11px] text-gray-500">
-            Max {personsMax} guests.
+            {t("maxGuests", { count: personsMax })}
           </p>
         )}
         {overMax && (
           <p className="-mt-1 text-[11px] text-red-600">
-            You’ve exceeded the maximum capacity.
+            {t("exceededCapacity")}
           </p>
         )}
       </div>
@@ -202,7 +203,7 @@ function BookingWidget({
       {/* Trip Selection Cards */}
       <div className="mt-4">
         <label className="block mb-2 text-xs font-medium text-gray-700">
-          Select Trip
+          {t("selectTrip")}
         </label>
         <div className="flex flex-col gap-2">
           {trips.map((trip, idx) => {
@@ -232,7 +233,7 @@ function BookingWidget({
                       <p className="mt-0.5 text-xs text-gray-600">
                         {trip.duration}
                         {trip.maxAnglers &&
-                          ` • Up to ${trip.maxAnglers} anglers`}
+                          ` • ${t("upToAnglers", { count: trip.maxAnglers })}`}
                       </p>
                     </div>
                     <div className="text-right">
@@ -241,7 +242,10 @@ function BookingWidget({
                       </p>
                       {days > 1 && (
                         <p className="text-[10px] text-gray-500">
-                          for {days} day{days > 1 ? "s" : ""}
+                          {t("forDays", {
+                            count: days,
+                            plural: days > 1 ? "s" : "",
+                          })}
                         </p>
                       )}
                     </div>
@@ -251,7 +255,7 @@ function BookingWidget({
                     {trip.startTimes && trip.startTimes.length > 0 && (
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-gray-500">
-                          Start Times:
+                          {t("startTimes")}
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {trip.startTimes.map((time) => (
@@ -283,7 +287,7 @@ function BookingWidget({
                       }}
                       className="text-xs text-gray-700 hover:text-[#ec2227] font-medium underline transition-colors"
                     >
-                      See Trip Details
+                      {t("seeDetails")}
                     </button>
                   </div>
                 </div>
@@ -327,7 +331,7 @@ function BookingWidget({
             );
           }}
         >
-          Check Availability
+          {t("checkAvailability")}
           <ArrowRight className="inline-block w-4 h-4 ml-2" />
         </button>
       </div>

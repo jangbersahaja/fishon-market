@@ -1,8 +1,9 @@
 /**
  * GET /api/charters/[id]/booked-dates
  *
- * Returns array of dates that have PAID bookings for this charter.
- * Used by calendar picker to block already-booked dates.
+ * Returns booking information (dates + time ranges) for PAID/PAYMENT_AUTHORIZED bookings.
+ * Supports time-based blocking: only blocks specific time ranges, not full days.
+ * Used by calendar picker to show partial availability with orange dots.
  */
 
 import { prisma } from "@/lib/database/prisma";
@@ -44,28 +45,45 @@ export async function GET(
           return d;
         })();
 
-    // Fetch PAID bookings for this charter in the date range
+    // Fetch PAID and PAYMENT_AUTHORIZED bookings for this charter in the date range
+    // PAYMENT_AUTHORIZED: Temporarily blocks during 12h captain acknowledgment window
     // For multi-day bookings, we need to block ALL days in the range
+    const now = new Date();
     const bookings = await prisma.booking.findMany({
       where: {
         charterId,
-        status: "PAID",
         date: {
           lte: endDate, // Booking starts before or on endDate
         },
+        OR: [
+          { status: "PAID" },
+          {
+            status: "PAYMENT_AUTHORIZED",
+            acknowledgmentDeadline: { gte: now }, // Still within 12h window
+          },
+        ],
       },
       select: {
         date: true,
         days: true,
+        startTime: true,
+        timeSlots: true,
+        status: true,
       },
       orderBy: {
         date: "asc",
       },
     });
 
-    // Expand multi-day bookings into all blocked dates
-    // Use local Malaysia time (GMT+8) consistently
-    const bookedDatesSet = new Set<string>();
+    // Process bookings into time-based format
+    // Separate full-day blocks from time-based blocks
+    const fullDayBlocks = new Set<string>();
+    const timeBasedBlocks: Array<{
+      date: string;
+      startTime: string;
+      endTime: string;
+      isFullDay: boolean;
+    }> = [];
 
     bookings.forEach((booking) => {
       // Parse the date from DB as local date (not UTC)
@@ -76,25 +94,60 @@ export async function GET(
       const startMonth = bookingDate.getMonth();
       const startDay = bookingDate.getDate();
 
-      // For each booking, block all days in range [date, date + days - 1]
-      for (let i = 0; i < booking.days; i++) {
-        // Create new date in local time and add days
-        const blockedDate = new Date(startYear, startMonth, startDay + i);
+      // Check if booking has time-based information
+      const hasTimeBased =
+        booking.startTime &&
+        booking.timeSlots &&
+        typeof booking.timeSlots === "object" &&
+        Array.isArray(booking.timeSlots);
 
-        // Only include if within our query range
-        if (blockedDate >= startDate && blockedDate <= endDate) {
-          const y = blockedDate.getFullYear();
-          const m = String(blockedDate.getMonth() + 1).padStart(2, "0");
-          const day = String(blockedDate.getDate()).padStart(2, "0");
-          bookedDatesSet.add(`${y}-${m}-${day}`);
+      if (hasTimeBased) {
+        // Time-based booking: extract time ranges from timeSlots
+        const timeSlots = booking.timeSlots as Array<{
+          day: number;
+          date: string;
+          startDateTime: string;
+          endDateTime: string;
+        }>;
+
+        timeSlots.forEach((slot) => {
+          const slotDate = new Date(slot.date);
+          if (slotDate >= startDate && slotDate <= endDate) {
+            // Extract HH:MM from ISO datetime strings
+            const startTime = new Date(slot.startDateTime)
+              .toTimeString()
+              .substring(0, 5);
+            const endTime = new Date(slot.endDateTime)
+              .toTimeString()
+              .substring(0, 5);
+
+            timeBasedBlocks.push({
+              date: slot.date.split("T")[0], // YYYY-MM-DD
+              startTime,
+              endTime,
+              isFullDay: false,
+            });
+          }
+        });
+      } else {
+        // Full-day booking: block all days in range [date, date + days - 1]
+        for (let i = 0; i < booking.days; i++) {
+          const blockedDate = new Date(startYear, startMonth, startDay + i);
+
+          if (blockedDate >= startDate && blockedDate <= endDate) {
+            const y = blockedDate.getFullYear();
+            const m = String(blockedDate.getMonth() + 1).padStart(2, "0");
+            const day = String(blockedDate.getDate()).padStart(2, "0");
+            fullDayBlocks.add(`${y}-${m}-${day}`);
+          }
         }
       }
     });
 
-    // Convert Set to sorted array
-    const bookedDates = Array.from(bookedDatesSet).sort();
-
-    return NextResponse.json({ bookedDates });
+    return NextResponse.json({
+      fullDayBlocks: Array.from(fullDayBlocks).sort(),
+      timeBasedBlocks,
+    });
   } catch (error) {
     console.error("[booked-dates] Error fetching booked dates:", error);
     return NextResponse.json(

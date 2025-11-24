@@ -10,7 +10,7 @@ import { prisma } from "@/lib/database/prisma";
 import {
   checkDateAvailability,
   getNextAvailableDates,
-} from "@/lib/helpers/availability-helpers";
+} from "@/lib/helpers/availability-helpers.server";
 import { isForceMockMode } from "@/lib/payment/senangpay";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
 import { getCharterById } from "@/lib/services/charter-service";
@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export default async function PaymentPage({
@@ -30,6 +31,7 @@ export default async function PaymentPage({
 }) {
   const { locale, bookingId } = await params;
   const session = await auth();
+  const t = await getTranslations({ locale, namespace: "booking.payment" });
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -45,7 +47,7 @@ export default async function PaymentPage({
   });
 
   if (!booking) {
-    redirect(`/${locale}/`);
+    redirect(`/${locale}/home`);
   }
 
   // Check authorization: User must be logged in and own the booking
@@ -129,7 +131,7 @@ export default async function PaymentPage({
   // Fetch charter data separately (charter is in fishon-captain DB)
   const charter = await getCharterById(booking.charterId);
   if (!charter) {
-    redirect("/");
+    redirect(`/${locale}/home`);
   }
 
   // Fetch enriched booking data
@@ -209,10 +211,10 @@ export default async function PaymentPage({
               <Clock className="w-5 h-5 text-amber-600" />
               <div>
                 <p className="font-semibold text-amber-900">
-                  Payment Due: {formattedDeadline}
+                  {t("deadlineTimer.title")}: {formattedDeadline}
                 </p>
                 <p className="text-sm text-amber-700">
-                  Complete payment before this deadline to confirm your booking
+                  {t("deadlineTimer.description")}
                 </p>
               </div>
             </div>
@@ -222,28 +224,25 @@ export default async function PaymentPage({
         <header className="pb-6 space-y-3 border-b border-border">
           <div className="space-y-2">
             <p className="text-sm font-semibold tracking-wide uppercase text-primary">
-              Manual Booking Payment
+              {t("header.badge")}
             </p>
             <h1 className="text-3xl font-bold tracking-tight">
-              Complete Your Payment
+              {t("header.title")}
             </h1>
-            <p className="text-muted-foreground">
-              Your booking has been approved by the captain. Complete payment to
-              confirm your trip.
-            </p>
+            <p className="text-muted-foreground">{t("header.description")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Badge
               variant="outline"
               className="text-green-700 border-green-500"
             >
-              Captain Approved
+              {t("header.captainApproved")}
             </Badge>
             <Badge
               variant="outline"
               className="border-amber-500 text-amber-700"
             >
-              Payment Required
+              {t("header.paymentRequired")}
             </Badge>
           </div>
         </header>
@@ -269,10 +268,10 @@ export default async function PaymentPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Payment Breakdown
+                    {t("paymentBreakdown.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Total amount due for your booking
+                    {t("paymentBreakdown.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -280,27 +279,29 @@ export default async function PaymentPage({
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
                         {enrichedBooking.tripName} × {booking.days}{" "}
-                        {booking.days === 1 ? "day" : "days"}
+                        {t("paymentBreakdown.day", { count: booking.days })}
                       </dt>
                       <dd>RM {enrichedBooking.unitPrice.toFixed(2)}</dd>
                     </div>
                     {booking.platformFee && (
                       <div className="flex items-center justify-between">
-                        <dt className="text-muted-foreground">Platform fee</dt>
+                        <dt className="text-muted-foreground">
+                          {t("paymentBreakdown.platformFee")}
+                        </dt>
                         <dd>RM {Number(booking.platformFee).toFixed(2)}</dd>
                       </div>
                     )}
                     {booking.serviceFee && (
                       <div className="flex items-center justify-between">
                         <dt className="text-muted-foreground">
-                          Payment gateway fee
+                          {t("paymentBreakdown.paymentGatewayFee")}
                         </dt>
                         <dd>RM {Number(booking.serviceFee).toFixed(2)}</dd>
                       </div>
                     )}
                     <div className="pt-3 border-t">
                       <div className="flex items-center justify-between text-lg font-semibold">
-                        <span>Total</span>
+                        <span>{t("paymentBreakdown.total")}</span>
                         <span className="flex items-center gap-1">
                           RM {enrichedBooking.totalPrice.toFixed(2)}
                         </span>
@@ -311,10 +312,7 @@ export default async function PaymentPage({
                   <div className="p-3 text-xs border rounded-lg bg-muted/40 text-muted-foreground">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-4 h-4" />
-                      <span>
-                        This booking has been approved by the captain. Your
-                        payment will be processed immediately upon submission.
-                      </span>
+                      <span>{t("paymentBreakdown.approvalNote")}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -324,10 +322,10 @@ export default async function PaymentPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Complete Payment
+                    {t("completePayment.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Select your payment method and submit
+                    {t("completePayment.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -341,13 +339,13 @@ export default async function PaymentPage({
                   <div className="p-4 space-y-3 text-xs border rounded-lg bg-muted/30 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-primary" />
-                      <span>
-                        Payments are encrypted and secured by Senang Pay
-                      </span>
+                      <span>{t("completePayment.securityNote")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <UserRound className="w-4 h-4 text-primary" />
-                      <span>Booking for: {contactEmail}</span>
+                      <span>
+                        {t("completePayment.bookingFor")}: {contactEmail}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -367,10 +365,10 @@ export default async function PaymentPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Participants ({participantList.length})
+                    {t("participants.title")} ({participantList.length})
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Anglers joining this trip
+                    {t("participants.description")}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -386,7 +384,9 @@ export default async function PaymentPage({
                           <div className="flex-1">
                             <p className="font-medium">{p.name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {p.isBooker ? "Booker" : "Guest"}
+                              {p.isBooker
+                                ? t("participants.booker")
+                                : t("participants.guest")}
                             </p>
                           </div>
                         </div>
@@ -401,10 +401,10 @@ export default async function PaymentPage({
                 <Card>
                   <CardHeader>
                     <CardTitle role="heading" aria-level={2}>
-                      Emergency Contact
+                      {t("emergencyContact.title")}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      In case of emergency
+                      {t("emergencyContact.description")}
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
@@ -418,7 +418,7 @@ export default async function PaymentPage({
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        Phone Number
+                        {t("emergencyContact.phoneNumber")}
                       </p>
                       <p className="font-medium">
                         {guestsData.emergencyContact.phone}
@@ -433,7 +433,7 @@ export default async function PaymentPage({
                 <Card>
                   <CardHeader>
                     <CardTitle role="heading" aria-level={2}>
-                      Cancellation Policy
+                      {t("cancellationPolicy.title")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">

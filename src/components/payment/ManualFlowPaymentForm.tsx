@@ -3,6 +3,7 @@
 import { PaymentMethodSelector } from "@/components/payment/shared/PaymentMethodSelector";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,7 +20,9 @@ export function ManualFlowPaymentForm({
   amount,
   enableMockPayment = false,
 }: ManualFlowPaymentFormProps) {
+  const locale = useLocale();
   const router = useRouter();
+  const t = useTranslations("booking.payment.completePayment");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("FPX");
 
@@ -75,7 +78,7 @@ export function ManualFlowPaymentForm({
 
       // Payment successful - redirect to confirmation
       toast.success("Payment completed successfully!");
-      router.push(`/book/confirm?id=${bookingId}`);
+      router.push(`/${locale}/book/confirm?id=${bookingId}`);
     } catch (error: any) {
       console.error("Payment error:", error);
       toast.error(error.message || "Failed to process payment");
@@ -111,10 +114,10 @@ export function ManualFlowPaymentForm({
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing Payment...
+              {t("processing")}
             </>
           ) : (
-            <>Pay RM {amount.toFixed(2)}</>
+            <>{t("payButton", { amount: amount.toFixed(2) })}</>
           )}
         </Button>
 
@@ -124,10 +127,12 @@ export function ManualFlowPaymentForm({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/book/confirm?id=${bookingId}`)}
+            onClick={() =>
+              router.push(`/${locale}/book/confirm?id=${bookingId}`)
+            }
             disabled={isSubmitting}
           >
-            ← Back to booking details
+            {t("backButton")}
           </Button>
         </div>
       </div>

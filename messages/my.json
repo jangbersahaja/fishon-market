@@ -16,7 +16,13 @@
     "learnMore": "Ketahui Lanjut",
     "readMore": "Baca Lagi",
     "seeAll": "Lihat Semua",
-    "backToHome": "Kembali ke Laman Utama"
+    "backToHome": "Kembali ke Laman Utama",
+    "justListed": "Baru Disenaraikan",
+    "reviewCount": "{count, plural, =1 {# ulasan} other {# ulasan}}",
+    "from": "Dari",
+    "total": "Jumlah",
+    "perDay": "/Hari",
+    "perTrip": "/Trip"
   },
   "nav": {
     "home": "Laman Utama",
@@ -68,7 +74,6 @@
     "discoverTitleBreak": "bertaraf tinggi",
     "bookYourNext": "Tempah trip memancing anda yang seterusnya",
     "exploreCharters": "Terokai Charter",
-    "popularDestinations": "Destinasi Popular",
     "viewAll": "Lihat Semua",
     "featuredCharters": "Charter Pilihan",
     "howItWorks": "Cara Ia Berfungsi",
@@ -77,7 +82,38 @@
     "bookSecurely": "Tempah dengan Selamat",
     "bookDescription": "Proses tempahan yang mudah dan selamat dengan pengesahan serta-merta",
     "enjoyYourTrip": "Nikmati Trip Anda",
-    "enjoyDescription": "Dapatkan pengalaman memancing yang menakjubkan dengan kapten profesional"
+    "enjoyDescription": "Dapatkan pengalaman memancing yang menakjubkan dengan kapten profesional",
+    "brandTitle": "Fishon.my — Platform tempahan memancing dalam talian pertama di Malaysia",
+    "brandDescription": "Fishon.my ialah platform tempahan memancing dalam talian dan marketplace pertama di Malaysia yang membantu pemancing mencari dan menempah charter memancing. Terokai trip merentasi tasik, sungai, destinasi inshore dan offshore di seluruh Malaysia — rancang, tempah, pancing.",
+    "listYourBusiness": "Senaraikan perniagaan anda di Fishon",
+    "findCustomers": "Cari pelanggan dan jana lebih pendapatan",
+    "listWithUs": "Senarai Bersama Kami",
+    "tripsNearby": {
+      "title": "Temui Trip Berhampiran Anda",
+      "detectingLocation": "Mengesan lokasi anda…",
+      "locationError": "Tidak dapat mendapatkan lokasi anda: {error}.",
+      "browseTripsBelowFallback": "Anda masih boleh layari trip di bawah.",
+      "noTripsNearby": "Tiada trip dalam radius 15 km dari lokasi semasa anda."
+    },
+    "browseByType": {
+      "title": "Layari Mengikut Jenis",
+      "seeAll": "Lihat semua jenis memancing",
+      "exploreTrips": "Terokai trip {type}",
+      "altText": "Memancing {type}"
+    },
+    "topTechniques": {
+      "title": "Teknik Memancing Teratas",
+      "seeAll": "Lihat semua teknik memancing",
+      "chartersUsing": "Charter menggunakan {technique}",
+      "altText": "Teknik {technique}"
+    },
+    "popularDestinations": {
+      "title": "Destinasi Popular",
+      "seeAll": "Lihat semua destinasi",
+      "findChartersIn": "Cari charter di {destination}",
+      "altText": "Destinasi memancing {destination}",
+      "chartersAvailable": "{count, plural, =1 {# Charter Tersedia} other {# Charter Tersedia}}"
+    }
   },
   "charter": {
     "viewDetails": "Lihat Butiran",
@@ -108,7 +144,173 @@
     "chartersTitle": "Charter",
     "noChartersAvailable": "Belum ada charter tersedia lagi.",
     "tryASampleCharter": "Cuba charter contoh:",
-    "view": "Lihat"
+    "view": "Lihat",
+    "distanceFromYou": "{distance} km dari anda",
+    "experienceYears": "{years, plural, =1 {# tahun} other {# tahun}}",
+    "bookTrip": "Tempah Trip",
+    "savedOn": "Disimpan pada {date}",
+    "details": "Butiran",
+    "trips": "Trip",
+    "moreTrips": "+ {count} lagi",
+    "yearsExp": "{years} thn pglmn",
+    "capacity": "{count} org",
+    "defaultDescription": "Perkhidmatan pancing yang hebat beroperasi di Malaysia. Perjalanan tersedia untuk tasik, sungai, pesisir dan laut dalam.",
+    "gallery": {
+      "viewAll": "Lihat semua",
+      "items": "{count, plural, =1 {# item} other {# item}}",
+      "openGallery": "Buka galeri",
+      "openItem": "Buka item {number}",
+      "seeMore": "+{count} lagi",
+      "close": "Tutup",
+      "fullscreen": "Skrin penuh",
+      "previous": "Sebelum",
+      "next": "Seterusnya",
+      "counter": "{current} / {total}",
+      "goToItem": "Pergi ke item {number}",
+      "shareCharter": "Kongsi perkhidmatan"
+    },
+    "trip": {
+      "perDay": "/Hari",
+      "upToAnglers": "Sehingga {count} pemancing",
+      "startTimes": "Masa Mula:"
+    },
+    "share": {
+      "whatsapp": "Kongsi di WhatsApp",
+      "telegram": "Kongsi di Telegram",
+      "facebook": "Kongsi di Facebook",
+      "twitter": "Kongsi di X (Twitter)",
+      "linkedin": "Kongsi di LinkedIn",
+      "copyLink": "Salin Pautan",
+      "linkCopied": "Pautan Disalin!"
+    },
+    "about": {
+      "title": "Tentang perkhidmatan ini"
+    },
+    "amenities": {
+      "title": "Kemudahan",
+      "included": "{count} disertakan",
+      "includedLabel": "Disertakan"
+    },
+    "boat": {
+      "title": "Bot",
+      "name": "Nama",
+      "type": "Jenis",
+      "length": "Panjang",
+      "ft": "kaki",
+      "capacity": "Kapasiti",
+      "pax": "org",
+      "features": "Ciri-ciri"
+    },
+    "captain": {
+      "title": "Pengendali Perkhidmatan",
+      "experience": "{years} thn pengalaman",
+      "crew": "{count} kru",
+      "fishing": "memancing"
+    },
+    "schedule": {
+      "title": "Jadual Operasi",
+      "everyday": {
+        "prefix": "Tersedia",
+        "highlight": "7 hari seminggu"
+      },
+      "weekdays": {
+        "prefix": "Tersedia",
+        "highlight": "Isnin hingga Jumaat"
+      },
+      "weekends": {
+        "prefix": "Tersedia",
+        "highlight": "Sabtu dan Ahad"
+      },
+      "custom": {
+        "contact": "Jadual tersuai (hubungi kapten untuk maklumat lanjut)",
+        "prefix": "Tersedia pada hari tertentu:",
+        "operatingDays": "Hari operasi"
+      },
+      "days": {
+        "sunday": "Ahad",
+        "monday": "Isnin",
+        "tuesday": "Selasa",
+        "wednesday": "Rabu",
+        "thursday": "Khamis",
+        "friday": "Jumaat",
+        "saturday": "Sabtu"
+      }
+    },
+    "policies": {
+      "title": "Polisi & maklumat",
+      "catchKeep": "Tangkap & simpan",
+      "catchRelease": "Tangkap & lepas",
+      "childFriendly": "Mesra kanak-kanak",
+      "wheelchairAccessible": "Boleh diakses kerusi roda",
+      "alcohol": "Alkohol",
+      "smoking": "Merokok",
+      "pickup": "Pengambilan",
+      "pickupFee": "Bayaran pengambilan",
+      "areas": "Kawasan",
+      "notes": "Nota",
+      "yes": "Ya",
+      "no": "Tidak",
+      "allowed": "Dibenarkan",
+      "notAllowed": "Tidak dibenarkan",
+      "available": "Tersedia",
+      "notAvailable": "Tidak tersedia"
+    },
+    "location": {
+      "title": "Peta lokasi",
+      "subtitle": "Berpusat pada titik pertemuan.",
+      "mapTitle": "Peta {title}"
+    },
+    "feedback": {
+      "title": "Maklum balas tetamu",
+      "subtitle": "Berdasarkan perjalanan yang telah disahkan baru-baru ini",
+      "reviewCount": "{count, plural, =1 {# ulasan} other {# ulasan}}",
+      "badgeHighlights": "Lencana utama",
+      "badgeExplanation": "Lencana memaparkan apa yang paling kerap disebutkan oleh tetamu selepas perjalanan mereka.",
+      "noBadges": "Tiada lencana lagi — semak semula selepas perjalanan seterusnya.",
+      "atAGlance": "Sekilas pandang",
+      "avgRating": "Penarafan purata",
+      "totalBadges": "Jumlah lencana",
+      "recentActivity": "Aktiviti terkini",
+      "guestsPraise": "Tetamu paling kerap memuji"
+    },
+    "species": {
+      "title": "Spesis Sasaran"
+    },
+    "techniques": {
+      "title": "Teknik"
+    },
+    "reviews": {
+      "title": "Ulasan pemancing",
+      "subtitle": "{count} ulasan dari perjalanan yang disahkan",
+      "sortBy": "Susun mengikut",
+      "sortRelevant": "Paling relevan",
+      "sortRecent": "Terkini",
+      "sortHighest": "Penarafan tertinggi",
+      "sortLowest": "Penarafan terendah",
+      "seeAllReviews": "Lihat semua ulasan",
+      "allReviews": "Semua ulasan",
+      "reviewsCount": "{count} ulasan",
+      "tripOn": "Perjalanan pada",
+      "close": "Tutup ulasan"
+    },
+    "bookingWidget": {
+      "date": "Tarikh",
+      "dateRange": "Julat Tarikh",
+      "daysSelected": "{count} hari berturut-turut dipilih",
+      "offshoreNotice": "Perjalanan laut dalam memerlukan tempahan 72 jam (3 hari) lebih awal",
+      "standardNotice": "Tempahan mesti dibuat 48 jam (2 hari) lebih awal",
+      "adults": "Dewasa",
+      "children": "Kanak-kanak",
+      "notChildFriendly": "Tidak mesra kanak-kanak",
+      "maxGuests": "Maksimum {count} tetamu.",
+      "exceededCapacity": "Anda telah melebihi kapasiti maksimum.",
+      "selectTrip": "Pilih Perjalanan",
+      "forDays": "untuk {count} hari",
+      "startTimes": "Masa Mula:",
+      "seeDetails": "Lihat Butiran Perjalanan",
+      "checkAvailability": "Semak Ketersediaan",
+      "upToAnglers": "Sehingga {count} pemancing"
+    }
   },
   "booking": {
     "title": "Tempah Charter Anda",
@@ -149,7 +351,601 @@
     "goToSearch": "Pergi ke Carian",
     "viewMyBookings": "Lihat Tempahan Saya",
     "thankYouBooking": "Terima kasih atas tempahan anda",
-    "bookingDetails": "Butiran Tempahan"
+    "bookingDetails": "Butiran Tempahan",
+    "checkout": {
+      "pageTitle": "Lengkapkan Tempahan Anda",
+      "pageSubtitle": "Semak butiran trip anda dan beritahu kapten tentang diri anda",
+      "manualNoticeTitle": "Kelulusan kapten diperlukan — tiada bayaran awal",
+      "manualNoticeDescription": "Hantar permintaan anda sekarang dan bayar hanya selepas kapten meluluskan (biasanya dalam 48 jam).",
+      "manualNoticeGuestNote": "Tetamu akan mengesahkan emel mereka dengan kod TAC sebelum permintaan dihantar.",
+      "manualNoticeAuthNote": "Kami akan menghantar emel kepada anda sebaik sahaja kapten membalas supaya anda boleh melengkapkan pembayaran.",
+      "yourDetails": {
+        "title": "Butiran Anda",
+        "accountFilled": "Butiran akaun diisi",
+        "signInPrompt": "untuk mengisi butiran anda secara automatik dan menjejaki tempahan anda, atau teruskan sebagai tetamu.",
+        "signIn": "Log masuk",
+        "firstName": "Nama pertama",
+        "lastName": "Nama akhir",
+        "email": "Emel",
+        "phone": "Nombor telefon",
+        "firstNamePlaceholder": "Nama pertama anda",
+        "lastNamePlaceholder": "Nama akhir anda",
+        "emailPlaceholder": "anda@contoh.com",
+        "phonePlaceholder": "+60 12-345 6789"
+      },
+      "emergencyContact": {
+        "title": "Kenalan Kecemasan",
+        "description": "Berikan kenalan kecemasan untuk tujuan keselamatan (pilihan tetapi disyorkan).",
+        "contactName": "Nama Kenalan",
+        "contactPhone": "Telefon Kenalan",
+        "relationship": "Hubungan",
+        "namePlaceholder": "Nama penuh",
+        "phonePlaceholder": "+60 12-345 6789",
+        "relationshipPlaceholder": "cth., Suami/Isteri, Ibu Bapa, Adik Beradik"
+      },
+      "startConversation": {
+        "title": "Salam kepada kapten",
+        "yearsExperience": "{years} tahun pengalaman",
+        "crew": "{count} krew",
+        "greeting": "Hello, selamat datang ke {charterName}. Terima kasih atas minat anda! Beritahu saya siapa yang akan menyertai trip, ikan apa yang anda sasarkan, dan sebarang permintaan khas — saya akan pastikan semuanya sedia untuk anda.",
+        "placeholder": "Perkenalkan diri anda kepada {captainFirstName}. Kongsikan pengalaman memancing anda, apa yang anda harap tangkap, atau sebarang permintaan khas...",
+        "note": "Mesej ini akan dihantar kepada kapten bersama permintaan tempahan anda."
+      },
+      "summary": {
+        "title": "Ringkasan Charter",
+        "captain": "Kapten:",
+        "vessel": "Bot",
+        "moreFeatures": "+{count} lagi",
+        "startingPoint": "Titik Permulaan",
+        "included": "Termasuk",
+        "tripPrice": "Harga Trip ({days, plural, =1 {# hari} other {# hari}})",
+        "commission": "Komisen (10%)",
+        "discount": "Diskaun",
+        "serviceFee": "Yuran Perkhidmatan (1.5%)",
+        "sst": "SST",
+        "total": "Jumlah",
+        "totalEstimate": "Jumlah (anggaran)",
+        "paymentInfo": "Maklumat pembayaran",
+        "paymentInfoManual": "Tiada bayaran diperlukan sekarang. Sebaik sahaja tempahan anda disahkan, kapten akan menghantar pautan pembayaran yang selamat.",
+        "paymentInfoAuto": "Untuk pembayaran kad: Kad anda akan dibenarkan (tidak dicaj) apabila anda hantar. Jika kapten mengesahkan tempahan anda, kad anda akan dicaj secara automatik. Jika ditolak, kebenaran akan dibebaskan.",
+        "cancellationNotes": "Nota pembatalan",
+        "cancellationPolicy1": "Lebih daripada 30 hari sebelum trip: 80% bayaran balik",
+        "cancellationPolicy2": "15-30 hari sebelum trip: 50% bayaran balik",
+        "cancellationPolicy3": "Kurang daripada 15 hari sebelum trip: Tiada bayaran balik",
+        "cancellationRefund": "Jika kapten menolak tempahan anda, anda akan menerima bayaran balik penuh",
+        "refundTiming": "Bayaran balik biasanya mengambil masa 5-7 hari bekerja"
+      },
+      "validation": {
+        "fixErrors": "Sila betulkan ralat berikut:",
+        "fieldLabels": {
+          "firstName": "Nama pertama",
+          "lastName": "Nama akhir",
+          "email": "Emel",
+          "phone": "Nombor telefon",
+          "date": "Tarikh",
+          "days": "Bilangan hari",
+          "adults": "Bilangan dewasa",
+          "startTime": "Masa mula",
+          "emergencyName": "Nama kenalan kecemasan",
+          "emergencyPhone": "Telefon kenalan kecemasan",
+          "emergencyRelation": "Hubungan kenalan kecemasan",
+          "participants": "Peserta",
+          "note": "Nota kepada kapten"
+        },
+        "participantError": "Peserta {number} {field}:",
+        "dateNotAvailable": "Tarikh ini tidak tersedia. Ia mungkin di luar hari operasi, ditanda sebagai tidak tersedia, atau sudah penuh ditempah.",
+        "dateRangeInvalid": "Julat tarikh yang dipilih termasuk tarikh yang tidak tersedia. Sila pilih tarikh lain atau kurangkan bilangan hari.",
+        "errorMessages": {
+          "startTimeRequired": "Masa mula diperlukan",
+          "firstNameRequired": "Nama pertama diperlukan",
+          "lastNameRequired": "Nama akhir diperlukan",
+          "emailInvalid": "Alamat emel tidak sah",
+          "phoneRequired": "Nombor telefon diperlukan",
+          "phoneInvalid": "Sila masukkan nombor telefon yang sah",
+          "emergencyNameRequired": "Nama kenalan kecemasan diperlukan",
+          "emergencyPhoneRequired": "Telefon kenalan kecemasan diperlukan",
+          "emergencyRelationRequired": "Hubungan kenalan kecemasan diperlukan",
+          "participantNameRequired": "Sekurang-kurangnya satu nama peserta diperlukan",
+          "participantPhoneRequired": "Telefon diperlukan",
+          "participantsRequired": "Sekurang-kurangnya satu peserta diperlukan",
+          "participantsExceedGuests": "Bilangan peserta tidak boleh melebihi jumlah tetamu"
+        }
+      },
+      "buttons": {
+        "submitting": "Menghantar...",
+        "requestBooking": "Mohon Tempahan",
+        "proceedToPayment": "Teruskan ke Pembayaran"
+      },
+      "guestBenefits": {
+        "title": "Ada akaun? Log masuk untuk tempahan yang lebih pantas",
+        "autofill": "Isi butiran anda secara automatik",
+        "trackBookings": "Jejaki semua tempahan anda di satu tempat",
+        "saveFavorites": "Simpan kegemaran dan pilihan",
+        "signIn": "Log masuk",
+        "or": "atau",
+        "createAccount": "Daftar akaun"
+      },
+      "participants": {
+        "title": "Senarai Peserta",
+        "description": "Tambah semua peserta untuk lawatan ini (maksimum {guests} berdasarkan pilihan tetamu anda). Sekurang-kurangnya satu peserta diperlukan.",
+        "participantN": "Peserta {number}",
+        "thisIsMe": "Ini saya",
+        "name": "Nama",
+        "phone": "Nombor Telefon",
+        "namePlaceholder": "Nama peserta",
+        "phonePlaceholder": "+60 12-345 6789",
+        "addButton": "Tambah Peserta",
+        "maxCapacity": "({current}/{max} maksimum)"
+      },
+      "tripSelection": {
+        "title": "Sahkan Lawatan",
+        "upToAnglers": "Sehingga {count} pemancing",
+        "forDays": "{days, plural, =1 {untuk # hari} other {untuk # hari}}",
+        "targetSpecies": "Spesies Sasaran",
+        "techniques": "Teknik",
+        "unavailable": "Tidak tersedia",
+        "limitedAvailability": "Terhad",
+        "availableTimes": "Waktu Tersedia"
+      },
+      "dateGuests": {
+        "title": "Tarikh & Tetamu Lawatan",
+        "days": "Hari",
+        "adults": "Dewasa",
+        "children": "Kanak-kanak",
+        "done": "Selesai",
+        "maxGuests": "Maksimum {max} tetamu.",
+        "exceededCapacity": "Anda telah melebihi kapasiti maksimum.",
+        "consecutiveDays": "{days, plural, =1 {# hari berturut-turut dipilih} other {# hari berturut-turut dipilih}}",
+        "offshoreNotice": "Lawatan luar pesisir memerlukan tempahan 72 jam (3 hari) lebih awal",
+        "standardNotice": "Tempahan perlu dibuat 48 jam (2 hari) lebih awal"
+      },
+      "startTime": {
+        "title": "Pilih masa mula",
+        "warningMessage": "Sila pilih masa mula untuk meneruskan"
+      },
+      "guestVerification": {
+        "titleEmail": "Sahkan E-mel Anda",
+        "titleCode": "Masukkan Kod Pengesahan",
+        "descriptionEmail": "Kami akan menghantar kod pengesahan ke e-mel anda untuk melengkapkan tempahan anda.",
+        "descriptionCode": "Masukkan kod 6 digit yang dihantar ke e-mel anda.",
+        "emailAddress": "Alamat E-mel",
+        "whatHappensNext": "Apa yang akan berlaku seterusnya?",
+        "step1": "Kami akan menghantar kod 6 digit ke e-mel anda",
+        "step2": "Masukkan kod untuk mengesahkan alamat e-mel anda",
+        "step3": "Anda akan menerima pengesahan tempahan sebaik sahaja diluluskan",
+        "sendingCode": "Menghantar Kod...",
+        "sendVerificationCode": "Hantar Kod Pengesahan",
+        "codeSent": "Kod pengesahan telah dihantar ke",
+        "checkInbox": "Sila semak inbox dan folder spam anda",
+        "verificationCode": "Kod Pengesahan",
+        "enterCode": "Masukkan kod 6 digit dari e-mel anda",
+        "verifying": "Mengesahkan...",
+        "verifyAndContinue": "Sahkan & Teruskan",
+        "didntReceiveCode": "Tidak menerima kod?",
+        "resendIn": "Hantar semula dalam {seconds}s",
+        "resendCode": "Hantar Semula Kod",
+        "errorSendCode": "Gagal menghantar kod pengesahan",
+        "errorInvalidCode": "Kod pengesahan tidak sah",
+        "errorEnter6Digits": "Sila masukkan kod 6 digit",
+        "errorVerifyCode": "Gagal mengesahkan kod"
+      }
+    },
+    "confirm": {
+      "pageTitle": {
+        "completed": "Perjalanan Selesai!",
+        "inProgress": "Perjalanan Sedang Berlangsung!",
+        "confirmed": "Tempahan Disahkan!",
+        "cardAuthorized": "Kad Diluluskan - Menunggu Kelulusan",
+        "paymentReceived": "Bayaran Diterima - Menunggu Kelulusan",
+        "approvedPaymentDue": "Diluluskan! Lengkapkan Bayaran",
+        "pending": "Menunggu Kelulusan Kapten",
+        "rejected": "Permintaan Ditolak",
+        "expired": "Tempahan Tamat Tempoh",
+        "cancelled": "Tempahan Dibatalkan",
+        "default": "Status Tempahan"
+      },
+      "pageDescription": {
+        "completed": "Perjalanan memancing anda telah selesai. Kami harap anda mendapat pengalaman yang mengagumkan! Sila kongsikan maklum balas anda.",
+        "inProgress": "Perjalanan memancing anda sedang berlangsung. Selamat berseronok dan berhati-hati!",
+        "confirmed": "Perjalanan memancing anda disahkan. Bersiaplah untuk pengalaman yang mengagumkan!",
+        "cardAuthorized": "Kad anda telah diluluskan. Menunggu kelulusan kapten dalam masa 12 jam. Tiada caj sehingga diluluskan.",
+        "paymentReceived": "Bayaran anda telah diterima. Menunggu kelulusan kapten dalam masa 12 jam. Bayaran balik penuh jika ditolak.",
+        "approvedPaymentDue": "Kapten telah meluluskan permintaan anda. Lengkapkan bayaran untuk mengesahkan tempahan anda.",
+        "pending": "Permintaan tempahan anda telah dihantar kepada kapten untuk semakan.",
+        "rejected": "Kapten tidak dapat menampung permintaan anda.",
+        "expired": "Tempahan ini telah tamat tempoh.",
+        "cancelled": "Tempahan ini telah dibatalkan.",
+        "default": "Lihat butiran tempahan anda di bawah."
+      },
+      "paymentStatus": {
+        "cardAuthorized": "Kad Diluluskan!",
+        "paymentReceived": "Bayaran Diterima!",
+        "tokenizedAuthMessage": "Kad anda diluluskan untuk <strong>RM {amount}</strong>. Tiada caj sehingga kapten meluluskan dalam masa 12 jam.",
+        "directPaymentMessage": "Bayaran <strong>RM {amount}</strong> diterima. Kapten ada 12 jam untuk meluluskan. Bayaran balik penuh jika ditolak.",
+        "authorizationExpires": "Kelulusan tamat",
+        "cardAuthorizedTitle": "Kad Diluluskan!",
+        "paymentReceivedTitle": "Bayaran Diterima!",
+        "cardAuthorizedMessage": "Kad anda telah diluluskan untuk <strong>RM {amount}</strong>. Tiada caj akan dibuat sehingga kapten meluluskan tempahan anda dalam masa 12 jam. Kad anda hanya akan dicaj jika kapten menerima permintaan anda.",
+        "paymentReceivedMessage": "Bayaran anda sebanyak <strong>RM {amount}</strong> telah diterima. Kapten mempunyai 12 jam untuk meluluskan tempahan anda. Jika kapten menolak atau tidak bertindak balas, anda akan menerima bayaran balik penuh secara automatik.",
+        "paymentFailedTitle": "Bayaran Gagal",
+        "paymentFailedMessage": "Bayaran anda tidak dapat diproses. Sila cuba lagi.",
+        "tryPaymentAgain": "Cuba Bayaran Lagi",
+        "paymentErrorTitle": "Ralat Bayaran"
+      },
+      "paymentErrors": {
+        "invalid_payment_response": "Respons bayaran tidak sah diterima. Sila hubungi sokongan.",
+        "invalid_payment_hash": "Pengesahan bayaran gagal. Sila hubungi sokongan.",
+        "booking_not_found": "Tempahan tidak dijumpai. Sila hubungi sokongan.",
+        "payment_gateway_error": "Ralat gerbang bayaran. Sila hubungi sokongan.",
+        "payment_processing_error": "Ralat pemprosesan bayaran. Sila cuba lagi.",
+        "default": "Ralat berlaku semasa pemprosesan bayaran."
+      },
+      "whatHappensNext": {
+        "title": "Apa yang akan berlaku seterusnya?",
+        "tokenized": {
+          "step1": "Kad anda <strong>diluluskan tetapi tidak dicaj</strong> (RM {amount} ditahan)",
+          "step2": "Kapten mempunyai <strong>12 jam</strong> untuk meluluskan atau menolak permintaan anda",
+          "step3": "Jika diluluskan: Kad anda akan dicaj dan perjalanan disahkan",
+          "step4": "Jika ditolak atau tiada respons: Kelulusan dilepaskan, <strong>tiada caj</strong> kepada kad anda"
+        },
+        "direct": {
+          "step1": "Bayaran anda sebanyak <strong>RM {amount}</strong> telah diterima",
+          "step2": "Kapten mempunyai <strong>12 jam</strong> untuk meluluskan atau menolak permintaan anda",
+          "step3": "Jika diluluskan: Perjalanan anda disahkan, tiada tindakan lanjut diperlukan",
+          "step4": "Jika ditolak atau tiada respons: <strong>Bayaran balik penuh</strong> akan diproses secara automatik"
+        }
+      },
+      "bookingReference": "Rujukan tempahan:",
+      "browseMoreCharters": "Layari Lebih Banyak Carter",
+      "viewAllBookings": "Lihat Semua Tempahan",
+      "needHelp": "Perlukan Bantuan?",
+      "returnHome": "Kembali ke Laman Utama",
+      "bookingNotFoundTitle": "Tempahan tidak dijumpai",
+      "bookingNotFoundMessage": "Kami tidak dapat mencari tempahan <code>{id}</code>.",
+      "missingBookingId": "ID tempahan tiada."
+    },
+    "paymentPreview": {
+      "pageTitle": "Semak & Lengkapkan Bayaran",
+      "pageSubtitle": "Semak semula jadual perjalanan, kumpulan pengembara, dan polisi sebelum menghantar bayaran.",
+      "header": {
+        "badge": "Semak & Bayar",
+        "title": "Semak & Lengkapkan Bayaran",
+        "description": "Semak semula jadual perjalanan, kumpulan pengembara, dan polisi sebelum menghantar bayaran.",
+        "sessionActive": "Sesi aktif",
+        "holdEnds": "Tempahan berakhir {date}"
+      },
+      "tripSummary": {
+        "title": "Ringkasan Perjalanan",
+        "description": "Sepadan dengan apa yang anda akan lihat pada skrin pengesahan.",
+        "charter": "Carter",
+        "trip": "Lawatan",
+        "schedule": "Jadual",
+        "guests": "Tetamu",
+        "specialRequests": "Permintaan khas"
+      },
+      "pricingSnapshot": {
+        "title": "Ringkasan Harga",
+        "description": "Kami akan mengesahkan semula jumlah ini sebelum caj dibuat.",
+        "day": "{tripName} × {count} {count, plural, =1 {hari} other {hari}}",
+        "tripDays": "{tripName} × {days} {days, plural, =1 {hari} other {hari}}",
+        "platformFee": "Yuran platform (10%)",
+        "paymentGatewayFee": "Yuran gerbang bayaran (1.5%)",
+        "total": "Jumlah",
+        "validationNote": "Ketersediaan, harga, dan kelulusan kad disemak semula sebelum bayaran anda dihantar kepada kapten.",
+        "revalidationNote": "Ketersediaan, harga, dan kelulusan kad disemak semula sebelum bayaran anda dihantar kepada kapten."
+      },
+      "completePayment": {
+        "title": "Lengkapkan Bayaran",
+        "description": "Caj kekal tertunda sehingga kapten mengesahkan perjalanan anda.",
+        "securityNote": "Bayaran disulitkan dan tidak pernah disimpan di pelayan Fishon.",
+        "encryptionNote": "Bayaran disulitkan dan tidak pernah disimpan di pelayan Fishon.",
+        "metadataNote": "Kami melampirkan metadata sesi ini (peserta, ringkasan harga, dan butiran hubungan) kepada bayaran supaya kapten boleh semak sebelum memberi kebenaran.",
+        "sessionMetadataNote": "Kami melampirkan metadata sesi ini (peserta, ringkasan harga, dan butiran hubungan) kepada bayaran supaya kapten boleh semak sebelum memberi kebenaran.",
+        "payButton": "Bayar RM {amount}",
+        "processing": "Memproses..."
+      },
+      "contacts": {
+        "title": "Kenalan",
+        "description": "Kami akan menghantar pengesahan, peringatan, dan kemas kini tempahan kepada orang ini.",
+        "primaryContact": "Kenalan utama",
+        "guestVerified": "Tetamu disahkan",
+        "signedIn": "Log masuk",
+        "guestCheckout": "Checkout tetamu",
+        "name": "Nama",
+        "email": "Emel",
+        "phone": "Nombor Telefon",
+        "guest": "Tetamu",
+        "emergencyContact": "Kenalan kecemasan",
+        "relationship": "Hubungan",
+        "notProvided": "Tidak diberikan",
+        "verificationLock": "Kunci pengesahan tetamu: {email}",
+        "signedInAs": "Log masuk sebagai {email}",
+        "payingAsGuest": "Membayar sebagai tetamu ({email})"
+      },
+      "participants": {
+        "title": "Peserta",
+        "description": "Sahkan semua orang di atas bot. Edit peserta sebelum membayar jika ada perubahan.",
+        "booker": "Penempah",
+        "participant": "Peserta",
+        "participantN": "Peserta {number}",
+        "noPhone": "Tiada telefon diberikan"
+      },
+      "cancellationPolicy": {
+        "title": "Polisi Pembatalan",
+        "description": "Sorotan daripada polisi kapten. Terma penuh tiba dalam resit anda.",
+        "freeUntil": "Pembatalan percuma sehingga {hours} jam sebelum berlepas",
+        "flexible": "Pembatalan fleksibel sebelum berlepas",
+        "afterWindow": "Selepas tempoh ini: {policy}",
+        "afterWindowDefault": "Selepas tempoh ini: Bayaran balik mengikut polisi kapten dan yuran pemprosesan.",
+        "childFriendly": "Krew dan peralatan mesra kanak-kanak tersedia.",
+        "catchAndKeep": "Tangkapan & simpan dibenarkan dalam peraturan tempatan.",
+        "catchAndRelease": "Tangkapan & lepas digalakkan untuk spesies trofi.",
+        "safetyBrief": "Kapten akan memberi taklimat keselamatan dan polisi tangkapan di dok."
+      }
+    },
+    "payment": {
+      "pageTitle": "Lengkapkan Bayaran Anda",
+      "pageSubtitle": "Tempahan anda telah diluluskan oleh kapten. Lengkapkan bayaran untuk mengesahkan perjalanan anda.",
+      "deadlineTimer": {
+        "title": "Bayaran Perlu Dibayar",
+        "description": "Lengkapkan bayaran sebelum tarikh akhir ini untuk mengesahkan tempahan anda"
+      },
+      "header": {
+        "badge": "Diluluskan Kapten",
+        "title": "Lengkapkan Bayaran Anda",
+        "description": "Tempahan anda telah diluluskan oleh kapten. Lengkapkan bayaran untuk mengesahkan perjalanan anda.",
+        "captainApproved": "Diluluskan Kapten",
+        "paymentRequired": "Bayaran Diperlukan"
+      },
+      "captainApproved": "Diluluskan Kapten",
+      "paymentRequired": "Bayaran Diperlukan",
+      "paymentDue": "Bayaran Perlu Dibayar: {date}",
+      "paymentDueNote": "Lengkapkan bayaran sebelum tarikh akhir ini untuk mengesahkan tempahan anda",
+      "paymentBreakdown": {
+        "title": "Pecahan Bayaran",
+        "description": "Jumlah bayaran untuk tempahan anda",
+        "day": "{count, plural, =1 {hari} other {hari}}",
+        "tripDays": "{tripName} × {days} {days, plural, =1 {hari} other {hari}}",
+        "platformFee": "Yuran platform",
+        "paymentGatewayFee": "Yuran gerbang bayaran",
+        "total": "Jumlah",
+        "approvalNote": "Tempahan ini telah diluluskan oleh kapten. Bayaran anda akan diproses serta-merta selepas penghantaran."
+      },
+      "completePayment": {
+        "title": "Lengkapkan Bayaran",
+        "description": "Pilih kaedah bayaran anda dan hantar",
+        "securityNote": "Bayaran disulitkan dan dijamin oleh Senang Pay",
+        "securedBy": "Bayaran disulitkan dan dijamin oleh Senang Pay",
+        "bookingFor": "Tempahan untuk: {email}",
+        "payButton": "Bayar RM {amount}",
+        "processing": "Memproses Bayaran...",
+        "backButton": "← Kembali ke butiran tempahan"
+      },
+      "participants": {
+        "title": "Peserta",
+        "description": "Pemancing yang menyertai perjalanan ini",
+        "booker": "Penempah",
+        "guest": "Tetamu"
+      },
+      "emergencyContact": {
+        "title": "Kenalan Kecemasan",
+        "description": "Sekiranya berlaku kecemasan",
+        "phoneNumber": "Nombor Telefon"
+      },
+      "cancellationPolicy": {
+        "title": "Polisi Pembatalan"
+      },
+      "bookingReference": {
+        "title": "Rujukan Tempahan",
+        "saveNote": "Simpan rujukan ini untuk rekod anda"
+      },
+      "tripSummary": {
+        "title": "Ringkasan Perjalanan",
+        "description": "Butiran tempahan anda",
+        "charter": "Carter",
+        "trip": "Lawatan",
+        "schedule": "Jadual",
+        "guests": "Tetamu",
+        "guestCount": "{count, plural, =1 {# Tetamu} other {# Tetamu}}",
+        "specialRequests": "Permintaan khas"
+      },
+      "contactDetails": {
+        "title": "Butiran Hubungan",
+        "description": "Pengesahan tempahan akan dihantar ke sini",
+        "name": "Nama",
+        "email": "Emel",
+        "phone": "Telefon"
+      },
+      "paymentMethod": {
+        "card": {
+          "title": "Kad Kredit/Debit",
+          "description": "Visa, Mastercard"
+        },
+        "fpx": {
+          "title": "Perbankan Dalam Talian & E-Dompet",
+          "description": "FPX, Touch 'n Go, GrabPay, dll."
+        },
+        "mock": {
+          "title": "Bayaran Ujian (Dev Sahaja)",
+          "description": "Langkau gerbang untuk ujian tempatan"
+        },
+        "cardForm": {
+          "cardNumber": "Nombor Kad",
+          "month": "Bulan",
+          "year": "Tahun",
+          "cvv": "CVV"
+        }
+      }
+    },
+    "calendar": {
+      "months": {
+        "january": "Januari",
+        "february": "Februari",
+        "march": "Mac",
+        "april": "April",
+        "may": "Mei",
+        "june": "Jun",
+        "july": "Julai",
+        "august": "Ogos",
+        "september": "September",
+        "october": "Oktober",
+        "november": "November",
+        "december": "Disember"
+      },
+      "days": {
+        "sun": "Ah",
+        "mon": "Is",
+        "tue": "Se",
+        "wed": "Ra",
+        "thu": "Kh",
+        "fri": "Ju",
+        "sat": "Sa"
+      },
+      "selectDate": "Pilih tarikh",
+      "selectDateRange": "Pilih julat tarikh",
+      "singleDay": "Satu Hari",
+      "multiDay": "Banyak Hari",
+      "previousMonth": "Bulan sebelumnya",
+      "nextMonth": "Bulan berikutnya",
+      "chooseDate": "Pilih tarikh",
+      "notAvailable": "Tidak tersedia",
+      "partialAvailability": "Sesetengah perjalanan tersedia",
+      "today": "Hari ini",
+      "close": "Tutup",
+      "clear": "Kosongkan",
+      "cancel": "Batal",
+      "confirm": "Sahkan"
+    },
+    "details": {
+      "guestName": "Nama Tetamu",
+      "bookingId": "ID Tempahan",
+      "tripSchedule": "Jadual Perjalanan",
+      "session": "{count, plural, =1 {sesi} other {sesi}}",
+      "day": "Hari",
+      "date": "Tarikh",
+      "duration": "Tempoh",
+      "hour": "{count, plural, =1 {jam} other {jam}}",
+      "startingAt": "Bermula pada",
+      "totalGuests": "Jumlah Tetamu",
+      "adult": "{count, plural, =1 {dewasa} other {dewasa}}",
+      "child": "{count, plural, =1 {kanak-kanak} other {kanak-kanak}}",
+      "participants": "Peserta",
+      "booker": "Penempah",
+      "emergencyContact": "Kenalan Kecemasan",
+      "yourNote": "Nota Anda",
+      "rejectionReason": "Sebab Penolakan",
+      "cancellationReason": "Sebab Pembatalan",
+      "paid": "DIBAYAR",
+      "tripPrice": "Harga Perjalanan (setiap hari)",
+      "numberOfDays": "Bilangan Hari",
+      "subtotal": "Subjumlah",
+      "discount": "Diskaun/Promo",
+      "commission": "Komisen (10%)",
+      "serviceFee": "Yuran Perkhidmatan (1.5%)",
+      "tax": "Cukai",
+      "total": "Jumlah",
+      "totalPaid": "Jumlah Dibayar"
+    },
+    "cancellationInfo": {
+      "cancelledByCaptain": "Dibatalkan oleh Kapten",
+      "bookingCancelled": "Tempahan Dibatalkan",
+      "refundNotice": "Jika bayaran telah dibuat, bayaran balik penuh akan diproses dalam masa 7 hari bekerja."
+    },
+    "tripPreparation": {
+      "title": "Persediaan Perjalanan",
+      "navigateToStartingPoint": "Navigasi ke Tempat Permulaan",
+      "beforeYouGo": "Sebelum Anda Pergi:",
+      "tip1": "Tiba 15 minit sebelum masa mula",
+      "tip2": "Bawa pelindung matahari dan topi untuk perlindungan matahari",
+      "tip3": "Pakai kasut selesa yang tidak licin",
+      "tip4": "Hubungi kapten jika lewat"
+    },
+    "review": {
+      "leaveReview": "Tinggalkan Ulasan",
+      "yourReview": "Ulasan Anda",
+      "guestMessage": "Ingin berkongsi pengalaman anda? Cipta akaun untuk meninggalkan ulasan dan membantu pemancing lain!",
+      "description": "Kongsi pengalaman anda dan bantu pemancing lain membuat keputusan termaklum.",
+      "createAccount": "Cipta Akaun",
+      "signIn": "Log Masuk"
+    },
+    "actions": {
+      "title": "Tindakan",
+      "contactCaptain": "Hubungi {captainName}",
+      "call": "Panggilan",
+      "callCaptain": "Panggil Kapten",
+      "email": "E-mel",
+      "chat": "Sembang",
+      "chatCaptain": "Sembang Kapten",
+      "chatNotAvailable": "Sembang tidak tersedia",
+      "chatWithCaptain": "Sembang dengan kapten",
+      "registerToChat": "Daftar untuk Sembang",
+      "chatDisabledTooltip": "Sembang akan diaktifkan selepas kelulusan kapten",
+      "chatEnabledTooltip": "Sembang dengan kapten",
+      "payNow": "Bayar Sekarang",
+      "cancel": "Batal Tempahan",
+      "bookAgain": "Tempah Lagi",
+      "viewDetails": "Lihat Butiran",
+      "writeReview": "Tulis Ulasan",
+      "viewReview": "Lihat Ulasan",
+      "yourRating": "Penilaian Anda:",
+      "waze": "Waze",
+      "maps": "Peta",
+      "downloadConfirmation": "Muat Turun Pengesahan",
+      "downloading": "Memuat turun...",
+      "cancellationRefund": {
+        "title": "Bayaran Balik Pembatalan",
+        "estimatedRefund": "Anggaran jumlah bayaran balik:",
+        "noRefundTitle": "Tiada bayaran balik tersedia",
+        "noRefundMessage": "Perjalanan anda kurang dari 15 hari lagi. Mengikut polisi pembatalan kami, tiada bayaran balik tersedia untuk pembatalan dalam tempoh ini.",
+        "policyTitle": "Polisi Pembatalan:",
+        "policy30Days": "Lebih dari 30 hari sebelum perjalanan: 80% bayaran balik",
+        "policy15Days": "15-30 hari sebelum perjalanan: 50% bayaran balik",
+        "policyUnder15": "Kurang dari 15 hari sebelum perjalanan: Tiada bayaran balik",
+        "processingTime": "Bayaran balik biasanya diproses dalam masa 5-7 hari bekerja.",
+        "continueCancel": "Teruskan Pembatalan",
+        "nevermind": "Tidak Jadi",
+        "stillCancelMessage": "Anda masih boleh membatalkan tempahan anda, tetapi tiada bayaran balik akan dikeluarkan."
+      },
+      "emailVerification": {
+        "title": "Sahkan E-mel Anda",
+        "actionCancel": "batalkan tempahan ini",
+        "actionDownload": "muat turun resit",
+        "actionModify": "ubah tempahan ini",
+        "description": "Untuk {action}, sila sahkan bahawa anda mempunyai akses kepada alamat e-mel yang digunakan untuk tempahan ini.",
+        "emailLabel": "Alamat E-mel",
+        "emailPlaceholder": "Masukkan e-mel (cth: {maskedEmail})",
+        "emailHint": "Ini mesti sepadan dengan e-mel yang digunakan semasa membuat tempahan.",
+        "verifying": "Mengesahkan...",
+        "verifyAndContinue": "Sahkan & Teruskan",
+        "tooManyAttempts": "Terlalu banyak percubaan. Sila cuba lagi dalam {minutes} minit.",
+        "attemptsRemaining": "{count} percubaan lagi",
+        "lockedOut": "Terlalu banyak percubaan gagal. Sila tunggu sebelum mencuba lagi atau hubungi sokongan jika anda memerlukan bantuan.",
+        "verificationFailed": "Pengesahan gagal",
+        "close": "Tutup"
+      },
+      "cancellationDialog": {
+        "title": "Batal Tempahan?",
+        "description": "Adakah anda pasti mahu membatalkan tempahan ini?",
+        "warningMessage": "Tindakan ini tidak boleh dibatalkan.",
+        "reasonLabel": "Sebab pembatalan",
+        "reasonSelectPrompt": "Pilih sebab",
+        "otherPlaceholder": "Sila nyatakan sebab anda...",
+        "confirmButton": "Ya, Batalkan",
+        "cancelling": "Membatalkan...",
+        "cancelButton": "Tidak Jadi",
+        "errorNoReason": "Sila pilih atau masukkan sebab pembatalan",
+        "commonReasons": {
+          "changeOfPlans": "Perubahan rancangan",
+          "foundBetterOffer": "Jumpa tawaran yang lebih baik",
+          "weatherConcerns": "Kebimbangan cuaca",
+          "unableToTravel": "Tidak dapat pergi",
+          "captainUnresponsive": "Kapten tidak bertindak balas",
+          "bookingMistake": "Kesilapan tempahan",
+          "personalReasons": "Sebab peribadi",
+          "other": "Lain-lain"
+        }
+      }
+    }
   },
   "account": {
     "overview": "Ringkasan",
@@ -188,6 +984,25 @@
     "priceRange": "Julat Harga",
     "date": "Tarikh",
     "sortBy": "Susun Mengikut",
+    "searchBox": {
+      "destination": "Destinasi",
+      "destinationPlaceholder": "Cari Destinasi",
+      "clearDestination": "Kosongkan destinasi",
+      "date": "Tarikh",
+      "dateRange": "Julat Tarikh",
+      "daysSelected": "{days} hari dipilih",
+      "guests": "Bilangan Pemancing",
+      "selectGuests": "Pilih pemancing",
+      "guestSummary": "{adults, plural, =1 {# Dewasa} other {# Dewasa}}{children, plural, =0 {} other { | {children, plural, =1 {# Kanak-kanak} other {# Kanak-kanak}}}}",
+      "adults": "Dewasa",
+      "children": "Kanak-kanak",
+      "decreaseAdults": "Kurangkan dewasa",
+      "increaseAdults": "Tambah dewasa",
+      "decreaseChildren": "Kurangkan kanak-kanak",
+      "increaseChildren": "Tambah kanak-kanak",
+      "done": "Selesai",
+      "search": "Cari"
+    },
     "relevance": "Relevan",
     "priceLowest": "Harga: Rendah ke Tinggi",
     "priceHighest": "Harga: Tinggi ke Rendah",

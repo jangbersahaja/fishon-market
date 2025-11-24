@@ -11,14 +11,33 @@ export interface UnavailabilityPeriod {
   startDate: string | Date; // YYYY-MM-DD or Date
   endDate: string | Date;
   reason?: string | null;
+  // Time-based unavailability (Phase 2)
+  isAllDay?: boolean;
+  startTime?: string; // HH:MM format
+  endTime?: string; // HH:MM format
+}
+
+export interface PartialAvailability {
+  date: string; // YYYY-MM-DD
+  unavailableTimeRanges: { startTime: string; endTime: string }[]; // HH:MM format
+}
+
+export interface BookedDatesResponse {
+  fullDayBlocks: string[]; // YYYY-MM-DD dates that are fully blocked
+  timeBasedBlocks: Array<{
+    date: string; // YYYY-MM-DD
+    startTime: string; // HH:MM
+    endTime: string; // HH:MM
+    isFullDay: boolean;
+  }>;
 }
 
 /**
  * Calculate all blocked dates from schedule, unavailability, and bookings
  *
  * @param schedule - Charter operational schedule
- * @param unavailability - Captain-defined unavailable periods
- * @param bookedDates - Dates with PAID bookings (array of date strings)
+ * @param unavailability - Captain-defined unavailable periods (with time-based support)
+ * @param bookedDatesData - Booking data (full-day blocks + time-based blocks)
  * @param startDate - Start of date range
  * @param endDate - End of date range
  * @returns Set of blocked date strings (YYYY-MM-DD)
@@ -26,7 +45,11 @@ export interface UnavailabilityPeriod {
 export function calculateBlockedDates(
   schedule: CharterSchedule | null | undefined,
   unavailability: UnavailabilityPeriod[] | null | undefined,
-  bookedDates: string[] | null | undefined,
+  bookedDatesData:
+    | BookedDatesResponse
+    | { bookedDates: string[] }
+    | null
+    | undefined,
   startDate: Date,
   endDate: Date
 ): Set<string> {
@@ -40,9 +63,18 @@ export function calculateBlockedDates(
   );
   scheduleBlocked.forEach((date) => blocked.add(date));
 
-  // 2. Add unavailability periods
+  // 2. Add unavailability periods (ONLY ALL-DAY BLOCKS)
+  // Time-based unavailability creates partial availability, not full blocks
   if (unavailability && unavailability.length > 0) {
     unavailability.forEach((period) => {
+      // UPDATED: Only block date if isAllDay=true or undefined (backward compatibility)
+      const isAllDayBlock = period.isAllDay !== false;
+
+      if (!isAllDayBlock) {
+        // Time-based unavailability - skip, will be handled by calculatePartialAvailability()
+        return;
+      }
+
       // Parse dates using local time (create Date from YYYY-MM-DD string or ISO string)
       const periodStartStr =
         typeof period.startDate === "string"
@@ -80,9 +112,17 @@ export function calculateBlockedDates(
     });
   }
 
-  // 3. Add booked dates
-  if (bookedDates && bookedDates.length > 0) {
-    bookedDates.forEach((date) => blocked.add(date));
+  // 3. Add booked dates (ONLY FULL-DAY BLOCKS)
+  // Time-based bookings will be handled by calculatePartialAvailability()
+  if (bookedDatesData) {
+    // Support both new format (BookedDatesResponse) and legacy format ({ bookedDates: string[] })
+    if ("fullDayBlocks" in bookedDatesData) {
+      // New format: only add full-day blocks
+      bookedDatesData.fullDayBlocks.forEach((date) => blocked.add(date));
+    } else if ("bookedDates" in bookedDatesData) {
+      // Legacy format: treat all as full-day blocks
+      bookedDatesData.bookedDates.forEach((date) => blocked.add(date));
+    }
   }
 
   return blocked;
@@ -198,207 +238,175 @@ export function isDateBlockedBySchedule(
 }
 
 /**
- * ==========================================
- * BOOKING CONFLICT CHECKING
- * ==========================================
- */
-
-import { hasConflicts } from "@/lib/booking/overlap";
-import { prisma } from "@/lib/database/prisma";
-
-export interface AvailabilityCheckResult {
-  /** Whether the date/time is available for booking */
-  isAvailable: boolean;
-  /** Number of conflicting PAID bookings found */
-  conflictCount: number;
-  /** IDs of conflicting bookings (if any) */
-  conflictingBookingIds: string[];
-}
-
-export interface DateAvailabilityOptions {
-  /** Charter ID to check availability for */
-  charterId: string;
-  /** Date to check (should be at UTC midnight) */
-  date: Date;
-  /** Number of consecutive days */
-  days: number;
-  /** Start time for the trip (e.g., "08:00"), null if no specific start time */
-  startTime?: string | null;
-  /** Booking ID to exclude from conflict check (for checking current booking) */
-  excludeBookingId?: string;
-}
-
-/**
- * Check if a charter date is available for booking (no PAID conflicts)
+ * Calculate partial availability for dates with time-based unavailability
  *
- * A date is considered UNAVAILABLE if there are any PAID bookings
- * that overlap with the requested date range and start time.
- *
- * @param options - Date availability check options
- * @returns Availability check result with conflict details
+ * @param unavailability - Captain-defined unavailable periods (with time-based support)
+ * @param startDate - Start of date range
+ * @param endDate - End of date range
+ * @returns Map of date strings to unavailable time ranges
  *
  * @example
- * ```typescript
- * const result = await checkDateAvailability({
- *   charterId: "charter-123",
- *   date: new Date("2025-04-24"),
- *   days: 1,
- *   startTime: "08:00",
- * });
- *
- * if (!result.isAvailable) {
- *   console.log(`Date blocked by ${result.conflictCount} booking(s)`);
+ * // Morning unavailability (08:00-12:00)
+ * {
+ *   "2025-06-15": [{ startTime: "08:00", endTime: "12:00" }]
  * }
- * ```
  */
-export async function checkDateAvailability(
-  options: DateAvailabilityOptions
-): Promise<AvailabilityCheckResult> {
-  const { charterId, date, days, startTime, excludeBookingId } = options;
+export function calculatePartialAvailability(
+  unavailability: UnavailabilityPeriod[] | null | undefined,
+  bookedDatesData:
+    | BookedDatesResponse
+    | { bookedDates: string[] }
+    | null
+    | undefined,
+  startDate: Date,
+  endDate: Date
+): Map<string, PartialAvailability> {
+  const partialAvailabilityMap = new Map<string, PartialAvailability>();
 
-  // Normalize date to UTC midnight
-  const normalizedDate = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-  );
+  // Process unavailability periods
+  if (unavailability && unavailability.length > 0) {
+    unavailability.forEach((period) => {
+      // Only process time-based unavailability (isAllDay=false)
+      if (period.isAllDay !== false || !period.startTime || !period.endTime) {
+        return;
+      }
 
-  // Calculate the date range we're checking
-  // For multi-day booking: requested dates are [date, date+1, ..., date+days-1]
-  const requestEndDate = new Date(normalizedDate);
-  requestEndDate.setUTCDate(requestEndDate.getUTCDate() + days - 1);
+      // Parse date range
+      const periodStartStr =
+        typeof period.startDate === "string"
+          ? period.startDate
+          : formatDateYMD(period.startDate);
+      const periodEndStr =
+        typeof period.endDate === "string"
+          ? period.endDate
+          : formatDateYMD(period.endDate);
 
-  // Query for PAID bookings that OVERLAP with our requested date range
-  // A booking overlaps if:
-  // - booking.date <= requestEndDate (booking starts before or on our end date)
-  // - booking.date + booking.days - 1 >= normalizedDate (booking ends on or after our start date)
-  //
-  // For simplicity, we'll fetch all bookings that START before our end date,
-  // then filter in code for those that actually overlap
-  const whereClause: any = {
-    charterId,
-    date: {
-      lte: requestEndDate, // Booking starts before or on our end date
-    },
-    status: "PAID",
-  };
+      const startDateOnly = periodStartStr.split("T")[0];
+      const endDateOnly = periodEndStr.split("T")[0];
 
-  // Exclude specific booking if provided (for checking current booking)
-  if (excludeBookingId) {
-    whereClause.id = { not: excludeBookingId };
+      const [psy, psm, psd] = startDateOnly.split("-").map(Number);
+      const [pey, pem, ped] = endDateOnly.split("-").map(Number);
+      const periodStart = new Date(psy, psm - 1, psd);
+      const periodEnd = new Date(pey, pem - 1, ped);
+
+      // Check if this is a single-day or multi-day period
+      const isSingleDay =
+        formatDateYMD(periodStart) === formatDateYMD(periodEnd);
+
+      if (isSingleDay) {
+        // Single day: apply the time range directly
+        const dateStr = formatDateYMD(periodStart);
+        const existing = partialAvailabilityMap.get(dateStr);
+
+        if (existing) {
+          existing.unavailableTimeRanges.push({
+            startTime: period.startTime,
+            endTime: period.endTime,
+          });
+        } else {
+          partialAvailabilityMap.set(dateStr, {
+            date: dateStr,
+            unavailableTimeRanges: [
+              {
+                startTime: period.startTime,
+                endTime: period.endTime,
+              },
+            ],
+          });
+        }
+      } else {
+        // Multi-day period: handle edge days specially
+        const current = new Date(
+          Math.max(periodStart.getTime(), startDate.getTime())
+        );
+        const end = new Date(Math.min(periodEnd.getTime(), endDate.getTime()));
+
+        current.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+
+        while (current <= end) {
+          const dateStr = formatDateYMD(current);
+          const isFirstDay = dateStr === formatDateYMD(periodStart);
+          const isLastDay = dateStr === formatDateYMD(periodEnd);
+
+          let timeRange: { startTime: string; endTime: string };
+
+          if (isFirstDay) {
+            // First day: from specified start time to end of day
+            timeRange = {
+              startTime: period.startTime,
+              endTime: "23:59",
+            };
+          } else if (isLastDay) {
+            // Last day: from start of day to specified end time
+            timeRange = {
+              startTime: "00:00",
+              endTime: period.endTime,
+            };
+          } else {
+            // Middle days: entire day blocked
+            timeRange = {
+              startTime: "00:00",
+              endTime: "23:59",
+            };
+          }
+
+          const existing = partialAvailabilityMap.get(dateStr);
+
+          if (existing) {
+            existing.unavailableTimeRanges.push(timeRange);
+          } else {
+            partialAvailabilityMap.set(dateStr, {
+              date: dateStr,
+              unavailableTimeRanges: [timeRange],
+            });
+          }
+
+          current.setDate(current.getDate() + 1);
+        }
+      }
+    });
   }
 
-  const allBookings = await prisma.booking.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      date: true,
-      startTime: true,
-      days: true,
-      status: true,
-    },
-  });
+  // Process time-based bookings
+  if (bookedDatesData && "timeBasedBlocks" in bookedDatesData) {
+    bookedDatesData.timeBasedBlocks.forEach((block) => {
+      const dateStr = block.date;
+      const existing = partialAvailabilityMap.get(dateStr);
 
-  // Filter to only bookings that actually overlap with our requested range
-  // Booking overlaps if its end date >= our start date
-  const candidateBookings = allBookings.filter((booking) => {
-    const bookingEndDate = new Date(booking.date);
-    bookingEndDate.setUTCDate(bookingEndDate.getUTCDate() + booking.days - 1);
-    return bookingEndDate >= normalizedDate;
-  });
+      if (existing) {
+        // Add time range to existing entry
+        existing.unavailableTimeRanges.push({
+          startTime: block.startTime,
+          endTime: block.endTime,
+        });
+      } else {
+        // Create new entry
+        partialAvailabilityMap.set(dateStr, {
+          date: dateStr,
+          unavailableTimeRanges: [
+            {
+              startTime: block.startTime,
+              endTime: block.endTime,
+            },
+          ],
+        });
+      }
+    });
+  }
 
-  console.log("📊 [AVAILABILITY] Found candidate PAID bookings:", {
-    count: candidateBookings.length,
-    bookings: candidateBookings.map((b) => ({
-      id: b.id,
-      date: b.date,
-      startTime: b.startTime,
-      days: b.days,
-    })),
-    checkingAgainst: {
-      date: normalizedDate,
-      startTime,
-      days,
-      excludeBookingId,
-    },
-  });
-
-  // Check for overlapping bookings using the overlap helper
-  const usesStartTimes = !!startTime;
-  const conflicts = hasConflicts(candidateBookings, normalizedDate, days, {
-    usesStartTimes,
-    selectedStartTime: startTime ?? null,
-  });
-
-  console.log("🎯 [AVAILABILITY] Conflict check result:", {
-    hasConflicts: conflicts,
-    usesStartTimes,
-    selectedStartTime: startTime ?? null,
-  });
-
-  return {
-    isAvailable: !conflicts,
-    conflictCount: conflicts ? candidateBookings.length : 0,
-    conflictingBookingIds: conflicts ? candidateBookings.map((b) => b.id) : [],
-  };
+  return partialAvailabilityMap;
 }
 
 /**
- * Get next N available dates for a charter (excludes PAID bookings)
+ * ==========================================
+ * BOOKING CONFLICT CHECKING (SERVER-ONLY)
+ * ==========================================
  *
- * Scans forward from startDate to find available dates.
- * Stops after finding the requested number of available dates or reaching maxDaysAhead.
+ * Server-only functions that require database access have been moved to:
+ * @see availability-helpers.server.ts
  *
- * @param charterId - Charter ID
- * @param startDate - Date to start scanning from (defaults to today)
- * @param count - Number of available dates to find (default: 5)
- * @param days - Number of days per booking (default: 1)
- * @param startTime - Optional start time filter
- * @param maxDaysAhead - Maximum days to scan ahead (default: 90)
- * @returns Array of available dates
- *
- * @example
- * ```typescript
- * // Find next 5 available dates starting today
- * const availableDates = await getNextAvailableDates("charter-123", new Date(), 5);
- * ```
+ * Functions available in the server module:
+ * - checkDateAvailability()
+ * - getNextAvailableDates()
  */
-export async function getNextAvailableDates(
-  charterId: string,
-  startDate: Date = new Date(),
-  count: number = 5,
-  days: number = 1,
-  startTime?: string | null,
-  maxDaysAhead: number = 90
-): Promise<Date[]> {
-  const availableDates: Date[] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let currentDate = new Date(startDate);
-  currentDate.setHours(0, 0, 0, 0);
-
-  // Don't scan past dates
-  if (currentDate < today) {
-    currentDate = today;
-  }
-
-  let daysScanned = 0;
-
-  while (availableDates.length < count && daysScanned < maxDaysAhead) {
-    const result = await checkDateAvailability({
-      charterId,
-      date: currentDate,
-      days,
-      startTime,
-    });
-
-    if (result.isAvailable) {
-      availableDates.push(new Date(currentDate));
-    }
-
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
-    daysScanned++;
-  }
-
-  return availableDates;
-}

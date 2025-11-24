@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import type { BookingFormData } from "./types";
 
@@ -27,13 +28,13 @@ export default function StartConversationCard({
   register,
   errors,
 }: StartConversationCardProps) {
+  const t = useTranslations("booking.checkout.startConversation");
   const displayName = captain?.name || charterName || "Your Captain";
+  const captainFirstName = displayName.split(" ")[0];
 
   return (
     <section className="">
-      <h2 className="mb-4 text-base font-semibold sm:text-lg">
-        Say hello to captain
-      </h2>
+      <h2 className="mb-4 text-base font-semibold sm:text-lg">{t("title")}</h2>
       {/* Captain Profile */}
       <div className="flex items-start gap-4 ">
         <div className="relative flex-shrink-0 w-16 h-16 overflow-hidden rounded-full shadow-sm ring-2 ring-white">
@@ -51,16 +52,13 @@ export default function StartConversationCard({
 
             {captain && (
               <p className="text-xs text-gray-600">
-                {captain.yearsExperience} years experience • {captain.crewCount}{" "}
-                crew
+                {t("yearsExperience", { years: captain.yearsExperience })} •{" "}
+                {t("crew", { count: captain.crewCount })}
               </p>
             )}
           </div>
           <p className="p-4 mb-4 text-sm border rounded-b-lg rounded-tr-lg bg-gradient-to-br from-blue-50/50 to-cyan-50/50 border-black/10">
-            Hello, welcome to {charterName}. Thanks for your interest! Let me
-            know who’ll be joining the trip, what fish you’re aiming to catch,
-            and any special requests — I’ll make sure everything’s ready for
-            you.
+            {t("greeting", { charterName: charterName || "this charter" })}
           </p>
         </div>
       </div>
@@ -70,9 +68,7 @@ export default function StartConversationCard({
         <label className="block text-slate-800">
           <textarea
             {...register("note")}
-            placeholder={`Introduce yourself to ${
-              displayName.split(" ")[0]
-            }. Share your fishing experience, what you hope to catch, or any special requests...`}
+            placeholder={t("placeholder", { captainFirstName })}
             rows={4}
             className={`w-full bg-slate-50 px-4 py-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
               errors.note ? "border-red-500" : "border-black/10"
@@ -82,9 +78,7 @@ export default function StartConversationCard({
         {errors.note && (
           <p className="mt-1 text-xs text-red-500">{errors.note.message}</p>
         )}
-        <p className="mt-2 text-xs text-gray-500">
-          This message will be sent to the captain with your booking request.
-        </p>
+        <p className="mt-2 text-xs text-gray-500">{t("note")}</p>
       </div>
     </section>
   );

@@ -114,8 +114,8 @@ export default async function SearchResults({
 }) {
   // Get locale and translations from next-intl server context
   const locale = await getLocale();
-  const t = await getTranslations("search");
-  const tCharter = await getTranslations("charter");
+  const t = await getTranslations({ locale, namespace: "search" });
+  const tCharter = await getTranslations({ locale, namespace: "charter" });
 
   // Await searchParams (Next.js 15 requirement)
   const params = await searchParams;
@@ -400,7 +400,9 @@ export default async function SearchResults({
               {tCharter("breadcrumbHome")}
             </Link>
             <span className="mx-2">/</span>
-            <span className="font-medium text-white">{t("searchCharters")}</span>
+            <span className="font-medium text-white">
+              {t("searchCharters")}
+            </span>
           </nav>
 
           {/* Header / Filters Summary */}
@@ -444,7 +446,8 @@ export default async function SearchResults({
               {date && (
                 <>
                   {" "}
-                  • {t("onDate")} <span className="font-bold text-white">{date}</span>
+                  • {t("onDate")}{" "}
+                  <span className="font-bold text-white">{date}</span>
                 </>
               )}
               {priceRange && (
@@ -461,7 +464,10 @@ export default async function SearchResults({
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full w-fit bg-white/20 backdrop-blur-sm">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-white">
-                  {filtered.length} {filtered.length === 1 ? t("charterFound") : t("chartersFound")}
+                  {filtered.length}{" "}
+                  {filtered.length === 1
+                    ? t("charterFound")
+                    : t("chartersFound")}
                 </span>
               </div>
             )}
@@ -491,7 +497,7 @@ export default async function SearchResults({
         />
 
         {/* Results */}
-        <div className="grid grid-cols-1 gap-10 p-5 mt-8 md:grid-cols-2 lg:gap-15">
+        <div className="grid grid-cols-1 gap-10 mt-8 md:grid-cols-2 lg:gap-15">
           {filtered.length === 0 && (
             <div className="p-12 text-center bg-white border shadow-sm col-span-full rounded-2xl border-slate-200">
               <div className="flex flex-col items-center gap-4">

@@ -93,7 +93,7 @@ async function testCharterUnavailability() {
     const blockedDates = calculateBlockedDates(
       charter.schedule,
       charter.unavailability,
-      [], // No bookings for this test
+      null, // No bookings for this test
       startDate,
       endDate
     );

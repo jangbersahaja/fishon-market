@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   CreditCard,
@@ -10,6 +12,7 @@ import {
   Star,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 // ============================================================================
@@ -30,6 +33,8 @@ export function CallCaptainButton({
   className = "",
   fullWidth = false,
 }: CallCaptainButtonProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -39,7 +44,7 @@ export function CallCaptainButton({
     >
       <a href={`tel:${phone}`}>
         <Phone className="w-4 h-4 mr-2" />
-        Call Captain
+        {t("callCaptain")}
       </a>
     </Button>
   );
@@ -65,6 +70,8 @@ export function ChatCaptainButton({
   className = "",
   fullWidth = false,
 }: ChatCaptainButtonProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -72,19 +79,21 @@ export function ChatCaptainButton({
       className={fullWidth ? `w-full ${className}` : className}
       disabled={disabled || !conversationId}
       title={
-        disabled || !conversationId ? "Chat not available" : "Chat with captain"
+        disabled || !conversationId
+          ? t("chatNotAvailable")
+          : t("chatWithCaptain")
       }
       asChild={!disabled && conversationId ? true : false}
     >
       {!disabled && conversationId ? (
         <Link href={`/account/messages/${conversationId}`}>
           <MessageSquare className="w-4 h-4 mr-2" />
-          Chat Captain
+          {t("chatCaptain")}
         </Link>
       ) : (
         <>
           <MessageSquare className="w-4 h-4 mr-2" />
-          Chat Captain
+          {t("chatCaptain")}
         </>
       )}
     </Button>
@@ -109,6 +118,8 @@ export function NavigateButtons({
   size = "sm",
   className = "",
 }: NavigateButtonsProps) {
+  const t = useTranslations("booking.actions");
+
   // Use coordinates if available, otherwise use location text
   const query =
     latitude && longitude
@@ -125,13 +136,13 @@ export function NavigateButtons({
       <Button variant="outline" size={size} className="flex-1" asChild>
         <a href={wazeLink} target="_blank" rel="noopener noreferrer">
           <MapPin className="w-4 h-4 mr-1" />
-          Waze
+          {t("waze")}
         </a>
       </Button>
       <Button variant="outline" size={size} className="flex-1" asChild>
         <a href={googleMapsLink} target="_blank" rel="noopener noreferrer">
           <MapPin className="w-4 h-4 mr-1" />
-          Maps
+          {t("maps")}
         </a>
       </Button>
     </div>
@@ -157,6 +168,8 @@ export function WriteReviewButton({
   className = "",
   fullWidth = false,
 }: Omit<ReviewButtonProps, "hasReview">) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -168,7 +181,7 @@ export function WriteReviewButton({
     >
       <Link href={`/account/reviews?action=new&bookingId=${bookingId}`}>
         <Edit className="w-4 h-4 mr-2" />
-        Write Review
+        {t("writeReview")}
       </Link>
     </Button>
   );
@@ -181,6 +194,8 @@ export function ViewReviewButton({
   className = "text-white bg-amber-700 hover:bg-amber-800",
   fullWidth = false,
 }: Omit<ReviewButtonProps, "hasReview">) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -190,7 +205,7 @@ export function ViewReviewButton({
     >
       <Link href={`/account/reviews?bookingId=${bookingId}`}>
         <Eye className="w-4 h-4 mr-2" />
-        View Review
+        {t("viewReview")}
       </Link>
     </Button>
   );
@@ -214,6 +229,8 @@ export function PayNowButton({
   className = "",
   fullWidth = false,
 }: PayNowButtonProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -225,7 +242,7 @@ export function PayNowButton({
     >
       <Link href={`/book/payment/${bookingId}`}>
         <CreditCard className="w-4 h-4 mr-2" />
-        Pay Now
+        {t("payNow")}
       </Link>
     </Button>
   );
@@ -250,6 +267,8 @@ export function CancelBookingButton({
   fullWidth = false,
   onCancel,
 }: CancelBookingButtonProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -260,7 +279,7 @@ export function CancelBookingButton({
       onClick={onCancel}
     >
       <X className="w-4 h-4 mr-2" />
-      Cancel Booking
+      {t("cancel")}
     </Button>
   );
 }
@@ -285,6 +304,8 @@ export function ViewDetailsButton({
   className = "text-white bg-gray-700 hover:bg-gray-800",
   fullWidth = false,
 }: ViewDetailsButtonProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -292,7 +313,9 @@ export function ViewDetailsButton({
       className={`${fullWidth ? "w-full" : ""} ${className}`}
       asChild
     >
-      <Link href={`/${locale}/book/confirm?id=${bookingId}`}>View Details</Link>
+      <Link href={`/${locale}/book/confirm?id=${bookingId}`}>
+        {t("viewDetails")}
+      </Link>
     </Button>
   );
 }
@@ -306,9 +329,13 @@ interface RatingDisplayProps {
 }
 
 export function RatingDisplay({ rating, className = "" }: RatingDisplayProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      <span className="text-sm font-medium text-gray-700">Your Rating:</span>
+      <span className="text-sm font-medium text-gray-700">
+        {t("yourRating")}
+      </span>
       <div className="flex items-center">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
@@ -342,6 +369,8 @@ export function BookAgainButton({
   fullWidth = false,
   charterId,
 }: BookAgainButtonProps) {
+  const t = useTranslations("booking.actions");
+
   return (
     <Button
       variant={variant}
@@ -351,7 +380,7 @@ export function BookAgainButton({
     >
       <Link href={`/charters/${charterId}`}>
         <RotateCcw className="w-4 h-4 mr-2" />
-        Book Again
+        {t("bookAgain")}
       </Link>
     </Button>
   );

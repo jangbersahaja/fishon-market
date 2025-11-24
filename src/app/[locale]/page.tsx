@@ -1,15 +1,35 @@
+import { LanguageSwitcher } from "@/components/shared";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 
-export default async function Home() {
-  const t = await getTranslations("home");
-  const tFooter = await getTranslations("footer");
+// External app URLs - configured per locale
+const CAPTAIN_APP_URL =
+  process.env.NEXT_PUBLIC_CAPTAIN_APP_URL ||
+  "https://fishon-captain.vercel.app";
+
+const getCaptainAppUrl = (locale: string) => {
+  return `${CAPTAIN_APP_URL}/${locale}/list-your-business`;
+};
+
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "home" });
+  const tFooter = await getTranslations({ locale, namespace: "footer" });
   const year = new Date().getFullYear();
+  const captainAppUrl = getCaptainAppUrl(locale);
 
   return (
     <main className="min-h-dvh bg-[#ec2227] flex items-center justify-center p-6">
       <section className="w-full max-w-3xl mx-auto">
+        {/* Language Switcher - Mobile */}
+        <div className="flex justify-end py-2 border-white/20">
+          <LanguageSwitcher />
+        </div>
         <div className="p-8 bg-white border shadow-2xl rounded-3xl border-black/5 md:p-12">
           <header className="flex items-center gap-4">
             <Image
@@ -53,7 +73,7 @@ export default async function Home() {
             <p className="mt-2 text-sm md:text-base text-black/80">
               {t("captainDescription")}{" "}
               <Link
-                href="https://fishon-captain.vercel.app/my/list-your-business"
+                href={captainAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[#ec2227] underline decoration-[#ec2227]/40 underline-offset-4 hover:decoration-[#ec2227]"
@@ -67,7 +87,9 @@ export default async function Home() {
           </div>
 
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-white/90 bg-[#ec2227] border border-white/10 rounded-xl px-4 py-3">
-            <div>© {year} Fishon. {tFooter("allRightsReserved")}.</div>
+            <div>
+              © {year} Fishon. {tFooter("allRightsReserved")}.
+            </div>
             <nav aria-label="Social links">
               <ul className="flex items-center gap-4">
                 {/* Add more links as they go live */}

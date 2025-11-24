@@ -460,12 +460,12 @@ export function getExpiresIn(expiresAt: Date): number {
 export function getMinimumBookableDate(charterType?: string): Date {
   const now = new Date();
 
-  // Base requirement: 24 hours for all trip types
-  let hoursRequired = 24;
+  // Base requirement: 48 hours for all trip types (UPDATED from 24h)
+  let hoursRequired = 48;
 
-  // Offshore requires additional 12 hours (36 hours total)
+  // Offshore requires additional 24 hours (72 hours total) (UPDATED from 36h)
   if (charterType?.toUpperCase() === "OFFSHORE") {
-    hoursRequired = 36;
+    hoursRequired = 72;
   }
 
   // Calculate minimum date
@@ -500,8 +500,8 @@ export function getAdvanceBookingMessage(charterType?: string): string {
   const isOffshore = charterType?.toUpperCase() === "OFFSHORE";
 
   if (isOffshore) {
-    return "Offshore trips require booking at least 36 hours in advance to allow proper preparation.";
+    return "Offshore trips require booking at least 72 hours (3 days) in advance to allow proper preparation.";
   }
 
-  return "Bookings must be made at least 24 hours in advance to allow captain preparation time.";
+  return "Bookings must be made at least 48 hours (2 days) in advance to allow captain preparation time.";
 }
