@@ -3,7 +3,10 @@
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { GuestBookingVerificationModal } from "@/components/booking";
 import { useBookingStorage } from "@/hooks/useBookingStorage";
-import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import {
+  calculateBlockedDates,
+  type PartialAvailability,
+} from "@/lib/helpers/availability-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
@@ -126,6 +129,9 @@ type CharterData = {
     startDate: string | Date;
     endDate: string | Date;
     reason?: string | null;
+    isAllDay?: boolean;
+    startTime?: string;
+    endTime?: string;
   }>;
 };
 
@@ -212,41 +218,11 @@ export default function CheckoutForm({
 
   const [tripIndex, setTripIndex] = useState<number>(tripIndexParam);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [partialAvailability, setPartialAvailability] = useState<
+    Map<string, PartialAvailability>
+  >(new Map());
 
-  // Fetch booked dates
-  useEffect(() => {
-    async function fetchBookedDates() {
-      if (!charterId) return;
-
-      try {
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + 3);
-
-        // Format dates in local time (YYYY-MM-DD) to avoid UTC conversion issues
-        const formatLocalYMD = (d: Date) => {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, "0");
-          const day = String(d.getDate()).padStart(2, "0");
-          return `${y}-${m}-${day}`;
-        };
-
-        const response = await fetch(
-          `/api/charters/${charterId}/booked-dates?startDate=${formatLocalYMD(startDate)}&endDate=${formatLocalYMD(endDate)}`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setBookedDates(data.bookedDates || []);
-        }
-      } catch (error) {
-        console.error("[CheckoutForm] Failed to fetch booked dates:", error);
-      }
-    }
-
-    fetchBookedDates();
-  }, [charterId]);
+  // Note: bookedDates fetching removed - DateGuestsCard now handles this via onPartialAvailabilityChange callback
 
   // Calculate blocked dates
   const blockedDatesSet = useMemo(() => {
@@ -259,7 +235,7 @@ export default function CheckoutForm({
     const result = calculateBlockedDates(
       charter.schedule,
       charter.unavailability,
-      bookedDates,
+      null, // CheckoutForm doesn't fetch booked dates, let DateGuestsCard handle it
       startDate,
       endDate
     );
@@ -271,7 +247,10 @@ export default function CheckoutForm({
       : new Set(
           (result as any[]).filter((v): v is string => typeof v === "string")
         );
-  }, [charter?.schedule, charter?.unavailability, bookedDates]);
+  }, [charter?.schedule, charter?.unavailability]);
+
+  // Note: partialAvailability is now a state variable (line 220) populated by DateGuestsCard callback
+  // Removed duplicate useMemo calculation
 
   // Validate if selected date is blocked
   const isDateBlocked = useCallback(
@@ -414,6 +393,52 @@ export default function CheckoutForm({
     return result;
   }, [trips, tripIndex, startTimes, charterFlowType]);
 
+  // Calculate disabled start times based on partial availability for selected date
+  const disabledStartTimes = useMemo(() => {
+    if (!date || !partialAvailability || !effectiveStartTimes) {
+      return [];
+    }
+
+    const datePartial = partialAvailability.get(date);
+    if (
+      !datePartial?.unavailableTimeRanges ||
+      datePartial.unavailableTimeRanges.length === 0
+    ) {
+      return [];
+    }
+
+    // Helper: Check if a time falls within unavailable ranges
+    const isTimeInConflict = (
+      time: string,
+      ranges: { startTime: string; endTime: string }[]
+    ): boolean => {
+      const [hour, min] = time.split(":").map(Number);
+      const timeMinutes = hour * 60 + min;
+
+      return ranges.some((range) => {
+        const [startHour, startMin] = range.startTime.split(":").map(Number);
+        const [endHour, endMin] = range.endTime.split(":").map(Number);
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+
+        return timeMinutes >= startMinutes && timeMinutes < endMinutes;
+      });
+    };
+
+    const disabled = effectiveStartTimes.filter((time) =>
+      isTimeInConflict(time, datePartial.unavailableTimeRanges)
+    );
+
+    console.log("[CheckoutForm] Disabled start times:", {
+      date,
+      unavailableRanges: datePartial.unavailableTimeRanges,
+      effectiveStartTimes,
+      disabled,
+    });
+
+    return disabled;
+  }, [date, partialAvailability, effectiveStartTimes]);
+
   const canSubmit = useMemo(() => {
     // Start time is always required for all charters
     const startTimeOk = Boolean(startTime);
@@ -531,6 +556,7 @@ export default function CheckoutForm({
     isDateRangeValid,
     setFormError,
     clearErrors,
+    t,
   ]);
 
   const onSubmit = handleSubmit(
@@ -886,6 +912,8 @@ export default function CheckoutForm({
               trips={trips || []}
               selectedIndex={tripIndex}
               days={days}
+              selectedDate={date}
+              partialAvailability={partialAvailability}
               charterSpecies={charter?.species || []}
               charterTechniques={charter?.techniques || []}
               onTripSelect={handleTripSelect}
@@ -919,7 +947,7 @@ export default function CheckoutForm({
                 updateSearchParam("children", String(clampedChildren));
               }}
               maxGuests={maxGuests}
-              blockedDatesSet={blockedDatesSet}
+              onPartialAvailabilityChange={setPartialAvailability}
               dateError={errors.date?.message}
             />
 
@@ -928,6 +956,7 @@ export default function CheckoutForm({
               <StartTimeSelection
                 startTimes={effectiveStartTimes}
                 startTime={startTime}
+                disabledTimes={disabledStartTimes}
                 onStartTimeChange={(v) => setValue("startTime", v)}
               />
             )}

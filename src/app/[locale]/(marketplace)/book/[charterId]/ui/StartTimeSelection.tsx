@@ -6,12 +6,14 @@ import { useTranslations } from "next-intl";
 interface StartTimeSelectionProps {
   startTimes?: string[];
   startTime: string;
+  disabledTimes?: string[];
   onStartTimeChange: (time: string) => void;
 }
 
 export default function StartTimeSelection({
   startTimes,
   startTime,
+  disabledTimes = [],
   onStartTimeChange,
 }: StartTimeSelectionProps) {
   const t = useTranslations("booking.checkout.startTime");
@@ -24,16 +26,21 @@ export default function StartTimeSelection({
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {startTimes.map((time) => {
           const isSelected = time === startTime;
+          const isDisabled = disabledTimes.includes(time);
 
           return (
             <button
               key={time}
               type="button"
-              onClick={() => onStartTimeChange(time)}
+              disabled={isDisabled}
+              onClick={() => !isDisabled && onStartTimeChange(time)}
+              title={isDisabled ? "Unavailable" : undefined}
               className={`px-3 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                isSelected
-                  ? "bg-[#ec2227] text-white ring-2 ring-[#ec2227] ring-offset-2 shadow-sm"
-                  : "bg-slate-50 text-gray-700 border border-gray-300 hover:border-[#ec2227] hover:bg-[#ec2227]/10"
+                isDisabled
+                  ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                  : isSelected
+                    ? "bg-[#ec2227] text-white ring-2 ring-[#ec2227] ring-offset-2 shadow-sm"
+                    : "bg-slate-50 text-gray-700 border border-gray-300 hover:border-[#ec2227] hover:bg-[#ec2227]/10"
               }`}
             >
               {convert24to12Hour(time)}

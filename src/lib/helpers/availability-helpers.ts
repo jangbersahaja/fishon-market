@@ -22,12 +22,22 @@ export interface PartialAvailability {
   unavailableTimeRanges: { startTime: string; endTime: string }[]; // HH:MM format
 }
 
+export interface BookedDatesResponse {
+  fullDayBlocks: string[]; // YYYY-MM-DD dates that are fully blocked
+  timeBasedBlocks: Array<{
+    date: string; // YYYY-MM-DD
+    startTime: string; // HH:MM
+    endTime: string; // HH:MM
+    isFullDay: boolean;
+  }>;
+}
+
 /**
  * Calculate all blocked dates from schedule, unavailability, and bookings
  *
  * @param schedule - Charter operational schedule
  * @param unavailability - Captain-defined unavailable periods (with time-based support)
- * @param bookedDates - Dates with PAID/PAYMENT_AUTHORIZED bookings (array of date strings)
+ * @param bookedDatesData - Booking data (full-day blocks + time-based blocks)
  * @param startDate - Start of date range
  * @param endDate - End of date range
  * @returns Set of blocked date strings (YYYY-MM-DD)
@@ -35,7 +45,11 @@ export interface PartialAvailability {
 export function calculateBlockedDates(
   schedule: CharterSchedule | null | undefined,
   unavailability: UnavailabilityPeriod[] | null | undefined,
-  bookedDates: string[] | null | undefined,
+  bookedDatesData:
+    | BookedDatesResponse
+    | { bookedDates: string[] }
+    | null
+    | undefined,
   startDate: Date,
   endDate: Date
 ): Set<string> {
@@ -98,9 +112,17 @@ export function calculateBlockedDates(
     });
   }
 
-  // 3. Add booked dates
-  if (bookedDates && bookedDates.length > 0) {
-    bookedDates.forEach((date) => blocked.add(date));
+  // 3. Add booked dates (ONLY FULL-DAY BLOCKS)
+  // Time-based bookings will be handled by calculatePartialAvailability()
+  if (bookedDatesData) {
+    // Support both new format (BookedDatesResponse) and legacy format ({ bookedDates: string[] })
+    if ("fullDayBlocks" in bookedDatesData) {
+      // New format: only add full-day blocks
+      bookedDatesData.fullDayBlocks.forEach((date) => blocked.add(date));
+    } else if ("bookedDates" in bookedDatesData) {
+      // Legacy format: treat all as full-day blocks
+      bookedDatesData.bookedDates.forEach((date) => blocked.add(date));
+    }
   }
 
   return blocked;
@@ -231,59 +253,132 @@ export function isDateBlockedBySchedule(
  */
 export function calculatePartialAvailability(
   unavailability: UnavailabilityPeriod[] | null | undefined,
+  bookedDatesData:
+    | BookedDatesResponse
+    | { bookedDates: string[] }
+    | null
+    | undefined,
   startDate: Date,
   endDate: Date
 ): Map<string, PartialAvailability> {
   const partialAvailabilityMap = new Map<string, PartialAvailability>();
 
-  if (!unavailability || unavailability.length === 0) {
-    return partialAvailabilityMap;
+  // Process unavailability periods
+  if (unavailability && unavailability.length > 0) {
+    unavailability.forEach((period) => {
+      // Only process time-based unavailability (isAllDay=false)
+      if (period.isAllDay !== false || !period.startTime || !period.endTime) {
+        return;
+      }
+
+      // Parse date range
+      const periodStartStr =
+        typeof period.startDate === "string"
+          ? period.startDate
+          : formatDateYMD(period.startDate);
+      const periodEndStr =
+        typeof period.endDate === "string"
+          ? period.endDate
+          : formatDateYMD(period.endDate);
+
+      const startDateOnly = periodStartStr.split("T")[0];
+      const endDateOnly = periodEndStr.split("T")[0];
+
+      const [psy, psm, psd] = startDateOnly.split("-").map(Number);
+      const [pey, pem, ped] = endDateOnly.split("-").map(Number);
+      const periodStart = new Date(psy, psm - 1, psd);
+      const periodEnd = new Date(pey, pem - 1, ped);
+
+      // Check if this is a single-day or multi-day period
+      const isSingleDay =
+        formatDateYMD(periodStart) === formatDateYMD(periodEnd);
+
+      if (isSingleDay) {
+        // Single day: apply the time range directly
+        const dateStr = formatDateYMD(periodStart);
+        const existing = partialAvailabilityMap.get(dateStr);
+
+        if (existing) {
+          existing.unavailableTimeRanges.push({
+            startTime: period.startTime,
+            endTime: period.endTime,
+          });
+        } else {
+          partialAvailabilityMap.set(dateStr, {
+            date: dateStr,
+            unavailableTimeRanges: [
+              {
+                startTime: period.startTime,
+                endTime: period.endTime,
+              },
+            ],
+          });
+        }
+      } else {
+        // Multi-day period: handle edge days specially
+        const current = new Date(
+          Math.max(periodStart.getTime(), startDate.getTime())
+        );
+        const end = new Date(Math.min(periodEnd.getTime(), endDate.getTime()));
+
+        current.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+
+        while (current <= end) {
+          const dateStr = formatDateYMD(current);
+          const isFirstDay = dateStr === formatDateYMD(periodStart);
+          const isLastDay = dateStr === formatDateYMD(periodEnd);
+
+          let timeRange: { startTime: string; endTime: string };
+
+          if (isFirstDay) {
+            // First day: from specified start time to end of day
+            timeRange = {
+              startTime: period.startTime,
+              endTime: "23:59",
+            };
+          } else if (isLastDay) {
+            // Last day: from start of day to specified end time
+            timeRange = {
+              startTime: "00:00",
+              endTime: period.endTime,
+            };
+          } else {
+            // Middle days: entire day blocked
+            timeRange = {
+              startTime: "00:00",
+              endTime: "23:59",
+            };
+          }
+
+          const existing = partialAvailabilityMap.get(dateStr);
+
+          if (existing) {
+            existing.unavailableTimeRanges.push(timeRange);
+          } else {
+            partialAvailabilityMap.set(dateStr, {
+              date: dateStr,
+              unavailableTimeRanges: [timeRange],
+            });
+          }
+
+          current.setDate(current.getDate() + 1);
+        }
+      }
+    });
   }
 
-  unavailability.forEach((period) => {
-    // Only process time-based unavailability (isAllDay=false)
-    if (period.isAllDay !== false || !period.startTime || !period.endTime) {
-      return;
-    }
-
-    // Parse date range
-    const periodStartStr =
-      typeof period.startDate === "string"
-        ? period.startDate
-        : formatDateYMD(period.startDate);
-    const periodEndStr =
-      typeof period.endDate === "string"
-        ? period.endDate
-        : formatDateYMD(period.endDate);
-
-    const startDateOnly = periodStartStr.split("T")[0];
-    const endDateOnly = periodEndStr.split("T")[0];
-
-    const [psy, psm, psd] = startDateOnly.split("-").map(Number);
-    const [pey, pem, ped] = endDateOnly.split("-").map(Number);
-    const periodStart = new Date(psy, psm - 1, psd);
-    const periodEnd = new Date(pey, pem - 1, ped);
-
-    // Iterate through each date in the period
-    const current = new Date(
-      Math.max(periodStart.getTime(), startDate.getTime())
-    );
-    const end = new Date(Math.min(periodEnd.getTime(), endDate.getTime()));
-
-    current.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    while (current <= end) {
-      const dateStr = formatDateYMD(current);
-
-      // Get or create partial availability entry
+  // Process time-based bookings
+  if (bookedDatesData && "timeBasedBlocks" in bookedDatesData) {
+    bookedDatesData.timeBasedBlocks.forEach((block) => {
+      const dateStr = block.date;
       const existing = partialAvailabilityMap.get(dateStr);
 
       if (existing) {
         // Add time range to existing entry
         existing.unavailableTimeRanges.push({
-          startTime: period.startTime,
-          endTime: period.endTime,
+          startTime: block.startTime,
+          endTime: block.endTime,
         });
       } else {
         // Create new entry
@@ -291,16 +386,14 @@ export function calculatePartialAvailability(
           date: dateStr,
           unavailableTimeRanges: [
             {
-              startTime: period.startTime,
-              endTime: period.endTime,
+              startTime: block.startTime,
+              endTime: block.endTime,
             },
           ],
         });
       }
-
-      current.setDate(current.getDate() + 1);
-    }
-  });
+    });
+  }
 
   return partialAvailabilityMap;
 }

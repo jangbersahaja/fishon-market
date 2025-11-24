@@ -183,55 +183,99 @@ export default async function CharterViewPage({
   const endDate = new Date();
   endDate.setMonth(endDate.getMonth() + 3);
 
-  // Fetch booked dates from database
-  const bookedDatesData = await prisma.booking.findMany({
+  // Fetch booked dates using time-based booking format
+  const bookings = await prisma.booking.findMany({
     where: {
       charterId: id,
-      status: "PAID",
       date: {
         lte: endDate,
       },
+      OR: [
+        { status: "PAID" },
+        {
+          status: "PAYMENT_AUTHORIZED",
+          acknowledgmentDeadline: { gte: new Date() },
+        },
+      ],
     },
     select: {
       date: true,
       days: true,
+      startTime: true,
+      timeSlots: true,
     },
     orderBy: {
       date: "asc",
     },
   });
 
-  // Expand multi-day bookings into all blocked dates
-  // Use local Malaysia time (GMT+8) consistently
-  const bookedDatesSet = new Set<string>();
-  bookedDatesData.forEach((booking) => {
-    // Parse the date from DB as local date (not UTC)
-    const bookingDate = new Date(booking.date);
+  // Process bookings into full-day blocks and time-based blocks
+  const fullDayBlocks = new Set<string>();
+  const timeBasedBlocks: Array<{
+    date: string;
+    startTime: string;
+    endTime: string;
+  }> = [];
 
-    // Extract year, month, day in LOCAL time (Malaysia GMT+8)
-    const startYear = bookingDate.getFullYear();
-    const startMonth = bookingDate.getMonth();
-    const startDay = bookingDate.getDate();
+  bookings.forEach((booking) => {
+    const hasTimeBased =
+      booking.startTime &&
+      booking.timeSlots &&
+      Array.isArray(booking.timeSlots);
 
-    for (let i = 0; i < booking.days; i++) {
-      // Create new date in local time and add days
-      const blockedDate = new Date(startYear, startMonth, startDay + i);
+    if (hasTimeBased) {
+      // Time-based booking: add each time slot
+      const timeSlots = booking.timeSlots as Array<{
+        date: string;
+        startDateTime: string;
+        endDateTime: string;
+      }>;
 
-      if (blockedDate >= startDate && blockedDate <= endDate) {
-        const y = blockedDate.getFullYear();
-        const m = String(blockedDate.getMonth() + 1).padStart(2, "0");
-        const day = String(blockedDate.getDate()).padStart(2, "0");
-        bookedDatesSet.add(`${y}-${m}-${day}`);
+      timeSlots.forEach((slot) => {
+        const slotDate = new Date(slot.date);
+        if (slotDate >= startDate && slotDate <= endDate) {
+          const startTime = new Date(slot.startDateTime)
+            .toTimeString()
+            .substring(0, 5);
+          const endTime = new Date(slot.endDateTime)
+            .toTimeString()
+            .substring(0, 5);
+
+          timeBasedBlocks.push({
+            date: slot.date.split("T")[0],
+            startTime,
+            endTime,
+          });
+        }
+      });
+    } else {
+      // Full-day booking: block all days
+      const bookingDate = new Date(booking.date);
+      const startYear = bookingDate.getFullYear();
+      const startMonth = bookingDate.getMonth();
+      const startDay = bookingDate.getDate();
+
+      for (let i = 0; i < booking.days; i++) {
+        const blockedDate = new Date(startYear, startMonth, startDay + i);
+        if (blockedDate >= startDate && blockedDate <= endDate) {
+          const y = blockedDate.getFullYear();
+          const m = String(blockedDate.getMonth() + 1).padStart(2, "0");
+          const d = String(blockedDate.getDate()).padStart(2, "0");
+          fullDayBlocks.add(`${y}-${m}-${d}`);
+        }
       }
     }
   });
 
-  const bookedDates = Array.from(bookedDatesSet);
+  const bookedDatesData = {
+    fullDayBlocks: Array.from(fullDayBlocks).sort(),
+    timeBasedBlocks,
+  };
 
   const blockedDatesResult = calculateBlockedDates(
     charter?.schedule,
     charter?.unavailability,
-    bookedDates,
+    bookedDatesData,
     startDate,
     endDate
   );

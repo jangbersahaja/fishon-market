@@ -419,7 +419,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       const blockedDates = calculateBlockedDates(
         charterSchedule,
         charterUnavailability,
-        [], // Booked dates handled by conflict logic below
+        null, // Booked dates handled by conflict logic below
         startDate,
         endDate
       );

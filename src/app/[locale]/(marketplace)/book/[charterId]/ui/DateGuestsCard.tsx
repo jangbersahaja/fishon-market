@@ -1,7 +1,11 @@
 "use client";
 
 import CalendarPicker from "@/components/shared/CalendarPicker";
-import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import {
+  calculateBlockedDates,
+  calculatePartialAvailability,
+  type PartialAvailability,
+} from "@/lib/helpers/availability-helpers";
 import { getMinimumBookableDate } from "@/lib/helpers/booking-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
@@ -24,6 +28,8 @@ export default function DateGuestsCard({
   onChildrenChange,
   maxGuests,
   blockedDatesSet,
+  partialAvailability,
+  onPartialAvailabilityChange,
   dateError,
 }: {
   schedule?: CharterSchedule;
@@ -40,11 +46,25 @@ export default function DateGuestsCard({
   onChildrenChange: (v: number) => void;
   maxGuests?: number;
   blockedDatesSet?: Set<string>;
+  partialAvailability?: Map<string, PartialAvailability>;
+  onPartialAvailabilityChange?: (
+    partial: Map<string, PartialAvailability>
+  ) => void;
   dateError?: string;
 }) {
+  console.log("[DateGuestsCard] Component rendered", { charterId });
+
   const t = useTranslations("booking.checkout.dateGuests");
   const [open, setOpen] = useState<null | "days" | "guests">(null);
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [bookedDatesData, setBookedDatesData] = useState<{
+    fullDayBlocks: string[];
+    timeBasedBlocks: Array<{
+      date: string;
+      startTime: string;
+      endTime: string;
+      isFullDay: boolean;
+    }>;
+  } | null>(null);
 
   // Calculate minimum bookable date based on charter type
   const minBookableDate = useMemo(
@@ -55,9 +75,22 @@ export default function DateGuestsCard({
   // If blockedDatesSet is not provided, fetch and calculate it locally
   const shouldFetchLocally = !blockedDatesSet;
 
+  console.log("[DateGuestsCard] Fetch decision:", {
+    blockedDatesSet: !!blockedDatesSet,
+    shouldFetchLocally,
+    charterId,
+  });
+
   // Fetch booked dates from API (only if not provided by parent)
   useEffect(() => {
-    if (!shouldFetchLocally) return;
+    console.log("[DateGuestsCard] useEffect triggered", {
+      shouldFetchLocally,
+      charterId,
+    });
+    if (!shouldFetchLocally) {
+      console.log("[DateGuestsCard] Skipping fetch - parent provided data");
+      return;
+    }
 
     async function fetchBookedDates() {
       if (!charterId) return;
@@ -81,7 +114,24 @@ export default function DateGuestsCard({
 
         if (response.ok) {
           const data = await response.json();
-          setBookedDates(data.bookedDates || []);
+          console.log("[DateGuestsCard] Booked dates API response:", {
+            fullDayBlocks: data.fullDayBlocks?.length || 0,
+            timeBasedBlocks: data.timeBasedBlocks?.length || 0,
+            sample: data.timeBasedBlocks?.slice(0, 3),
+          });
+          // Support both new format and legacy format
+          if (data.fullDayBlocks) {
+            setBookedDatesData({
+              fullDayBlocks: data.fullDayBlocks,
+              timeBasedBlocks: data.timeBasedBlocks || [],
+            });
+          } else if (data.bookedDates) {
+            // Legacy format: convert to new structure
+            setBookedDatesData({
+              fullDayBlocks: data.bookedDates,
+              timeBasedBlocks: [],
+            });
+          }
         }
       } catch (error) {
         console.error("[DateGuestsCard] Failed to fetch booked dates:", error);
@@ -100,14 +150,63 @@ export default function DateGuestsCard({
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 3);
 
-    return calculateBlockedDates(
+    const blocked = calculateBlockedDates(
       schedule,
       unavailability,
-      bookedDates,
+      bookedDatesData,
       startDate,
       endDate
     );
-  }, [schedule, unavailability, bookedDates, shouldFetchLocally]);
+
+    console.log("[DateGuestsCard] Blocked dates calculated:", {
+      count: blocked.size,
+      sample: Array.from(blocked).slice(0, 5),
+    });
+
+    return blocked;
+  }, [schedule, unavailability, bookedDatesData, shouldFetchLocally]);
+
+  // Calculate partial availability (time-based unavailability)
+  // Only calculate if not provided by parent
+  const localPartialAvailability = useMemo(() => {
+    console.log("[DateGuestsCard] Calculating partial availability:", {
+      hasParentPartialAvailability: !!partialAvailability,
+      hasUnavailability: !!unavailability,
+      hasBookedDatesData: !!bookedDatesData,
+      bookedDatesDataKeys: bookedDatesData
+        ? Object.keys(bookedDatesData)
+        : null,
+    });
+
+    if (partialAvailability) return new Map();
+    if (!unavailability && !bookedDatesData) return new Map();
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+
+    const partial = calculatePartialAvailability(
+      unavailability,
+      bookedDatesData,
+      startDate,
+      endDate
+    );
+
+    console.log("[DateGuestsCard] Partial availability calculated:", {
+      count: partial.size,
+      dates: Array.from(partial.keys()).slice(0, 5),
+      sample: Array.from(partial.entries()).slice(0, 2),
+    });
+
+    return partial;
+  }, [unavailability, bookedDatesData, partialAvailability]);
+
+  // Notify parent when partial availability changes
+  useEffect(() => {
+    if (onPartialAvailabilityChange && localPartialAvailability.size > 0) {
+      onPartialAvailabilityChange(localPartialAvailability);
+    }
+  }, [localPartialAvailability, onPartialAvailabilityChange]);
 
   // Use provided blockedDatesSet or fallback to local calculation
   const blockedDates = useMemo(() => {
@@ -178,6 +277,9 @@ export default function DateGuestsCard({
             enableModeToggle={true}
             mode="single"
             blockedDates={blockedDates}
+            partialAvailability={
+              partialAvailability || localPartialAvailability
+            }
             buttonClassName={
               dateError
                 ? "border-red-500 hover:border-red-600"

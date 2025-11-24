@@ -482,7 +482,10 @@
         "upToAnglers": "Sehingga {count} pemancing",
         "forDays": "{days, plural, =1 {untuk # hari} other {untuk # hari}}",
         "targetSpecies": "Spesies Sasaran",
-        "techniques": "Teknik"
+        "techniques": "Teknik",
+        "unavailable": "Tidak tersedia",
+        "limitedAvailability": "Terhad",
+        "availableTimes": "Waktu Tersedia"
       },
       "dateGuests": {
         "title": "Tarikh & Tetamu Lawatan",

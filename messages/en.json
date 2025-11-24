@@ -482,7 +482,10 @@
         "upToAnglers": "Up to {count} anglers",
         "forDays": "for {days, plural, =1 {# day} other {# days}}",
         "targetSpecies": "Target Species",
-        "techniques": "Techniques"
+        "techniques": "Techniques",
+        "unavailable": "Unavailable",
+        "limitedAvailability": "Limited",
+        "availableTimes": "Available Times"
       },
       "dateGuests": {
         "title": "Trip Date & Guests",

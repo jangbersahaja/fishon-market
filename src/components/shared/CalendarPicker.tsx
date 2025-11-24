@@ -74,6 +74,19 @@ export default function CalendarPicker({
 }) {
   const [open, setOpen] = useState(false);
 
+  // Debug logging
+  useEffect(() => {
+    console.log(`[CalendarPicker:${className}] Props received:`, {
+      blockedDatesCount: blockedDates.size,
+      blockedDatesSample: Array.from(blockedDates).slice(0, 5),
+      partialAvailabilityCount: partialAvailability.size,
+      partialAvailabilitySample: Array.from(partialAvailability.keys()).slice(
+        0,
+        5
+      ),
+    });
+  }, [blockedDates, partialAvailability, className]);
+
   // Initialize mode based on initialDays
   const [currentMode, setCurrentMode] = useState<"single" | "range">(() => {
     if (initialDays && initialDays > 1) return "range";
@@ -176,7 +189,20 @@ export default function CalendarPicker({
 
   const hasPartialAvailability = (y: number, m: number, d: number) => {
     const dateStr = formatLocalYMD(new Date(y, m, d));
-    return partialAvailability.has(dateStr);
+    const hasIt = partialAvailability.has(dateStr);
+
+    // Debug logging for specific dates
+    if (dateStr.startsWith("2025-12-1") && hasIt) {
+      console.log(
+        `[CalendarPicker] Date ${dateStr} has partial availability:`,
+        {
+          unavailableRanges:
+            partialAvailability.get(dateStr)?.unavailableTimeRanges,
+        }
+      );
+    }
+
+    return hasIt;
   };
 
   const isInRange = (y: number, m: number, d: number) => {
@@ -389,6 +415,22 @@ export default function CalendarPicker({
                     viewMonth,
                     d
                   );
+
+                  // Debug logging for December dates
+                  const debugDateStr = formatLocalYMD(
+                    new Date(viewYear, viewMonth, d)
+                  );
+                  if (
+                    debugDateStr.startsWith("2025-12-1") &&
+                    (hasPartial || isBlockedDate)
+                  ) {
+                    console.log(`[CalendarPicker] Rendering ${debugDateStr}:`, {
+                      hasPartial,
+                      isBlockedDate,
+                      disabled,
+                      willShowOrangeDot: hasPartial && !disabled,
+                    });
+                  }
 
                   // Single mode selection
                   const isSel =
