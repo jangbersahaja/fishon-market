@@ -66,8 +66,6 @@ export default function TripSelectionCard({
 }: TripSelectionCardProps) {
   const t = useTranslations("booking.checkout.tripSelection");
 
-  if (!trips || trips.length === 0) return null;
-
   // Calculate trip availability based on time-based unavailability
   const tripsWithAvailability = useMemo(() => {
     const selectedDatePartial =
@@ -106,6 +104,9 @@ export default function TripSelectionCard({
       return { trip, isAvailable, availableStartTimes };
     });
   }, [trips, selectedDate, partialAvailability]);
+
+  // Early return after all hooks
+  if (!trips || trips.length === 0) return null;
 
   // Map species strings (id/english/local) to rich pill items with image + local name
   const mapSpeciesToPills = (list: string[]) =>

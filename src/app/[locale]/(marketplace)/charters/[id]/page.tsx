@@ -215,6 +215,7 @@ export default async function CharterViewPage({
     date: string;
     startTime: string;
     endTime: string;
+    isFullDay: boolean;
   }> = [];
 
   bookings.forEach((booking) => {
@@ -245,6 +246,7 @@ export default async function CharterViewPage({
             date: slot.date.split("T")[0],
             startTime,
             endTime,
+            isFullDay: false,
           });
         }
       });
