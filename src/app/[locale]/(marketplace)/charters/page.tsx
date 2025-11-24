@@ -3,9 +3,9 @@ import { getCharters } from "@/lib/services/charter-service";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
-export default async function ViewIndex() {
+export default async function ChartersPage() {
   const locale = await getLocale();
-  const t = await getTranslations("charter");
+  const t = await getTranslations({ locale, namespace: "charter" });
   const charters = await getCharters();
   const first = charters[0];
 

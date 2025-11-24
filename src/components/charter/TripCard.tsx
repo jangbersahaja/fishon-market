@@ -1,4 +1,5 @@
 import { convert24to12Hour } from "@/lib/helpers/booking-helpers";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { TripSpeciesSection } from "./TripSpeciesSection";
 import { TripTechniquesSection } from "./TripTechniquesSection";
@@ -30,6 +31,7 @@ export const TripCard: React.FC<TripCardProps> = ({
   showSpecies = true,
   showTechniques = true,
 }) => {
+  const t = useTranslations("charter.trip");
   return (
     <div
       id={id}
@@ -43,20 +45,21 @@ export const TripCard: React.FC<TripCardProps> = ({
           </div>
           <div className="flex items-center gap-3 md:ml-4">
             <span className="text-base font-semibold text-primary whitespace-nowrap">
-              RM {price}/Day
+              RM {price}
+              {t("perDay")}
             </span>
           </div>
         </div>
         <div className="flex-1 min-w-0">
           <p className="mt-0.5 text-sm text-gray-600">
             {duration}
-            {maxAnglers && ` • Up to ${maxAnglers} anglers`}
+            {maxAnglers && ` • ${t("upToAnglers", { count: maxAnglers })}`}
           </p>
         </div>
         {/* Start Times */}
         {startTimes && startTimes.length > 0 && (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500">Start Times:</span>
+            <span className="text-xs text-gray-500">{t("startTimes")}</span>
             <div className="flex flex-wrap gap-1">
               {startTimes.map((time) => (
                 <span

@@ -6,6 +6,7 @@ import { getMinimumBookableDate } from "@/lib/helpers/booking-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { CharterSchedule, UnavailabilityPeriod } from "@fishon/ui";
 import { ChevronDown, Minus, Plus, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 export default function DateGuestsCard({
@@ -41,6 +42,7 @@ export default function DateGuestsCard({
   blockedDatesSet?: Set<string>;
   dateError?: string;
 }) {
+  const t = useTranslations("booking.checkout.dateGuests");
   const [open, setOpen] = useState<null | "days" | "guests">(null);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
 
@@ -150,9 +152,7 @@ export default function DateGuestsCard({
 
   return (
     <section className="relative pb-5 border-b border-black/10">
-      <h2 className="mb-4 text-base font-semibold sm:text-lg">
-        Trip Date & Guests
-      </h2>
+      <h2 className="mb-4 text-base font-semibold sm:text-lg">{t("title")}</h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-9">
         {/* Date field (uses shared CalendarPicker with built-in dropdown) */}
@@ -189,14 +189,14 @@ export default function DateGuestsCard({
           )}
           {!dateError && days > 1 && (
             <p className="mt-1 text-[10px] text-gray-500">
-              {days} consecutive days selected
+              {t("consecutiveDays", { days })}
             </p>
           )}
           {!dateError && (
             <p className="mt-1 text-[10px] text-gray-600">
               {charterType?.toUpperCase() === "OFFSHORE"
-                ? "Offshore trips require 36 hours advance booking"
-                : "Bookings must be made 24 hours in advance"}
+                ? t("offshoreNotice")
+                : t("standardNotice")}
             </p>
           )}
         </div>
@@ -210,7 +210,9 @@ export default function DateGuestsCard({
             aria-haspopup="dialog"
             aria-expanded={open === "days"}
           >
-            <span className="text-xs font-medium text-gray-700">Days</span>
+            <span className="text-xs font-medium text-gray-700">
+              {t("days")}
+            </span>
             <span className="text-sm text-gray-900">{days}</span>
             <ChevronDown className="w-4 h-4 ml-2 text-gray-500" />
           </button>
@@ -270,7 +272,7 @@ export default function DateGuestsCard({
               <div className="flex items-center justify-between gap-4">
                 {/* Adults */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">Adults</span>
+                  <span className="text-xs text-gray-600">{t("adults")}</span>
                   <button
                     type="button"
                     onClick={() => onAdultsChange(clampAdults(adults - 1))}
@@ -296,7 +298,7 @@ export default function DateGuestsCard({
 
                 {/* Children */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">Children</span>
+                  <span className="text-xs text-gray-600">{t("children")}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -326,12 +328,12 @@ export default function DateGuestsCard({
               </div>
               {typeof maxGuests === "number" && (
                 <p className="mt-2 text-[11px] text-gray-500">
-                  Max {maxGuests} guests.
+                  {t("maxGuests", { max: maxGuests })}
                 </p>
               )}
               {overMax && (
                 <p className="mt-1 text-[11px] text-red-600">
-                  You’ve exceeded the maximum capacity.
+                  {t("exceededCapacity")}
                 </p>
               )}
               <div className="flex justify-end mt-3">
@@ -340,7 +342,7 @@ export default function DateGuestsCard({
                   onClick={() => setOpen(null)}
                   className="px-3 py-1.5 text-sm font-medium text-white rounded-md bg-[#ec2227]"
                 >
-                  Done
+                  {t("done")}
                 </button>
               </div>
             </div>

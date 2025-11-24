@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import React from "react";
 
 const TECHNIQUE_LABELS: Record<string, string> = {
@@ -22,11 +25,14 @@ interface TripTechniquesSectionProps {
 export const TripTechniquesSection: React.FC<TripTechniquesSectionProps> = ({
   techniques,
 }) => {
+  const t = useTranslations("charter.techniques");
+
   if (!techniques.length) return null;
+
   return (
     <div>
       <div className="mb-1 text-xs font-semibold tracking-wide text-gray-600 uppercase">
-        Techniques
+        {t("title")}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {techniques.map((tech) => (

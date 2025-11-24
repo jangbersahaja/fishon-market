@@ -1,0 +1,21 @@
+// Charter components barrel export
+export { default as AboutSection } from "./AboutSection";
+export { default as AmenitiesCard } from "./AmenitiesCard";
+export { default as BoatCard } from "./BoatCard";
+export { default as BookingWidget } from "./BookingWidget";
+export { default as CaptainSection } from "./CaptainSection";
+export { CharterViewTracker } from "./CharterViewTracker";
+export { default as EnhancedReviewsList } from "./EnhancedReviewsList";
+export { GalleryTabs } from "./GalleryTabs";
+export { GuestFeedback } from "./GuestFeedback";
+export { LazySection } from "./LazySection";
+export { default as LocationMap } from "./LocationMap";
+export { OperationalScheduleCard } from "./OperationalScheduleCard";
+export { PhotoGallery } from "./PhotoGallery";
+export { default as PoliciesCard } from "./PoliciesCard";
+export { default as ReviewsList } from "./ReviewsList";
+export { ShareButton } from "./ShareButton";
+export { TripCard } from "./TripCard";
+export { TripSpeciesSection } from "./TripSpeciesSection";
+export { TripTechniquesSection } from "./TripTechniquesSection";
+export { VideoGallery } from "./VideoGallery";

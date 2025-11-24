@@ -13,14 +13,18 @@ export default function Chrome({ children }: { children: ReactNode }) {
   const isAuthenticated = !!session?.user;
 
   // 1) Hide Navbar & Footer on main page
-  const hideChrome = pathname === "/";
+  const hideChrome = pathname === "/my" || pathname === "/en";
 
   // 2) Transparent on top for hero pages (e.g., home pages)
-  const transparentOnTop = pathname.startsWith("/home");
+  const transparentOnTop =
+    pathname.startsWith("/my/home") || pathname.startsWith("/en/home");
 
   // 3) Show AccountNav for authenticated users on all pages (except auth pages)
   const showAccountNav =
-    isAuthenticated && !pathname.startsWith("/auth") && !hideChrome;
+    isAuthenticated &&
+    !pathname.startsWith("/my/auth") &&
+    !pathname.startsWith("/en/auth") &&
+    !hideChrome;
 
   if (hideChrome) return <> {children}</>;
 

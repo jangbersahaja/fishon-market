@@ -1,13 +1,15 @@
+import { PaymentGuard } from "@/components/payment/PaymentGuard";
 import { PaymentPreviewForm } from "@/components/payment/PaymentPreviewForm";
 import { PaymentSessionTimer } from "@/components/payment/PaymentSessionTimer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth/auth";
+import { prisma } from "@/lib/database/prisma";
 import { buildBookingPreviewSummary } from "@/lib/helpers/booking-preview-summary";
+import { isForceMockMode } from "@/lib/payment/senangpay";
 import { getCharterById } from "@/lib/services/charter-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
-import { isForceMockMode } from "@/lib/payment/senangpay";
 import {
   AlertCircle,
   Calendar,
@@ -19,12 +21,11 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 // Session timeout: 30 minutes
 const PAYMENT_SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-const PAYMENT_SESSION_TIMEOUT_MINUTES =
-  PAYMENT_SESSION_TIMEOUT_MS / (60 * 1000);
 
 interface BookingPreviewData {
   charterId: string;
@@ -70,16 +71,21 @@ export default async function PaymentPreviewPage({
 }) {
   const sp = await searchParams;
   const session = await auth();
+  const locale = await getLocale();
+  const t = await getTranslations({
+    locale,
+    namespace: "booking.paymentPreview",
+  });
 
   // Decode booking data
   const encodedData = sp.data;
   if (!encodedData) {
-    redirect("/");
+    redirect(`/${locale}/home`);
   }
 
   const bookingData = decodeBookingData(encodedData);
   if (!bookingData) {
-    redirect("/");
+    redirect(`/${locale}/home`);
   }
 
   // Check session timeout
@@ -88,21 +94,48 @@ export default async function PaymentPreviewPage({
     bookingData.sessionStart + PAYMENT_SESSION_TIMEOUT_MS;
   if (now > sessionExpiresAt) {
     redirect(
-      `/book/${bookingData.charterId}?error=session_expired&message=${encodeURIComponent(
+      `/${locale}/book/${bookingData.charterId}?error=session_expired&message=${encodeURIComponent(
         "Your payment session expired. Please submit your booking details again."
       )}`
     );
   }
 
+  // Check if booking already exists for this session (prevent duplicate payments)
+  // Match by: tripId, date, user (via email), and recent creation time
+  const existingBooking = await prisma.booking.findFirst({
+    where: {
+      tripId: bookingData.tripId,
+      date: new Date(bookingData.date),
+      // Match user by email (works for both authenticated and guest users)
+      user: {
+        email: bookingData.email,
+      },
+      // Only check recent bookings (within session window)
+      createdAt: {
+        gte: new Date(bookingData.sessionStart),
+      },
+      // Exclude cancelled or failed bookings
+      status: {
+        notIn: ["CANCELLED", "REJECTED"],
+      },
+    },
+    select: { id: true },
+  });
+
+  if (existingBooking) {
+    // Booking already exists - redirect to confirmation page
+    redirect(`/${locale}/book/confirm?id=${existingBooking.id}`);
+  }
+
   // Fetch charter and trip details
   const charter = await getCharterById(bookingData.charterId);
   if (!charter) {
-    redirect("/");
+    redirect(`/${locale}/home`);
   }
 
   const trip = await getTripById(bookingData.tripId);
   if (!trip) {
-    redirect("/");
+    redirect(`/${locale}/home`);
   }
 
   // Calculate pricing (snapshot - will be re-validated on submit)
@@ -171,6 +204,15 @@ export default async function PaymentPreviewPage({
 
   return (
     <main className="bg-slate-50">
+      <PaymentGuard
+        sessionData={{
+          tripId: bookingData.tripId,
+          date: bookingData.date,
+          email: bookingData.email,
+          sessionStart: bookingData.sessionStart,
+        }}
+        locale={locale}
+      />
       <div className="w-full px-4 py-8 mx-auto max-w-7xl sm:px-6">
         <PaymentSessionTimer
           expiresAt={expiresAt}
@@ -180,22 +222,20 @@ export default async function PaymentPreviewPage({
         <header className="pb-6 space-y-3 border-b border-border">
           <div className="space-y-2">
             <p className="text-sm font-semibold tracking-wide uppercase text-primary">
-              Payment Preview
+              {t("header.badge")}
             </p>
             <h1 className="text-3xl font-bold tracking-tight">
-              Review & Complete Payment
+              {t("header.title")}
             </h1>
-            <p className="text-muted-foreground">
-              Double-check your itinerary, traveling party, and policies before
-              submitting payment.
-            </p>
+            <p className="text-muted-foreground">{t("header.description")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Badge variant="outline" className="border-primary/40 text-primary">
-              Session active
+              {t("header.sessionActive")}
             </Badge>
             <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" /> Hold ends {formattedExpiryLabel}
+              <Clock className="h-3.5 w-3.5" />{" "}
+              {t("header.holdEnds", { date: formattedExpiryLabel })}
             </span>
           </div>
         </header>
@@ -209,10 +249,10 @@ export default async function PaymentPreviewPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Trip Summary
+                    {t("tripSummary.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Matches what you&apos;ll see on the confirmation screen.
+                    {t("tripSummary.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -221,7 +261,7 @@ export default async function PaymentPreviewPage({
                       <MapPin className="mt-0.5 h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-                          Charter
+                          {t("tripSummary.charter")}
                         </p>
                         <p className="text-lg font-semibold">
                           {bookingSummary.charter.name}
@@ -230,7 +270,7 @@ export default async function PaymentPreviewPage({
                           {bookingSummary.charter.location}
                         </p>
                         <p className="inline-flex items-center gap-2 mt-2 text-xs font-medium text-muted-foreground">
-                          Trip
+                          {t("tripSummary.trip")}
                           <Badge
                             variant="secondary"
                             className="text-xs font-semibold"
@@ -245,7 +285,7 @@ export default async function PaymentPreviewPage({
                       <Calendar className="mt-0.5 h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-                          Schedule
+                          {t("tripSummary.schedule")}
                         </p>
                         <p className="font-semibold">
                           {bookingSummary.schedule.primaryDateLabel}
@@ -271,7 +311,7 @@ export default async function PaymentPreviewPage({
                       <Users className="mt-0.5 h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-                          Guests
+                          {t("tripSummary.guests")}
                         </p>
                         <p className="font-semibold">
                           {bookingSummary.guests.totalLabel}
@@ -286,7 +326,7 @@ export default async function PaymentPreviewPage({
                   {bookingSummary.note && (
                     <div className="p-4 border rounded-lg bg-muted/40">
                       <p className="mb-1 text-sm font-semibold tracking-wide uppercase text-muted-foreground">
-                        Special requests
+                        {t("tripSummary.specialRequests")}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {bookingSummary.note}
@@ -299,10 +339,10 @@ export default async function PaymentPreviewPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Pricing Snapshot
+                    {t("pricingSnapshot.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    We&apos;ll re-validate these totals right before the charge.
+                    {t("pricingSnapshot.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -310,25 +350,25 @@ export default async function PaymentPreviewPage({
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
                         {trip.name} × {bookingData.days}{" "}
-                        {bookingData.days === 1 ? "day" : "days"}
+                        {t("pricingSnapshot.day", { count: bookingData.days })}
                       </dt>
                       <dd>RM {pricing.subtotal.toFixed(2)}</dd>
                     </div>
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
-                        Platform fee (10%)
+                        {t("pricingSnapshot.platformFee")}
                       </dt>
                       <dd>RM {pricing.platformFee.toFixed(2)}</dd>
                     </div>
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
-                        Payment gateway fee (1.5%)
+                        {t("pricingSnapshot.paymentGatewayFee")}
                       </dt>
                       <dd>RM {pricing.paymentGatewayFee.toFixed(2)}</dd>
                     </div>
                     <div className="pt-3 border-t">
                       <div className="flex items-center justify-between text-lg font-semibold">
-                        <span>Total</span>
+                        <span>{t("pricingSnapshot.total")}</span>
                         <span className="flex items-center gap-1">
                           RM {pricing.finalPrice.toFixed(2)}
                         </span>
@@ -339,11 +379,7 @@ export default async function PaymentPreviewPage({
                   <div className="p-3 text-xs border rounded-lg bg-muted/40 text-muted-foreground">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-4 h-4" />
-                      <span>
-                        Availability, pricing, and card authorization are
-                        checked again before your payment is sent to the
-                        captain.
-                      </span>
+                      <span>{t("pricingSnapshot.validationNote")}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -352,10 +388,10 @@ export default async function PaymentPreviewPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Complete Payment
+                    {t("completePayment.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Charges remain pending until the captain confirms your trip.
+                    {t("completePayment.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -371,10 +407,7 @@ export default async function PaymentPreviewPage({
                   <div className="p-4 space-y-3 text-xs border rounded-lg bg-muted/30 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-primary" />
-                      <span>
-                        Payments are encrypted and never stored on Fishon
-                        servers.
-                      </span>
+                      <span>{t("completePayment.securityNote")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <UserRound className="w-4 h-4 text-primary" />
@@ -382,11 +415,7 @@ export default async function PaymentPreviewPage({
                     </div>
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 text-primary" />
-                      <span>
-                        We attach this session metadata (participants, pricing
-                        snapshot, and contact details) to the payment so the
-                        captain can review before authorizing.
-                      </span>
+                      <span>{t("completePayment.metadataNote")}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -397,17 +426,16 @@ export default async function PaymentPreviewPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Contacts
+                    {t("contacts.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    We&apos;ll send confirmations, reminders, and hold updates
-                    to this person.
+                    {t("contacts.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-6 text-sm">
                   <div className="p-4 border border-dashed rounded-xl bg-muted/40">
                     <div className="flex items-center justify-between text-xs tracking-wide uppercase text-muted-foreground">
-                      <span>Primary contact</span>
+                      <span>{t("contacts.primaryContact")}</span>
                       <Badge
                         variant="outline"
                         className="text-[10px] uppercase tracking-wide"
@@ -418,15 +446,15 @@ export default async function PaymentPreviewPage({
                     <dl className="mt-3 space-y-2">
                       <div className="flex items-center justify-between gap-3">
                         <dt className="flex items-center gap-2 text-muted-foreground">
-                          <UserRound className="w-4 h-4" /> Name
+                          <UserRound className="w-4 h-4" /> {t("contacts.name")}
                         </dt>
                         <dd className="font-medium text-right">
-                          {contactName || "Guest"}
+                          {contactName || t("contacts.guest")}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <dt className="flex items-center gap-2 text-muted-foreground">
-                          <Mail className="w-4 h-4" /> Email
+                          <Mail className="w-4 h-4" /> {t("contacts.email")}
                         </dt>
                         <dd className="font-medium text-right">
                           {bookingData.email}
@@ -434,7 +462,7 @@ export default async function PaymentPreviewPage({
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <dt className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="w-4 h-4" /> Phone
+                          <Phone className="w-4 h-4" /> {t("contacts.phone")}
                         </dt>
                         <dd className="font-medium text-right">
                           {bookingData.phone}
@@ -445,25 +473,34 @@ export default async function PaymentPreviewPage({
 
                   <div className="p-4 border rounded-xl bg-muted/30">
                     <div className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-                      Emergency contact
+                      {t("contacts.emergencyContact")}
                     </div>
                     <dl className="mt-3 space-y-2">
                       <div className="flex items-center justify-between gap-3">
-                        <dt className="text-muted-foreground">Name</dt>
+                        <dt className="text-muted-foreground">
+                          {t("contacts.name")}
+                        </dt>
                         <dd className="font-medium text-right">
-                          {bookingData.emergencyName || "Not provided"}
+                          {bookingData.emergencyName ||
+                            t("contacts.notProvided")}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <dt className="text-muted-foreground">Relationship</dt>
+                        <dt className="text-muted-foreground">
+                          {t("contacts.relationship")}
+                        </dt>
                         <dd className="font-medium text-right">
-                          {bookingData.emergencyRelation || "Not provided"}
+                          {bookingData.emergencyRelation ||
+                            t("contacts.notProvided")}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <dt className="text-muted-foreground">Phone</dt>
+                        <dt className="text-muted-foreground">
+                          {t("contacts.phone")}
+                        </dt>
                         <dd className="font-medium text-right">
-                          {bookingData.emergencyPhone || "Not provided"}
+                          {bookingData.emergencyPhone ||
+                            t("contacts.notProvided")}
                         </dd>
                       </div>
                     </dl>
@@ -474,11 +511,10 @@ export default async function PaymentPreviewPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Participants
+                    {t("participants.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Verify everyone on board. Edit participants before paying if
-                    anything changed.
+                    {t("participants.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -490,15 +526,17 @@ export default async function PaymentPreviewPage({
                       <div>
                         <p className="font-medium">{participant.name}</p>
                         <p className="text-muted-foreground">
-                          {participant.phone || "No phone provided"}
+                          {participant.phone || t("participants.noPhone")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {participant.isBooker && (
-                          <Badge variant="secondary">Booker</Badge>
+                          <Badge variant="secondary">
+                            {t("participants.booker")}
+                          </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">
-                          Participant {index + 1}
+                          {t("participants.participant")} {index + 1}
                         </span>
                       </div>
                     </div>
@@ -509,11 +547,10 @@ export default async function PaymentPreviewPage({
               <Card>
                 <CardHeader>
                   <CardTitle role="heading" aria-level={2}>
-                    Cancellation Policy
+                    {t("cancellationPolicy.title")}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Highlights from the captain&apos;s policy. Full terms arrive
-                    in your receipt.
+                    {t("cancellationPolicy.description")}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">

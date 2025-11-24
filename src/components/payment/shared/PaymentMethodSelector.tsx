@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Beaker, Building2, CreditCard } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface PaymentMethodSelectorProps {
   paymentMethod: string;
@@ -33,6 +34,8 @@ export function PaymentMethodSelector({
   onCardExpYearChange,
   onCardCvvChange,
 }: PaymentMethodSelectorProps) {
+  const t = useTranslations("booking.payment.paymentMethod");
+
   return (
     <div className="space-y-6">
       <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
@@ -45,8 +48,10 @@ export function PaymentMethodSelector({
           >
             <CreditCard className="w-5 h-5 text-muted-foreground" />
             <div>
-              <p className="font-semibold">Credit/Debit Card</p>
-              <p className="text-sm text-muted-foreground">Visa, Mastercard</p>
+              <p className="font-semibold">{t("card.title")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("card.description")}
+              </p>
             </div>
           </Label>
         </div>
@@ -60,9 +65,9 @@ export function PaymentMethodSelector({
           >
             <Building2 className="w-5 h-5 text-muted-foreground" />
             <div>
-              <p className="font-semibold">Online Banking & E-Wallet</p>
+              <p className="font-semibold">{t("fpx.title")}</p>
               <p className="text-sm text-muted-foreground">
-                FPX, Touch &#39;n Go, GrabPay, etc.
+                {t("fpx.description")}
               </p>
             </div>
           </Label>
@@ -78,9 +83,9 @@ export function PaymentMethodSelector({
             >
               <Beaker className="w-5 h-5 text-amber-600" />
               <div>
-                <p className="font-semibold">Mock Payment (Dev Only)</p>
+                <p className="font-semibold">{t("mock.title")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Skips gateway for local testing
+                  {t("mock.description")}
                 </p>
               </div>
             </Label>
@@ -93,7 +98,7 @@ export function PaymentMethodSelector({
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="cardNumber">Card Number</Label>
+              <Label htmlFor="cardNumber">{t("cardForm.cardNumber")}</Label>
               <Input
                 id="cardNumber"
                 placeholder="1234 5678 9012 3456"
@@ -106,7 +111,7 @@ export function PaymentMethodSelector({
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="expMonth">Month</Label>
+                <Label htmlFor="expMonth">{t("cardForm.month")}</Label>
                 <Input
                   id="expMonth"
                   placeholder="MM"
@@ -117,7 +122,7 @@ export function PaymentMethodSelector({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="expYear">Year</Label>
+                <Label htmlFor="expYear">{t("cardForm.year")}</Label>
                 <Input
                   id="expYear"
                   placeholder="YY"
@@ -128,7 +133,7 @@ export function PaymentMethodSelector({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cvv">CVV</Label>
+                <Label htmlFor="cvv">{t("cardForm.cvv")}</Label>
                 <Input
                   id="cvv"
                   placeholder="123"

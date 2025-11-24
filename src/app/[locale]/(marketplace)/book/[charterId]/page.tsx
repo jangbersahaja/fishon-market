@@ -5,11 +5,13 @@ import {
   getCharterById,
   getCharterFlowType,
 } from "@/lib/services/charter-service";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import CheckoutForm from "./ui/CheckoutForm";
 
 type RouteParams = Promise<{
   charterId: string;
+  locale: string;
 }>;
 
 type RouteSearchParams = Promise<{
@@ -30,6 +32,8 @@ export default async function CheckoutPage({
   params: RouteParams;
   searchParams: RouteSearchParams;
 }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "booking.checkout" });
   const session = await auth();
   const { charterId } = await params;
   const sp = await searchParams;
@@ -155,10 +159,10 @@ export default async function CheckoutPage({
     <main className="w-full min-h-screen mx-auto bg-slate-50">
       <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 ">
         <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
-          Complete Your Booking
+          {t("pageTitle")}
         </h1>
         <p className="mb-6 text-sm text-gray-600 sm:text-base">
-          Review your trip details and tell the captain about yourself
+          {t("pageSubtitle")}
         </p>
 
         <CheckoutForm

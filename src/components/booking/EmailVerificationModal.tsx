@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Mail, ShieldCheck, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ChangeEvent, useEffect, useState } from "react";
 
 interface EmailVerificationModalProps {
@@ -19,6 +20,7 @@ export function EmailVerificationModal({
   action,
   bookingEmail,
 }: EmailVerificationModalProps) {
+  const t = useTranslations("booking.actions.emailVerification");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(
@@ -48,16 +50,14 @@ export function EmailVerificationModal({
       handleClose();
     } catch (err: any) {
       const errorData = err.response?.data || err;
-      setError(errorData.error || "Verification failed");
+      setError(errorData.error || t("verificationFailed"));
 
       if (errorData.attemptsRemaining !== undefined) {
         setAttemptsRemaining(errorData.attemptsRemaining);
       }
 
       if (errorData.retryAfter) {
-        setError(
-          `Too many attempts. Please try again in ${errorData.retryAfter} minute(s).`
-        );
+        setError(t("tooManyAttempts", { minutes: errorData.retryAfter }));
       }
     } finally {
       setLoading(false);
@@ -74,9 +74,9 @@ export function EmailVerificationModal({
   if (!isOpen) return null;
 
   const actionText = {
-    cancel: "cancel this booking",
-    download: "download the receipt",
-    modify: "modify this booking",
+    cancel: t("actionCancel"),
+    download: t("actionDownload"),
+    modify: t("actionModify"),
   }[action];
 
   const maskedEmail =
@@ -96,7 +96,7 @@ export function EmailVerificationModal({
           onClick={handleClose}
           className="absolute text-gray-400 top-4 right-4 hover:text-gray-600"
           disabled={loading}
-          aria-label="Close"
+          aria-label={t("close")}
         >
           <X className="w-5 h-5" />
         </button>
@@ -108,12 +108,11 @@ export function EmailVerificationModal({
               <ShieldCheck className="w-6 h-6 text-blue-600" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Verify Your Email
+              {t("title")}
             </h2>
           </div>
           <p className="text-sm text-gray-600">
-            To {actionText}, please verify that you have access to the email
-            address used for this booking.
+            {t("description", { action: actionText })}
           </p>
         </div>
 
@@ -124,14 +123,14 @@ export function EmailVerificationModal({
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              Email Address
+              {t("emailLabel")}
             </label>
             <div className="relative">
               <Mail className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
               <input
                 id="email"
                 type="email"
-                placeholder={`Enter email (e.g., ${maskedEmail})`}
+                placeholder={t("emailPlaceholder", { maskedEmail })}
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEmail(e.target.value)
@@ -145,9 +144,7 @@ export function EmailVerificationModal({
                 autoFocus
               />
             </div>
-            <p className="text-xs text-gray-500">
-              This must match the email used when creating the booking.
-            </p>
+            <p className="text-xs text-gray-500">{t("emailHint")}</p>
           </div>
 
           {error && (
@@ -157,7 +154,7 @@ export function EmailVerificationModal({
                 <p className="text-sm text-red-800">{error}</p>
                 {attemptsRemaining !== null && attemptsRemaining > 0 && (
                   <p className="mt-1 text-xs text-red-600">
-                    {attemptsRemaining} attempt(s) remaining
+                    {t("attemptsRemaining", { count: attemptsRemaining })}
                   </p>
                 )}
               </div>
@@ -166,10 +163,7 @@ export function EmailVerificationModal({
 
           {attemptsRemaining === 0 && (
             <div className="p-3 border border-yellow-200 rounded-lg bg-yellow-50">
-              <p className="text-sm text-yellow-800">
-                <strong>Too many failed attempts.</strong> Please wait before
-                trying again or contact support if you need help.
-              </p>
+              <p className="text-sm text-yellow-800">{t("lockedOut")}</p>
             </div>
           )}
         </div>
@@ -182,14 +176,14 @@ export function EmailVerificationModal({
             disabled={loading}
             className="flex-1"
           >
-            Cancel
+            {t("../cancellationDialog.cancelButton")}
           </Button>
           <Button
             onClick={handleVerify}
             disabled={!email || loading || attemptsRemaining === 0}
             className="flex-1 bg-[#ec2227] hover:bg-[#d11e22] text-white"
           >
-            {loading ? "Verifying..." : "Verify & Continue"}
+            {loading ? t("verifying") : t("verifyAndContinue")}
           </Button>
         </div>
       </div>

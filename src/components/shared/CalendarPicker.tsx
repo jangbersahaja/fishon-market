@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { IoCalendarClear } from "react-icons/io5";
 
@@ -39,6 +40,11 @@ interface RangeValue {
   endDate: string;
 }
 
+export interface PartialAvailability {
+  date: string; // YYYY-MM-DD
+  unavailableTimeRanges: { startTime: string; endTime: string }[]; // HH:MM format
+}
+
 export default function CalendarPicker({
   value,
   onChange,
@@ -46,6 +52,7 @@ export default function CalendarPicker({
   disablePast = true,
   minDate,
   blockedDates = new Set(),
+  partialAvailability = new Map(),
   className = "",
   buttonClassName = "",
   mode = "single",
@@ -57,7 +64,8 @@ export default function CalendarPicker({
   onRangeChange?: (range: RangeValue) => void; // For range mode
   disablePast?: boolean;
   minDate?: Date; // Minimum selectable date (overrides disablePast)
-  blockedDates?: Set<string>; // Set of YYYY-MM-DD date strings to block
+  blockedDates?: Set<string>; // Set of YYYY-MM-DD date strings to block (full day)
+  partialAvailability?: Map<string, PartialAvailability>; // Map of dates with time-based unavailability
   className?: string;
   buttonClassName?: string; // style the trigger if needed
   mode?: "single" | "range"; // Default mode
@@ -166,6 +174,11 @@ export default function CalendarPicker({
     return blockedDates.has(dateStr);
   };
 
+  const hasPartialAvailability = (y: number, m: number, d: number) => {
+    const dateStr = formatLocalYMD(new Date(y, m, d));
+    return partialAvailability.has(dateStr);
+  };
+
   const isInRange = (y: number, m: number, d: number) => {
     if (!rangeStart || !rangeEnd) return false;
     const date = new Date(y, m, d);
@@ -204,21 +217,31 @@ export default function CalendarPicker({
     }
   };
 
+  const t = useTranslations("booking.calendar");
+
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    t("months.january"),
+    t("months.february"),
+    t("months.march"),
+    t("months.april"),
+    t("months.may"),
+    t("months.june"),
+    t("months.july"),
+    t("months.august"),
+    t("months.september"),
+    t("months.october"),
+    t("months.november"),
+    t("months.december"),
   ];
-  const dow = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const dow = [
+    t("days.sun"),
+    t("days.mon"),
+    t("days.tue"),
+    t("days.wed"),
+    t("days.thu"),
+    t("days.fri"),
+    t("days.sat"),
+  ];
 
   // Display text for button
   const buttonText = useMemo(() => {
@@ -228,7 +251,7 @@ export default function CalendarPicker({
         const end = DISPLAY_FORMATTER.format(rangeEnd);
         return `${start} - ${end}`;
       } catch {
-        return "Select date range";
+        return t("selectDateRange");
       }
     } else if (currentMode === "single" && value) {
       try {
@@ -237,8 +260,8 @@ export default function CalendarPicker({
         return value;
       }
     }
-    return currentMode === "range" ? "Select date range" : "Select date";
-  }, [currentMode, rangeStart, rangeEnd, value]);
+    return currentMode === "range" ? t("selectDateRange") : t("selectDate");
+  }, [currentMode, rangeStart, rangeEnd, value, t]);
 
   return (
     <div className={["relative", className].join(" ")}>
@@ -268,7 +291,7 @@ export default function CalendarPicker({
       {open && (
         <div
           role="dialog"
-          aria-label="Choose date"
+          aria-label={t("chooseDate")}
           className="absolute z-20 mt-2 w-[min(20rem,100%)] rounded-xl border border-black/10 bg-white shadow-lg"
         >
           {/* Mode Toggle (if enabled) */}
@@ -288,7 +311,7 @@ export default function CalendarPicker({
                     : "text-gray-600 hover:bg-gray-100",
                 ].join(" ")}
               >
-                Single Day
+                {t("singleDay")}
               </button>
               <button
                 type="button"
@@ -304,7 +327,7 @@ export default function CalendarPicker({
                     : "text-gray-600 hover:bg-gray-100",
                 ].join(" ")}
               >
-                Multi Day
+                {t("multiDay")}
               </button>
             </div>
           )}
@@ -322,7 +345,7 @@ export default function CalendarPicker({
                   setViewMonth((m) => m - 1);
                 }
               }}
-              aria-label="Previous month"
+              aria-label={t("previousMonth")}
             >
               ‹
             </button>
@@ -340,7 +363,7 @@ export default function CalendarPicker({
                   setViewMonth((m) => m + 1);
                 }
               }}
-              aria-label="Next month"
+              aria-label={t("nextMonth")}
             >
               ›
             </button>
@@ -361,6 +384,11 @@ export default function CalendarPicker({
                   const isPastDate = isPast(viewYear, viewMonth, d);
                   const isBlockedDate = isBlocked(viewYear, viewMonth, d);
                   const disabled = isPastDate || isBlockedDate;
+                  const hasPartial = hasPartialAvailability(
+                    viewYear,
+                    viewMonth,
+                    d
+                  );
 
                   // Single mode selection
                   const isSel =
@@ -425,9 +453,19 @@ export default function CalendarPicker({
                           : "",
                       ].join(" ")}
                       aria-pressed={isSel || isRangeEdgeDate ? true : undefined}
-                      title={isBlockedDate ? "Not available" : undefined}
+                      title={
+                        isBlockedDate
+                          ? t("notAvailable")
+                          : hasPartial
+                            ? t("partialAvailability")
+                            : undefined
+                      }
                     >
                       {d}
+                      {/* Partial availability indicator */}
+                      {hasPartial && !disabled && (
+                        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-orange-500" />
+                      )}
                     </button>
                   );
                 })
@@ -448,14 +486,14 @@ export default function CalendarPicker({
                     }}
                     className="px-2 py-1 text-xs text-gray-700 rounded hover:bg-gray-100"
                   >
-                    Today
+                    {t("today")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
                     className="px-3 py-1 text-xs font-semibold text-gray-700 rounded hover:bg-gray-100"
                   >
-                    Close
+                    {t("close")}
                   </button>
                 </>
               ) : (
@@ -469,7 +507,7 @@ export default function CalendarPicker({
                     className="px-2 py-1 text-xs text-gray-700 rounded hover:bg-gray-100"
                     disabled={!rangeStart && !rangeEnd}
                   >
-                    Clear
+                    {t("clear")}
                   </button>
                   <div className="flex gap-2">
                     <button
@@ -477,7 +515,7 @@ export default function CalendarPicker({
                       onClick={() => setOpen(false)}
                       className="px-3 py-1 text-xs font-semibold text-gray-700 rounded hover:bg-gray-100"
                     >
-                      Cancel
+                      {t("cancel")}
                     </button>
                     <button
                       type="button"
@@ -490,7 +528,7 @@ export default function CalendarPicker({
                           : "bg-gray-200 text-gray-400 cursor-not-allowed",
                       ].join(" ")}
                     >
-                      Confirm
+                      {t("confirm")}
                     </button>
                   </div>
                 </>

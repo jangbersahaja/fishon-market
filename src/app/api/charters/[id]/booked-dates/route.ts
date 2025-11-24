@@ -44,19 +44,30 @@ export async function GET(
           return d;
         })();
 
-    // Fetch PAID bookings for this charter in the date range
+    // Fetch PAID and PAYMENT_AUTHORIZED bookings for this charter in the date range
+    // PAYMENT_AUTHORIZED: Temporarily blocks during 12h captain acknowledgment window
     // For multi-day bookings, we need to block ALL days in the range
+    const now = new Date();
     const bookings = await prisma.booking.findMany({
       where: {
         charterId,
-        status: "PAID",
         date: {
           lte: endDate, // Booking starts before or on endDate
         },
+        OR: [
+          { status: "PAID" },
+          {
+            status: "PAYMENT_AUTHORIZED",
+            acknowledgmentDeadline: { gte: now }, // Still within 12h window
+          },
+        ],
       },
       select: {
         date: true,
         days: true,
+        startTime: true,
+        timeSlots: true,
+        status: true,
       },
       orderBy: {
         date: "asc",

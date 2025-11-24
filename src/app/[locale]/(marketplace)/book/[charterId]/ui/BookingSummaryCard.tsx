@@ -1,6 +1,9 @@
 "use client";
 
+import { AMENITIES_OPTIONS } from "@/data/amenities";
+import { BOAT_FEATURE_OPTIONS } from "@/data/boatFeatures";
 import { MapPin, Ship } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 
 interface Boat {
@@ -50,9 +53,25 @@ export default function BookingSummaryCard({
   totalPrice,
   pricingBreakdown,
 }: BookingSummaryCardProps) {
+  const t = useTranslations("booking.checkout.summary");
+  const locale = useLocale();
   const images = charter?.images || [];
   const mainImage = images[0] || "/placeholder-1.jpg";
   const sideImages = images.slice(1, 3);
+
+  // Helper function to get localized label for amenity
+  const getAmenityLabel = (key: string) => {
+    const amenity = AMENITIES_OPTIONS.find((a) => a.key === key);
+    if (!amenity) return key;
+    return locale === "my" ? amenity.labelMy : amenity.label;
+  };
+
+  // Helper function to get localized label for boat feature
+  const getFeatureLabel = (key: string) => {
+    const feature = BOAT_FEATURE_OPTIONS.find((f) => f.key === key);
+    if (!feature) return key;
+    return locale === "my" ? feature.labelMy : feature.label;
+  };
 
   const mapEmbedSrc = charter?.coordinates
     ? `https://www.google.com/maps?q=${charter.coordinates.lat},${charter.coordinates.lng}&z=13&output=embed`
@@ -64,9 +83,7 @@ export default function BookingSummaryCard({
 
   return (
     <aside className="p-3 bg-white border rounded-lg border-black/10 sm:p-5 h-fit">
-      <h2 className="mb-3 text-base font-semibold sm:text-lg">
-        Charter Summary
-      </h2>
+      <h2 className="mb-3 text-base font-semibold sm:text-lg">{t("title")}</h2>
 
       {/* Photo Collage */}
       {images.length > 0 && (
@@ -123,7 +140,7 @@ export default function BookingSummaryCard({
         </h3>
         {captain?.name && (
           <p className="mt-1 text-sm text-gray-600">
-            Captain:{" "}
+            {t("captain")}{" "}
             <span className="font-medium text-gray-800">{captain.name}</span>
           </p>
         )}
@@ -135,7 +152,7 @@ export default function BookingSummaryCard({
           <div className="flex items-center gap-1.5 mb-1.5">
             <Ship className="w-4 h-4 text-gray-600" />
             <h4 className="text-sm font-semibold">
-              {charter.boat.name || "Vessel"}
+              {charter.boat.name || t("vessel")}
             </h4>
             {charter.boat.type && (
               <p className="text-sm text-gray-600">- {charter.boat.type}</p>
@@ -149,12 +166,14 @@ export default function BookingSummaryCard({
                   key={feature}
                   className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700"
                 >
-                  {feature}
+                  {getFeatureLabel(feature)}
                 </span>
               ))}
               {charter.boat.features.length > 3 && (
                 <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">
-                  +{charter.boat.features.length - 3} more
+                  {t("moreFeatures", {
+                    count: charter.boat.features.length - 3,
+                  })}
                 </span>
               )}
             </div>
@@ -180,7 +199,9 @@ export default function BookingSummaryCard({
           </div>
           {charter?.address && (
             <div className="mt-4">
-              <h4 className="mb-1.5 text-sm font-semibold">Starting Point</h4>
+              <h4 className="mb-1.5 text-sm font-semibold">
+                {t("startingPoint")}
+              </h4>
               <div className="flex items-start gap-1.5 mt-1.5 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                 <p className="capitalize">{charter.address}</p>
@@ -193,19 +214,19 @@ export default function BookingSummaryCard({
       {/* Amenities */}
       {charter?.includes && charter.includes.length > 0 && (
         <div className="">
-          <h4 className="mb-1.5 text-sm font-semibold">Included</h4>
+          <h4 className="mb-1.5 text-sm font-semibold">{t("included")}</h4>
           <div className="flex flex-wrap gap-1.5">
             {charter.includes.slice(0, 4).map((item) => (
               <span
                 key={item}
                 className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-green-50 text-green-700 border border-green-200"
               >
-                {item}
+                {getAmenityLabel(item)}
               </span>
             ))}
             {charter.includes.length > 4 && (
               <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-green-50 text-green-700 border border-green-200">
-                +{charter.includes.length - 4} more
+                {t("moreFeatures", { count: charter.includes.length - 4 })}
               </span>
             )}
           </div>
@@ -222,36 +243,35 @@ export default function BookingSummaryCard({
                 <div className="mb-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">
-                      Trip Price ({pricingBreakdown.days}{" "}
-                      {pricingBreakdown.days > 1 ? "days" : "day"})
+                      {t("tripPrice", { days: pricingBreakdown.days })}
                     </span>
                     <span className="font-medium">
                       RM{pricingBreakdown.subtotal.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Commission (10%)</span>
+                    <span className="text-gray-600">{t("commission")}</span>
                     <span className="font-medium">
                       RM{pricingBreakdown.platformFee.toFixed(2)}
                     </span>
                   </div>
                   {pricingBreakdown.discount > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Discount</span>
+                      <span className="text-gray-600">{t("discount")}</span>
                       <span className="font-medium text-green-600">
                         -RM{pricingBreakdown.discount.toFixed(2)}
                       </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Service Fee (1.5%)</span>
+                    <span className="text-gray-600">{t("serviceFee")}</span>
                     <span className="font-medium">
                       RM{pricingBreakdown.paymentGatewayFee.toFixed(2)}
                     </span>
                   </div>
                   {pricingBreakdown.sst > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">SST</span>
+                      <span className="text-gray-600">{t("sst")}</span>
                       <span className="font-medium">
                         RM{pricingBreakdown.sst.toFixed(2)}
                       </span>
@@ -262,7 +282,7 @@ export default function BookingSummaryCard({
                 {/* Total */}
                 <div className="pt-3 border-t border-black/10">
                   <div className="flex items-center justify-between text-base font-semibold">
-                    <span>Total</span>
+                    <span>{t("total")}</span>
                     <span className="text-[#ec2227]">
                       RM{pricingBreakdown.finalPrice.toFixed(2)}
                     </span>
@@ -272,7 +292,7 @@ export default function BookingSummaryCard({
             ) : (
               // Legacy: show simple total
               <div className="flex items-center justify-between text-base font-semibold">
-                <span>Total (est.)</span>
+                <span>{t("totalEstimate")}</span>
                 <span className="text-[#ec2227]">RM{totalPrice}</span>
               </div>
             )}
@@ -281,12 +301,10 @@ export default function BookingSummaryCard({
           {/* Payment Info */}
           <details className="mt-3 text-xs text-gray-600">
             <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
-              Payment information
+              {t("paymentInfo")}
             </summary>
             <p className="mt-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50">
-              {pricingBreakdown
-                ? "For card payments: Your card will be authorized (not charged) when you submit. If the captain confirms your booking, your card will be charged automatically. If rejected, the authorization will be released."
-                : "No payment is required now. Once your booking is confirmed, the captain will send you a secure payment link."}
+              {pricingBreakdown ? t("paymentInfoAuto") : t("paymentInfoManual")}
             </p>
           </details>
 
@@ -294,18 +312,15 @@ export default function BookingSummaryCard({
 
           <details className="mt-3 text-xs text-gray-600">
             <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
-              Cancellation notes
+              {t("cancellationNotes")}
             </summary>
             <ul className="space-y-0.5 my-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50">
-              <li>• More than 30 days before trip: 80% refund</li>
-              <li>• 15-30 days before trip: 50% refund</li>
-              <li>• Less than 15 days before trip: No refund</li>
+              <li>• {t("cancellationPolicy1")}</li>
+              <li>• {t("cancellationPolicy2")}</li>
+              <li>• {t("cancellationPolicy3")}</li>
             </ul>
-            <p>
-              If the captain rejects your booking, you&apos;ll receive a full
-              refund
-            </p>
-            <p>Refunds typically take 5-7 business days</p>
+            <p>{t("cancellationRefund")}</p>
+            <p>{t("refundTiming")}</p>
           </details>
         </>
       )}

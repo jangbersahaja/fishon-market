@@ -1,6 +1,7 @@
 "use client";
 
 import { trackEvent } from "@/lib/analytics-tracking";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -48,6 +49,7 @@ export function PhotoGallery({
   ownerId?: string;
   userId?: string;
 }) {
+  const t = useTranslations("charter.gallery");
   const safeImages =
     Array.isArray(images) && images.length > 0 ? images : undefined;
   const media = useMemo(
@@ -111,7 +113,7 @@ export function PhotoGallery({
           type="button"
           onClick={() => openAt(0)}
           className="relative w-full h-120 overflow-hidden bg-gray-100 group rounded-xl sm:row-span-2 sm:h-auto sm:min-h-[500px]"
-          aria-label="Open gallery"
+          aria-label={t("openGallery")}
         >
           <Image
             src={main?.src || PLACEHOLDER}
@@ -128,7 +130,7 @@ export function PhotoGallery({
                 {title}
               </div>
               <div className="rounded-full bg-black/40 px-2 py-0.5 text-xs backdrop-blur">
-                {media.length} {media.length === 1 ? "item" : "items"}
+                {t("items", { count: media.length })}
               </div>
             </div>
           </div>
@@ -156,7 +158,7 @@ export function PhotoGallery({
                   openAt(activeIdx);
                 }}
               >
-                View all
+                {t("viewAll")}
               </span>
             </span>
           </div>
@@ -174,7 +176,7 @@ export function PhotoGallery({
                 type="button"
                 onClick={() => openAt(idx)}
                 className="relative flex w-full h-full overflow-hidden bg-gray-100 group rounded-xl"
-                aria-label={`Open item ${idx + 1}`}
+                aria-label={t("openItem", { number: idx + 1 })}
               >
                 <Image
                   src={m.src || PLACEHOLDER}
@@ -187,7 +189,7 @@ export function PhotoGallery({
                 {isLast && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40">
                     <span className="px-3 py-1 text-sm font-semibold text-gray-900 rounded-full shadow bg-white/90">
-                      +{media.length - tiles.length} more
+                      {t("seeMore", { count: media.length - tiles.length })}
                     </span>
                   </div>
                 )}
@@ -204,7 +206,7 @@ export function PhotoGallery({
             key={m.src + idx}
             type="button"
             onClick={() => openAt(idx)}
-            aria-label={`Open item ${idx + 1}`}
+            aria-label={t("openItem", { number: idx + 1 })}
             className={clsx(
               "relative h-28 w-28 shrink-0 overflow-hidden rounded-lg border bg-gray-100",
               idx === activeIdx ? "border-[#ec2227]" : "border-transparent"
@@ -249,6 +251,7 @@ function Lightbox({
   onClose: () => void;
   onIndexChange: (idx: number) => void;
 }) {
+  const t = useTranslations("charter.gallery");
   const [current, setCurrent] = useState(index);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -334,16 +337,16 @@ function Lightbox({
           <button
             className="px-3 py-1 text-sm rounded-full bg-white/10 hover:bg-white/20"
             onClick={requestFs}
-            aria-label="Enter fullscreen"
+            aria-label={t("fullscreen")}
           >
-            Fullscreen
+            {t("fullscreen")}
           </button>
           <button
             className="px-3 py-1 text-sm rounded-full bg-white/10 hover:bg-white/20"
             onClick={onClose}
-            aria-label="Close gallery"
+            aria-label={t("close")}
           >
-            Close
+            {t("close")}
           </button>
         </div>
       </div>
@@ -379,7 +382,7 @@ function Lightbox({
                 e.stopPropagation();
                 prev();
               }}
-              aria-label="Previous"
+              aria-label={t("previous")}
             >
               <ArrowLeft />
             </button>
@@ -390,7 +393,7 @@ function Lightbox({
                 e.stopPropagation();
                 next();
               }}
-              aria-label="Next"
+              aria-label={t("next")}
             >
               <ArrowRight />
             </button>
@@ -399,7 +402,7 @@ function Lightbox({
 
         {/* Counter */}
         <div className="absolute px-3 py-1 text-sm text-white -translate-x-1/2 rounded-full bottom-4 left-1/2 bg-white/10">
-          {current + 1} / {media.length}
+          {t("counter", { current: current + 1, total: media.length })}
         </div>
       </div>
 
@@ -422,7 +425,7 @@ function Lightbox({
                   e.stopPropagation();
                   setCurrent(i);
                 }}
-                aria-label={`Go to item ${i + 1}`}
+                aria-label={t("goToItem", { number: i + 1 })}
               >
                 <Image
                   src={mm.src || PLACEHOLDER}

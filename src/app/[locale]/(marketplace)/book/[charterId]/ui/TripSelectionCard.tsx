@@ -5,6 +5,7 @@ import type { SpeciesItem } from "@fishon/ui";
 import { SPECIES_BY_ID } from "@fishon/ui";
 import { SpeciesPills } from "@fishon/ui/charter";
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 interface Trip {
   name: string;
   duration?: string;
@@ -33,6 +34,8 @@ export default function TripSelectionCard({
   charterTechniques = [],
   onTripSelect,
 }: TripSelectionCardProps) {
+  const t = useTranslations("booking.checkout.tripSelection");
+
   if (!trips || trips.length === 0) return null;
 
   // Map species strings (id/english/local) to rich pill items with image + local name
@@ -61,7 +64,7 @@ export default function TripSelectionCard({
 
   return (
     <section className="pb-5 border-b border-black/10">
-      <h2 className="mb-3 text-base font-semibold sm:text-lg">Confirm Trips</h2>
+      <h2 className="mb-3 text-base font-semibold sm:text-lg">{t("title")}</h2>
 
       <div className="space-y-3">
         {trips.map((trip, index) => {
@@ -99,7 +102,7 @@ export default function TripSelectionCard({
                       <p className="text-xs text-gray-600">
                         {trip.duration}
                         {trip.maxAnglers &&
-                          ` • Up to ${trip.maxAnglers} anglers`}
+                          ` • ${t("upToAnglers", { count: trip.maxAnglers })}`}
                       </p>
                     )}
                   </div>
@@ -111,7 +114,7 @@ export default function TripSelectionCard({
                       </p>
                       {days > 1 && (
                         <p className="text-xs text-gray-500">
-                          for {days} day{days > 1 ? "s" : ""}
+                          {t("forDays", { days })}
                         </p>
                       )}
                     </div>
@@ -141,7 +144,7 @@ export default function TripSelectionCard({
                     {speciesToShow.length > 0 && (
                       <div>
                         <h4 className="mb-2 text-xs font-semibold text-gray-600 uppercase">
-                          Target Species
+                          {t("targetSpecies")}
                         </h4>
                         <SpeciesPills
                           items={mapSpeciesToPills(speciesToShow)}
@@ -155,7 +158,7 @@ export default function TripSelectionCard({
                     {techniquesToShow.length > 0 && (
                       <div>
                         <h4 className="mb-2 text-xs font-semibold text-gray-600 uppercase">
-                          Techniques
+                          {t("techniques")}
                         </h4>
                         <div className="flex flex-wrap items-center gap-2">
                           {techniquesToShow.map((technique) => (

@@ -1,4 +1,8 @@
 // components/ratings/StarRating.tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+
 /**
  * Unified StarRating component
  * @param value - Rating value (0-5)
@@ -24,6 +28,7 @@ export default function StarRating({
   textSize = "text-xs",
   variant = "default",
 }: Props) {
+  const t = useTranslations("common");
   const full = Math.floor(value);
   const half = value - full >= 0.5;
   const total = 5;
@@ -38,7 +43,7 @@ export default function StarRating({
   if (value === 0) {
     return (
       <span className={`${textSize} ${textColorClass[variant]}`}>
-        Just Listed
+        {t("justListed")}
       </span>
     );
   }
@@ -83,7 +88,7 @@ export default function StarRating({
       {/* Show review count or rating value */}
       {reviewCount !== undefined && reviewCount > 0 && (
         <span className={`${textSize} ${textColorClass[variant]}`}>
-          {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
+          {t("reviewCount", { count: reviewCount })}
         </span>
       )}
       {showValue && (

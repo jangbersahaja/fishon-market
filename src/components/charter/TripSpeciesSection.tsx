@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React from "react";
 import { SPECIES_BY_ID, SpeciesItem } from "../../data/species";
@@ -9,11 +12,14 @@ interface TripSpeciesSectionProps {
 export const TripSpeciesSection: React.FC<TripSpeciesSectionProps> = ({
   species,
 }) => {
+  const t = useTranslations("charter.species");
+
   if (!species.length) return null;
+
   return (
     <div>
       <div className="mb-1 text-xs font-semibold tracking-wide text-gray-600 uppercase">
-        Target Species
+        {t("title")}
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {species.map((id) => {

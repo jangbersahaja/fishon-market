@@ -2,6 +2,7 @@
 
 import BaseCharterCard from "@/components/charters/BaseCharterCard";
 import type { Charter } from "@fishon/ui";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdError } from "react-icons/md";
@@ -26,6 +27,7 @@ function distanceKm(
 type Nearby = Charter & { _distance: number };
 
 export default function TripsNearby({ charters }: { charters: Charter[] }) {
+  const t = useTranslations("home.tripsNearby");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -165,28 +167,26 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
       <div className="w-full px-5 mx-auto max-w-7xl">
         {/* Status */}
         {!coords && !error && (
-          <div className="text-sm text-white">Detecting your location…</div>
+          <div className="text-sm text-white">{t("detectingLocation")}</div>
         )}
         {error && (
           <div className="flex items-center gap-2 text-sm text-white">
             <MdError className="text-3xl" />
             <p>
-              Unable to fetch your location: {error}.<br /> You can still browse
-              trips below.
+              {t("locationError", { error })}
+              <br /> {t("browseTripsBelowFallback")}
             </p>
           </div>
         )}
         {coords && nearby.length === 0 && !error && (
-          <div className="text-sm text-white">
-            No trips within 15 km of your current location.
-          </div>
+          <div className="text-sm text-white">{t("noTripsNearby")}</div>
         )}
 
         {/* Cards (carousel) */}
         {nearby.length > 0 && (
           <>
             <h2 className="text-3xl font-bold text-center text-white">
-              Discover Trip Near You
+              {t("title")}
             </h2>
             <div className="relative">
               {/* track */}

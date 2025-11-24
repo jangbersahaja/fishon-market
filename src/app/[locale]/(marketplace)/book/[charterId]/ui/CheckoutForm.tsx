@@ -7,12 +7,12 @@ import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useLocale } from "next-intl";
 import BookingSummaryCard from "./BookingSummaryCard";
 import DateGuestsCard from "./DateGuestsCard";
 import EmergencyContactCard from "./EmergencyContactCard";
@@ -154,6 +154,7 @@ export default function CheckoutForm({
   };
   charterFlowType?: "MANUAL" | "AUTO";
 }) {
+  const t = useTranslations("booking.checkout");
   const locale = useLocale();
   const sp = useSearchParams();
   const router = useRouter();
@@ -162,6 +163,42 @@ export default function CheckoutForm({
   const { openModal } = useAuthModal();
   const { addBooking } = useBookingStorage();
   const isLoggedIn = !!session?.user;
+
+  // Helper function to translate Zod error messages
+  const translateErrorMessage = (message: string): string => {
+    const errorMap: Record<string, string> = {
+      "Start time is required": t("validation.errorMessages.startTimeRequired"),
+      "First name is required": t("validation.errorMessages.firstNameRequired"),
+      "Last name is required": t("validation.errorMessages.lastNameRequired"),
+      "Invalid email address": t("validation.errorMessages.emailInvalid"),
+      "Phone number is required": t("validation.errorMessages.phoneRequired"),
+      "Please enter a valid phone number": t(
+        "validation.errorMessages.phoneInvalid"
+      ),
+      "Emergency contact name is required": t(
+        "validation.errorMessages.emergencyNameRequired"
+      ),
+      "Emergency contact phone is required": t(
+        "validation.errorMessages.emergencyPhoneRequired"
+      ),
+      "Emergency contact relation is required": t(
+        "validation.errorMessages.emergencyRelationRequired"
+      ),
+      "At least one participant name is required": t(
+        "validation.errorMessages.participantNameRequired"
+      ),
+      "Phone is required": t(
+        "validation.errorMessages.participantPhoneRequired"
+      ),
+      "At least one participant is required": t(
+        "validation.errorMessages.participantsRequired"
+      ),
+      "Number of participants cannot exceed total guests": t(
+        "validation.errorMessages.participantsExceedGuests"
+      ),
+    };
+    return errorMap[message] || message;
+  };
 
   // Get current pathname to preserve it when updating search params
   const currentPath = pathname;
@@ -471,8 +508,7 @@ export default function CheckoutForm({
     if (isDateBlocked(selectedDate)) {
       setFormError("date", {
         type: "manual",
-        message:
-          "This date is not available. It may be outside operational days, marked as unavailable, or already fully booked.",
+        message: t("validation.dateNotAvailable"),
       });
       return;
     }
@@ -481,7 +517,7 @@ export default function CheckoutForm({
     if (!isDateRangeValid(selectedDate, selectedDays)) {
       setFormError("date", {
         type: "manual",
-        message: `The selected date range includes unavailable dates. Please select a different date or reduce the number of days.`,
+        message: t("validation.dateRangeInvalid"),
       });
       return;
     }
@@ -583,7 +619,7 @@ export default function CheckoutForm({
             const encoded = Buffer.from(JSON.stringify(bookingData)).toString(
               "base64"
             );
-            router.push(`/book/payment/preview?data=${encoded}`);
+            router.push(`/${locale}/book/payment/preview?data=${encoded}`);
             return;
           }
         } catch (err: any) {
@@ -654,7 +690,7 @@ export default function CheckoutForm({
         const encoded = Buffer.from(JSON.stringify(bookingData)).toString(
           "base64"
         );
-        router.push(`/book/payment/preview?data=${encoded}`);
+        router.push(`/${locale}/book/payment/preview?data=${encoded}`);
         return;
       }
 
@@ -697,7 +733,9 @@ export default function CheckoutForm({
           window.location.href = data.redirectUrl;
         } else {
           // TOKENIZED flow (Card) or MOCK - go to confirmation
-          router.push(`/book/confirm?id=${encodeURIComponent(bookingId)}`);
+          router.push(
+            `/${locale}/book/confirm?id=${encodeURIComponent(bookingId)}`
+          );
         }
       } else {
         setFormError("root", {
@@ -782,21 +820,18 @@ export default function CheckoutForm({
       {charterFlowType === "MANUAL" && (
         <div className="p-4 mb-6 border rounded-lg border-amber-200 bg-amber-50">
           <p className="text-sm font-medium text-amber-900">
-            Captain approval required — no upfront payment
+            {t("manualNoticeTitle")}
           </p>
           <p className="mt-1 text-sm text-amber-900">
-            Submit your request now and pay only after the captain approves
-            (typically within 24 hours).
+            {t("manualNoticeDescription")}
           </p>
           {!isLoggedIn ? (
             <p className="mt-2 text-xs text-amber-800">
-              Guests will verify their email with a TAC code before the request
-              is sent.
+              {t("manualNoticeGuestNote")}
             </p>
           ) : (
             <p className="mt-2 text-xs text-amber-800">
-              We&apos;ll email you as soon as the captain responds so you can
-              complete payment.
+              {t("manualNoticeAuthNote")}
             </p>
           )}
         </div>
@@ -892,8 +927,8 @@ export default function CheckoutForm({
             {effectiveStartTimes && effectiveStartTimes.length > 0 && (
               <StartTimeSelection
                 startTimes={effectiveStartTimes}
-                selectedTime={startTime}
-                onTimeSelect={(v) => setValue("startTime", v)}
+                startTime={startTime}
+                onStartTimeChange={(v) => setValue("startTime", v)}
               />
             )}
           </div>
@@ -932,28 +967,18 @@ export default function CheckoutForm({
                   </svg>
                   <div className="flex-1">
                     <p className="mb-2 text-sm font-semibold text-red-800">
-                      Please fix the following errors:
+                      {t("validation.fixErrors")}
                     </p>
                     <ul className="space-y-1.5 text-sm text-red-700">
                       {Object.entries(errors).map(
                         ([field, error]: [string, any]) => {
                           if (field === "root") return null;
-                          // Map field names to user-friendly labels
-                          const fieldLabels: Record<string, string> = {
-                            firstName: "First name",
-                            lastName: "Last name",
-                            email: "Email",
-                            phone: "Phone number",
-                            date: "Date",
-                            days: "Number of days",
-                            adults: "Number of adults",
-                            startTime: "Start time",
-                            emergencyName: "Emergency contact name",
-                            emergencyPhone: "Emergency contact phone",
-                            emergencyRelation: "Emergency contact relationship",
-                            participants: "Participants",
-                            note: "Note to captain",
-                          };
+
+                          // Get field label from translations
+                          const fieldLabel = t(
+                            `validation.fieldLabels.${field}` as any,
+                            { default: field }
+                          );
 
                           // Special handling for participants field
                           if (field === "participants") {
@@ -966,10 +991,8 @@ export default function CheckoutForm({
                                 >
                                   <span className="font-bold mt-0.5">•</span>
                                   <span>
-                                    <strong>
-                                      {fieldLabels[field] || field}:
-                                    </strong>{" "}
-                                    {error.message}
+                                    <strong>{fieldLabel}:</strong>{" "}
+                                    {translateErrorMessage(error.message)}
                                   </span>
                                 </li>
                               );
@@ -1002,12 +1025,21 @@ export default function CheckoutForm({
                                           </span>
                                           <span>
                                             <strong>
-                                              Participant {i + 1}{" "}
-                                              {pField.charAt(0).toUpperCase() +
-                                                pField.slice(1)}
-                                              :
+                                              {t(
+                                                "validation.participantError",
+                                                {
+                                                  number: i + 1,
+                                                  field:
+                                                    pField
+                                                      .charAt(0)
+                                                      .toUpperCase() +
+                                                    pField.slice(1),
+                                                }
+                                              )}
                                             </strong>{" "}
-                                            {(pErr as any).message}
+                                            {translateErrorMessage(
+                                              (pErr as any).message
+                                            )}
                                           </span>
                                         </li>
                                       );
@@ -1024,8 +1056,8 @@ export default function CheckoutForm({
                             <li key={field} className="flex items-start gap-2">
                               <span className="font-bold mt-0.5">•</span>
                               <span>
-                                <strong>{fieldLabels[field] || field}:</strong>{" "}
-                                {error.message}
+                                <strong>{fieldLabel}:</strong>{" "}
+                                {translateErrorMessage(error.message)}
                               </span>
                             </li>
                           );
@@ -1043,29 +1075,29 @@ export default function CheckoutForm({
               className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
               {isSubmitting
-                ? "Submitting..."
+                ? t("buttons.submitting")
                 : charterFlowType === "MANUAL"
-                  ? "Request Booking"
-                  : "Proceed to Payment"}
+                  ? t("buttons.requestBooking")
+                  : t("buttons.proceedToPayment")}
             </button>
 
             {!isLoggedIn && canSubmit && (
               <div className="pt-3 space-y-3 border-t border-gray-200">
                 <p className="text-sm font-medium text-gray-700">
-                  Have an account? Sign in for faster bookings
+                  {t("guestBenefits.title")}
                 </p>
                 <ul className="space-y-1.5 text-sm text-gray-600">
                   <li className="flex items-start gap-2">
                     <span className="text-green-600 mt-0.5">✓</span>
-                    <span>Auto-fill your details</span>
+                    <span>{t("guestBenefits.autofill")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-green-600 mt-0.5">✓</span>
-                    <span>Track all your bookings in one place</span>
+                    <span>{t("guestBenefits.trackBookings")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-green-600 mt-0.5">✓</span>
-                    <span>Save favorites and preferences</span>
+                    <span>{t("guestBenefits.saveFavorites")}</span>
                   </li>
                 </ul>
                 <div className="flex items-center gap-2 text-sm">
@@ -1076,9 +1108,9 @@ export default function CheckoutForm({
                       openModal("signin", undefined, { showHomeButton: true })
                     }
                   >
-                    Sign in
+                    {t("guestBenefits.signIn")}
                   </button>
-                  <span className="text-gray-400">or</span>
+                  <span className="text-gray-400">{t("guestBenefits.or")}</span>
                   <button
                     type="button"
                     className="font-semibold text-[#ec2227] underline underline-offset-2 hover:text-[#d01f24] transition-colors"
@@ -1086,7 +1118,7 @@ export default function CheckoutForm({
                       openModal("register", undefined, { showHomeButton: true })
                     }
                   >
-                    Create account
+                    {t("guestBenefits.createAccount")}
                   </button>
                 </div>
               </div>

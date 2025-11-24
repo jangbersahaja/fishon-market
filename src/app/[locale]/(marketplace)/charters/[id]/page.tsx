@@ -1,11 +1,21 @@
 import { FavoriteButton } from "@/components/account";
-import BookingWidget from "@/components/charter/BookingWidget";
-import { CharterViewTracker } from "@/components/charter/CharterViewTracker";
-import EnhancedReviewsList from "@/components/charter/EnhancedReviewsList";
-import { PhotoGallery } from "@/components/charter/PhotoGallery";
-import { ShareButton } from "@/components/charter/ShareButton";
-import { TripCard } from "@/components/charter/TripCard";
-import { VideoGallery } from "@/components/charter/VideoGallery";
+import {
+  AboutSection,
+  AmenitiesCard,
+  BoatCard,
+  BookingWidget,
+  CaptainSection,
+  CharterViewTracker,
+  EnhancedReviewsList,
+  GuestFeedback,
+  LocationMap,
+  OperationalScheduleCard,
+  PhotoGallery,
+  PoliciesCard,
+  ShareButton,
+  TripCard,
+  VideoGallery,
+} from "@/components/charter";
 import SearchBox from "@/components/charters/SearchBox";
 import StarRating from "@/components/ratings/StarRating";
 import { auth } from "@/lib/auth/auth";
@@ -18,17 +28,6 @@ import {
   getCharterReviews,
 } from "@/lib/services/review-service";
 import type { Charter, Trip } from "@fishon/ui";
-import {
-  AboutSection,
-  AmenitiesCard,
-  BoatCard,
-  CaptainSection,
-  GuestFeedback,
-  LocationMap,
-  OperationalScheduleCard,
-  PoliciesCard,
-  summariseBadges,
-} from "@fishon/ui/charter";
 import { MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -141,12 +140,12 @@ export default async function CharterViewPage({
   checkoutParams.set("children", "0");
   // const checkoutHref = `/checkout?${checkoutParams.toString()}`; // old CTA removed; navigation handled by BookingWidget
 
+  const t = await getTranslations({ locale, namespace: "charter" });
+
   const title = charter?.name || `Charter #${id}`;
   const location = charter?.location || "Malaysia";
   const address = charter?.address;
-  const desc =
-    charter?.description ||
-    "A great fishing charter operating in Malaysia. Trips available for lakes, rivers, inshore and offshore.";
+  const desc = charter?.description || t("defaultDescription");
 
   const images: string[] = getImagesArray(charter);
 
@@ -251,7 +250,6 @@ export default async function CharterViewPage({
         );
 
   if (!charter) {
-    const t = await getTranslations("charter");
     return (
       <main className="bg-white min-h-dvh">
         <section className="max-w-3xl px-4 py-12 mx-auto sm:px-6">
@@ -268,8 +266,6 @@ export default async function CharterViewPage({
       </main>
     );
   }
-
-  const t = await getTranslations("charter");
 
   return (
     <main className="bg-white min-h-dvh">
@@ -290,7 +286,8 @@ export default async function CharterViewPage({
             <Link href={`/${locale}/home`} className="hover:underline">
               {t("breadcrumbHome")}
             </Link>{" "}
-            <span>/</span> <span className="">{t("breadcrumbCharters")}</span> <span>/</span>{" "}
+            <span>/</span> <span className="">{t("breadcrumbCharters")}</span>{" "}
+            <span>/</span>{" "}
             <Link
               href={`/${locale}/search?destination=${charter.location.split(",")[1]}`}
               className="capitalize hover:underline"
@@ -306,9 +303,9 @@ export default async function CharterViewPage({
             </Link>
           </nav>
           {/* Header */}
-          <header className="flex flex-col gap-3 mt-4">
+          <header className="flex flex-col gap-3 mt-10">
             <div className="flex items-start justify-between gap-4">
-              <h1 className="flex-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              <h1 className="flex-1 text-3xl font-semibold tracking-tight text-white uppercase sm:text-5xl font-oswald">
                 {title}
               </h1>
               <div className="flex items-center gap-2 shrink-0">
@@ -331,7 +328,7 @@ export default async function CharterViewPage({
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between mt-2">
+            <div className="flex flex-col items-center justify-between gap-3 mt-2 md:flex-row">
               {address && (
                 <div className="flex items-center gap-1 text-gray-100">
                   <MapPin className="inline-block w-4 h-4 mr-1" />
@@ -339,10 +336,10 @@ export default async function CharterViewPage({
                 </div>
               )}
 
-              <div className="flex items-center gap-2 text-sm text-gray-700">
+              <div className="flex justify-end w-full gap-2 text-sm text-gray-700 md:w-fit">
                 <StarRating
                   value={ratingAvg}
-                  size={24}
+                  size={20}
                   textSize="text-md"
                   showValue
                   reviewCount={ratingCount}
@@ -390,11 +387,16 @@ export default async function CharterViewPage({
 
             <div className="grid grid-cols-1 gap-5">
               {/* Amenities */}
-              <AmenitiesCard includes={charter?.includes ?? []} />
+              <AmenitiesCard
+                includes={charter?.includes ?? []}
+                locale={locale}
+              />
 
               {/* Trip Cards - Under the map in left column */}
               <div className="mt-6">
-                <h2 className="mb-4 text-xl font-bold">{t("availableTrips")}</h2>
+                <h2 className="mb-4 text-xl font-bold">
+                  {t("availableTrips")}
+                </h2>
                 <div className="flex flex-col gap-3">
                   {trips.map((trip, idx) => {
                     // Since species and techniques are at charter level (not per-trip),
@@ -451,7 +453,7 @@ export default async function CharterViewPage({
           </div>
           <div className="col-span-2">
             {/* Boat */}
-            <BoatCard boat={uiBoat as any} />
+            <BoatCard boat={uiBoat as any} locale={locale} />
           </div>
         </div>
         <PoliciesCard
@@ -470,7 +472,7 @@ export default async function CharterViewPage({
           reviews={reviews as any}
           ratingAvg={ratingAvg}
           ratingCount={ratingCount}
-          summariseBadges={summariseBadges as any}
+          locale={locale}
         />
         {/* Reviews (Real database reviews) */}
         <EnhancedReviewsList reviews={reviews as any} />

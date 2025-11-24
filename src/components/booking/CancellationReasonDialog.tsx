@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface CancellationReasonDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,6 +33,11 @@ export function CancellationReasonDialog({
   error,
   getFinalReason,
 }: CancellationReasonDialogProps) {
+  const t = useTranslations("booking.actions.cancellationDialog");
+  const tReasons = useTranslations(
+    "booking.actions.cancellationDialog.commonReasons"
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -59,46 +66,64 @@ export function CancellationReasonDialog({
             </svg>
           </button>
 
-          <h3 className="mb-2 text-xl font-bold text-gray-900">
-            Cancel Booking?
-          </h3>
+          <h3 className="mb-2 text-xl font-bold text-gray-900">{t("title")}</h3>
           <p className="mb-4 text-sm text-gray-700">
-            Are you sure you want to cancel this booking?{" "}
+            {t("description")}{" "}
             <span className="font-medium text-[#ec2227]">
-              This action cannot be undone.
+              {t("warningMessage")}
             </span>
           </p>
 
           <div className="mb-5">
             <label className="block mb-2 text-sm font-semibold text-gray-900">
-              Reason for cancellation
+              {t("reasonLabel")}
             </label>
             <fieldset>
-              <legend className="sr-only">Select a reason</legend>
+              <legend className="sr-only">{t("reasonSelectPrompt")}</legend>
               <div className="flex flex-col gap-2">
-                {commonReasons.map((reason) => (
-                  <label
-                    key={reason}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer ${
-                      selectedReason === reason
-                        ? "border-[#ec2227] bg-[#fff0f1]"
-                        : "border-gray-200 bg-white hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="cancel-reason"
-                      value={reason}
-                      checked={selectedReason === reason}
-                      onChange={() => setSelectedReason(reason)}
-                      disabled={isSubmitting}
-                      className="accent-[#ec2227] focus:ring-2 focus:ring-[#ec2227]"
-                    />
-                    <span className="text-sm font-medium text-gray-900">
-                      {reason}
-                    </span>
-                  </label>
-                ))}
+                {commonReasons.map((reason) => {
+                  // Map English reasons to translation keys
+                  const reasonKeyMap: Record<string, string> = {
+                    "Change of plans": "changeOfPlans",
+                    "Found a better offer": "foundBetterOffer",
+                    "Weather concerns": "weatherConcerns",
+                    "Unable to travel": "unableToTravel",
+                    "Captain unresponsive": "captainUnresponsive",
+                    "Booking mistake": "bookingMistake",
+                    "Personal reasons": "personalReasons",
+                    Other: "other",
+                  };
+
+                  const translationKey = reasonKeyMap[reason] || "other";
+                  const displayText =
+                    translationKey === "other" && reason !== "Other"
+                      ? reason // Show original text if not mapped
+                      : tReasons(translationKey);
+
+                  return (
+                    <label
+                      key={reason}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer ${
+                        selectedReason === reason
+                          ? "border-[#ec2227] bg-[#fff0f1]"
+                          : "border-gray-200 bg-white hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="cancel-reason"
+                        value={reason}
+                        checked={selectedReason === reason}
+                        onChange={() => setSelectedReason(reason)}
+                        disabled={isSubmitting}
+                        className="accent-[#ec2227] focus:ring-2 focus:ring-[#ec2227]"
+                      />
+                      <span className="text-sm font-medium text-gray-900">
+                        {displayText}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </fieldset>
 
@@ -106,13 +131,13 @@ export function CancellationReasonDialog({
               <input
                 type="text"
                 className="mt-3 w-full border-2 border-[#ec2227] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ec2227]"
-                placeholder="Please specify your reason..."
+                placeholder={t("otherPlaceholder")}
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
                 maxLength={120}
                 disabled={isSubmitting}
                 autoFocus
-                aria-label="Other reason"
+                aria-label={t("reasonLabel")}
               />
             )}
           </div>
@@ -127,14 +152,14 @@ export function CancellationReasonDialog({
               onClick={onConfirm}
               disabled={isSubmitting || !getFinalReason()}
             >
-              {isSubmitting ? "Cancelling..." : "Yes, Cancel"}
+              {isSubmitting ? t("cancelling") : t("confirmButton")}
             </button>
             <button
               className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 focus:outline-none"
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Nevermind
+              {t("cancelButton")}
             </button>
           </div>
         </div>

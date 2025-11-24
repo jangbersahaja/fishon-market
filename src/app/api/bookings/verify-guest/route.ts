@@ -68,33 +68,36 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send verification email asynchronously (non-blocking)
-    // Fire-and-forget pattern to avoid blocking API response
-    // Email should arrive within 1-3 seconds after API response
-    sendVerificationCode({
-      to: email,
-      userName: firstName || "there",
-      code,
-      purpose: "guest_booking",
-      expiryMinutes: 10,
-    }).catch((emailError) => {
-      // Log detailed email error for debugging (don't throw - email sending is async)
-      console.error("Email sending failed (async):", {
-        error: emailError,
-        message:
-          emailError instanceof Error ? emailError.message : "Unknown error",
-        stack: emailError instanceof Error ? emailError.stack : undefined,
-        email: email,
-        codePrefix: code.substring(0, 2) + "****", // Log partial code for debugging
-        smtpConfigured: !!(
-          process.env.SMTP_HOST &&
-          process.env.SMTP_USER &&
-          (process.env.SMTP_PASS || process.env.SMTP_PASSWORD)
-        ),
+    // Send verification email asynchronously (completely non-blocking)
+    // Use setImmediate to ensure email sending happens AFTER response is sent
+    // This prevents SMTP connection setup from blocking the API response
+    setImmediate(() => {
+      sendVerificationCode({
+        to: email,
+        userName: firstName || "there",
+        code,
+        purpose: "guest_booking",
+        expiryMinutes: 10,
+      }).catch((emailError) => {
+        // Log detailed email error for debugging (don't throw - email sending is async)
+        console.error("Email sending failed (async):", {
+          error: emailError,
+          message:
+            emailError instanceof Error ? emailError.message : "Unknown error",
+          stack: emailError instanceof Error ? emailError.stack : undefined,
+          email: email,
+          codePrefix: code.substring(0, 2) + "****", // Log partial code for debugging
+          timestamp: new Date().toISOString(),
+          smtpConfigured: !!(
+            process.env.SMTP_HOST &&
+            process.env.SMTP_USER &&
+            (process.env.SMTP_PASS || process.env.SMTP_PASSWORD)
+          ),
+        });
       });
     });
 
-    // Return immediately - don't wait for email
+    // Return immediately - email will be sent in background
     return NextResponse.json(
       {
         success: true,

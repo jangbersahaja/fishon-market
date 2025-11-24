@@ -15,7 +15,7 @@ import {
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
 import { Calendar, Clock, MapPin, ShipIcon } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 
 /**
@@ -69,6 +69,7 @@ export default function BaseCharterCard({
   className = "",
 }: CharterCardProps) {
   const locale = useLocale();
+  const t = useTranslations("charter");
   const c = charter;
 
   // Image URLs - get all available images
@@ -222,7 +223,7 @@ export default function BaseCharterCard({
           )}
           {distance !== undefined && (
             <span className="absolute top-3 left-3 px-3 py-1.5 bg-white font-medium rounded-full text-xs">
-              {distance.toFixed(1)} km from you
+              {t("distanceFromYou", { distance: distance.toFixed(1) })}
             </span>
           )}
           <div className="absolute bottom-0 w-full ">
@@ -240,8 +241,7 @@ export default function BaseCharterCard({
           <div className="flex items-center gap-1 text-gray-200">
             <Clock className="w-3 h-3" />
             <span className="text-sm">
-              {c.captain.yearsExperience}{" "}
-              {c.captain.yearsExperience === 1 ? "year" : "years"}
+              {t("experienceYears", { years: c.captain.yearsExperience })}
             </span>
             {" · "}
             <StarRating
@@ -271,7 +271,7 @@ export default function BaseCharterCard({
               className="w-full py-1.5 bg-gradient-to-tr from-gray-100 to-gray-200 rounded-full shadow-md transition-colors hover:from-gray-50 hover:to-gray-100 flex justify-center hover:scale-101"
             >
               <span className="text-xl font-medium text-[#ec2227] uppercase font-oswald">
-                Book Trip
+                {t("bookTrip")}
               </span>
             </Link>
           </div>
@@ -333,7 +333,9 @@ export default function BaseCharterCard({
           {savedAt && (
             <div className="flex items-center gap-1 mb-4 text-xs text-gray-500">
               <Calendar className="w-3 h-3" />
-              <span>Saved on {new Date(savedAt).toLocaleDateString()}</span>
+              <span>
+                {t("savedOn", { date: new Date(savedAt).toLocaleDateString() })}
+              </span>
             </div>
           )}
 
@@ -341,12 +343,12 @@ export default function BaseCharterCard({
           <div className="flex gap-2">
             <Link href={`/${locale}/book/${idForLink}`} className="flex-1">
               <button className="w-full px-4 py-2 bg-[#ec2227] hover:bg-[#d11f24] text-white rounded-lg font-medium transition-colors font-oswald uppercase">
-                Book Now
+                {t("bookNow")}
               </button>
             </Link>
             <Link href={href}>
               <button className="px-4 py-2 font-medium text-gray-700 uppercase transition-colors border border-gray-300 rounded-lg hover:border-gray-400 font-oswald">
-                Details
+                {t("details")}
               </button>
             </Link>
           </div>
@@ -426,7 +428,9 @@ export default function BaseCharterCard({
           {/* Trip list - Show first 4 trips with count */}
           {Array.isArray(c.trip) && c.trip.length > 0 && (
             <div className="text-[10px] mt-1">
-              <span className="font-semibold text-slate-900">Trips:</span>{" "}
+              <span className="font-semibold text-slate-900">
+                {t("trips")}:
+              </span>{" "}
               <span className="text-slate-700">
                 {(() => {
                   const tripNames = c.trip.map((t) => t.name).filter(Boolean);
@@ -437,7 +441,7 @@ export default function BaseCharterCard({
                       {shown.join(" • ")}
                       {more > 0 && (
                         <span className="ml-1 font-semibold text-[#ec2227]">
-                          + {more} more
+                          {t("moreTrips", { count: more })}
                         </span>
                       )}
                     </>
@@ -475,7 +479,9 @@ export default function BaseCharterCard({
                   {captainName.toLowerCase()}
                 </span>
                 <span className="text-[11px] text-slate-600">
-                  {captainYears !== undefined && <>{captainYears} yrs exp</>}
+                  {captainYears !== undefined && (
+                    <>{t("yearsExp", { years: captainYears })}</>
+                  )}
                 </span>
               </div>
             </div>
@@ -486,7 +492,7 @@ export default function BaseCharterCard({
               <span className="font-medium text-slate-700">{c.boat.type}</span>
               <span className="text-slate-400">•</span>
               <span className="font-semibold text-slate-900">
-                {c.boat.capacity} pax
+                {t("capacity", { count: c.boat.capacity })}
               </span>
             </div>
 
@@ -535,11 +541,11 @@ export default function BaseCharterCard({
             <div className="flex flex-col items-center w-full gap-3 pl-3">
               {typeof minPrice === "number" && (
                 <div className="flex flex-col transition-all duration-200 font-oswald group-hover:scale-105">
-                  <PriceTag price={minPrice} variant="per-day" size="lg" />
+                  <PriceTag price={minPrice} size="lg" />
                 </div>
               )}
               <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white text-lg font-medium uppercase rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105 font-oswald">
-                Book Now
+                {t("bookNow")}
               </button>
             </div>
           </div>

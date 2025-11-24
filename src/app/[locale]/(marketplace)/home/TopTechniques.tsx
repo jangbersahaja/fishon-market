@@ -2,7 +2,7 @@ import CategoryCard from "@/components/marketing/CategoryCard";
 import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
 import { getPopularTechniques } from "@/lib/helpers/popularity-helpers";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 
 const TECHNIQUE_DEFS = [
@@ -23,6 +23,7 @@ interface TopTechniquesProps {
 
 export default function TopTechniques({ charters }: TopTechniquesProps) {
   const locale = useLocale();
+  const t = useTranslations("home.topTechniques");
   const topTechniques = getPopularTechniques(
     charters,
     TECHNIQUE_DEFS as unknown as string[],
@@ -37,12 +38,12 @@ export default function TopTechniques({ charters }: TopTechniquesProps) {
     <section className="w-full px-2 mx-auto max-w-7xl md:px-0">
       <div className="w-full px-5">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold">Top Fishing Techniques</h2>
+          <h2 className="text-xl font-bold">{t("title")}</h2>
           <Link
             href={`/${locale}/categories/techniques`}
             className="hidden text-sm font-medium text-[#ec2227] hover:underline md:inline"
           >
-            See all fishing techniques
+            {t("seeAll")}
           </Link>
         </div>
 
@@ -57,9 +58,9 @@ export default function TopTechniques({ charters }: TopTechniquesProps) {
                 )}`}
                 label={name}
                 count={count}
-                subtitle={`Charters using ${name.toLowerCase()}`}
+                subtitle={t("chartersUsing", { technique: name.toLowerCase() })}
                 image={image}
-                alt={`${name} technique`}
+                alt={t("altText", { technique: name })}
               />
             );
           })}
@@ -70,7 +71,7 @@ export default function TopTechniques({ charters }: TopTechniquesProps) {
             href={`/${locale}/categories/techniques`}
             className="text-sm font-semibold text-[#ec2227] hover:underline"
           >
-            See all fishing techniques
+            {t("seeAll")}
           </Link>
         </div>
       </div>

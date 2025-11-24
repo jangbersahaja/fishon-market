@@ -1,4 +1,8 @@
 // components/shared/PriceTag.tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+
 /**
  * Unified price display component
  * @param price - Price in RM
@@ -20,6 +24,8 @@ export default function PriceTag({
   className = "",
   color = "default",
 }: Props) {
+  const t = useTranslations("common");
+
   const sizeClasses = {
     sm: {
       label: "text-xs",
@@ -45,25 +51,29 @@ export default function PriceTag({
 
   const currentSize = sizeClasses[size];
 
-  const labels = {
-    from: "From",
-    total: "Total",
-    "per-day": "",
+  // Get label for current variant
+  const getLabel = () => {
+    if (variant === "from") return t("from");
+    if (variant === "total") return t("total");
+    return "";
   };
 
-  const suffixes = {
-    from: "/Day",
-    total: "",
-    "per-day": "/Day",
+  // Get suffix for current variant
+  const getSuffix = () => {
+    if (variant === "from" || variant === "per-day") return t("perTrip");
+    return "";
   };
+
+  const label = getLabel();
+  const suffix = getSuffix();
 
   return (
     <div className={`flex items-end gap-1 ${className}`}>
-      {labels[variant] && (
+      {label && (
         <span
           className={`${currentSize.label} ${color === "chrome" ? "text-gray-100" : "text-gray-500"}`}
         >
-          {labels[variant]}
+          {label}
         </span>
       )}
       <span
@@ -71,11 +81,11 @@ export default function PriceTag({
       >
         RM{price}
       </span>
-      {suffixes[variant] && (
+      {suffix && (
         <span
           className={`${currentSize.suffix} ${color === "chrome" ? "text-gray-100" : "text-gray-500"}`}
         >
-          {suffixes[variant]}
+          {suffix}
         </span>
       )}
     </div>

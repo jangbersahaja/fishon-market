@@ -21,8 +21,9 @@ export async function POST(req: Request) {
   }
 
   const now = new Date();
-  // Update many in one go; return count
-  const result = await prisma.booking.updateMany({
+
+  // 1. Expire PENDING bookings where expiresAt < now
+  const pendingResult = await prisma.booking.updateMany({
     where: {
       status: "PENDING",
       expiresAt: { lt: now },
@@ -30,7 +31,26 @@ export async function POST(req: Request) {
     data: { status: "EXPIRED" },
   });
 
-  return NextResponse.json({ expired: result.count }, { status: 200 });
+  // 2. Expire PAYMENT_AUTHORIZED bookings where acknowledgmentDeadline < now
+  // These are AUTO flow bookings where captain didn't acknowledge within 12h
+  const paymentAuthorizedResult = await prisma.booking.updateMany({
+    where: {
+      status: "PAYMENT_AUTHORIZED",
+      acknowledgmentDeadline: { lt: now },
+    },
+    data: { status: "EXPIRED" },
+  });
+
+  return NextResponse.json(
+    {
+      expired: pendingResult.count + paymentAuthorizedResult.count,
+      details: {
+        pending: pendingResult.count,
+        paymentAuthorized: paymentAuthorizedResult.count,
+      },
+    },
+    { status: 200 }
+  );
 }
 
 // Vercel Cron issues GET requests. Support GET with the same security, allowing a `secret` query param
@@ -50,9 +70,30 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const now = new Date();
-  const result = await prisma.booking.updateMany({
+
+  // 1. Expire PENDING bookings where expiresAt < now
+  const pendingResult = await prisma.booking.updateMany({
     where: { status: "PENDING", expiresAt: { lt: now } },
     data: { status: "EXPIRED" },
   });
-  return NextResponse.json({ expired: result.count }, { status: 200 });
+
+  // 2. Expire PAYMENT_AUTHORIZED bookings where acknowledgmentDeadline < now
+  const paymentAuthorizedResult = await prisma.booking.updateMany({
+    where: {
+      status: "PAYMENT_AUTHORIZED",
+      acknowledgmentDeadline: { lt: now },
+    },
+    data: { status: "EXPIRED" },
+  });
+
+  return NextResponse.json(
+    {
+      expired: pendingResult.count + paymentAuthorizedResult.count,
+      details: {
+        pending: pendingResult.count,
+        paymentAuthorized: paymentAuthorizedResult.count,
+      },
+    },
+    { status: 200 }
+  );
 }

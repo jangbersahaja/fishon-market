@@ -2,15 +2,10 @@ import { getToken } from "next-auth/jwt";
 import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { defaultLocale, locales } from "./src/i18n/config";
+import { routing } from "./src/i18n/navigation";
 
-// Create next-intl middleware
-const intlMiddleware = createMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: "always", // Always show locale in URL (temporary test)
-  localeDetection: true, // Enable locale detection
-});
+// Create next-intl middleware with routing config
+const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

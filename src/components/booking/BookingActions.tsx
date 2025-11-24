@@ -1,15 +1,13 @@
 "use client";
 
-import {
-  BookAgainButton,
-  CancelBookingButton,
-} from "@/components/account/BookingActionButtons";
+import { CancelBookingButton } from "@/components/account/BookingActionButtons";
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { CancellationReasonDialog } from "@/components/booking/CancellationReasonDialog";
 import { EmailVerificationModal } from "@/components/booking/EmailVerificationModal";
 import { Button } from "@/components/ui/button";
 import type { BookingStatus } from "@/lib/services/booking-service";
 import { Download, Mail, MessageCircle, Phone } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -27,6 +25,7 @@ interface BookingActionsProps {
   conversationStatus?: string;
   tripDate?: Date;
   finalPrice?: number;
+  locale: string;
 }
 
 export function BookingActions({
@@ -43,9 +42,11 @@ export function BookingActions({
   conversationStatus,
   tripDate,
   finalPrice,
+  locale,
 }: BookingActionsProps) {
   const router = useRouter();
   const { openModal } = useAuthModal();
+  const t = useTranslations("booking.actions");
   const [isDownloading, setIsDownloading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -255,14 +256,14 @@ export function BookingActions({
   return (
     <>
       <div className="p-3 space-y-3 bg-white border border-gray-200 rounded-lg sm:p-5">
-        <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t("title")}</h3>
 
         {/* PAYMENT_AUTHORIZED or PAID: Contact Captain + Cancel */}
         {(status === "PAYMENT_AUTHORIZED" || status === "PAID") && (
           <>
             <div className="pb-3 mb-3 border-b border-gray-200">
               <p className="mb-3 text-sm font-medium text-gray-700">
-                Contact {captainName || "Captain"}
+                {t("contactCaptain", { captainName: captainName || "Captain" })}
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {/* Call Button */}
@@ -274,7 +275,7 @@ export function BookingActions({
                     className="flex-col h-auto py-3"
                   >
                     <Phone className="w-4 h-4 mb-1" />
-                    <span className="text-xs">Call</span>
+                    <span className="text-xs">{t("call")}</span>
                   </Button>
                 )}
                 {/* Email Button */}
@@ -286,7 +287,7 @@ export function BookingActions({
                     className="flex-col h-auto py-3"
                   >
                     <Mail className="w-4 h-4 mb-1" />
-                    <span className="text-xs">Email</span>
+                    <span className="text-xs">{t("email")}</span>
                   </Button>
                 )}
                 {/* Chat Button - Different for Guest vs Registered Users */}
@@ -295,13 +296,16 @@ export function BookingActions({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      openModal("register", `/book/confirm?id=${bookingId}`);
+                      openModal(
+                        "register",
+                        `/${locale}/book/confirm?id=${bookingId}`
+                      );
                     }}
                     className="flex-col h-auto py-3"
-                    title="Register to enable chat with captain"
+                    title={t("chatDisabledTooltip")}
                   >
                     <MessageCircle className="w-4 h-4 mb-1" />
-                    <span className="text-xs">Register to Chat</span>
+                    <span className="text-xs">{t("registerToChat")}</span>
                   </Button>
                 ) : (
                   <Button
@@ -309,19 +313,21 @@ export function BookingActions({
                     size="sm"
                     onClick={() => {
                       if (conversationId) {
-                        router.push(`/account/messages/${conversationId}`);
+                        router.push(
+                          `/${locale}/account/messages/${conversationId}`
+                        );
                       }
                     }}
                     disabled={!isChatAvailable}
                     className="flex-col h-auto py-3"
                     title={
                       !isChatAvailable
-                        ? "Chat will be enabled after captain approval"
-                        : "Chat with captain"
+                        ? t("chatDisabledTooltip")
+                        : t("chatEnabledTooltip")
                     }
                   >
                     <MessageCircle className="w-4 h-4 mb-1" />
-                    <span className="text-xs">Chat</span>
+                    <span className="text-xs">{t("chat")}</span>
                   </Button>
                 )}
               </div>
@@ -333,11 +339,13 @@ export function BookingActions({
           {/* Pay Now button for AWAITING_PAYMENT - Manual Flow */}
           {status === "AWAITING_PAYMENT" && (
             <Button
-              onClick={() => router.push(`/book/payment/${bookingId}`)}
+              onClick={() =>
+                router.push(`/${locale}/book/payment/${bookingId}`)
+              }
               className="w-full col-span-3 text-white bg-green-600 hover:bg-green-700"
               size="lg"
             >
-              Pay Now
+              {t("payNow")}
             </Button>
           )}
 
@@ -355,12 +363,24 @@ export function BookingActions({
 
           {/* CANCELLED: Book Again */}
           {status === "CANCELLED" && (
-            <BookAgainButton charterId={charterId} fullWidth />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push(`/${locale}/charters/${charterId}`)}
+            >
+              {t("bookAgain")}
+            </Button>
           )}
 
           {/* REJECTED: Book Again */}
           {status === "REJECTED" && (
-            <BookAgainButton charterId={charterId} fullWidth />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push(`/${locale}/charters/${charterId}`)}
+            >
+              {t("bookAgain")}
+            </Button>
           )}
 
           {/* COMPLETED: Download Confirmation + Book Again */}
@@ -372,9 +392,15 @@ export function BookingActions({
                 className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                {isDownloading ? "Downloading..." : "Download Confirmation"}
+                {isDownloading ? t("downloading") : t("downloadConfirmation")}
               </button>
-              <BookAgainButton charterId={charterId} fullWidth />
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => router.push(`/${locale}/charters/${charterId}`)}
+              >
+                {t("bookAgain")}
+              </Button>
             </>
           )}
 
@@ -387,9 +413,15 @@ export function BookingActions({
                 className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                {isDownloading ? "Downloading..." : "Download Confirmation"}
+                {isDownloading ? t("downloading") : t("downloadConfirmation")}
               </button>
-              <BookAgainButton charterId={charterId} fullWidth />
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => router.push(`/${locale}/charters/${charterId}`)}
+              >
+                {t("bookAgain")}
+              </Button>
             </>
           )}
         </div>
@@ -431,14 +463,14 @@ export function BookingActions({
               </button>
 
               <h3 className="mb-2 text-xl font-bold text-gray-900">
-                Cancellation Refund
+                {t("cancellationRefund.title")}
               </h3>
 
               {estimatedRefund > 0 ? (
                 <>
                   <div className="p-4 mb-4 rounded-lg bg-green-50">
                     <p className="text-sm text-gray-700">
-                      Estimated refund amount:
+                      {t("cancellationRefund.estimatedRefund")}
                     </p>
                     <p className="text-2xl font-bold text-green-600">
                       RM {estimatedRefund.toFixed(2)}
@@ -447,46 +479,43 @@ export function BookingActions({
 
                   <div className="p-4 mb-4 border border-gray-200 rounded-lg">
                     <p className="mb-2 text-sm font-semibold text-gray-900">
-                      Cancellation Policy:
+                      {t("cancellationRefund.policyTitle")}
                     </p>
                     <ul className="space-y-1 text-xs text-gray-600">
-                      <li>• More than 30 days before trip: 80% refund</li>
-                      <li>• 15-30 days before trip: 50% refund</li>
-                      <li>• Less than 15 days before trip: No refund</li>
+                      <li>• {t("cancellationRefund.policy30Days")}</li>
+                      <li>• {t("cancellationRefund.policy15Days")}</li>
+                      <li>• {t("cancellationRefund.policyUnder15")}</li>
                     </ul>
                   </div>
 
                   <p className="mb-5 text-sm text-gray-700">
-                    Refunds are typically processed within 5-7 business days.
+                    {t("cancellationRefund.processingTime")}
                   </p>
                 </>
               ) : (
                 <>
                   <div className="p-4 mb-4 rounded-lg bg-amber-50">
                     <p className="text-sm font-semibold text-amber-800">
-                      No refund available
+                      {t("cancellationRefund.noRefundTitle")}
                     </p>
                     <p className="mt-1 text-xs text-amber-700">
-                      Your trip is less than 15 days away. According to our
-                      cancellation policy, no refund is available for
-                      cancellations within this period.
+                      {t("cancellationRefund.noRefundMessage")}
                     </p>
                   </div>
 
                   <div className="p-4 mb-4 border border-gray-200 rounded-lg">
                     <p className="mb-2 text-sm font-semibold text-gray-900">
-                      Cancellation Policy:
+                      {t("cancellationRefund.policyTitle")}
                     </p>
                     <ul className="space-y-1 text-xs text-gray-600">
-                      <li>• More than 30 days before trip: 80% refund</li>
-                      <li>• 15-30 days before trip: 50% refund</li>
-                      <li>• Less than 15 days before trip: No refund</li>
+                      <li>• {t("cancellationRefund.policy30Days")}</li>
+                      <li>• {t("cancellationRefund.policy15Days")}</li>
+                      <li>• {t("cancellationRefund.policyUnder15")}</li>
                     </ul>
                   </div>
 
                   <p className="mb-5 text-sm text-gray-700">
-                    You can still cancel your booking, but no refund will be
-                    issued.
+                    {t("cancellationRefund.stillCancelMessage")}
                   </p>
                 </>
               )}
@@ -496,13 +525,13 @@ export function BookingActions({
                   className="px-4 py-2 text-sm rounded-lg bg-[#ec2227] text-white font-semibold hover:bg-[#d11f24] focus:outline-none focus:ring-2 focus:ring-[#ec2227]"
                   onClick={handleRefundPreviewContinue}
                 >
-                  Continue to Cancel
+                  {t("cancellationRefund.continueCancel")}
                 </button>
                 <button
                   className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 focus:outline-none"
                   onClick={() => setShowRefundPreview(false)}
                 >
-                  Nevermind
+                  {t("cancellationRefund.nevermind")}
                 </button>
               </div>
             </div>

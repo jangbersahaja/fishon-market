@@ -2,6 +2,7 @@
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import type { BookingFormData } from "./types";
 
@@ -21,6 +22,7 @@ export default function YourDetailsCard({
   lastName,
   email,
 }: YourDetailsCardProps) {
+  const t = useTranslations("booking.checkout.yourDetails");
   const { data: session } = useSession();
   const { openModal } = useAuthModal();
   const isLoggedIn = !!session?.user;
@@ -31,7 +33,7 @@ export default function YourDetailsCard({
   return (
     <section className="pb-5 border-b border-black/10">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold sm:text-lg">Your Details</h2>
+        <h2 className="text-base font-semibold sm:text-lg">{t("title")}</h2>
         {isPrefilled && (
           <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full">
             <svg
@@ -47,7 +49,7 @@ export default function YourDetailsCard({
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            <span>Account details filled</span>
+            <span>{t("accountFilled")}</span>
           </div>
         )}
       </div>
@@ -60,10 +62,9 @@ export default function YourDetailsCard({
               onClick={() => openModal("signin")}
               className="font-semibold cursor-pointer hover:underline text-[#ec2227]"
             >
-              Sign in
+              {t("signIn")}
             </button>{" "}
-            to autofill your details and track your bookings, or continue as a
-            guest.
+            {t("signInPrompt")}
           </div>
         </div>
       )}
@@ -73,12 +74,12 @@ export default function YourDetailsCard({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
-              First name <span className="text-red-500">*</span>
+              {t("firstName")} <span className="text-red-500">*</span>
             </span>
             <input
               type="text"
               {...register("firstName")}
-              placeholder="Your first name"
+              placeholder={t("firstNamePlaceholder")}
               className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.firstName ? "border-red-500" : "border-black/10"
               }`}
@@ -92,12 +93,12 @@ export default function YourDetailsCard({
 
           <label className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
-              Last name <span className="text-red-500">*</span>
+              {t("lastName")} <span className="text-red-500">*</span>
             </span>
             <input
               type="text"
               {...register("lastName")}
-              placeholder="Your last name"
+              placeholder={t("lastNamePlaceholder")}
               className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.lastName ? "border-red-500" : "border-black/10"
               }`}
@@ -113,12 +114,12 @@ export default function YourDetailsCard({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
-              Email <span className="text-red-500">*</span>
+              {t("email")} <span className="text-red-500">*</span>
             </span>
             <input
               type="email"
               {...register("email")}
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.email ? "border-red-500" : "border-black/10"
               }`}
@@ -132,12 +133,12 @@ export default function YourDetailsCard({
 
           <label className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
-              Phone number <span className="text-red-500">*</span>
+              {t("phone")} <span className="text-red-500">*</span>
             </span>
             <input
               type="tel"
               {...register("phone")}
-              placeholder="+60 12-345 6789"
+              placeholder={t("phonePlaceholder")}
               className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
                 errors.phone ? "border-red-500" : "border-black/10"
               }`}
