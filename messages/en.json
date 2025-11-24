@@ -63,7 +63,21 @@
     "tagline": "plan • book • fish",
     "captainTitle": "Are you a Captain or Charter Operator?",
     "captainDescription": "Captain and charter registration is now available at Fishon Captain App",
-    "captainCta": "Register your charter, manage bookings, and reach anglers across Malaysia."
+    "captainCta": "Register your charter, manage bookings, and reach anglers across Malaysia.",
+    "discoverTitle": "Discover top-rated",
+    "discoverTitleBreak": "fishing charters",
+    "bookYourNext": "Book your next fishing trip",
+    "exploreCharters": "Explore Charters",
+    "popularDestinations": "Popular Destinations",
+    "viewAll": "View All",
+    "featuredCharters": "Featured Charters",
+    "howItWorks": "How It Works",
+    "findYourCharter": "Find Your Charter",
+    "searchDescription": "Browse hundreds of fishing charters across Malaysia",
+    "bookSecurely": "Book Securely",
+    "bookDescription": "Easy and secure booking process with instant confirmation",
+    "enjoyYourTrip": "Enjoy Your Trip",
+    "enjoyDescription": "Have an amazing fishing experience with professional captains"
   },
   "charter": {
     "viewDetails": "View Details",
