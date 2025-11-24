@@ -222,7 +222,7 @@ Successfully implemented a dual-flow payment system for fishon-market that suppo
 #### 6. Approval Flow (`/api/bookings/approve`)
 
 - **TOKENIZED**: Charges card via `capturePayment()`, updates to PAID
-- **DIRECT**: Confirms booking (already charged), updates to PAID
+- **DIRECT**: Confir(my) booking (already charged), updates to PAID
 - **MOCK**: Simulates capture for testing
 - Error handling: 402 if card charge fails
 - Notifications: BOOKING_CONFIRMED for PAID status
@@ -260,7 +260,7 @@ Successfully implemented a dual-flow payment system for fishon-market that suppo
 - Protected by CRON_SECRET authentication
 - Comprehensive logging and error handling
 
-## Payment Flow Diagrams
+## Payment Flow Diagra(my)
 
 ### TOKENIZED Flow (Card)
 

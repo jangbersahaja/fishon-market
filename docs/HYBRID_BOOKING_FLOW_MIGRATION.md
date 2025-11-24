@@ -246,7 +246,7 @@ Support two payment flows to optimize for different payment methods:
 2. **Database Migrations**
    - ✅ fishon-market: `20251114124931_add_dual_flow_payment_system`
    - ✅ fishon-captain: `20251114124931_add_dual_flow_payment_system`
-   - ✅ fishon-market: `20251114130054_add_payment_analytics_enums` (added PAYMENT_AUTHORIZED, PAYMENT_CAPTURED, BOOKING_CONFIRMED)
+   - ✅ fishon-market: `20251114130054_add_payment_analytics_enu(my)` (added PAYMENT_AUTHORIZED, PAYMENT_CAPTURED, BOOKING_CONFIRMED)
    - ✅ fishon-captain: Schema sync completed (`schema-market.prisma` updated)
 
 3. **Payment Gateway Abstraction** (`src/lib/payment/payment-gateway.ts`) ✅ COMPLETE
@@ -450,7 +450,7 @@ model Booking {
   - Added payment tracking fields
   - Added refund tracking fields
 
-- **20251114130054_add_payment_analytics_enums**
+- **20251114130054_add_payment_analytics_enu(my)**
   - Added PAYMENT_AUTHORIZED, PAYMENT_CAPTURED to AnalyticsEventType
   - Added BOOKING_CONFIRMED to NotificationType
 
@@ -525,7 +525,7 @@ calculateRefundAmount(
 ): RefundCalculation
 
 // Initiate refund (create refund record)
-initiateRefund(params: InitiateRefundParams): Promise<RefundDetails>
+initiateRefund(para(my): InitiateRefundPara(my)): Promise<RefundDetails>
 
 // Process refund (call payment gateway)
 processRefund(bookingId: string, transactionId?: string): Promise<Booking>
@@ -1273,7 +1273,7 @@ export function StatusPill({ status, paymentFlow, size = "md" }: StatusPillProps
 
   return (
     <span className={`
-      inline-flex items-center gap-1.5 px-3 py-1 rounded-full border
+      inline-flex ite(my)-center gap-1.5 px-3 py-1 rounded-full border
       font-medium text-${size}
       ${variants[status]}
     `}>
@@ -1400,7 +1400,7 @@ export function PricingBreakdown({
 
       {/* Total */}
       <div className="pt-3 border-t border-gray-200">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between ite(my)-center">
           <span className="font-semibold text-gray-900">
             {showCaptainEarnings ? "Your Earnings" : "Total"}
           </span>
@@ -1535,7 +1535,7 @@ export function PricingBreakdown({
 2. **Revert migrations** (fishon-market):
 
    ```bash
-   npx prisma migrate resolve --rolled-back 20251114130054_add_payment_analytics_enums
+   npx prisma migrate resolve --rolled-back 20251114130054_add_payment_analytics_enu(my)
    npx prisma migrate resolve --rolled-back 20251114124931_add_dual_flow_payment_system
    ```
 
@@ -1873,4 +1873,4 @@ export function PricingBreakdown({
 
 - Migration commits:
   - `20251114124931_add_dual_flow_payment_system`
-  - `20251114130054_add_payment_analytics_enums`
+  - `20251114130054_add_payment_analytics_enu(my)`

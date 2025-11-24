@@ -5,7 +5,7 @@
 
 ---
 
-## Current Flow Problems
+## Current Flow Proble(my)
 
 ### Issues
 
@@ -71,7 +71,7 @@
 
 **Features**:
 
-- Receives booking details from form (via POST or query params)
+- Receives booking details from form (via POST or query para(my))
 - **Session timeout: 30 minutes** ⏱️
 - **Countdown timer** (prominent display at top)
 - Displays booking summary (charter, dates, participants)
@@ -166,7 +166,7 @@ export function PaymentSessionTimer({ expiresAt }: { expiresAt: Date }) {
 
   return (
     <div className="fixed top-4 right-4 bg-amber-50 border border-amber-300 px-4 py-2 rounded-lg">
-      <div className="flex items-center gap-2">
+      <div className="flex ite(my)-center gap-2">
         <Clock className="w-4 h-4 text-amber-600" />
         <span className="text-sm font-medium text-amber-900">
           Session expires in: {formatTimeRemaining(timeLeft)}
@@ -423,11 +423,11 @@ if (booking.status !== "AWAITING_PAYMENT") {
 
 ```typescript
 export default async function PaymentPreviewPage({
-  searchParams,
+  searchPara(my),
 }: {
-  searchParams: Promise<{ data?: string }>;
+  searchPara(my): Promise<{ data?: string }>;
 }) {
-  const sp = await searchParams;
+  const sp = await searchPara(my);
   const session = await auth();
 
   // 1. Decode booking data
@@ -560,7 +560,7 @@ export async function getCharterById(id: string) {
 ### Phase 5: Documentation (0.5 days)
 
 1. ✅ Update API documentation
-2. ✅ Create user flow diagrams
+2. ✅ Create user flow diagra(my)
 3. ✅ Update help center articles
 
 **Total Effort**: ~3.5 days
@@ -610,7 +610,7 @@ export async function getCharterById(id: string) {
 - Prevents stale pricing issues
 - Prevents double-booking conflicts
 - Creates healthy urgency (improves conversion)
-- Aligns with user expectations from other platforms
+- Aligns with user expectations from other platfor(my)
 - Protects captain's availability calendar
 
 ### Comparison: Session Timeout vs Payment Deadline
@@ -632,9 +632,9 @@ export async function getCharterById(id: string) {
 - ✅ Clearer separation of concerns
 - ✅ Review step before payment
 - ✅ Less overwhelming booking form
-- ✅ Better mobile experience (shorter forms)
+- ✅ Better mobile experience (shorter for(my))
 - ✅ **Clear urgency without pressure** (30-min countdown)
-- ✅ **Fair expectations** (matches industry norms)
+- ✅ **Fair expectations** (matches industry nor(my))
 
 ### Technical
 
@@ -648,7 +648,7 @@ export async function getCharterById(id: string) {
 
 ### Business
 
-- ✅ Higher conversion (simpler forms)
+- ✅ Higher conversion (simpler for(my))
 - ✅ Better analytics per step
 - ✅ Easier A/B testing
 - ✅ Manual flow unlocks new markets

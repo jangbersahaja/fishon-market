@@ -70,7 +70,7 @@ export async function createBlogPostWithSocial(formData: FormData) {
   }
 
   // Create the post (will redirect after creation)
-  const { createBlogPost } = await import("@/app/admin/blog/posts/actions");
+  const { createBlogPost } = await import("@/app/[locale]/admin/blog/posts/actions");
   await createBlogPost(formData);
 }
 
@@ -102,6 +102,6 @@ export async function updateBlogPostWithSocial(
   }
 
   // Update the post (will redirect after update)
-  const { updateBlogPost } = await import("@/app/admin/blog/posts/actions");
+  const { updateBlogPost } = await import("@/app/[locale]/admin/blog/posts/actions");
   await updateBlogPost(postId, formData);
 }

@@ -13,6 +13,8 @@ interface BlogPostFormProps {
   allCategories: BlogCategory[];
   allTags: BlogTag[];
   onSubmit: (formData: FormData) => Promise<void>;
+  /** Locale for link generation */
+  locale: string;
 }
 
 export default function BlogPostForm({
@@ -20,6 +22,7 @@ export default function BlogPostForm({
   allCategories,
   allTags,
   onSubmit,
+  locale,
 }: BlogPostFormProps) {
   const router = useRouter();
   const [content, setContent] = useState(post?.content || "");
@@ -206,7 +209,7 @@ export default function BlogPostForm({
               </button>
               <span className="text-gray-300">|</span>
               <a
-                href="/admin/blog/categories"
+                href={`/${locale}/admin/blog/categories`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"
@@ -325,7 +328,7 @@ export default function BlogPostForm({
               </button>
               <span className="text-gray-300">|</span>
               <a
-                href="/admin/blog/tags"
+                href={`/${locale}/admin/blog/tags`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-[#EC2227] hover:underline"

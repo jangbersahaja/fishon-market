@@ -8,6 +8,7 @@ import {
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import type { Trip } from "@fishon/ui";
 import { ArrowRight } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useMemo, useState } from "react";
 
 interface BookingWidgetProps {
@@ -35,6 +36,7 @@ function BookingWidget({
   className = "",
   defaultPersons = 2,
 }: BookingWidgetProps) {
+  const locale = useLocale();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   // Format in local time (Malaysia GMT+8), not UTC
@@ -320,7 +322,9 @@ function BookingWidget({
             params.set("days", String(days));
             params.set("adults", String(adults));
             params.set("children", String(childrenCount));
-            window.location.assign(`/book/${charterId}?${params.toString()}`);
+            window.location.assign(
+              `/${locale}/book/${charterId}?${params.toString()}`
+            );
           }}
         >
           Check Availability

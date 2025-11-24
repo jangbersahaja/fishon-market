@@ -61,7 +61,7 @@ model AnalyticsEvent {
 
 ```typescript
 // Record events (non-blocking, error-handled)
-async function trackEvent(params: {
+async function trackEvent(para(my): {
   eventType: AnalyticsEventType;
   charterId?: string;
   captainId?: string;
@@ -441,7 +441,7 @@ npm install --save-dev @types/recharts
 
 - Server component to fetch data
 - Client components for interactivity
-- Period selector updates URL params
+- Period selector updates URL para(my)
 - Loading and error states
 - Mobile responsive design
 

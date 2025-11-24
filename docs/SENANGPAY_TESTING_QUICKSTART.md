@@ -65,7 +65,7 @@ Replace `abc123xyz` with your ngrok ID. **Save**.
 1. Create booking
 2. **Manually craft fake success URL**:
    ```
-   http://localhost:3000/book/payment/return?status_id=1&order_id=YOUR_BOOKING_ID&transaction_id=fake&msg=test&hash=invalid
+   http://localhost:3000/book/payment/return?status_id=1&order_id=YOUR_BOOKING_ID&transaction_id=fake&(my)g=test&hash=invalid
    ```
 3. **Watch logs** for: Invalid hash detected - tampering
 4. **Check database**: status unchanged (not PAID)

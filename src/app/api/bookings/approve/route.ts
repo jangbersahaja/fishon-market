@@ -173,7 +173,7 @@ export async function POST(req: Request) {
             type: "BOOKING_APPROVED",
             title: "Booking Approved! 🎉",
             message: `${trip.charter.name} approved your booking for ${updated.date.toISOString().slice(0, 10)}. Complete your payment within 48 hours to confirm your spot!`,
-            actionUrl: `/book/payment/${updated.id}`,
+            actionUrl: `/my/book/payment/${updated.id}`,
             actionLabel: "Complete Payment",
             bookingId: updated.id,
             charterId: trip.charter.id,
@@ -205,9 +205,9 @@ export async function POST(req: Request) {
         if (trip) {
           const base =
             process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-          const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(updated.id)}`;
-          const bookingUrl = `${base}/account/bookings/${encodeURIComponent(updated.id)}`;
-          const paymentUrl = `${base}/book/payment/${encodeURIComponent(updated.id)}`;
+          const confirmationUrl = `${base}/my/book/confirm?id=${encodeURIComponent(updated.id)}`;
+          const bookingUrl = `${base}/my/account/bookings/${encodeURIComponent(updated.id)}`;
+          const paymentUrl = `${base}/my/book/payment/${encodeURIComponent(updated.id)}`;
 
           // Manual flow: Send approval email with payment link
           await sendBookingApprovedEmail({
@@ -227,10 +227,13 @@ export async function POST(req: Request) {
       console.error("Failed to send booking approved email:", err);
     }
 
-    // Revalidate angler pages
+    // Revalidate angler pages for all locales
     try {
-      revalidatePath("/book/confirm", "page");
-      revalidatePath("/account/bookings", "page");
+      const locales = ["my", "en"];
+      for (const locale of locales) {
+        revalidatePath(`/${locale}/book/confirm`, "page");
+        revalidatePath(`/${locale}/account/bookings`, "page");
+      }
 
       // Revalidate messages page if conversation exists
       const conversation = await prisma.conversation.findUnique({
@@ -238,7 +241,12 @@ export async function POST(req: Request) {
         select: { id: true },
       });
       if (conversation) {
-        revalidatePath(`/account/messages/${conversation.id}`, "page");
+        for (const locale of locales) {
+          revalidatePath(
+            `/${locale}/account/messages/${conversation.id}`,
+            "page"
+          );
+        }
       }
     } catch (error) {
       console.error("Revalidation failed:", error);

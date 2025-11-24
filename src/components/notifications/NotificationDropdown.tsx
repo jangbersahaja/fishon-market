@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import { NotificationItem } from "./NotificationItem";
 import { NotificationSkeleton } from "./NotificationSkeleton";
@@ -15,6 +16,7 @@ interface NotificationDropdownProps {
 }
 
 export function NotificationDropdown({ children }: NotificationDropdownProps) {
+  const locale = useLocale();
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } =
     useNotifications();
 
@@ -65,7 +67,7 @@ export function NotificationDropdown({ children }: NotificationDropdownProps) {
 
             <div className="border-t px-4 py-3 sticky bottom-0 bg-white">
               <Link
-                href="/account/notifications"
+                href={`/${locale}/account/notifications`}
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium text-center min-h-[44px] flex items-center justify-center"
                 aria-label="View all notifications"
               >

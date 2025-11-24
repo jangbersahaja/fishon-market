@@ -118,7 +118,7 @@ WHERE bookingId = '<booking_id>';
 
 - ✅ User redirected to `/login` with return URL
 - ✅ After login, user returns to booking page
-- ✅ Form data preserved (if stored in URL params)
+- ✅ Form data preserved (if stored in URL para(my))
 
 ---
 
@@ -193,10 +193,10 @@ WHERE bookingId = '<booking_id>';
   - Card option
   - FPX option
   - E-wallet option (if enabled)
-- ✅ Terms & conditions checkbox
+- ✅ Ter(my) & conditions checkbox
 - ✅ "Proceed to Payment" button enabled only when:
   - Payment method selected
-  - Terms accepted
+  - Ter(my) accepted
 
 ---
 
@@ -210,7 +210,7 @@ WHERE bookingId = '<booking_id>';
 **Steps:**
 
 1. Select payment method
-2. Accept terms
+2. Accept ter(my)
 3. Click "Proceed to Payment" button
 4. Observe validation API call
 
@@ -277,8 +277,8 @@ WHERE bookingId = '<booking_id>';
 ```javascript
 // In browser console, manipulate URL
 const url = new URL(window.location.href);
-const params = new URLSearchParams(url.search);
-const data = JSON.parse(atob(params.get("data")));
+const para(my) = new URLSearchPara(my)(url.search);
+const data = JSON.parse(atob(para(my).get("data")));
 // Set session start to 31 minutes ago
 data.sessionStart = new Date(Date.now() - 31 * 60 * 1000).toISOString();
 const newData = btoa(JSON.stringify(data));
@@ -652,7 +652,7 @@ LIMIT 10;
 
 - ✅ Conversation locked until captain acknowledges
 - ✅ Lock icon visible
-- ✅ Message: "Conversation will unlock after captain confirms"
+- ✅ Message: "Conversation will unlock after captain confir(my)"
 
 ---
 

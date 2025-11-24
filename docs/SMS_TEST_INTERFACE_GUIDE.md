@@ -2,12 +2,12 @@
 
 ## Overview
 
-The SMS Test Interface (`/dev/sms-test`) is a development tool for testing SMS notifications during deployment. It allows you to send test SMS messages with various notification templates to verify the Exabytes integration is working correctly.
+The SMS Test Interface (`/dev/s(my)-test`) is a development tool for testing SMS notifications during deployment. It allows you to send test SMS messages with various notification templates to verify the Exabytes integration is working correctly.
 
 ## Access
 
-**URL:** `http://localhost:3001/dev/sms-test` (development)  
-**URL:** `https://fishon.my/dev/sms-test` (preview/staging only)
+**URL:** `http://localhost:3001/dev/s(my)-test` (development)  
+**URL:** `https://fishon.my/dev/s(my)-test` (preview/staging only)
 
 ## Features
 
@@ -106,7 +106,7 @@ Real-time preview showing:
 
 ### Test Booking Created Notification
 
-1. Navigate to `/dev/sms-test`
+1. Navigate to `/dev/s(my)-test`
 2. Enter phone number: `60105581238`
 3. Select template: "Booking Created"
 4. Customize template data:
@@ -125,7 +125,7 @@ has been received. Total: RM450.00. We will notify you once the captain approves
 
 ### Send Custom Message
 
-1. Navigate to `/dev/sms-test`
+1. Navigate to `/dev/s(my)-test`
 2. Enter phone number
 3. Type custom message in "Custom Message" field
 4. Click "Send SMS"
@@ -138,7 +138,7 @@ has been received. Total: RM450.00. We will notify you once the captain approves
 
 - ✅ Green card with "Success" message
 - Displays Message ID from Exabytes
-- Toast notification confirms delivery
+- Toast notification confir(my) delivery
 
 ### Failure Response
 
@@ -159,7 +159,7 @@ These are configured in `.env.local` and automatically loaded in development.
 
 ## API Endpoint
 
-**POST** `/api/dev/sms-test`
+**POST** `/api/dev/s(my)-test`
 
 ```json
 {
@@ -287,5 +287,5 @@ Once deployed to production:
 ## Related Documentation
 
 - `/docs/SMS_INTEGRATION_COMPLETE.md` - Complete SMS integration overview
-- `/src/lib/services/sms-service.ts` - SMS service implementation
+- `/src/lib/services/s(my)-service.ts` - SMS service implementation
 - `/src/lib/services/notification-service.ts` - Notification service integration

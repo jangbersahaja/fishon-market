@@ -264,7 +264,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
               : {
                   label: "Settings",
                   onClick: () => {
-                    window.location.href = "/account/notifications/settings";
+                    window.location.href = "/my/account/notifications/settings";
                   },
                 },
             duration: 5000,

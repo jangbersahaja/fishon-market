@@ -220,8 +220,8 @@ T=50h   Angler A: Tries to pay but booking is EXPIRED 😱
 // Before showing payment form, check if booking still valid
 // src/app/book/payment/[id]/page.tsx
 
-export default async function PaymentPage({ params }: Props) {
-  const booking = await getBookingById(params.id);
+export default async function PaymentPage({ para(my) }: Props) {
+  const booking = await getBookingById(para(my).id);
 
   // Real-time expiration check
   if (booking.status === "EXPIRED") {
@@ -322,7 +322,7 @@ export function BookingExpiredScreen({ booking }: Props) {
 
       {/* Educational content */}
       <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+        <h4 className="font-semibold text-blue-900 mb-2 flex ite(my)-center gap-2">
           <Info className="w-4 h-4" />
           Why do bookings expire?
         </h4>
@@ -369,7 +369,7 @@ export function DateNoLongerAvailableScreen({ booking }: Props) {
 
       {/* Original booking details */}
       <div className="bg-gray-50 rounded-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex ite(my)-center justify-between mb-3">
           <h3 className="font-semibold">Your Original Selection</h3>
           <Badge variant="destructive">Unavailable</Badge>
         </div>
@@ -541,14 +541,14 @@ export function BookingCard({ booking }: Props) {
             urgency === "medium" && "bg-amber-50 border-amber-300",
             urgency === "low" && "bg-blue-50 border-blue-300"
           )}>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex ite(my)-center justify-between mb-2">
               <span className="text-sm font-medium">
                 {urgency === "high" && "⚠️ Expires in:"}
                 {urgency === "medium" && "⏰ Time left:"}
                 {urgency === "low" && "✓ Approved until:"}
               </span>
               <span className={cn(
-                "text-lg font-bold tabular-nums",
+                "text-lg font-bold tabular-nu(my)",
                 urgency === "high" && "text-red-600",
                 urgency === "medium" && "text-amber-600",
                 urgency === "low" && "text-blue-600"
@@ -573,10 +573,10 @@ export function BookingCard({ booking }: Props) {
   );
 }
 
-function formatTimeRemaining(ms: number): string {
-  const hours = Math.floor(ms / (1000 * 60 * 60));
-  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+function formatTimeRemaining((my): number): string {
+  const hours = Math.floor((my) / (1000 * 60 * 60));
+  const minutes = Math.floor(((my) % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor(((my) % (1000 * 60)) / 1000);
 
   if (hours > 0) {
     return `${hours}h ${minutes}m`;

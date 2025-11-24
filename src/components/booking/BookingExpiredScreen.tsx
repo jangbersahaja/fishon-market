@@ -29,11 +29,14 @@ interface BookingExpiredScreenProps {
   };
   /** Type of expiration: PENDING (captain didn't respond) or AWAITING_PAYMENT (angler didn't pay) */
   expirationType: "PENDING" | "AWAITING_PAYMENT";
+  /** Locale for link generation */
+  locale: string;
 }
 
 export function BookingExpiredScreen({
   booking,
   expirationType,
+  locale,
 }: BookingExpiredScreenProps) {
   const isAwaitingPaymentExpiry = expirationType === "AWAITING_PAYMENT";
 
@@ -188,7 +191,7 @@ export function BookingExpiredScreen({
         <p className="text-sm text-gray-600">
           Need help?{" "}
           <Link
-            href="/contact?subject=expired-booking"
+            href={`/${locale}/contact?subject=expired-booking`}
             className="text-blue-600 hover:text-blue-700 font-medium underline"
           >
             Contact Support

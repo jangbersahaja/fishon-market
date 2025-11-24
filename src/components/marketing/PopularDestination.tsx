@@ -1,6 +1,9 @@
+"use client";
+
 import { getDestinationImage } from "@/lib/helpers/image-helpers";
 import { getPopularDestinations } from "@/lib/helpers/popularity-helpers";
 import type { Charter } from "@fishon/ui";
+import { useLocale } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,11 +12,12 @@ type Destination = {
   count: number;
   image?: string;
   state?: string;
+  locale: string;
 };
 
-const Card = ({ name, count, image }: Destination) => (
+const Card = ({ name, count, image, locale }: Destination) => (
   <Link
-    href={`/search?destination=${encodeURIComponent(name)}`}
+    href={`/${locale}/search?destination=${encodeURIComponent(name)}`}
     className="flex flex-col gap-2 group"
     title={`Find charters in ${name}`}
   >
@@ -45,6 +49,7 @@ interface PopularDestinationProps {
 }
 
 const PopularDestination = ({ charters }: PopularDestinationProps) => {
+  const locale = useLocale();
   // Get all popular destinations
   const allDestinations = getPopularDestinations(charters, 50); // Get more to filter
 
@@ -67,7 +72,7 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold">Popular Destinations</h2>
           <Link
-            href="/categories/destinations"
+            href={`/${locale}/categories/destinations`}
             className="hidden text-sm font-medium text-[#ec2227] hover:underline md:inline"
           >
             See all destinations
@@ -81,12 +86,13 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
               count={d.count}
               image={d.image}
               state={d.state}
+              locale={locale}
             />
           ))}
         </div>
         <div className="mt-4 flex justify-start md:hidden">
           <Link
-            href="/categories/destinations"
+            href={`/${locale}/categories/destinations`}
             className="text-sm font-semibold text-[#ec2227] hover:underline"
           >
             See all destinations

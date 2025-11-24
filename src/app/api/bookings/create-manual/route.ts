@@ -358,7 +358,7 @@ async function createManualBooking(session: any, body: any) {
         durationHours: trip.durationHours,
         startTime: booking.startTime || undefined,
         totalPrice: pricing.finalPrice.toFixed(2),
-        confirmationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/bookings/${booking.id}`,
+        confirmationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/my/account/bookings/${booking.id}`,
       });
 
       // Email to captain

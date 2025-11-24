@@ -239,7 +239,7 @@ interface PaymentResponse {
   status_id: string; // "1" = success, "0" = failed
   order_id: string;
   transaction_id: string;
-  msg: string;
+  (my)g: string;
   hash: string;
 }
 
@@ -269,7 +269,7 @@ export function verifyReturnHash(
   const expectedHash = crypto
     .createHmac("sha256", secretKey)
     .update(
-      `${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`
+      `${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.(my)g}`
     )
     .digest("hex");
 
@@ -380,7 +380,7 @@ describe("senangpay utilities", () => {
         status_id: "1",
         order_id: "booking-123",
         transaction_id: "TXN123",
-        msg: "Payment Successful",
+        (my)g: "Payment Successful",
         hash: generatePaymentHash(testConfig),
       };
 
@@ -537,21 +537,21 @@ import { verifyReturnHash } from "@/lib/payment/senangpay";
 import { revalidatePath } from "next/cache";
 
 interface PageProps {
-  searchParams: Promise<{
+  searchPara(my): Promise<{
     status_id?: string;
     order_id?: string;
     transaction_id?: string;
-    msg?: string;
+    (my)g?: string;
     hash?: string;
   }>;
 }
 
-export default async function PaymentReturnPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const { status_id, order_id, transaction_id, msg, hash } = params;
+export default async function PaymentReturnPage({ searchPara(my) }: PageProps) {
+  const para(my) = await searchPara(my);
+  const { status_id, order_id, transaction_id, (my)g, hash } = para(my);
 
   // Validate required parameters
-  if (!status_id || !order_id || !transaction_id || !msg || !hash) {
+  if (!status_id || !order_id || !transaction_id || !(my)g || !hash) {
     redirect("/book/confirm?error=invalid_payment_response");
   }
 
@@ -560,7 +560,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
   const secretKey = process.env.SENANGPAY_SECRET_KEY!;
 
   const isValid = verifyReturnHash(
-    { status_id, order_id, transaction_id, msg, hash },
+    { status_id, order_id, transaction_id, (my)g, hash },
     secretKey,
     merchantId
   );
@@ -604,7 +604,7 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
         paidAt: new Date(),
         paymentTransactionId: transaction_id,
         paymentMethod: "SENANGPAY",
-        paymentNote: msg,
+        paymentNote: (my)g,
       },
     });
 
@@ -622,18 +622,18 @@ export default async function PaymentReturnPage({ searchParams }: PageProps) {
     // Payment failed
     console.log("❌ [PAYMENT RETURN] Payment failed", {
       orderId: order_id,
-      reason: msg,
+      reason: (my)g,
     });
 
     await prisma.booking.update({
       where: { id: order_id },
       data: {
-        paymentNote: `Payment Failed: ${msg}`,
+        paymentNote: `Payment Failed: ${(my)g}`,
       },
     });
 
     redirect(
-      `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`
+      `/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent((my)g)}`
     );
   }
 }
@@ -664,18 +664,18 @@ export async function POST(request: NextRequest) {
     const status_id = formData.get("status_id")?.toString();
     const order_id = formData.get("order_id")?.toString();
     const transaction_id = formData.get("transaction_id")?.toString();
-    const msg = formData.get("msg")?.toString();
+    const (my)g = formData.get("(my)g")?.toString();
     const hash = formData.get("hash")?.toString();
 
     console.log("📥 [SENANGPAY CALLBACK] Received", {
       status_id,
       order_id,
       transaction_id,
-      msg,
+      (my)g,
     });
 
     // Validate required fields
-    if (!status_id || !order_id || !transaction_id || !msg || !hash) {
+    if (!status_id || !order_id || !transaction_id || !(my)g || !hash) {
       console.error("❌ [SENANGPAY CALLBACK] Missing required fields");
       return new NextResponse("Bad Request", { status: 400 });
     }
@@ -685,7 +685,7 @@ export async function POST(request: NextRequest) {
     const secretKey = process.env.SENANGPAY_SECRET_KEY!;
 
     const isValid = verifyReturnHash(
-      { status_id, order_id, transaction_id, msg, hash },
+      { status_id, order_id, transaction_id, (my)g, hash },
       secretKey,
       merchantId
     );
@@ -732,7 +732,7 @@ export async function POST(request: NextRequest) {
           paidAt: new Date(),
           paymentTransactionId: transaction_id,
           paymentMethod: "SENANGPAY",
-          paymentNote: msg,
+          paymentNote: (my)g,
         },
       });
 
@@ -755,13 +755,13 @@ export async function POST(request: NextRequest) {
       // Payment failed
       console.log("❌ [SENANGPAY CALLBACK] Payment failed", {
         bookingId: order_id,
-        reason: msg,
+        reason: (my)g,
       });
 
       await prisma.booking.update({
         where: { id: order_id },
         data: {
-          paymentNote: `Payment Failed: ${msg}`,
+          paymentNote: `Payment Failed: ${(my)g}`,
         },
       });
     }
@@ -1098,7 +1098,7 @@ ngrok http 3000
 **Performance**:
 
 - [ ] Payment page loads < 2 seconds
-- [ ] Hash generation < 100ms
+- [ ] Hash generation < 100(my)
 - [ ] Return URL processing < 1 second
 - [ ] Callback webhook responds < 2 seconds
 - [ ] Side effects don't block user flow

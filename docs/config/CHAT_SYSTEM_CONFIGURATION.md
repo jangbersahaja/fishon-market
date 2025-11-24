@@ -647,7 +647,7 @@ useEffect(() => {
 
 ---
 
-### 7. ⚠️ Status Mismatch Between Booking and Chat Systems
+### 7. ⚠️ Status Mismatch Between Booking and Chat Syste(my)
 
 **Description**: Booking status changes (e.g., PENDING → AWAITING_PAYMENT → PAID) should be reflected in chat conversation state, but synchronization may be inconsistent.
 

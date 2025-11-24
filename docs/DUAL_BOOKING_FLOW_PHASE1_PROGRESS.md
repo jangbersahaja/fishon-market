@@ -226,7 +226,7 @@
 
 4. **Documentation**
    - API documentation updates
-   - Status flow diagrams
+   - Status flow diagra(my)
    - Migration guide for captain app
    - User-facing documentation (help center)
 

@@ -160,7 +160,7 @@ export async function POST(req: Request) {
             type: "BOOKING_CONFIRMED",
             title: "Booking Confirmed! 🎉",
             message: `Your booking for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed by the captain!`,
-            actionUrl: `/account/bookings/${updated.id}`,
+            actionUrl: `/my/account/bookings/${updated.id}`,
             actionLabel: "View Booking",
             bookingId: updated.id,
             charterId: trip.charter.id,
@@ -201,7 +201,7 @@ export async function POST(req: Request) {
             captainName: trip.charter.captain?.displayName || "Captain",
             captainEmail: trip.charter.captain?.email || "",
             captainPhone: trip.charter.captain?.phone || "",
-            bookingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/bookings/${updated.id}`,
+            bookingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/my/account/bookings/${updated.id}`,
           });
 
           // Also send email to captain with pricing breakdown
@@ -236,11 +236,14 @@ export async function POST(req: Request) {
       console.error("Failed to send confirmation notification/email:", err);
     }
 
-    // Revalidate paths
+    // Revalidate paths for all locales
+    const locales = ["my", "en"];
     revalidatePath("/captain/bookings");
     revalidatePath(`/captain/bookings/${updated.id}`);
-    revalidatePath("/account/bookings");
-    revalidatePath(`/account/bookings/${updated.id}`);
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/account/bookings`);
+      revalidatePath(`/${locale}/account/bookings/${updated.id}`);
+    }
 
     // Revalidate message page if conversation exists
     const conversation = await prisma.conversation.findUnique({
@@ -249,7 +252,9 @@ export async function POST(req: Request) {
     });
 
     if (conversation) {
-      revalidatePath(`/account/messages/${conversation.id}`);
+      for (const locale of locales) {
+        revalidatePath(`/${locale}/account/messages/${conversation.id}`);
+      }
     }
 
     return NextResponse.json({

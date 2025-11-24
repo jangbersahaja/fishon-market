@@ -171,7 +171,7 @@ NEXT_PUBLIC_PUSHER_CLUSTER=your_cluster
 
 ### Payment Completion Example:
 
-1. Payment gateway confirms payment
+1. Payment gateway confir(my) payment
 2. `payment-side-effects.ts` processes completion
 3. Notification created for angler: "Payment confirmed"
 4. Notification created for captain: "Booking paid"

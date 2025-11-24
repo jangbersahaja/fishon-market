@@ -48,14 +48,14 @@ const message = `${secretKey}${detail}${amount}${orderId}`;
 **Before:**
 
 ```typescript
-.update(`${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`)
+.update(`${merchantId}${response.status_id}${response.order_id}${response.transaction_id}${response.(my)g}`)
 ```
 
 **After:**
 
 ```typescript
-// Per Senang Pay documentation: hash = HMAC-SHA256(secretkey + status_id + order_id + transaction_id + msg)
-.update(`${secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.msg}`)
+// Per Senang Pay documentation: hash = HMAC-SHA256(secretkey + status_id + order_id + transaction_id + (my)g)
+.update(`${secretKey}${response.status_id}${response.order_id}${response.transaction_id}${response.(my)g}`)
 ```
 
 ### 3. Updated Tests
@@ -86,7 +86,7 @@ HMAC-SHA256(secretkey + detail + amount + order_id, secretkey)
 ### Return/Callback Hash (when verifying response)
 
 ```
-HMAC-SHA256(secretkey + status_id + order_id + transaction_id + msg, secretkey)
+HMAC-SHA256(secretkey + status_id + order_id + transaction_id + (my)g, secretkey)
 ```
 
 **Components:**
@@ -95,7 +95,7 @@ HMAC-SHA256(secretkey + status_id + order_id + transaction_id + msg, secretkey)
 - `status_id` - Payment status (1=success, 0=failed)
 - `order_id` - Your booking ID
 - `transaction_id` - Senang Pay transaction ID
-- `msg` - Status message
+- `(my)g` - Status message
 
 **Note**: `merchantId` is NOT part of the return hash either
 
@@ -134,7 +134,7 @@ git commit -m "fix(payment): correct hash generation to match Senang Pay docs
 
 - Prepend secretKey to message instead of using merchantId
 - Update payment hash: secretkey + detail + amount + order_id
-- Update return hash: secretkey + status_id + order_id + transaction_id + msg
+- Update return hash: secretkey + status_id + order_id + transaction_id + (my)g
 - Fix all 54 tests to match correct hash format
 - Matches official Senang Pay PHP sample code"
 

@@ -827,7 +827,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           type: "BOOKING_CREATED",
           title: "Booking Request Submitted! 🎣",
           message: `Your booking request for ${trip.charter.name} has been sent to the captain. You'll be notified once they review it.`,
-          actionUrl: `/book/confirm?id=${booking.id}`,
+          actionUrl: `/my/book/confirm?id=${booking.id}`,
           actionLabel: "View Booking",
           bookingId: booking.id,
           charterId: trip.charter.id,
@@ -855,7 +855,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
         if (!user?.email) return;
         const base =
           process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(
+        const confirmationUrl = `${base}/my/book/confirm?id=${encodeURIComponent(
           booking.id
         )}`;
 
@@ -954,13 +954,21 @@ async function createAuthenticatedBooking(session: any, body: any) {
         select: { id: true },
       });
 
-      // Revalidate booking list and confirmation page
-      revalidatePath("/account/bookings", "page");
-      revalidatePath("/book/confirm", "page");
+      // Revalidate booking list and confirmation page for all locales
+      const locales = ["my", "en"];
+      for (const locale of locales) {
+        revalidatePath(`/${locale}/account/bookings`, "page");
+        revalidatePath(`/${locale}/book/confirm`, "page");
+      }
 
       // Revalidate message page if conversation exists
       if (conversation) {
-        revalidatePath(`/account/messages/${conversation.id}`, "page");
+        for (const locale of locales) {
+          revalidatePath(
+            `/${locale}/account/messages/${conversation.id}`,
+            "page"
+          );
+        }
         console.log(
           "✅ Revalidated pages including message page:",
           conversation.id

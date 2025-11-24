@@ -10,7 +10,7 @@
 | Flow       | Trigger                           | Captain Action                                                    | Payment Moment                                            | Guest Eligibility                 |
 | ---------- | --------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
 | **MANUAL** | Angler (or guest) submits request | Captain approves/rejects within `approvalTimeHours` (default 24h) | After approval (CARD capture or FPX/E-Wallet redirect)    | ✅ Yes, handled by `create-guest` |
-| **AUTO**   | Angler/guest confirms booking     | Captain receives notification + conversation unlocked immediately | Immediately (CARD tokenized + held, FPX/E-Wallet charged) | ✅ Yes, same guest checkout       |
+| **AUTO**   | Angler/guest confir(my) booking     | Captain receives notification + conversation unlocked immediately | Immediately (CARD tokenized + held, FPX/E-Wallet charged) | ✅ Yes, same guest checkout       |
 
 - Flow configuration lives on the captain side (Prisma `Charter.bookingFlowType`).
 - Market reads the flow via `getCharterFlowType(charterId)`, which prioritizes the public DB view (`v_public_charters`) and falls back to the public v1 API.

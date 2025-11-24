@@ -36,8 +36,8 @@ model Booking {
 
 **Key Functions:**
 
-- `calculateTimeSlots(params)` - Generates TimeSlot array for a booking
-  - Params: `{ date, startTime, durationHours, days }`
+- `calculateTimeSlots(para(my))` - Generates TimeSlot array for a booking
+  - Para(my): `{ date, startTime, durationHours, days }`
   - Returns: `TimeSlot[]` with separate entry for each day
   - Example: 2-day half-day trip → 2 separate 4-hour slots
 

@@ -1,3 +1,4 @@
+import { locales } from "@/i18n/config";
 import { prisma } from "@/lib/database/prisma";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
@@ -193,7 +194,7 @@ async function notifyAngler(
       type: "BOOKING_PAID",
       title: "Payment Confirmed! ✅",
       message: `Your payment for ${trip.charter.name} on ${booking.date.toISOString().slice(0, 10)} has been confirmed. See you on the water!`,
-      actionUrl: `/book/confirm?id=${booking.id}`,
+      actionUrl: `/my/book/confirm?id=${booking.id}`,
       actionLabel: "View Confirmation",
       bookingId: booking.id,
       charterId: booking.charterId,
@@ -391,16 +392,21 @@ async function unlockConversation(
 }
 
 /**
- * Side Effect 5: Revalidate Pages
+ * Side Effect 5: Revalidate Next.js Pages
  *
  * Revalidates Next.js pages to show fresh booking data.
  * - Confirmation page: Shows updated payment status
  * - Bookings dashboard: Shows booking in correct status group
+ *
+ * Note: Revalidates for all locales since payment callbacks don't have locale context
  */
 async function revalidatePages(bookingId: string): Promise<void> {
   try {
-    revalidatePath("/book/confirm", "page");
-    revalidatePath("/account/bookings", "page");
+    // Revalidate for all locales
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/book/confirm`, "page");
+      revalidatePath(`/${locale}/account/bookings`, "page");
+    }
 
     console.log("✅ [PAYMENT SIDE EFFECTS] Pages revalidated successfully", {
       bookingId,

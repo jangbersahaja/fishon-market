@@ -674,7 +674,7 @@ export async function POST(req: Request) {
       try {
         const base =
           process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/book/confirm?id=${encodeURIComponent(
+        const confirmationUrl = `${base}/my/book/confirm?id=${encodeURIComponent(
           booking.id
         )}`;
 
@@ -796,12 +796,17 @@ export async function POST(req: Request) {
         select: { id: true },
       });
 
-      // Revalidate confirmation page (guest doesn't have /account/bookings)
-      revalidatePath("/book/confirm");
+      // Revalidate confirmation page for all locales (guest doesn't have /account/bookings)
+      const locales = ["my", "en"];
+      for (const locale of locales) {
+        revalidatePath(`/${locale}/book/confirm`);
+      }
 
       // Revalidate message page if conversation exists
       if (conversation) {
-        revalidatePath(`/account/messages/${conversation.id}`);
+        for (const locale of locales) {
+          revalidatePath(`/${locale}/account/messages/${conversation.id}`);
+        }
       }
     } catch (revalidateErr) {
       console.warn(

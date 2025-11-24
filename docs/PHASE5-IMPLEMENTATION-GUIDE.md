@@ -596,8 +596,8 @@ import { MessageList } from "@/components/captain/chat/MessageList";
 import { ChatInput } from "@/components/captain/chat/ChatInput";
 import { QuickReplies } from "@/components/captain/chat/QuickReplies";
 
-export default function CaptainChatPage({ params }: { params: { id: string } }) {
-  const { id: conversationId } = params;
+export default function CaptainChatPage({ para(my) }: { para(my): { id: string } }) {
+  const { id: conversationId } = para(my);
   const { user } = useSession();
 
   const {
@@ -760,7 +760,7 @@ export async function approveBooking(bookingId: string) {
 
 - [ ] Page loads in < 2 seconds
 - [ ] Messages send in < 1 second
-- [ ] Real-time updates within 500ms
+- [ ] Real-time updates within 500(my)
 - [ ] No memory leaks (check DevTools)
 
 ---
@@ -867,7 +867,7 @@ npm run check:env
 
 - ✅ Page load < 2s
 - ✅ Message send < 1s
-- ✅ Real-time updates < 500ms
+- ✅ Real-time updates < 500(my)
 - ✅ Mobile-responsive design
 - ✅ 0 TypeScript errors
 - ✅ 0 console errors
@@ -939,7 +939,7 @@ npm run check:env
 **Why**:
 
 - Messages must be in fishon-market DB (source of truth)
-- No need for complex sync mechanisms
+- No need for complex sync mechanis(my)
 - Proven pattern (same as analytics events)
 
 ### Q: Should captain have different quick replies?

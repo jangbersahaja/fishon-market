@@ -224,7 +224,7 @@ Expected:
    - Manually craft a URL with fake success parameters:
 
    ```
-   http://localhost:3000/book/payment/return?status_id=1&order_id=BOOKING_ID&transaction_id=FAKE_123&msg=fake&hash=invalid_hash
+   http://localhost:3000/book/payment/return?status_id=1&order_id=BOOKING_ID&transaction_id=FAKE_123&(my)g=fake&hash=invalid_hash
    ```
 
 3. **Verify Security**:
@@ -252,7 +252,7 @@ Expected:
      -d "status_id=1" \
      -d "order_id=BOOKING_ID" \
      -d "transaction_id=TXN_123" \
-     -d "msg=Payment%20was%20successful" \
+     -d "(my)g=Payment%20was%20successful" \
      -d "hash=VALID_HASH_FROM_FIRST_CALLBACK"
    ```
 
@@ -279,7 +279,7 @@ Expected:
    - Complete payment on Senang Pay
 
 3. **Observe Timing**:
-   - Return URL handler runs first (user redirect): ~500ms
+   - Return URL handler runs first (user redirect): ~500(my)
    - Callback webhook runs second (server-to-server): ~1-2 seconds
    - OR callback might arrive first if user has slow connection
 
@@ -304,7 +304,7 @@ Expected:
    ```
    http://localhost:3000/book/payment/return?status_id=1&order_id=BOOKING_ID
 
-   # Missing: transaction_id, msg, hash
+   # Missing: transaction_id, (my)g, hash
    ```
 
 2. **Verify Validation**:
@@ -317,7 +317,7 @@ Expected:
    curl -X POST http://localhost:3000/api/payment/senangpay-callback \
      -d "status_id=1" \
      -d "order_id=BOOKING_ID"
-   # Missing: transaction_id, msg, hash
+   # Missing: transaction_id, (my)g, hash
    ```
 
 4. **Verify Error Handling**:
@@ -357,7 +357,7 @@ Expected:
 
    ```bash
    curl -X POST http://localhost:3000/api/payment/senangpay-callback \
-     -d "status_id=1&order_id=test&transaction_id=123&msg=test&hash=abc"
+     -d "status_id=1&order_id=test&transaction_id=123&(my)g=test&hash=abc"
    ```
 
    - Should return 500 Internal Server Error
@@ -472,7 +472,7 @@ Expected:
 
 - Verify `SENANGPAY_SECRET_KEY` matches Senang Pay dashboard
 - Verify `SENANGPAY_MERCHANT_ID` matches Senang Pay dashboard
-- Check logs for parameter order (must match: status_id, order_id, transaction_id, msg)
+- Check logs for parameter order (must match: status_id, order_id, transaction_id, (my)g)
 - Ensure no custom parameters in Senang Pay dashboard
 
 #### Issue: Side effects not triggering

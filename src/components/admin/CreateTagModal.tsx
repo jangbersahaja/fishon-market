@@ -1,4 +1,4 @@
-import { createTag } from "@/app/admin/blog/tags/actions";
+import { createTag } from "@/app/[locale]/admin/blog/tags/actions";
 import CreateEntityModal from "./CreateEntityModal";
 
 interface CreateTagModalProps {

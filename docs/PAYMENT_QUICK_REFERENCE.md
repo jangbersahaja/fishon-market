@@ -87,14 +87,14 @@ Same as authenticated, plus:
 
 **GET/POST** `/api/payment/callback`
 
-**Query/Body Params** (from Senang Pay):
+**Query/Body Para(my)** (from Senang Pay):
 
 ```typescript
 {
   status_id: "1" | "0"; // 1 = success, 0 = failed
   order_id: string; // "booking-{bookingId}"
   transaction_id: string; // Senang Pay transaction ID
-  msg: string; // Status message
+  (my)g: string; // Status message
   hash: string; // HMAC-SHA256 signature
 }
 ```
@@ -348,8 +348,8 @@ curl -X POST http://localhost:3000/api/bookings/create \
 ### Simulate Callback (Success)
 
 ```bash
-# Calculate hash: HMAC-SHA256(secretKey + statusId + orderId + transactionId + msg)
-curl "http://localhost:3000/api/payment/callback?status_id=1&order_id=booking-abc123&transaction_id=TXN123&msg=Payment+Success&hash=calculated_hash"
+# Calculate hash: HMAC-SHA256(secretKey + statusId + orderId + transactionId + (my)g)
+curl "http://localhost:3000/api/payment/callback?status_id=1&order_id=booking-abc123&transaction_id=TXN123&(my)g=Payment+Success&hash=calculated_hash"
 ```
 
 ## Monitoring Queries

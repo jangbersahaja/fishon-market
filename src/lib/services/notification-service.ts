@@ -400,6 +400,8 @@ async function sendNotificationEmail(userId: string, notification: any) {
     if (!user?.email) return;
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://fishon.my";
+    // Use default locale "my" for email URLs - middleware will redirect to user's preferred locale
+    const localePrefix = "/my";
 
     // Send appropriate email based on notification type
     switch (notification.type) {
@@ -413,8 +415,8 @@ async function sendNotificationEmail(userId: string, notification: any) {
             userName: user.name || "Angler",
             charterName: notification.metadata.charterName,
             tripDate: notification.metadata.tripDate,
-            paymentUrl: `${baseUrl}/bookings/${notification.bookingId}/pay`,
-            confirmationUrl: `${baseUrl}/bookings/${notification.bookingId}`,
+            paymentUrl: `${baseUrl}${localePrefix}/bookings/${notification.bookingId}/pay`,
+            confirmationUrl: `${baseUrl}${localePrefix}/bookings/${notification.bookingId}`,
           });
         }
         break;
@@ -429,7 +431,7 @@ async function sendNotificationEmail(userId: string, notification: any) {
             userName: user.name || "Angler",
             charterName: notification.metadata.charterName,
             reason: notification.metadata.reason,
-            searchUrl: `${baseUrl}/charters`,
+            searchUrl: `${baseUrl}${localePrefix}/charters`,
           });
         }
         break;

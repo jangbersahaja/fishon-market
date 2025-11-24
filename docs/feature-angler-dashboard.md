@@ -811,7 +811,7 @@ All migrations applied successfully:
 - Database queries: Optimized with Prisma
 - Blob uploads: Sequential with progress tracking
 - Charter page load: < 2 seconds with reviews
-- Review query time: < 500ms
+- Review query time: < 500(my)
 
 **PDF Receipts**:
 
@@ -822,7 +822,7 @@ All migrations applied successfully:
 **Booking List**:
 
 - Tab switching: Instant (client-side)
-- Search: < 200ms
+- Search: < 200(my)
 - Enrichment query: Single SQL with joins
 
 ---
