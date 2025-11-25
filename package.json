@@ -25,7 +25,7 @@
     "@ffmpeg/core": "^0.12.6",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@fishon/email": "github:jangbersahaja/fishon-email#main",
-    "@fishon/schemas": "git+https://github.com/jangbersahaja/fishon-schemas#main",
+    "@fishon/schemas": "github:jangbersahaja/fishon-schemas#main",
     "@fishon/ui": "github:jangbersahaja/fishon-ui#main",
     "@hookform/resolvers": "^3.9.0",
     "@neondatabase/serverless": "^1.0.1",

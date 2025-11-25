@@ -39,8 +39,10 @@ interface PricingBreakdown {
   platformFee: number;
   captainEarnings: number;
   subtotal: number;
-  paymentGatewayFee: number;
+  serviceFee: number; // Updated from paymentGatewayFee
+  displayPrice: number; // Added for new pricing display
   days: number;
+  discount: number; // Added for completeness
 }
 
 interface PaymentPreviewFormProps {

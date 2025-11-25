@@ -11,6 +11,7 @@ export interface TripData {
   name: string;
   price: number;
   promoPrice: number | null;
+  priceOverride: number | null; // Admin's active price override
   durationHours: number;
   maxAnglers: number;
   tripType: string;
@@ -51,6 +52,7 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
         name: string;
         price: any; // Prisma Decimal
         promoPrice: any | null; // Prisma Decimal
+        priceOverride: any | null; // Prisma Decimal - Admin's active override
         durationHours: number;
         maxAnglers: number;
         tripType: string;
@@ -77,6 +79,7 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
         t.name,
         t.price,
         t."promoPrice",
+        t."priceOverride",
         t."durationHours",
         t."maxAnglers",
         t."tripType",
@@ -153,6 +156,7 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
       name: trip.name,
       price: Number(trip.price),
       promoPrice: trip.promoPrice ? Number(trip.promoPrice) : null,
+      priceOverride: trip.priceOverride ? Number(trip.priceOverride) : null,
       durationHours: trip.durationHours,
       maxAnglers: trip.maxAnglers,
       tripType: trip.tripType,
@@ -215,19 +219,28 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
 }
 
 /**
- * Get the effective price for a trip (promo if available, otherwise regular price)
- * @deprecated Use getNormalPrice for booking submissions to ensure normal price is charged
+ * Get the display price for a trip (what customers see in UI)
+ * Priority: priceOverride > price
+ * Note: promoPrice is now used as minimum price floor, not for display
  */
-export function getEffectivePrice(trip: TripData): number {
-  return trip.promoPrice ?? trip.price;
+export function getDisplayPrice(trip: TripData): number {
+  return trip.priceOverride ?? trip.price;
 }
 
 /**
- * Get the normal price for a trip (always returns base price, never promo)
- * Use this for booking submissions to ensure users are charged the normal price
+ * Get the effective price for a trip (promo if available, otherwise regular price)
+ * @deprecated Use getDisplayPrice instead - promoPrice is now minimum floor, not display price
  */
-export function getNormalPrice(trip: TripData): number {
-  return trip.price;
+export function getEffectivePrice(trip: TripData): number {
+  return trip.priceOverride ?? trip.price;
+}
+
+/**
+ * Get the booking price for a trip (what gets charged)
+ * Uses priceOverride if set, otherwise base price
+ */
+export function getBookingPrice(trip: TripData): number {
+  return trip.priceOverride ?? trip.price;
 }
 
 /**

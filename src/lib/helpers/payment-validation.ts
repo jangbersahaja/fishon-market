@@ -93,11 +93,12 @@ export async function validateSessionAndAvailability(
     let promoDiscount = 0;
     const userId = data.userId || data.guestVerification?.userId;
     if (data.promoCode && userId) {
+      const tripPrice = trip.priceOverride ?? trip.price;
       const promoValidation = await validatePromoCode({
         code: data.promoCode,
         userId,
         charterId: data.charterId,
-        subtotal: trip.price * data.days,
+        subtotal: tripPrice * data.days,
       });
 
       if (promoValidation.valid && promoValidation.discount) {
@@ -106,7 +107,7 @@ export async function validateSessionAndAvailability(
     }
 
     const currentPricing = calculatePricing({
-      tripPrice: trip.price,
+      tripPrice: trip.priceOverride ?? trip.price,
       days: data.days,
       promoDiscount,
     });

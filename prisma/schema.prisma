@@ -920,3 +920,29 @@ model UserCampaignInteraction {
   @@index([campaignId, action, createdAt])
   @@index([sessionId, action, createdAt])
 }
+
+// Payment Session - Stores booking data before DIRECT payment completion
+// Used for AUTO flow + DIRECT payment (FPX/E-wallet) where booking is created after payment
+model PaymentSession {
+  id        String   @id @default(cuid())
+  userId    String?  // Nullable for guest bookings
+  
+  // Booking data (stored as JSON for flexibility)
+  bookingData Json   // Contains all booking details needed to create booking
+  
+  // Payment details
+  amount      Decimal  @db.Decimal(10, 2)
+  paymentMethod String @db.VarChar(50) // FPX, EWALLET
+  
+  // Status tracking
+  status      String   @default("PENDING") @db.VarChar(50) // PENDING, COMPLETED, EXPIRED, FAILED
+  
+  // Lifecycle
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime // Payment session expires after 30 minutes
+  completedAt DateTime? // When payment was confirmed
+  
+  @@index([id, status])
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}

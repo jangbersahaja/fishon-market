@@ -83,7 +83,120 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ [SENANGPAY CALLBACK] Hash verified successfully");
 
-    // Check if booking exists
+    // Check if this is a payment session or existing booking
+    const paymentSession = await prisma.paymentSession.findUnique({
+      where: { id: order_id },
+    });
+
+    // If payment session exists, create booking from session data
+    if (paymentSession && paymentSession.status === "PENDING") {
+      if (status_id !== "1") {
+        // Payment failed - mark session as failed
+        await prisma.paymentSession.update({
+          where: { id: order_id },
+          data: { status: "FAILED" },
+        });
+        console.log("❌ [SENANGPAY CALLBACK] Payment failed for session", {
+          sessionId: order_id,
+          reason: msg,
+        });
+        return new NextResponse("OK", { status: 200 });
+      }
+
+      // Payment successful - create booking from session data
+      const bookingData = paymentSession.bookingData as any;
+      const pricingBreakdown = bookingData.pricingBreakdown;
+
+      // Import required services
+      const { getTripById } = await import("@/lib/services/trip-service");
+      const trip = await getTripById(bookingData.tripId);
+      if (!trip) {
+        console.error("❌ [SENANGPAY CALLBACK] Trip not found", {
+          tripId: bookingData.tripId,
+        });
+        return new NextResponse("Not Found: Trip not found", { status: 404 });
+      }
+
+      // Calculate expiry (24h for AUTO flow acknowledgment)
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      // Build guests data
+      const guestsData: any = {
+        adults: bookingData.adults,
+        children: bookingData.children,
+      };
+      if (bookingData.participants) {
+        guestsData.participants = bookingData.participants;
+      }
+      if (bookingData.emergencyName && bookingData.emergencyPhone) {
+        guestsData.emergencyContact = {
+          name: bookingData.emergencyName,
+          phone: bookingData.emergencyPhone,
+          relationship: bookingData.emergencyRelation || "Not specified",
+        };
+      }
+
+      // Create booking (mark promo code usage if applicable)
+      const booking = await prisma.booking.create({
+        data: {
+          userId: paymentSession.userId!,
+          tripId: bookingData.tripId,
+          charterId: bookingData.charterId,
+          date: new Date(bookingData.date),
+          days: bookingData.days,
+          startTime: bookingData.startTime,
+          guests: guestsData,
+          tripPrice: pricingBreakdown.tripPrice,
+          finalPrice: pricingBreakdown.finalPrice,
+          platformFee: pricingBreakdown.platformFee,
+          serviceFee: pricingBreakdown.serviceFee,
+          captainEarnings: pricingBreakdown.captainEarnings,
+          promoCodeId: bookingData.promoCodeId,
+          discount: bookingData.promoDiscount
+            ? ({
+                code: bookingData.promoCode,
+                amount: bookingData.promoDiscount,
+              } as any)
+            : null,
+          expiresAt,
+          status: "PAID", // Payment already confirmed
+          paidAt: new Date(),
+          bookingFlowType: "AUTO",
+          acknowledgmentDeadline: expiresAt,
+          paymentMethod: paymentSession.paymentMethod,
+          paymentFlow: "DIRECT",
+          paymentTransactionId: transaction_id,
+          note: bookingData.note,
+        },
+      });
+
+      // Mark session as completed
+      await prisma.paymentSession.update({
+        where: { id: order_id },
+        data: {
+          status: "COMPLETED",
+          completedAt: new Date(),
+        },
+      });
+
+      console.log(
+        "✅ [SENANGPAY CALLBACK] Booking created from payment session",
+        {
+          sessionId: order_id,
+          bookingId: booking.id,
+        }
+      );
+
+      // Trigger all side effects
+      await triggerPaymentSideEffects({
+        bookingId: booking.id,
+        source: "callback",
+      });
+
+      return new NextResponse("OK", { status: 200 });
+    }
+
+    // Check if booking already exists (TOKENIZED flow)
     const booking = await prisma.booking.findUnique({
       where: { id: order_id },
       select: {
@@ -105,7 +218,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!booking) {
-      console.error("❌ [SENANGPAY CALLBACK] Booking not found", {
+      console.error("❌ [SENANGPAY CALLBACK] Booking/Session not found", {
         orderId: order_id,
       });
       return new NextResponse("Not Found: Booking not found", { status: 404 });

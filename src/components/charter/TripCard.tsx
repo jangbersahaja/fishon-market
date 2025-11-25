@@ -1,4 +1,5 @@
 import { convert24to12Hour } from "@/lib/helpers/booking-helpers";
+import { calculateDisplayPrice } from "@/lib/helpers/pricing-helpers";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { TripSpeciesSection } from "./TripSpeciesSection";
@@ -8,6 +9,7 @@ interface TripCardProps {
   id?: string;
   name: string;
   price: number;
+  priceOverride?: number; // Admin's active price override
   duration: string;
   description?: string;
   species: string[];
@@ -22,6 +24,7 @@ export const TripCard: React.FC<TripCardProps> = ({
   id,
   name,
   price,
+  priceOverride,
   duration,
   description,
   species,
@@ -32,6 +35,8 @@ export const TripCard: React.FC<TripCardProps> = ({
   showTechniques = true,
 }) => {
   const t = useTranslations("charter.trip");
+  const basePrice = priceOverride ?? price;
+  const displayPrice = calculateDisplayPrice(basePrice);
   return (
     <div
       id={id}
@@ -45,7 +50,7 @@ export const TripCard: React.FC<TripCardProps> = ({
           </div>
           <div className="flex items-center gap-3 md:ml-4">
             <span className="text-base font-semibold text-primary whitespace-nowrap">
-              RM {price}
+              RM {displayPrice}
               {t("perDay")}
             </span>
           </div>

@@ -820,20 +820,23 @@ export default function CheckoutForm({
   }, [maxGuests, adults, children, updateSearchParam]);
   // Calculate complete pricing breakdown
   const pricingBreakdown = useMemo(() => {
-    const tripPrice = chosenTrip?.price ?? 0;
+    // Use priceOverride if available, otherwise fall back to price
+    const tripPrice =
+      (chosenTrip as any)?.priceOverride ?? chosenTrip?.price ?? 0;
     if (tripPrice === 0) return null;
 
     // Import and use the same pricing calculation as backend
     const subtotal = tripPrice * Math.max(1, days);
-    const platformFee = Math.round(subtotal * 0.1 * 100) / 100;
+    const commission = Math.min(subtotal * 0.1, 100); // 10% cap at RM100
+    const platformFee = Math.round(commission * 100) / 100;
     const discount = appliedPromo?.discount ?? 0;
-    const amountBeforeGateway = subtotal + platformFee - discount;
-    const paymentGatewayFee =
-      Math.round(amountBeforeGateway * 0.015 * 100) / 100;
+    const displayPrice = subtotal + platformFee; // Trip price shown to angler (includes commission)
+    const amountBeforeGateway = displayPrice - discount;
+    const serviceFee = Math.round(amountBeforeGateway * 0.02 * 100) / 100; // Updated to 2%
     const sst = 0; // Future
     const finalPrice =
-      Math.round((amountBeforeGateway + paymentGatewayFee + sst) * 100) / 100;
-    const captainEarnings = Math.round((subtotal - platformFee) * 100) / 100;
+      Math.round((amountBeforeGateway + serviceFee + sst) * 100) / 100;
+    const captainEarnings = Math.round(subtotal * 100) / 100; // Captain earns base price only
 
     return {
       tripPrice,
@@ -841,12 +844,18 @@ export default function CheckoutForm({
       subtotal,
       platformFee,
       discount,
-      paymentGatewayFee,
+      displayPrice,
+      serviceFee,
       sst,
       finalPrice,
       captainEarnings,
     };
-  }, [chosenTrip?.price, days, appliedPromo?.discount]);
+  }, [
+    chosenTrip?.price,
+    (chosenTrip as any)?.priceOverride,
+    days,
+    appliedPromo?.discount,
+  ]);
 
   return (
     <form onSubmit={onSubmit} className="">

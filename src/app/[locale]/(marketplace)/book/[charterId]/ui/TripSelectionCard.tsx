@@ -15,6 +15,7 @@ interface Trip {
   duration?: string;
   description?: string;
   price: number;
+  priceOverride?: number; // Admin's active price override
   maxAnglers?: number;
   startTimes?: string[];
   targetSpecies?: string[];
@@ -141,7 +142,7 @@ export default function TripSelectionCard({
           ({ trip, isAvailable, availableStartTimes }, index) => {
             const isSelected = index === selectedIndex;
             const totalPrice = calculatePricing({
-              tripPrice: trip.price,
+              tripPrice: trip.priceOverride ?? trip.price,
               days,
             });
 

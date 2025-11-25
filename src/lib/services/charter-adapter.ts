@@ -67,6 +67,12 @@ function convertTrip(backendTrip: BackendTrip): Trip {
     id: backendTrip.id, // Include trip ID for booking creation
     name: backendTrip.name,
     price: Number(backendTrip.price),
+    promoPrice: backendTrip.promoPrice
+      ? Number(backendTrip.promoPrice)
+      : undefined,
+    priceOverride: backendTrip.priceOverride
+      ? Number(backendTrip.priceOverride)
+      : undefined,
     duration: `${backendTrip.durationHours} hour${
       backendTrip.durationHours !== 1 ? "s" : ""
     }`,
@@ -300,6 +306,8 @@ export function convertBackendCharterToFrontend(
     // Analytics tracking IDs (now properly typed in Charter)
     captainId: backendCharter.captainId,
     ownerId: backendCharter.ownerId || undefined,
+    // Booking flow settings
+    bookingFlowType: backendCharter.bookingFlowType || "MANUAL",
     name: backendCharter.name,
     location,
     address,

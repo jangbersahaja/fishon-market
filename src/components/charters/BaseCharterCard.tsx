@@ -6,6 +6,7 @@ import ImageMosaic from "@/components/charters/ImageMosaic";
 import StarRating from "@/components/ratings/StarRating";
 import PriceTag from "@/components/shared/PriceTag";
 import SafeImage from "@/components/shared/SafeImage";
+import { calculateDisplayPrice } from "@/lib/helpers/pricing-helpers";
 import { getAverageRating, getCharterReviews } from "@/lib/helpers/ratings";
 import {
   capitalize,
@@ -79,11 +80,14 @@ export default function BaseCharterCard({
       : [(c as any).imageUrl || "/placeholder-1.jpg"];
   const img = allImages[0];
 
-  // Min price calculation
-  const minPrice =
+  // Min price calculation - use priceOverride if available, then add commission
+  const minBasePrice =
     c.trip && c.trip.length
-      ? Math.min(...c.trip.map((t) => t.price))
+      ? Math.min(...c.trip.map((t) => t.priceOverride ?? t.price))
       : undefined;
+  const minPrice = minBasePrice
+    ? calculateDisplayPrice(minBasePrice)
+    : undefined;
 
   // Build link params preserving booking context
   const params = new URLSearchParams();

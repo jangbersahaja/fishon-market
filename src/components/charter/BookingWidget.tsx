@@ -208,7 +208,11 @@ function BookingWidget({
         <div className="flex flex-col gap-2">
           {trips.map((trip, idx) => {
             const isSelected = selectedTripIndex === idx;
-            const totalPrice = trip.price * Math.max(1, days);
+            // Calculate display price with commission (10% capped at RM100)
+            const basePrice = trip.priceOverride ?? trip.price;
+            const commission = Math.min(basePrice * 0.1, 100);
+            const displayPrice = basePrice + commission;
+            const totalPrice = displayPrice * Math.max(1, days);
 
             return (
               <div
@@ -238,7 +242,7 @@ function BookingWidget({
                     </div>
                     <div className="text-right">
                       <p className="text-base font-bold text-[#ec2227]">
-                        RM{totalPrice}
+                        RM{totalPrice.toFixed(2)}
                       </p>
                       {days > 1 && (
                         <p className="text-[10px] text-gray-500">
