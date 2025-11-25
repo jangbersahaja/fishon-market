@@ -1,5 +1,6 @@
 import { checkDateAvailability } from "@/lib/helpers/availability-helpers.server";
 import { calculatePricing } from "@/lib/services/pricing-service";
+import { validatePromoCode } from "@/lib/services/promo-service";
 import { getTripById } from "@/lib/services/trip-service";
 
 interface BookingPreviewData {
@@ -19,6 +20,9 @@ interface BookingPreviewData {
   emergencyRelation: string;
   note?: string;
   sessionStart: number;
+  promoCode?: string;
+  userId?: string;
+  guestVerification?: { userId: string; email: string };
 }
 
 interface ValidationResult {
@@ -85,9 +89,26 @@ export async function validateSessionAndAvailability(
       };
     }
 
+    // Validate promo code if provided
+    let promoDiscount = 0;
+    const userId = data.userId || data.guestVerification?.userId;
+    if (data.promoCode && userId) {
+      const promoValidation = await validatePromoCode({
+        code: data.promoCode,
+        userId,
+        charterId: data.charterId,
+        subtotal: trip.price * data.days,
+      });
+
+      if (promoValidation.valid && promoValidation.discount) {
+        promoDiscount = promoValidation.discount.amount;
+      }
+    }
+
     const currentPricing = calculatePricing({
       tripPrice: trip.price,
       days: data.days,
+      promoDiscount,
     });
 
     // Allow small floating point differences (< 0.01)

@@ -19,6 +19,10 @@ import {
 import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
+import {
+  markPromoCodeUsed,
+  validatePromoCode,
+} from "@/lib/services/promo-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
@@ -81,6 +85,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       cardExpMonth,
       cardExpYear,
       cardCvv,
+      promoCode, // NEW: Promo code for discount
     } = body as {
       tripId?: string;
       date?: string;
@@ -99,6 +104,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       cardExpMonth?: string;
       cardExpYear?: string;
       cardCvv?: string;
+      promoCode?: string;
     };
 
     // Basic validation
@@ -232,12 +238,54 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // IMPORTANT: Use normal price (not promo price) for booking submission
     const tripPrice = trip.price; // Always use base price, never promoPrice
 
+    // Validate and apply promo code if provided
+    let validatedPromo: {
+      promoCodeId: string;
+      discountAmount: number;
+      percentage: number;
+    } | null = null;
+
+    if (promoCode && typeof promoCode === "string" && promoCode.trim()) {
+      try {
+        const promoValidation = await validatePromoCode({
+          code: promoCode.trim(),
+          userId: dbUserId,
+          charterId: trip.charter.id,
+          subtotal: tripPrice * ds, // Calculate subtotal for validation
+        });
+
+        if (promoValidation.valid && promoValidation.discount) {
+          validatedPromo = {
+            promoCodeId: promoValidation.promoCodeId!,
+            discountAmount: promoValidation.discount.amount,
+            percentage: promoValidation.discount.percentage || 0,
+          };
+          console.log("✅ Promo code validated:", {
+            code: promoCode,
+            discount: validatedPromo.discountAmount,
+            percentage: validatedPromo.percentage,
+          });
+        } else {
+          console.warn("⚠️ Invalid promo code:", promoValidation.error);
+          return NextResponse.json(
+            { error: promoValidation.error || "Invalid promo code" },
+            { status: 400 }
+          );
+        }
+      } catch (promoError) {
+        console.error("❌ Promo validation error:", promoError);
+        return NextResponse.json(
+          { error: "Failed to validate promo code" },
+          { status: 500 }
+        );
+      }
+    }
+
     // Calculate complete pricing breakdown including platform fees and payment gateway fees
     const pricingBreakdown = calculatePricing({
       tripPrice,
       days: ds,
-      // TODO: Add promo code support in future
-      // promoCode: promoCode ? { code: promoCode, percentage: 10 } : undefined,
+      promoDiscount: validatedPromo?.discountAmount,
     });
 
     const finalPrice = pricingBreakdown.finalPrice;
@@ -576,6 +624,16 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 platformFee: pricingBreakdown.platformFee,
                 serviceFee: pricingBreakdown.paymentGatewayFee,
                 captainEarnings: pricingBreakdown.captainEarnings,
+                promoCodeId: validatedPromo?.promoCodeId || null,
+                discount: validatedPromo
+                  ? {
+                      code: promoCode,
+                      percentage: validatedPromo.percentage
+                        ? `${validatedPromo.percentage}%`
+                        : null,
+                      amount: validatedPromo.discountAmount,
+                    }
+                  : Prisma.JsonNull,
                 expiresAt,
                 status: initialStatus,
                 bookingFlowType: bookingFlowType,
@@ -692,6 +750,27 @@ async function createAuthenticatedBooking(session: any, body: any) {
         { error: "Failed to create booking. Please try again." },
         { status: 500 }
       );
+    }
+
+    // Mark promo code as used (non-blocking best-effort)
+    if (validatedPromo) {
+      (async () => {
+        try {
+          await markPromoCodeUsed(
+            dbUserId,
+            validatedPromo.promoCodeId,
+            booking.id
+          );
+          console.log("✅ Promo code marked as used:", {
+            userId: dbUserId,
+            promoCodeId: validatedPromo.promoCodeId,
+            bookingId: booking.id,
+          });
+        } catch (promoError) {
+          console.error("❌ Failed to mark promo code as used:", promoError);
+          // Non-critical - booking is already created
+        }
+      })();
     }
 
     // Auto-create conversation for booking (Phase 2.1) (non-blocking best-effort)

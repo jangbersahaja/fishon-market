@@ -48,12 +48,13 @@ interface BookingDetailsProps {
     timeSlots?: TimeSlot[];
     participants?: Participant[];
     emergencyContact?: EmergencyContact;
+    discount?: number;
+    promoCode?: string | null;
   };
 }
 
 const GST_TAX: number = 0;
 const tax = GST_TAX || 0;
-const discount: number = 0;
 
 export function BookingDetails({ booking }: BookingDetailsProps) {
   const t = useTranslations("booking.details");
@@ -329,11 +330,21 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
           </div>
 
           {/* Discount */}
-          {discount > 0 && (
+          {booking.discount && booking.discount > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">{t("discount")}</span>
-              <span className="text-green-600">
-                - {formatCurrency(discount)}
+              <span className="text-gray-600">
+                {booking.promoCode && (
+                  <span className="inline-flex items-center gap-1.5">
+                    {t("discount")}
+                    <span className="px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200 rounded">
+                      {booking.promoCode}
+                    </span>
+                  </span>
+                )}
+                {!booking.promoCode && t("discount")}
+              </span>
+              <span className="font-semibold text-green-600">
+                - {formatCurrency(booking.discount)}
               </span>
             </div>
           )}

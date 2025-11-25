@@ -415,6 +415,23 @@
         "cancellationRefund": "If the captain rejects your booking, you'll receive a full refund",
         "refundTiming": "Refunds typically take 5-7 business days"
       },
+      "promo": {
+        "label": "Promo Code",
+        "optional": "optional",
+        "placeholder": "Enter promo code",
+        "apply": "Apply",
+        "applying": "Applying...",
+        "success": "Discount of RM {amount} applied!",
+        "hint": "Enter your promo code to receive a discount on this booking.",
+        "errors": {
+          "codeRequired": "Please enter a promo code",
+          "loginRequired": "Please sign in to use promo codes",
+          "guestsNotAllowed": "Promo codes are only available for registered users. Please create an account to use promo codes.",
+          "validationFailed": "Failed to validate promo code",
+          "invalidCode": "Invalid or expired promo code",
+          "networkError": "Unable to validate promo code. Please try again."
+        }
+      },
       "validation": {
         "fixErrors": "Please fix the following errors:",
         "fieldLabels": {
@@ -629,6 +646,7 @@
         "day": "{tripName} × {count} {count, plural, =1 {day} other {days}}",
         "tripDays": "{tripName} × {days} {days, plural, =1 {day} other {days}}",
         "platformFee": "Platform fee (10%)",
+        "discount": "Discount",
         "paymentGatewayFee": "Payment gateway fee (1.5%)",
         "total": "Total",
         "validationNote": "Availability, pricing, and card authorization are checked again before your payment is sent to the captain.",
@@ -707,6 +725,7 @@
         "day": "{count, plural, =1 {day} other {days}}",
         "tripDays": "{tripName} × {days} {days, plural, =1 {day} other {days}}",
         "platformFee": "Platform fee",
+        "discount": "Discount",
         "paymentGatewayFee": "Payment gateway fee",
         "total": "Total",
         "approvalNote": "This booking has been approved by the captain. Your payment will be processed immediately upon submission."
@@ -974,7 +993,27 @@
     "viewDetails": "View Details",
     "writeReview": "Write Review",
     "contactHost": "Contact Host",
-    "cancelBooking": "Cancel Booking"
+    "cancelBooking": "Cancel Booking",
+    "promoCodes": {
+      "title": "Promo Codes",
+      "description": "Your available and used promo codes",
+      "available": "Available",
+      "used": "Used",
+      "copy": "Copy",
+      "copied": "Promo code copied!",
+      "copiedDescription": "{code} has been copied to your clipboard",
+      "discount": "Discount",
+      "percentageOff": "{percentage}% off your booking",
+      "fixedOff": "RM {amount} off your booking",
+      "validUntil": "Valid until {date}",
+      "usedOn": "Used on {date}",
+      "empty": "No promo codes available",
+      "emptyHint": "Check your email for exclusive promo codes!",
+      "errors": {
+        "unauthorized": "Please sign in to view your promo codes",
+        "loadFailed": "Failed to load promo codes. Please try again."
+      }
+    }
   },
   "search": {
     "searchCharters": "Search Charters",

@@ -6,6 +6,7 @@ export { CancellationInfo } from "./CancellationInfo";
 export { CheckYourBookings } from "./CheckYourBookings";
 export { EmailVerificationModal } from "./EmailVerificationModal";
 export { GuestBookingVerificationModal } from "./GuestBookingVerificationModal";
+export { PromoCodeInput } from "./PromoCodeInput";
 export { ReviewSection } from "./ReviewSection";
 export { TripPreparation } from "./TripPreparation";
 

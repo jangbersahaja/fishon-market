@@ -291,6 +291,33 @@ export default async function PaymentPage({
                         <dd>RM {Number(booking.platformFee).toFixed(2)}</dd>
                       </div>
                     )}
+                    {(() => {
+                      const discountData = booking.discount as {
+                        code: string;
+                        amount: number;
+                      } | null;
+                      return (
+                        discountData &&
+                        discountData.amount > 0 && (
+                          <div className="flex items-center justify-between">
+                            <dt className="text-muted-foreground">
+                              <div className="inline-flex items-center gap-2">
+                                {t("paymentBreakdown.discount")}
+                                <Badge
+                                  variant="secondary"
+                                  className="text-green-700 border-green-200 bg-green-50"
+                                >
+                                  {discountData.code}
+                                </Badge>
+                              </div>
+                            </dt>
+                            <dd className="font-semibold text-green-700">
+                              -RM {discountData.amount.toFixed(2)}
+                            </dd>
+                          </div>
+                        )
+                      );
+                    })()}
                     {booking.serviceFee && (
                       <div className="flex items-center justify-between">
                         <dt className="text-muted-foreground">

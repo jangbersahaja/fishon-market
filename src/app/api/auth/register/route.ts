@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/database/prisma";
+import { sendWelcomeEmail } from "@/lib/services/email-service";
 import { upgradeGuestToAngler } from "@/lib/services/guest-user-service";
+import {
+  assignPromoCodeToUser,
+  getPromoCodeByCode,
+} from "@/lib/services/promo-service";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -86,6 +91,34 @@ export async function POST(request: Request) {
         role: true,
       },
     });
+
+    // Assign FISHONTRIP1 welcome promo code to new user
+    // Non-blocking: don't fail registration if promo assignment fails
+    let assignedPromoCode: string | undefined;
+    try {
+      const welcomePromo = await getPromoCodeByCode("FISHONTRIP1");
+      if (welcomePromo) {
+        await assignPromoCodeToUser(user.id, welcomePromo.id);
+        assignedPromoCode = welcomePromo.code;
+      }
+    } catch (promoError) {
+      console.error("Failed to assign welcome promo code:", promoError);
+      // Continue with registration - promo assignment is not critical
+    }
+
+    // Send welcome email with promo code (non-blocking)
+    try {
+      const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://fishon.my"}/login`;
+      await sendWelcomeEmail({
+        to: user.email,
+        userName: user.name || user.email.split("@")[0],
+        loginUrl,
+        promoCode: assignedPromoCode,
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+      // Continue with registration - email sending is not critical
+    }
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (e) {

@@ -415,6 +415,23 @@
         "cancellationRefund": "Jika kapten menolak tempahan anda, anda akan menerima bayaran balik penuh",
         "refundTiming": "Bayaran balik biasanya mengambil masa 5-7 hari bekerja"
       },
+      "promo": {
+        "label": "Kod Promo",
+        "optional": "pilihan",
+        "placeholder": "Masukkan kod promo",
+        "apply": "Guna",
+        "applying": "Memohon...",
+        "success": "Diskaun RM {amount} digunakan!",
+        "hint": "Masukkan kod promo anda untuk menerima diskaun untuk tempahan ini.",
+        "errors": {
+          "codeRequired": "Sila masukkan kod promo",
+          "loginRequired": "Sila log masuk untuk menggunakan kod promo",
+          "guestsNotAllowed": "Kod promo hanya tersedia untuk pengguna berdaftar. Sila buat akaun untuk menggunakan kod promo.",
+          "validationFailed": "Gagal mengesahkan kod promo",
+          "invalidCode": "Kod promo tidak sah atau telah tamat tempoh",
+          "networkError": "Tidak dapat mengesahkan kod promo. Sila cuba lagi."
+        }
+      },
       "validation": {
         "fixErrors": "Sila betulkan ralat berikut:",
         "fieldLabels": {
@@ -629,6 +646,7 @@
         "day": "{tripName} × {count} {count, plural, =1 {hari} other {hari}}",
         "tripDays": "{tripName} × {days} {days, plural, =1 {hari} other {hari}}",
         "platformFee": "Yuran platform (10%)",
+        "discount": "Diskaun",
         "paymentGatewayFee": "Yuran gerbang bayaran (1.5%)",
         "total": "Jumlah",
         "validationNote": "Ketersediaan, harga, dan kelulusan kad disemak semula sebelum bayaran anda dihantar kepada kapten.",
@@ -707,6 +725,7 @@
         "day": "{count, plural, =1 {hari} other {hari}}",
         "tripDays": "{tripName} × {days} {days, plural, =1 {hari} other {hari}}",
         "platformFee": "Yuran platform",
+        "discount": "Diskaun",
         "paymentGatewayFee": "Yuran gerbang bayaran",
         "total": "Jumlah",
         "approvalNote": "Tempahan ini telah diluluskan oleh kapten. Bayaran anda akan diproses serta-merta selepas penghantaran."
@@ -974,7 +993,27 @@
     "viewDetails": "Lihat Butiran",
     "writeReview": "Tulis Ulasan",
     "contactHost": "Hubungi Tuan Rumah",
-    "cancelBooking": "Batal Tempahan"
+    "cancelBooking": "Batal Tempahan",
+    "promoCodes": {
+      "title": "Kod Promo",
+      "description": "Kod promo anda yang tersedia dan telah digunakan",
+      "available": "Tersedia",
+      "used": "Digunakan",
+      "copy": "Salin",
+      "copied": "Kod promo disalin!",
+      "copiedDescription": "{code} telah disalin ke papan keratan anda",
+      "discount": "Diskaun",
+      "percentageOff": "{percentage}% diskaun untuk tempahan anda",
+      "fixedOff": "RM {amount} diskaun untuk tempahan anda",
+      "validUntil": "Sah sehingga {date}",
+      "usedOn": "Digunakan pada {date}",
+      "empty": "Tiada kod promo tersedia",
+      "emptyHint": "Semak e-mel anda untuk kod promo eksklusif!",
+      "errors": {
+        "unauthorized": "Sila log masuk untuk melihat kod promo anda",
+        "loadFailed": "Gagal memuatkan kod promo. Sila cuba lagi."
+      }
+    }
   },
   "search": {
     "searchCharters": "Cari Charter",

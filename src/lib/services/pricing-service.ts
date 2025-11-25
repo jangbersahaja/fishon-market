@@ -23,7 +23,9 @@ export interface PricingBreakdown {
 export interface PricingInput {
   tripPrice: number;
   days: number;
+  promoDiscount?: number; // Direct discount amount from promo validation
   promoCode?: {
+    // DEPRECATED: Use promoDiscount instead
     code: string;
     percentage: number; // e.g., 10 for 10%
   };
@@ -53,7 +55,7 @@ export interface PricingInput {
  * - Captain Earnings: RM450
  */
 export function calculatePricing(input: PricingInput): PricingBreakdown {
-  const { tripPrice, days, promoCode } = input;
+  const { tripPrice, days, promoDiscount, promoCode } = input;
 
   // Step 1: Subtotal (trip price * days)
   const subtotal = tripPrice * days;
@@ -61,10 +63,14 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
   // Step 2: Platform Fee (always 10% for now - no package system yet)
   const platformFee = Math.round(subtotal * 0.1 * 100) / 100;
 
-  // Step 3: Discount (if promo code applied)
-  const discount = promoCode
-    ? Math.round(subtotal * (promoCode.percentage / 100) * 100) / 100
-    : 0;
+  // Step 3: Discount (prefer direct promoDiscount over deprecated promoCode)
+  let discount = 0;
+  if (promoDiscount !== undefined && promoDiscount > 0) {
+    discount = Math.round(promoDiscount * 100) / 100;
+  } else if (promoCode) {
+    // DEPRECATED: Legacy promoCode object support
+    discount = Math.round(subtotal * (promoCode.percentage / 100) * 100) / 100;
+  }
 
   // Step 4: Amount before gateway fee
   const amountBeforeGateway = subtotal + platformFee - discount;

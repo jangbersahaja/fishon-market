@@ -1,7 +1,10 @@
 "use client";
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
-import { GuestBookingVerificationModal } from "@/components/booking";
+import {
+  GuestBookingVerificationModal,
+  PromoCodeInput,
+} from "@/components/booking";
 import { useBookingStorage } from "@/hooks/useBookingStorage";
 import {
   calculateBlockedDates,
@@ -335,6 +338,13 @@ export default function CheckoutForm({
   const selectedDate = watch("date");
   const selectedDays = watch("days");
 
+  // Promo code state
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discount: number;
+    promoCodeId: string;
+  } | null>(null);
+
   // Normalize URL params on mount: support both date+days and startDate+endDate formats
   useEffect(() => {
     const startDateParam = sp.get("startDate");
@@ -585,6 +595,7 @@ export default function CheckoutForm({
                 emergencyPhone: formData.emergencyPhone,
                 emergencyRelation: formData.emergencyRelation,
                 participants: formData.participants,
+                promoCode: appliedPromo?.code,
               }),
             });
 
@@ -639,6 +650,7 @@ export default function CheckoutForm({
               emergencyRelation: formData.emergencyRelation || "",
               note: formData.note || "",
               participants: formData.participants,
+              promoCode: appliedPromo?.code,
               sessionStart: Date.now(),
             };
 
@@ -706,6 +718,7 @@ export default function CheckoutForm({
           emergencyRelation: formData.emergencyRelation || "",
           note: formData.note || "",
           participants: formData.participants,
+          promoCode: appliedPromo?.code,
           guestVerification: {
             userId: verificationData.userId,
             email: verificationData.email,
@@ -729,6 +742,7 @@ export default function CheckoutForm({
           verifiedEmail: verificationData.email,
           verifiedUserId: verificationData.userId,
           ...formData,
+          promoCode: appliedPromo?.code,
         }),
       });
 
@@ -812,7 +826,7 @@ export default function CheckoutForm({
     // Import and use the same pricing calculation as backend
     const subtotal = tripPrice * Math.max(1, days);
     const platformFee = Math.round(subtotal * 0.1 * 100) / 100;
-    const discount = 0; // TODO: Promo code support
+    const discount = appliedPromo?.discount ?? 0;
     const amountBeforeGateway = subtotal + platformFee - discount;
     const paymentGatewayFee =
       Math.round(amountBeforeGateway * 0.015 * 100) / 100;
@@ -832,7 +846,7 @@ export default function CheckoutForm({
       finalPrice,
       captainEarnings,
     };
-  }, [chosenTrip?.price, days]);
+  }, [chosenTrip?.price, days, appliedPromo?.discount]);
 
   return (
     <form onSubmit={onSubmit} className="">
@@ -974,6 +988,24 @@ export default function CheckoutForm({
               errors={errors}
             />
           </div>
+
+          {/* Promo Code (only for logged-in users) */}
+          {isLoggedIn && pricingBreakdown && (
+            <div className="flex flex-col p-3 space-y-3 bg-white border rounded-lg md:hidden border-black/10 sm:p-5">
+              <PromoCodeInput
+                charterId={charterId || ""}
+                subtotal={pricingBreakdown.subtotal}
+                onPromoApplied={(promo) =>
+                  setAppliedPromo({
+                    code: promo.code,
+                    discount: promo.discount,
+                    promoCodeId: promo.promoCodeId,
+                  })
+                }
+                onPromoRemoved={() => setAppliedPromo(null)}
+              />
+            </div>
+          )}
 
           {/* Submit Button */}
           <div className="flex flex-col gap-3">
@@ -1164,6 +1196,24 @@ export default function CheckoutForm({
               pricingBreakdown={pricingBreakdown}
             />
           </div>
+
+          {/* Promo Code (only for logged-in users) */}
+          {isLoggedIn && pricingBreakdown && (
+            <div className="p-3 mt-5 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+              <PromoCodeInput
+                charterId={charterId || ""}
+                subtotal={pricingBreakdown.subtotal}
+                onPromoApplied={(promo) =>
+                  setAppliedPromo({
+                    code: promo.code,
+                    discount: promo.discount,
+                    promoCodeId: promo.promoCodeId,
+                  })
+                }
+                onPromoRemoved={() => setAppliedPromo(null)}
+              />
+            </div>
+          )}
         </div>
       </section>
 

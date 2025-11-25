@@ -10,29 +10,34 @@ const intlMiddleware = createMiddleware(routing);
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Handle i18n routing first - this will rewrite /home to /my/home internally
-  const intlResponse = intlMiddleware(request);
+  // 1. Bypass i18n for /admin and /dev routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/dev")) {
+    // Protect /admin routes (ADMIN or STAFF role check)
+    if (pathname.startsWith("/admin")) {
+      const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "next-auth.session-token.market",
+      });
 
-  // Extract locale from pathname for protected routes check
-  const pathnameWithoutLocale = pathname.replace(/^\/(my|en)/, "") || "/";
-
-  // 1. Protect /admin routes (NextAuth with ADMIN role check)
-  if (pathnameWithoutLocale.startsWith("/admin")) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-      cookieName: "next-auth.session-token.market",
-    });
-
-    // Check if user is authenticated and has ADMIN role
-    if (!token || (token as any).role !== "ADMIN") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("callbackUrl", pathname);
-      url.searchParams.set("error", "admin_only");
-      return NextResponse.redirect(url);
+      // Check if user is authenticated and has ADMIN or STAFF role
+      const userRole = (token as any)?.role;
+      if (!token || !["ADMIN", "STAFF"].includes(userRole)) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/en/login";
+        url.searchParams.set("callbackUrl", pathname);
+        url.searchParams.set("error", "admin_only");
+        return NextResponse.redirect(url);
+      }
     }
+
+    // Allow admin and dev routes to bypass i18n middleware
+    return NextResponse.next();
   }
+
+  // Handle i18n routing for user-facing routes
+  const intlResponse = intlMiddleware(request); // Extract locale from pathname for protected routes check
+  const pathnameWithoutLocale = pathname.replace(/^\/(my|en)/, "") || "/";
 
   // 2. Protect /account routes (NextAuth-based)
   if (pathnameWithoutLocale.startsWith("/account")) {
