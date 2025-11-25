@@ -60,6 +60,7 @@ const baseTrip: TripData = {
   name: "Full Day Offshore",
   price: 1800,
   promoPrice: null,
+  priceOverride: null,
   durationHours: 8,
   maxAnglers: 4,
   tripType: "PRIVATE",

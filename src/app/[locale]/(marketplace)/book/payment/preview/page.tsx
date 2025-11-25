@@ -150,7 +150,7 @@ export default async function PaymentPreviewPage({
       code: bookingData.promoCode,
       userId: session.user.id,
       charterId: bookingData.charterId,
-      subtotal: trip.price * bookingData.days,
+      subtotal: (trip.priceOverride ?? trip.price) * bookingData.days,
     });
 
     if (promoValidation.valid && promoValidation.discount) {
@@ -161,7 +161,7 @@ export default async function PaymentPreviewPage({
 
   // Calculate pricing (snapshot - will be re-validated on submit)
   const pricing = calculatePricing({
-    tripPrice: trip.price,
+    tripPrice: trip.priceOverride ?? trip.price,
     days: bookingData.days,
     promoDiscount,
   });
@@ -369,6 +369,7 @@ export default async function PaymentPreviewPage({
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <dl className="space-y-3 text-sm">
+                    {/* Trip Price (combined subtotal + platformFee) */}
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
                         {t("pricingSnapshot.day", {
@@ -376,13 +377,9 @@ export default async function PaymentPreviewPage({
                           count: bookingData.days,
                         })}
                       </dt>
-                      <dd>RM {pricing.subtotal.toFixed(2)}</dd>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <dt className="text-muted-foreground">
-                        {t("pricingSnapshot.platformFee")}
-                      </dt>
-                      <dd>RM {pricing.platformFee.toFixed(2)}</dd>
+                      <dd>
+                        RM {(pricing.subtotal + pricing.platformFee).toFixed(2)}
+                      </dd>
                     </div>
                     {pricing.discount > 0 && appliedPromoCode && (
                       <div className="flex items-center justify-between">
@@ -404,9 +401,9 @@ export default async function PaymentPreviewPage({
                     )}
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
-                        {t("pricingSnapshot.paymentGatewayFee")}
+                        {t("pricingSnapshot.serviceFee")}
                       </dt>
-                      <dd>RM {pricing.paymentGatewayFee.toFixed(2)}</dd>
+                      <dd>RM {pricing.serviceFee.toFixed(2)}</dd>
                     </div>
                     <div className="pt-3 border-t">
                       <div className="flex items-center justify-between text-lg font-semibold">

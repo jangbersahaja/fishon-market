@@ -1,12 +1,11 @@
 // @vitest-environment jsdom
 
-import React from "react";
-import "@testing-library/jest-dom/vitest";
-import { PaymentPreviewForm } from "../PaymentPreviewForm";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Charter, Trip } from "@fishon/ui";
+import "@testing-library/jest-dom/vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PaymentPreviewForm } from "../PaymentPreviewForm";
 
 const pushMock = vi.hoisted(() => vi.fn());
 const addBookingMock = vi.hoisted(() => vi.fn());
@@ -69,8 +68,10 @@ const basePricing: PaymentPreviewFormProps["pricing"] = {
   platformFee: 100,
   captainEarnings: 900,
   subtotal: 1000,
-  paymentGatewayFee: 18,
+  serviceFee: 22, // Updated from paymentGatewayFee (2% of 1100)
+  displayPrice: 1100, // Added for new pricing structure
   days: 1,
+  discount: 0, // Added for completeness
 };
 
 const charter = {

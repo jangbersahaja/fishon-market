@@ -401,7 +401,7 @@
         "tripPrice": "Trip Price ({days, plural, =1 {# day} other {# days}})",
         "commission": "Commission (10%)",
         "discount": "Discount",
-        "serviceFee": "Service Fee (1.5%)",
+        "serviceFee": "Service Fee (2%)",
         "sst": "SST",
         "total": "Total",
         "totalEstimate": "Total (est.)",
@@ -647,7 +647,7 @@
         "tripDays": "{tripName} × {days} {days, plural, =1 {day} other {days}}",
         "platformFee": "Platform fee (10%)",
         "discount": "Discount",
-        "paymentGatewayFee": "Payment gateway fee (1.5%)",
+        "paymentGatewayFee": "Payment gateway fee (2%)",
         "total": "Total",
         "validationNote": "Availability, pricing, and card authorization are checked again before your payment is sent to the captain.",
         "revalidationNote": "Availability, pricing, and card authorization are checked again before your payment is sent to the captain."
@@ -860,7 +860,7 @@
       "subtotal": "Subtotal",
       "discount": "Discount/Promo",
       "commission": "Commission (10%)",
-      "serviceFee": "Service Fee (1.5%)",
+      "serviceFee": "Service Fee (2%)",
       "tax": "Tax",
       "total": "Total",
       "totalPaid": "Total Paid"

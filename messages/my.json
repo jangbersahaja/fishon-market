@@ -401,7 +401,7 @@
         "tripPrice": "Harga Trip ({days, plural, =1 {# hari} other {# hari}})",
         "commission": "Komisen (10%)",
         "discount": "Diskaun",
-        "serviceFee": "Yuran Perkhidmatan (1.5%)",
+        "serviceFee": "Yuran Perkhidmatan (2%)",
         "sst": "SST",
         "total": "Jumlah",
         "totalEstimate": "Jumlah (anggaran)",
@@ -647,7 +647,8 @@
         "tripDays": "{tripName} × {days} {days, plural, =1 {hari} other {hari}}",
         "platformFee": "Yuran platform (10%)",
         "discount": "Diskaun",
-        "paymentGatewayFee": "Yuran gerbang bayaran (1.5%)",
+        "serviceFee": "Yuran perkhidmatan (2%)",
+        "paymentGatewayFee": "Yuran gerbang bayaran (2%)",
         "total": "Jumlah",
         "validationNote": "Ketersediaan, harga, dan kelulusan kad disemak semula sebelum bayaran anda dihantar kepada kapten.",
         "revalidationNote": "Ketersediaan, harga, dan kelulusan kad disemak semula sebelum bayaran anda dihantar kepada kapten."
@@ -860,7 +861,7 @@
       "subtotal": "Subjumlah",
       "discount": "Diskaun/Promo",
       "commission": "Komisen (10%)",
-      "serviceFee": "Yuran Perkhidmatan (1.5%)",
+      "serviceFee": "Yuran Perkhidmatan (2%)",
       "tax": "Cukai",
       "total": "Jumlah",
       "totalPaid": "Jumlah Dibayar"

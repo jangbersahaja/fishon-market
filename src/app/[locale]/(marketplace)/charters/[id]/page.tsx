@@ -456,6 +456,7 @@ export default async function CharterViewPage({
                         id={`trip-${idx}`}
                         name={trip.name}
                         price={trip.price}
+                        priceOverride={trip.priceOverride}
                         duration={trip.duration}
                         description={trip.description}
                         species={charter?.species ?? []}

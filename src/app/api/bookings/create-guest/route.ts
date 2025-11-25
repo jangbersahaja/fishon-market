@@ -192,6 +192,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // Use override price if set by admin, otherwise base price
+    const tripPrice = trip.priceOverride ?? trip.price;
+
     // Get charter's booking flow type
     const { getCharterFlowType } = await import(
       "@/lib/services/charter-service"
@@ -209,9 +212,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Calculate pricing - IMPORTANT: Use normal price (not promo price)
-    const tripPrice = trip.price; // Always use base price, never promoPrice
-
     // Calculate complete pricing breakdown including platform fees and payment gateway fees
     const pricingBreakdown = calculatePricing({
       tripPrice,
@@ -225,7 +225,11 @@ export async function POST(req: Request) {
     // --- FLOW-SPECIFIC LOGIC ---
     let paymentFlow: string | null = null;
     let paymentResult: any = null;
-    let initialStatus: "PENDING" | "PAYMENT_AUTHORIZED" | "PAID" = "PENDING";
+    let initialStatus:
+      | "PENDING"
+      | "PAYMENT_AUTHORIZED"
+      | "PAID"
+      | "AWAITING_PAYMENT" = "PENDING";
     let expiresAt: Date;
     let approvalDeadline: Date | null = null;
 
@@ -296,6 +300,76 @@ export async function POST(req: Request) {
       initialStatus = "PAYMENT_AUTHORIZED";
       expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hour hold for payment
 
+      // DIRECT PAYMENT (FPX/E-WALLET): Create payment session instead of booking
+      // Booking will be created after payment callback confirms success
+      if (paymentMethod === "FPX" || paymentMethod === "EWALLET") {
+        // Create payment session with booking data
+        const paymentSession = await prisma.paymentSession.create({
+          data: {
+            userId: verifiedUserId,
+            amount: finalPrice,
+            paymentMethod,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+            bookingData: {
+              tripId: trip.id,
+              charterId: trip.charter.id,
+              date: d.toISOString(),
+              days: ds,
+              startTime: trip.startTimes.length > 0 ? startTime : null,
+              adults: ad,
+              children: ch,
+              phone,
+              emergencyName,
+              emergencyPhone,
+              emergencyRelation,
+              participants,
+              note,
+              pricingBreakdown: JSON.parse(JSON.stringify(pricingBreakdown)),
+              guestInfo: {
+                firstName,
+                lastName,
+                email: guestUser.email,
+              },
+            } as any,
+          },
+        });
+
+        // Generate payment URL
+        const directPaymentResult = await createPaymentIntent({
+          bookingId: paymentSession.id, // Use session ID as order_id
+          amount: finalPrice,
+          paymentMethod: paymentMethod as "FPX" | "EWALLET",
+          description: `Booking for ${trip.name} on ${d.toISOString().split("T")[0]}`,
+          customerName: `${firstName} ${lastName}`,
+          customerEmail: guestUser.email,
+          customerPhone: phone,
+        });
+
+        if (!directPaymentResult.success || !directPaymentResult.redirectUrl) {
+          console.error(
+            "❌ Failed to generate payment URL (guest):",
+            directPaymentResult.error
+          );
+          return NextResponse.json(
+            {
+              error:
+                directPaymentResult.error || "Failed to generate payment URL",
+            },
+            { status: 500 }
+          );
+        }
+
+        // Return redirect URL - no booking created yet
+        return NextResponse.json(
+          {
+            sessionId: paymentSession.id,
+            requiresRedirect: true,
+            redirectUrl: directPaymentResult.redirectUrl,
+          },
+          { status: 200 }
+        );
+      }
+
       // MOCK flow (development only)
       if (paymentMethod === "MOCK") {
         paymentResult = {
@@ -349,6 +423,7 @@ export async function POST(req: Request) {
       }
       // DIRECT flow (FPX/E-wallet)
       else if (paymentFlow === "DIRECT") {
+        // DIRECT flow: User redirected to payment gateway, status updated via callback
         initialStatus = "PAYMENT_AUTHORIZED"; // Will be updated by callback to PAID
       }
     } // End AUTO flow payment processing
@@ -472,7 +547,7 @@ export async function POST(req: Request) {
                 tripPrice: pricingBreakdown.tripPrice, // Base price per day, not subtotal
                 finalPrice: pricingBreakdown.finalPrice,
                 platformFee: pricingBreakdown.platformFee,
-                serviceFee: pricingBreakdown.paymentGatewayFee,
+                serviceFee: pricingBreakdown.serviceFee,
                 captainEarnings: pricingBreakdown.captainEarnings,
                 expiresAt,
                 status: initialStatus,
@@ -613,15 +688,25 @@ export async function POST(req: Request) {
           conversationId: conversation.id,
           initialStatus: conversation.status,
           bookingFlowType,
+          paymentFlow,
         });
 
-        // For AUTO flow (payment already authorized), unlock conversation immediately
-        if (bookingFlowType === "AUTO") {
+        // Unlock conversation only for TOKENIZED flow (card pre-authorized)
+        // DIRECT flow (FPX/E-wallet) stays locked until callback confirms payment
+        if (bookingFlowType === "AUTO" && paymentFlow === "TOKENIZED") {
           await unlockConversation(conversation.id);
-          console.log("✅ Conversation unlocked for AUTO flow booking:", {
+          console.log("✅ Conversation unlocked for TOKENIZED payment:", {
             conversationId: conversation.id,
             bookingId: booking.id,
           });
+        } else if (paymentFlow === "DIRECT") {
+          console.log(
+            "🔒 Conversation stays locked for DIRECT payment until callback confirms:",
+            {
+              conversationId: conversation.id,
+              bookingId: booking.id,
+            }
+          );
         }
       } catch (err) {
         console.error(

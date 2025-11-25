@@ -311,26 +311,38 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
         )}
 
         <div className="space-y-2">
-          {/* Trip Price Calculation */}
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">{t("tripPrice")}</span>
-            <span className="text-gray-900">
-              {formatCurrency(booking.unitPrice)}
-            </span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">{t("numberOfDays")}</span>
-            <span className="text-gray-900">× {booking.days}</span>
-          </div>
-          <div className="flex justify-between pt-2 text-sm border-t border-gray-100">
-            <span className="text-gray-600">{t("subtotal")}</span>
-            <span className="text-gray-900">
-              {formatCurrency(booking.subtotal)}
-            </span>
-          </div>
+          {/* Trip Price Calculation - Display price includes commission (hidden from breakdown) */}
+          {(() => {
+            // Calculate display price: base + commission (10% capped at RM100)
+            const commission =
+              booking.platformFee || Math.min(booking.unitPrice * 0.1, 100);
+            const displayPricePerDay = booking.unitPrice + commission;
+            const displaySubtotal = displayPricePerDay * booking.days;
+
+            return (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{t("tripPrice")}</span>
+                  <span className="text-gray-900">
+                    {formatCurrency(displayPricePerDay)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{t("numberOfDays")}</span>
+                  <span className="text-gray-900">× {booking.days}</span>
+                </div>
+                <div className="flex justify-between pt-2 text-sm border-t border-gray-100">
+                  <span className="text-gray-600">{t("subtotal")}</span>
+                  <span className="text-gray-900">
+                    {formatCurrency(displaySubtotal)}
+                  </span>
+                </div>
+              </>
+            );
+          })()}
 
           {/* Discount */}
-          {booking.discount && booking.discount > 0 && (
+          {booking.discount !== undefined && booking.discount > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">
                 {booking.promoCode && (
@@ -349,17 +361,7 @@ export function BookingDetails({ booking }: BookingDetailsProps) {
             </div>
           )}
 
-          {/* Platform Fee */}
-          {booking.platformFee && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">{t("commission")}</span>
-              <span className="text-gray-900">
-                {formatCurrency(booking.platformFee)}
-              </span>
-            </div>
-          )}
-
-          {/* Service Fee (Payment Gateway) */}
+          {/* Service Fee (Payment Gateway) - Commission hidden from angler view */}
           {booking.serviceFee && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">{t("serviceFee")}</span>

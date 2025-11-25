@@ -35,10 +35,7 @@ const Footer = () => {
       key: "blog",
       link: `/${locale}/blog`,
     },
-    {
-      key: "affiliateProgram",
-      link: "",
-    },
+
     {
       key: "contactUs",
       link: `/${locale}/support/contact`,

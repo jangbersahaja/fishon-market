@@ -34,10 +34,12 @@ interface PricingBreakdown {
   subtotal: number;
   platformFee: number;
   discount: number;
-  paymentGatewayFee: number;
+  serviceFee: number; // Updated to match new pricing service
+  paymentGatewayFee?: number; // Legacy support
   sst: number;
   finalPrice: number;
   captainEarnings: number;
+  displayPrice: number;
 }
 
 interface BookingSummaryCardProps {
@@ -239,22 +241,20 @@ export default function BookingSummaryCard({
           <div className="pt-3 mt-3 border-t border-black/10">
             {pricingBreakdown ? (
               <>
-                {/* Itemized Breakdown */}
+                {/* Itemized Breakdown - Commission Hidden */}
                 <div className="mb-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">
                       {t("tripPrice", { days: pricingBreakdown.days })}
                     </span>
                     <span className="font-medium">
-                      RM{pricingBreakdown.subtotal.toFixed(2)}
+                      RM
+                      {(
+                        pricingBreakdown.subtotal + pricingBreakdown.platformFee
+                      ).toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">{t("commission")}</span>
-                    <span className="font-medium">
-                      RM{pricingBreakdown.platformFee.toFixed(2)}
-                    </span>
-                  </div>
+                  {/* Commission/Platform Fee HIDDEN from angler */}
                   {pricingBreakdown.discount > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">{t("discount")}</span>
@@ -266,7 +266,12 @@ export default function BookingSummaryCard({
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">{t("serviceFee")}</span>
                     <span className="font-medium">
-                      RM{pricingBreakdown.paymentGatewayFee.toFixed(2)}
+                      RM
+                      {(
+                        pricingBreakdown.serviceFee ||
+                        pricingBreakdown.paymentGatewayFee ||
+                        0
+                      ).toFixed(2)}
                     </span>
                   </div>
                   {pricingBreakdown.sst > 0 && (

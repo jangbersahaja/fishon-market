@@ -30,6 +30,8 @@ export type BackendTrip = {
   name: string;
   tripType: string;
   price: number;
+  promoPrice?: number | null; // Captain's minimum acceptable price
+  priceOverride?: number | null; // Admin's active price override
   durationHours: number;
   maxAnglers: number;
   style: "PRIVATE" | "SHARED";

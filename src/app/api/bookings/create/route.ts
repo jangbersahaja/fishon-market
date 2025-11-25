@@ -235,8 +235,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    // IMPORTANT: Use normal price (not promo price) for booking submission
-    const tripPrice = trip.price; // Always use base price, never promoPrice
+    // Use override price if set by admin, otherwise base price
+    const tripPrice = trip.priceOverride ?? trip.price;
 
     // Validate and apply promo code if provided
     let validatedPromo: {
@@ -300,8 +300,11 @@ async function createAuthenticatedBooking(session: any, body: any) {
     let paymentFlow: "TOKENIZED" | "DIRECT" | "MOCK" | null = null;
     let paymentResult: any = null;
     let normalizedPaymentMethod: string | null = null;
-    let initialStatus: "PENDING" | "PAYMENT_AUTHORIZED" | "PAID" =
-      "PAYMENT_AUTHORIZED";
+    let initialStatus:
+      | "PENDING"
+      | "PAYMENT_AUTHORIZED"
+      | "PAID"
+      | "AWAITING_PAYMENT" = "PAYMENT_AUTHORIZED";
     let approvalDeadline: Date | null = null;
     let expiresAt: Date;
 
@@ -344,6 +347,85 @@ async function createAuthenticatedBooking(session: any, body: any) {
               "Mock payments disabled. Set SENANGPAY_FORCE_MOCK=true to enable.",
           },
           { status: 400 }
+        );
+      }
+
+      // DIRECT PAYMENT (FPX/E-WALLET): Create payment session instead of booking
+      // Booking will be created after payment callback confirms success
+      if (
+        normalizedPaymentMethod === "FPX" ||
+        normalizedPaymentMethod === "EWALLET"
+      ) {
+        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
+        if (!user) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 404 }
+          );
+        }
+
+        // Create payment session with booking data
+        const paymentSession = await prisma.paymentSession.create({
+          data: {
+            userId: dbUserId,
+            amount: finalPrice,
+            paymentMethod: normalizedPaymentMethod,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+            bookingData: {
+              tripId: trip.id,
+              charterId: trip.charter.id,
+              date: d.toISOString(),
+              days: ds,
+              startTime: trip.startTimes.length > 0 ? startTime : null,
+              adults: ad,
+              children: ch,
+              phone,
+              emergencyName,
+              emergencyPhone,
+              emergencyRelation,
+              participants,
+              note,
+              pricingBreakdown: JSON.parse(JSON.stringify(pricingBreakdown)),
+              promoCodeId: validatedPromo?.promoCodeId || null,
+              promoCode: validatedPromo ? promoCode : null,
+              promoDiscount: validatedPromo?.discountAmount || null,
+            } as any,
+          },
+        });
+
+        // Generate payment URL
+        const directPaymentResult = await createPaymentIntent({
+          bookingId: paymentSession.id, // Use session ID as order_id
+          amount: finalPrice,
+          paymentMethod: normalizedPaymentMethod as "FPX" | "EWALLET",
+          description: `Booking for ${trip.name} on ${d.toISOString().split("T")[0]}`,
+          customerName: user.name || "Guest",
+          customerEmail: user.email,
+          customerPhone: user.phone || phone || "",
+        });
+
+        if (!directPaymentResult.success || !directPaymentResult.redirectUrl) {
+          console.error(
+            "❌ Failed to generate payment URL:",
+            directPaymentResult.error
+          );
+          return NextResponse.json(
+            {
+              error:
+                directPaymentResult.error || "Failed to generate payment URL",
+            },
+            { status: 500 }
+          );
+        }
+
+        // Return redirect URL - no booking created yet
+        return NextResponse.json(
+          {
+            sessionId: paymentSession.id,
+            requiresRedirect: true,
+            redirectUrl: directPaymentResult.redirectUrl,
+          },
+          { status: 200 }
         );
       }
 
@@ -431,6 +513,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           );
         }
       } else if (paymentFlow === "DIRECT") {
+        // DIRECT flow: User redirected to payment gateway, status updated via callback
         initialStatus = "PAYMENT_AUTHORIZED";
       }
     }
@@ -622,7 +705,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
                 tripPrice: pricingBreakdown.tripPrice, // Base price per day, not subtotal
                 finalPrice: pricingBreakdown.finalPrice,
                 platformFee: pricingBreakdown.platformFee,
-                serviceFee: pricingBreakdown.paymentGatewayFee,
+                serviceFee: pricingBreakdown.serviceFee,
                 captainEarnings: pricingBreakdown.captainEarnings,
                 promoCodeId: validatedPromo?.promoCodeId || null,
                 discount: validatedPromo
@@ -790,14 +873,18 @@ async function createAuthenticatedBooking(session: any, body: any) {
           trip.charter.captain.id // ownerId
         );
 
-        // If booking has PAYMENT_AUTHORIZED status, unlock conversation immediately (payment already received)
-        if (booking.status === "PAYMENT_AUTHORIZED") {
+        // Unlock conversation only for TOKENIZED flow (card pre-authorized)
+        // DIRECT flow (FPX/E-wallet) stays locked until callback confirms payment
+        if (
+          booking.status === "PAYMENT_AUTHORIZED" &&
+          paymentFlow === "TOKENIZED"
+        ) {
           console.log(
-            "🔓 Unlocking conversation for PAYMENT_AUTHORIZED booking (AUTO flow)"
+            "🔓 Unlocking conversation for TOKENIZED payment (card pre-authorized)"
           );
           await unlockConversation(conversation.id);
 
-          // Send system message informing about payment receipt
+          // Send system message informing about payment authorization
           const { paymentReceivedMessage } = await import(
             "@/lib/services/message-templates"
           );
@@ -814,7 +901,11 @@ async function createAuthenticatedBooking(session: any, body: any) {
               status: "PAYMENT_AUTHORIZED",
             }
           );
-          console.log("✅ Sent payment received system message");
+          console.log("✅ Sent payment authorization system message");
+        } else if (paymentFlow === "DIRECT") {
+          console.log(
+            "🔒 Conversation stays locked for DIRECT payment until callback confirms"
+          );
         }
 
         // Send initial booking card message
@@ -1063,66 +1154,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       // Non-critical error - continue with response
     }
 
-    // Handle DIRECT flow redirect
-    if (
-      !isManualFlow &&
-      paymentFlow === "DIRECT" &&
-      normalizedPaymentMethod &&
-      normalizedPaymentMethod !== "MOCK"
-    ) {
-      // Generate payment URL for FPX/E-wallet
-      try {
-        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
-        if (!user) {
-          return NextResponse.json(
-            { error: "User not found" },
-            { status: 404 }
-          );
-        }
-
-        const directPaymentResult = await createPaymentIntent({
-          bookingId: booking.id, // Use actual booking ID
-          amount: finalPrice,
-          paymentMethod: normalizedPaymentMethod as "FPX" | "EWALLET",
-          description: `Booking for ${trip.name} on ${date}`,
-          customerName: user.name || "Guest",
-          customerEmail: user.email,
-          customerPhone: user.phone || phone || "",
-        });
-
-        if (!directPaymentResult.success || !directPaymentResult.redirectUrl) {
-          console.error(
-            "❌ Failed to generate payment URL:",
-            directPaymentResult.error
-          );
-          return NextResponse.json(
-            {
-              error:
-                directPaymentResult.error || "Failed to generate payment URL",
-            },
-            { status: 500 }
-          );
-        }
-
-        // Return redirect URL to client
-        return NextResponse.json(
-          {
-            booking,
-            requiresRedirect: true,
-            redirectUrl: directPaymentResult.redirectUrl,
-          },
-          { status: 201 }
-        );
-      } catch (error: any) {
-        console.error("❌ Direct payment redirect error:", error);
-        return NextResponse.json(
-          { error: "Failed to process payment" },
-          { status: 500 }
-        );
-      }
-    }
-
-    // TOKENIZED or MOCK flow - return booking directly
+    // TOKENIZED, MOCK, or MANUAL flow - return booking directly
     return NextResponse.json({ booking }, { status: 201 });
   } catch (e: any) {
     console.error("authenticated booking.create error", e);

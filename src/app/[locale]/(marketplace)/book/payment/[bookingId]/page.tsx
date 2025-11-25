@@ -276,21 +276,20 @@ export default async function PaymentPage({
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <dl className="space-y-3 text-sm">
+                    {/* Trip Price (combined subtotal + platformFee) */}
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
                         {enrichedBooking.tripName} × {booking.days}{" "}
                         {t("paymentBreakdown.day", { count: booking.days })}
                       </dt>
-                      <dd>RM {enrichedBooking.unitPrice.toFixed(2)}</dd>
+                      <dd>
+                        RM{" "}
+                        {(
+                          enrichedBooking.unitPrice +
+                          (Number(booking.platformFee) || 0)
+                        ).toFixed(2)}
+                      </dd>
                     </div>
-                    {booking.platformFee && (
-                      <div className="flex items-center justify-between">
-                        <dt className="text-muted-foreground">
-                          {t("paymentBreakdown.platformFee")}
-                        </dt>
-                        <dd>RM {Number(booking.platformFee).toFixed(2)}</dd>
-                      </div>
-                    )}
                     {(() => {
                       const discountData = booking.discount as {
                         code: string;
@@ -321,7 +320,7 @@ export default async function PaymentPage({
                     {booking.serviceFee && (
                       <div className="flex items-center justify-between">
                         <dt className="text-muted-foreground">
-                          {t("paymentBreakdown.paymentGatewayFee")}
+                          {t("paymentBreakdown.serviceFee")}
                         </dt>
                         <dd>RM {Number(booking.serviceFee).toFixed(2)}</dd>
                       </div>
