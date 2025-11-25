@@ -5,7 +5,14 @@
  */
 
 import { prisma } from "@/lib/database/prisma";
-import { sendVerificationCode } from "@/lib/services/email-service";
+import {
+  sendVerificationCode,
+  sendWelcomeEmail,
+} from "@/lib/services/email-service";
+import {
+  assignPromoCodeToUser,
+  getPromoCodeByCode,
+} from "@/lib/services/promo-service";
 
 /**
  * Generate 6-digit verification code
@@ -185,8 +192,39 @@ export async function upgradeGuestToAngler(data: {
       phone: data.phone || undefined,
       emailVerified: new Date(), // Ensure verified on registration
     },
-    select: { id: true, email: true, role: true },
+    select: { id: true, email: true, role: true, name: true },
   });
+
+  // Assign FISHONTRIP1 welcome promo code to upgraded user
+  // Non-blocking: don't fail upgrade if promo assignment fails
+  let assignedPromoCode: string | undefined;
+  try {
+    const welcomePromo = await getPromoCodeByCode("FISHONTRIP1");
+    if (welcomePromo) {
+      await assignPromoCodeToUser(user.id, welcomePromo.id);
+      assignedPromoCode = welcomePromo.code;
+    }
+  } catch (promoError) {
+    console.error(
+      "Failed to assign welcome promo code on upgrade:",
+      promoError
+    );
+    // Continue with upgrade - promo assignment is not critical
+  }
+
+  // Send welcome email with promo code (non-blocking)
+  try {
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://fishon.my"}/login`;
+    await sendWelcomeEmail({
+      to: user.email,
+      userName: user.name || user.email.split("@")[0],
+      loginUrl,
+      promoCode: assignedPromoCode,
+    });
+  } catch (emailError) {
+    console.error("Failed to send welcome email on upgrade:", emailError);
+    // Continue with upgrade - email sending is not critical
+  }
 
   return {
     id: user.id,

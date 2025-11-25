@@ -320,6 +320,7 @@ interface SendWelcomeParams {
   to: string;
   userName: string;
   loginUrl: string;
+  promoCode?: string; // NEW: Optional promo code for welcome bonus
 }
 
 export async function sendWelcomeEmail(params: SendWelcomeParams) {
@@ -327,6 +328,7 @@ export async function sendWelcomeEmail(params: SendWelcomeParams) {
     userName: params.userName,
     userType: "angler",
     loginUrl: params.loginUrl,
+    promoCode: params.promoCode, // Pass promo code to template
   });
 
   return sendMail({

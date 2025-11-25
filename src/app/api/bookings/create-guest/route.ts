@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       cardExpMonth,
       cardExpYear,
       cardCvv,
+      promoCode, // NEW: Promo codes not allowed for guests
     } = body as {
       verifiedEmail?: string;
       verifiedUserId?: string;
@@ -70,7 +71,20 @@ export async function POST(req: Request) {
       cardExpMonth?: string;
       cardExpYear?: string;
       cardCvv?: string;
+      promoCode?: string;
     };
+
+    // GUESTS CANNOT USE PROMO CODES - MUST REGISTER
+    if (promoCode && typeof promoCode === "string" && promoCode.trim()) {
+      return NextResponse.json(
+        {
+          error:
+            "Promo codes are only available for registered users. Please create an account to use promo codes.",
+          requiresRegistration: true,
+        },
+        { status: 403 }
+      );
+    }
 
     // Validate verified email and user ID
     if (!verifiedEmail || !verifiedUserId) {

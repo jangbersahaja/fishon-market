@@ -159,6 +159,15 @@ export default async function ConfirmationPage({
   // Enrich booking with trip and charter data
   const enrichedBooking = await enrichBookingWithTripData(booking);
 
+  // Parse discount from JSON
+  const discountData = booking.discount as {
+    code: string;
+    percentage?: number;
+    amount: number;
+  } | null;
+  const discountAmount = discountData?.amount || 0;
+  const promoCodeStr = discountData?.code || null;
+
   const charterData = enrichedBooking.charter
     ? {
         id: enrichedBooking.charter.id,
@@ -552,6 +561,8 @@ export default async function ConfirmationPage({
                 timeSlots: enrichedBooking.timeSlots,
                 participants: enrichedBooking.participants,
                 emergencyContact: enrichedBooking.emergencyContact,
+                discount: discountAmount,
+                promoCode: promoCodeStr,
               }}
             />
 

@@ -1,4 +1,4 @@
-import { deleteTag } from "@/app/[locale]/admin/blog/tags/actions";
+import { deleteTag } from "@/app/admin/blog/tags/actions";
 import EntityActions from "./EntityActions";
 
 interface TagActionsProps {

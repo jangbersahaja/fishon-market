@@ -1,4 +1,9 @@
-import { BookingCard, EmptyState, QuickStats } from "@/components/account";
+import {
+  BookingCard,
+  EmptyState,
+  PromoCodesCard,
+  QuickStats,
+} from "@/components/account";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/auth";
 import {
@@ -35,6 +40,9 @@ export default async function OverviewPage() {
           Here&apos;s what&apos;s happening with your fishing charters.
         </p>
       </div>
+
+      {/* Promo Codes */}
+      <PromoCodesCard />
 
       {/* Quick Stats */}
       <QuickStats

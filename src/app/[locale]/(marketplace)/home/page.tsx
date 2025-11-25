@@ -1,7 +1,14 @@
+import { HomeWelcomeModal } from "@/components/campaigns/HomeWelcomeBar";
 import SearchBox from "@/components/charters/SearchBox";
 import PopularDestination from "@/components/marketing/PopularDestination";
+import { authOptions } from "@/lib/auth/auth-options";
+import type { CampaignContext } from "@/lib/services/campaign-service";
+import { campaignService } from "@/lib/services/campaign-service";
 import { getCharters } from "@/lib/services/charter-service";
+import type { UserRole } from "@prisma/client";
+import { getServerSession } from "next-auth";
 import { getLocale, getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -14,9 +21,52 @@ export default async function Home() {
   const charters = await getCharters();
   const t = await getTranslations({ locale, namespace: "home" });
 
+  // Fetch campaign data server-side
+  const session = await getServerSession(authOptions);
+  const cookieStore = await cookies();
+  let sessionId = cookieStore.get("fishon_session_id")?.value;
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+  }
+
+  const context: CampaignContext = {
+    userId: session?.user?.id,
+    sessionId,
+    userRole: session?.user?.role as UserRole | undefined,
+    currentPage: "home",
+    device: "DESKTOP", // Will be overridden by client-side responsive logic
+    locale,
+  };
+
+  // Fetch campaigns for home welcome bar
+  const campaigns = await campaignService.getActiveCampaigns(context);
+  const campaign = campaigns.find((c) =>
+    c.placements.some((p) => p.placementKey === "home-welcome-bar")
+  );
+  const placement = campaign?.placements.find(
+    (p) => p.placementKey === "home-welcome-bar"
+  );
+  const content = campaign
+    ? campaignService.getCampaignContent(campaign, locale)
+    : null;
+  const layoutConfig = placement?.layoutConfig as any;
+  const variant = layoutConfig?.variant?.toLowerCase() || "modal";
+  const ctaHref = `/${locale}/register`;
+
   return (
     <div className="flex flex-col items-center min-h-screen font-sans">
+      {/* Welcome modal - shows after 5 seconds */}
+      <HomeWelcomeModal
+        campaignId={campaign?.id || null}
+        placementKey="home-welcome-bar"
+        content={content}
+        variant={variant}
+        ctaHref={ctaHref}
+        className={layoutConfig?.className || ""}
+      />
+
       <main className="flex flex-col items-center w-full gap-8 mb-24 sm:items-start md:gap-10 ">
+        {" "}
         {/* Home page with hero section */}
         <section className="relative w-full h-[40vh] md:h-[50vh] lg:h-[60vh]">
           {/* wallpaper */}
@@ -62,7 +112,6 @@ export default async function Home() {
           </Suspense>
         </div>
         <PopularDestination charters={charters} />
-
         {/* Brand explainer + CTA */}
         <section className="w-full bg-gray-100">
           <div className="flex flex-col items-center w-full gap-10 p-5 mx-auto max-w-7xl md:flex-row">
@@ -98,10 +147,8 @@ export default async function Home() {
             </div>
           </div>
         </section>
-
         {/* Browse by type */}
         <BrowseByType charters={charters} />
-
         {/* Top fishing techniques */}
         <TopTechniques charters={charters} />
       </main>

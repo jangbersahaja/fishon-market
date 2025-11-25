@@ -2,12 +2,15 @@
 import CharterCard from "@/components/charters/CharterCard";
 import CompactFiltersBar from "@/components/charters/CompactFiltersBar";
 import SearchBox from "@/components/charters/SearchBox";
+import { CampaignContainer } from "@/components/promotional";
 import { getAverageRating } from "@/lib/helpers/ratings";
 import { getCharters } from "@/lib/services/charter-service";
+
 import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
 import { getLocale, getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 // Helpers
@@ -340,6 +343,16 @@ export default async function SearchResults({
     charters.map((c) => c.fishingType).filter(Boolean)
   ).sort((a, b) => a.localeCompare(b));
 
+  // Device detection for campaign targeting (server-side)
+  const headersList = await headers();
+  const userAgent = headersList.get("user-agent") || "";
+  const isMobileUA =
+    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      userAgent
+    );
+  const device = isMobileUA ? "MOBILE" : "DESKTOP";
+  const currentPage = "search";
+
   return (
     <main className="min-h-dvh bg-gradient-to-br from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
       {/* Responsive SearchBox: non-sticky on mobile, sticky on desktop under fixed navbar */}
@@ -476,71 +489,100 @@ export default async function SearchResults({
       </div>
 
       <section className="px-5 py-6 mx-auto max-w-7xl sm:px-5 sm:py-8">
-        {/* Compact Sort & Filters Bar */}
-        <CompactFiltersBar
-          orderby={orderby}
-          priceRange={priceRange}
-          tripType={tripType}
-          pickup={pickupParam}
-          childFriendly={childFriendlyParam}
-          destination={destination}
-          date={date}
-          adults={adults}
-          childrenCount={childrenParam}
-          tripNames={tripNames}
-          availableSpecies={availableSpecies}
-          availableTechniques={availableTechniques}
-          availableAmenities={availableAmenities}
-          availableBoatTypes={availableBoatTypes}
-          fishingTypes={fishingTypes}
-          filteredCount={filtered.length}
-        />
-
-        {/* Results */}
-        <div className="grid grid-cols-1 gap-10 mt-8 md:grid-cols-2 lg:gap-15">
-          {filtered.length === 0 && (
-            <div className="p-12 text-center bg-white border shadow-sm col-span-full rounded-2xl border-slate-200">
-              <div className="flex flex-col items-center gap-4">
-                <div className="p-4 rounded-full bg-[#ec2227]/10">
-                  <svg
-                    className="w-12 h-12 text-[#ec2227]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="mb-2 text-xl font-bold text-slate-900">
-                    {t("noChartersFoundTitle")}
-                  </h3>
-                  <p className="max-w-md mx-auto text-sm text-slate-600">
-                    {t("noChartersFoundDescription")}
-                  </p>
-                </div>
-                <Link
-                  href={`/${locale}/search`}
-                  className="mt-4 inline-block px-6 py-3 bg-[#ec2227] hover:bg-[#d11f24] text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-                >
-                  {t("clearAllFilters")}
-                </Link>
-              </div>
+        {/* Desktop: 2-column layout with sidebar | Mobile: single column with bottom bar */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+          {/* Desktop Sidebar - Hidden on mobile */}
+          <aside className="hidden lg:block lg:w-[300px] lg:flex-shrink-0">
+            <div className="sticky space-y-4 top-20">
+              {/* Promotional Campaign Sidebar (Desktop Only) */}
+              <CampaignContainer
+                placementKey="search-sidebar"
+                currentPage={currentPage}
+                device="DESKTOP"
+                locale={locale}
+              />
             </div>
-          )}
+          </aside>
 
-          {filtered.map((c) => (
-            <CharterCard
-              key={(c as any).backendId ?? `d:${String(c.id)}`}
-              charter={c}
-              context={{ date, adults, children, guestsParam }}
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Compact Sort & Filters Bar */}
+            <CompactFiltersBar
+              orderby={orderby}
+              priceRange={priceRange}
+              tripType={tripType}
+              pickup={pickupParam}
+              childFriendly={childFriendlyParam}
+              destination={destination}
+              date={date}
+              adults={adults}
+              childrenCount={childrenParam}
+              tripNames={tripNames}
+              availableSpecies={availableSpecies}
+              availableTechniques={availableTechniques}
+              availableAmenities={availableAmenities}
+              availableBoatTypes={availableBoatTypes}
+              fishingTypes={fishingTypes}
+              filteredCount={filtered.length}
             />
-          ))}
+
+            {/* Results */}
+            <div className="grid grid-cols-1 gap-10 mt-8 md:grid-cols-2 lg:gap-15">
+              {filtered.length === 0 && (
+                <div className="p-12 text-center bg-white border shadow-sm col-span-full rounded-2xl border-slate-200">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-4 rounded-full bg-[#ec2227]/10">
+                      <svg
+                        className="w-12 h-12 text-[#ec2227]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="mb-2 text-xl font-bold text-slate-900">
+                        {t("noChartersFoundTitle")}
+                      </h3>
+                      <p className="max-w-md mx-auto text-sm text-slate-600">
+                        {t("noChartersFoundDescription")}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/${locale}/search`}
+                      className="mt-4 inline-block px-6 py-3 bg-[#ec2227] hover:bg-[#d11f24] text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                    >
+                      {t("clearAllFilters")}
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {filtered.map((c) => (
+                <CharterCard
+                  key={(c as any).backendId ?? `d:${String(c.id)}`}
+                  charter={c}
+                  context={{ date, adults, children, guestsParam }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Bar Campaign (Mobile Only) */}
+        <div className="lg:hidden">
+          <CampaignContainer
+            placementKey="search-bottom-bar"
+            currentPage={currentPage}
+            device="MOBILE"
+            locale={locale}
+          />
         </div>
       </section>
     </main>

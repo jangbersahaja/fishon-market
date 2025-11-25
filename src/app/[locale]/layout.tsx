@@ -15,7 +15,6 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Inter, Oswald } from "next/font/google";
 import { notFound } from "next/navigation";
-import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],

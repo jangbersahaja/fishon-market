@@ -82,7 +82,7 @@ export default async function BlogPage({
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             Fishing Blog & Guides
           </h1>
@@ -100,14 +100,14 @@ export default async function BlogPage({
           {/* Categories */}
           {categories.length > 0 && (
             <nav
-              className="mt-8 flex flex-wrap gap-2"
+              className="flex flex-wrap gap-2 mt-8"
               aria-label="Blog categories"
             >
               {categories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/blog/category/${category.slug}`}
-                  className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition"
+                  className="px-4 py-2 text-sm font-medium transition rounded-full bg-white/20 hover:bg-white/30"
                 >
                   {category.name}
                 </Link>
@@ -117,7 +117,7 @@ export default async function BlogPage({
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* Featured Posts */}
         {featuredPosts.length > 0 && (
           <section className="mb-12">
@@ -152,7 +152,7 @@ export default async function BlogPage({
           <h2 className="mb-6 text-2xl font-bold">Recent Articles</h2>
 
           {posts.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
+            <div className="p-12 text-center border border-gray-200 rounded-lg bg-gray-50">
               <p className="text-gray-600">
                 No blog posts yet. Check back soon for fishing tips and guides!
               </p>
@@ -168,13 +168,13 @@ export default async function BlogPage({
               {/* Pagination */}
               {totalPages > 1 && (
                 <nav
-                  className="mt-12 flex justify-center gap-2"
+                  className="flex justify-center gap-2 mt-12"
                   aria-label="Pagination"
                 >
                   {page > 1 && (
                     <Link
                       href={`/blog?page=${page - 1}`}
-                      className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                      className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                       Previous
                     </Link>
@@ -198,7 +198,7 @@ export default async function BlogPage({
                   {page < totalPages && (
                     <Link
                       href={`/blog?page=${page + 1}`}
-                      className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                      className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                       Next
                     </Link>
@@ -216,7 +216,7 @@ export default async function BlogPage({
             Get the latest fishing tips and destination guides delivered to your
             inbox.
           </p>
-          <form className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <form className="flex flex-col justify-center gap-3 mt-6 sm:flex-row">
             <input
               type="email"
               placeholder="Enter your email"

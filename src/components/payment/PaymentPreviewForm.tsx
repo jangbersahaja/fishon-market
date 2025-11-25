@@ -30,6 +30,7 @@ interface BookingPreviewData {
   participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
   guestVerification?: { userId: string; email: string };
   sessionStart: number;
+  promoCode?: string;
 }
 
 interface PricingBreakdown {
@@ -88,6 +89,7 @@ export function PaymentPreviewForm({
         body: JSON.stringify({
           ...bookingData,
           finalPrice: pricing.finalPrice,
+          userId: session?.user?.id,
         }),
       });
 
@@ -147,6 +149,7 @@ export function PaymentPreviewForm({
         emergencyRelation: bookingData.emergencyRelation,
         participants: bookingData.participants,
         paymentMethod,
+        promoCode: bookingData.promoCode,
         ...(paymentMethod === "CARD" && {
           cardNumber,
           cardExpMonth,

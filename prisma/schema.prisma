@@ -45,6 +45,25 @@ enum NotificationStatus {
   ARCHIVED
 }
 
+enum PromoCodeType {
+  PERCENTAGE  // e.g., 10% off
+  FIXED       // e.g., RM50 off (future)
+}
+
+enum PromoCodeStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  EXHAUSTED   // Max uses reached
+}
+
+enum PromoCodeScope {
+  UNIVERSAL     // Can be used by anyone (admin-created codes)
+  REGISTRATION  // Auto-assigned on registration (like FISHONTRIP1)
+  CHARTER       // Charter-specific codes (future)
+  REFERRAL      // Referral codes (future)
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -81,6 +100,7 @@ model User {
   sessions                 Session[] // NextAuth sessions
   notifications            Notification[]
   notificationPreferences  NotificationPreferences?
+  promoCodeAssignments     UserPromoCodeAssignment[]
 }
 
 // NextAuth OAuth Account model
@@ -304,6 +324,10 @@ model Booking {
   discount   Json? // { "code": "SUMMER10", "percentage": "10%", "amount": 50.00 }
   tax        Json? // { "name": "SST", "percentage": "6%", "amount": 30.00 } (future)
   finalPrice Decimal @db.Decimal(10, 2) // Total amount angler pays (includes platform fee, gateway fee, tax, minus discount)
+
+  // === PROMO CODE ===
+  promoCodeId String?
+  promoCode   PromoCode? @relation("BookingPromoCode", fields: [promoCodeId], references: [id])
 
   // === BOOKING STATUS ===
   status             BookingStatus @default(PENDING)
@@ -695,4 +719,204 @@ model AnalyticsEvent {
   @@index([sessionId, createdAt])
   @@index([userId, createdAt])
   @@map("analytics_events")
+}
+
+// Promo Code System
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "FISHONTRIP1", "SUMMER10"
+  name        String   // Display name: "Welcome Bonus", "Summer Sale"
+  description String?  // "Get 10% off your first trip"
+  
+  // Discount configuration
+  type        PromoCodeType @default(PERCENTAGE)
+  percentage  Int?     // For PERCENTAGE type (e.g., 10 for 10%)
+  fixedAmount Decimal? @db.Decimal(10, 2) // For FIXED type (future)
+  
+  // Scope and eligibility
+  scope       PromoCodeScope @default(UNIVERSAL)
+  
+  // Validity period
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Usage limits
+  maxUses     Int?     // Total times code can be used (null = unlimited)
+  usesCount   Int      @default(0) // Current usage count
+  maxUsesPerUser Int   @default(1) // Per-user limit (default: one-time use)
+  
+  // Eligibility rules
+  minPurchase Decimal? @db.Decimal(10, 2) // Minimum booking amount
+  maxDiscount Decimal? @db.Decimal(10, 2) // Maximum discount cap
+  newUsersOnly Boolean @default(false) // Only for users with no completed bookings
+  
+  // Targeting (future - Phase 2)
+  specificCharters String[] // Charter IDs (empty = all charters)
+  
+  // Status
+  status      PromoCodeStatus @default(ACTIVE)
+  
+  // Tracking
+  createdBy   String?  // Admin user ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  bookings    Booking[] @relation("BookingPromoCode")
+  assignments UserPromoCodeAssignment[]
+  
+  @@index([code])
+  @@index([status, endDate])
+  @@index([scope])
+}
+
+// Track which users have been assigned which promo codes
+model UserPromoCodeAssignment {
+  id           String   @id @default(cuid())
+  userId       String
+  promoCodeId  String
+  
+  // Tracking
+  assignedAt   DateTime @default(now())
+  usedAt       DateTime? // When user redeemed the code
+  usedInBookingId String? // Which booking used this code
+  
+  // Relations
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promoCode    PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, promoCodeId]) // User can only be assigned each code once
+  @@index([userId])
+  @@index([promoCodeId])
+}
+
+// Promotional Campaign System
+enum CampaignType {
+  REGISTRATION_INCENTIVE  // Drive new registrations
+  SEASONAL_PROMOTION      // Seasonal offers
+  PARTNER_OFFER           // Partner/affiliate campaigns
+  ANNOUNCEMENT            // System announcements
+}
+
+enum CampaignStatus {
+  DRAFT       // Being configured
+  ACTIVE      // Live and showing
+  PAUSED      // Temporarily disabled
+  COMPLETED   // Ended naturally
+  ARCHIVED    // Archived for history
+}
+
+enum DismissalStrategy {
+  SESSION_ONLY             // Dismissed for current session only
+  SESSION_WITH_COOLDOWN    // Reappear after X days
+  PERMANENT                // Never show again after dismissal
+  MAX_DISMISSALS           // Stop after X dismissals
+}
+
+enum PlacementPosition {
+  RIGHT_SIDEBAR   // Desktop sidebar (sticky)
+  LEFT_SIDEBAR    // Left sidebar
+  BOTTOM_FIXED    // Mobile bottom bar (fixed)
+  TOP_BANNER      // Top page banner
+  MODAL_CENTER    // Center modal overlay
+  INLINE_CONTENT  // Inline with content
+}
+
+enum InteractionAction {
+  IMPRESSION  // Banner shown
+  CLICK       // User clicked CTA
+  DISMISS     // User dismissed banner
+  CONVERSION  // User completed target action (e.g., registered)
+}
+
+model PromotionalCampaign {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "reg-welcome-2025"
+  type        CampaignType
+  status      CampaignStatus @default(DRAFT)
+  priority    Int      @default(50) // Higher = more important
+  
+  // Scheduling
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Targeting rules
+  targetGuests      Boolean @default(true)
+  targetRegistered  Boolean @default(false)
+  excludeRoles      UserRole[]
+  allowedPages      String[] // e.g., ["search", "charter-detail", "home"]
+  allowedDevices    String[] // e.g., ["DESKTOP", "MOBILE", "TABLET"]
+  
+  // Content (JSON for multi-language support)
+  contentEn   Json // { title, subtitle, cta, benefits: [] }
+  contentMy   Json // { title, subtitle, cta, benefits: [] }
+  
+  // Dismissal configuration
+  dismissalStrategy   DismissalStrategy @default(SESSION_ONLY)
+  cooldownDays        Int?  // For SESSION_WITH_COOLDOWN
+  maxDismissals       Int?  // For MAX_DISMISSALS
+  
+  // Analytics aggregates
+  impressions   Int @default(0)
+  clicks        Int @default(0)
+  conversions   Int @default(0)
+  
+  // Metadata
+  createdBy   String?  // Admin user ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  placements    CampaignPlacement[]
+  interactions  UserCampaignInteraction[]
+  
+  @@index([status, priority])
+  @@index([code])
+}
+
+model CampaignPlacement {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    PromotionalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  placementKey  String // e.g., "search-sidebar", "pre-checkout-modal"
+  devices       String[] // ["DESKTOP"] or ["MOBILE", "TABLET"]
+  position      PlacementPosition
+  sticky        Boolean @default(false)
+  
+  // Display rules (JSON for flexibility)
+  // Example: { showAfterScroll: 200, hideOnCheckout: false, maxViewsPerSession: 1 }
+  displayRules  Json
+  
+  // Layout configuration (JSON)
+  // Example: { variant: "CARD", width: "300px", maxHeight: "400px", className: "..." }
+  layoutConfig  Json
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([campaignId, placementKey])
+  @@index([campaignId])
+}
+
+model UserCampaignInteraction {
+  id          String   @id @default(cuid())
+  userId      String?  // Null for guest users
+  sessionId   String   // Browser session ID (cookie-based)
+  campaignId  String
+  campaign    PromotionalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  placementKey  String // Which placement was interacted with
+  action        InteractionAction
+  
+  // Context metadata (JSON)
+  // Example: { page: "/search", device: "MOBILE", locale: "en", ... }
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, campaignId])
+  @@index([sessionId, campaignId])
+  @@index([campaignId, action, createdAt])
+  @@index([sessionId, action, createdAt])
 }

@@ -1,4 +1,4 @@
-import { deleteCategory } from "@/app/[locale]/admin/blog/categories/actions";
+import { deleteCategory } from "@/app/admin/blog/categories/actions";
 import EntityActions from "./EntityActions";
 
 interface CategoryActionsProps {

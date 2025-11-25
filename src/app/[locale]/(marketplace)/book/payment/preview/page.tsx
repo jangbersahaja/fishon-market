@@ -9,6 +9,7 @@ import { buildBookingPreviewSummary } from "@/lib/helpers/booking-preview-summar
 import { isForceMockMode } from "@/lib/payment/senangpay";
 import { getCharterById } from "@/lib/services/charter-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
+import { validatePromoCode } from "@/lib/services/promo-service";
 import { getTripById } from "@/lib/services/trip-service";
 import {
   AlertCircle,
@@ -21,7 +22,7 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 // Session timeout: 30 minutes
@@ -46,6 +47,7 @@ interface BookingPreviewData {
   participants?: Array<{ name: string; phone: string; isBooker?: boolean }>;
   guestVerification?: { userId: string; email: string };
   sessionStart: number;
+  promoCode?: string;
 }
 
 type CharterCancellationInfo = {
@@ -65,13 +67,15 @@ function decodeBookingData(encoded: string): BookingPreviewData | null {
 }
 
 export default async function PaymentPreviewPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ data?: string }>;
 }) {
+  const { locale } = await params;
   const sp = await searchParams;
   const session = await auth();
-  const locale = await getLocale();
   const t = await getTranslations({
     locale,
     namespace: "booking.paymentPreview",
@@ -138,10 +142,28 @@ export default async function PaymentPreviewPage({
     redirect(`/${locale}/home`);
   }
 
+  // Validate promo code if provided
+  let promoDiscount = 0;
+  let appliedPromoCode: string | null = null;
+  if (bookingData.promoCode && session?.user?.id) {
+    const promoValidation = await validatePromoCode({
+      code: bookingData.promoCode,
+      userId: session.user.id,
+      charterId: bookingData.charterId,
+      subtotal: trip.price * bookingData.days,
+    });
+
+    if (promoValidation.valid && promoValidation.discount) {
+      promoDiscount = promoValidation.discount.amount;
+      appliedPromoCode = bookingData.promoCode;
+    }
+  }
+
   // Calculate pricing (snapshot - will be re-validated on submit)
   const pricing = calculatePricing({
     tripPrice: trip.price,
     days: bookingData.days,
+    promoDiscount,
   });
 
   const bookingSummary = buildBookingPreviewSummary({
@@ -269,7 +291,7 @@ export default async function PaymentPreviewPage({
                         <p className="text-sm text-muted-foreground">
                           {bookingSummary.charter.location}
                         </p>
-                        <p className="inline-flex items-center gap-2 mt-2 text-xs font-medium text-muted-foreground">
+                        <div className="inline-flex items-center gap-2 mt-2 text-xs font-medium text-muted-foreground">
                           {t("tripSummary.trip")}
                           <Badge
                             variant="secondary"
@@ -277,7 +299,7 @@ export default async function PaymentPreviewPage({
                           >
                             {trip.name}
                           </Badge>
-                        </p>
+                        </div>
                       </div>
                     </div>
 
@@ -349,8 +371,10 @@ export default async function PaymentPreviewPage({
                   <dl className="space-y-3 text-sm">
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
-                        {trip.name} × {bookingData.days}{" "}
-                        {t("pricingSnapshot.day", { count: bookingData.days })}
+                        {t("pricingSnapshot.day", {
+                          tripName: trip.name,
+                          count: bookingData.days,
+                        })}
                       </dt>
                       <dd>RM {pricing.subtotal.toFixed(2)}</dd>
                     </div>
@@ -360,6 +384,24 @@ export default async function PaymentPreviewPage({
                       </dt>
                       <dd>RM {pricing.platformFee.toFixed(2)}</dd>
                     </div>
+                    {pricing.discount > 0 && appliedPromoCode && (
+                      <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">
+                          <div className="inline-flex items-center gap-2">
+                            {t("pricingSnapshot.discount")}
+                            <Badge
+                              variant="secondary"
+                              className="text-green-700 border-green-200 bg-green-50"
+                            >
+                              {appliedPromoCode}
+                            </Badge>
+                          </div>
+                        </dt>
+                        <dd className="font-semibold text-green-700">
+                          -RM {pricing.discount.toFixed(2)}
+                        </dd>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <dt className="text-muted-foreground">
                         {t("pricingSnapshot.paymentGatewayFee")}
