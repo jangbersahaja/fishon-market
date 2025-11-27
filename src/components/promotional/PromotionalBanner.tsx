@@ -161,7 +161,7 @@ function CardVariant({
   onDismiss?: () => void;
 }) {
   return (
-    <div className="relative bg-white dark:bg-gray-900 rounded-lg border border-[#ec2227]/20 p-6 shadow-lg animate-in fade-in slide-in-from-right-5 duration-500">
+    <div className="relative bg-white dark:bg-gray-900 rounded-lg border border-[#ec2227]/20 p-5 shadow-lg animate-in fade-in slide-in-from-right-5 duration-500">
       {onDismiss && (
         <button
           onClick={onDismiss}

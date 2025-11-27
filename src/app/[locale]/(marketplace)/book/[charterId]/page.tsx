@@ -1,9 +1,10 @@
+import { CampaignContainer } from "@/components/promotional";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import {
-  getCharterById,
-  getCharterFlowType,
+    getCharterById,
+    getCharterFlowType,
 } from "@/lib/services/charter-service";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -175,6 +176,13 @@ export default async function CheckoutPage({
           charterFlowType={charterFlowType}
         />
       </div>
+
+      {/* Pre-checkout modal campaign placement */}
+      <CampaignContainer
+        placementKey="pre-checkout-modal"
+        variant="modal"
+        charterId={charterId}
+      />
     </main>
   );
 }

@@ -493,7 +493,7 @@ export default async function SearchResults({
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Desktop Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:w-[300px] lg:flex-shrink-0">
-            <div className="sticky space-y-4 top-20">
+            <div className="sticky space-y-4 top-25">
               {/* Promotional Campaign Sidebar (Desktop Only) */}
               <CampaignContainer
                 placementKey="search-sidebar"

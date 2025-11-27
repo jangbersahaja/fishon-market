@@ -62,7 +62,7 @@ function BookingWidget({
   const overMax = personsMax !== undefined && totalGuests > (personsMax ?? 0);
 
   const containerClassName = [
-    "rounded-2xl border-2 border-[#ec2227] bg-white p-5 sm:p-6 shadow-lg",
+    "rounded-2xl border-2 border-[#ec2227] bg-white p-5 shadow-lg",
     className,
   ]
     .filter(Boolean)

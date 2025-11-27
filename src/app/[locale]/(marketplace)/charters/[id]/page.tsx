@@ -1,22 +1,23 @@
 import { FavoriteButton } from "@/components/account";
 import {
-  AboutSection,
-  AmenitiesCard,
-  BoatCard,
-  BookingWidget,
-  CaptainSection,
-  CharterViewTracker,
-  EnhancedReviewsList,
-  GuestFeedback,
-  LocationMap,
-  OperationalScheduleCard,
-  PhotoGallery,
-  PoliciesCard,
-  ShareButton,
-  TripCard,
-  VideoGallery,
+    AboutSection,
+    AmenitiesCard,
+    BoatCard,
+    BookingWidget,
+    CaptainSection,
+    CharterViewTracker,
+    EnhancedReviewsList,
+    GuestFeedback,
+    LocationMap,
+    OperationalScheduleCard,
+    PhotoGallery,
+    PoliciesCard,
+    ShareButton,
+    TripCard,
+    VideoGallery,
 } from "@/components/charter";
 import SearchBox from "@/components/charters/SearchBox";
+import { CampaignContainer } from "@/components/promotional";
 import StarRating from "@/components/ratings/StarRating";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
@@ -24,8 +25,8 @@ import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
 import { getCharterById } from "@/lib/services/charter-service";
 import { isFavorited } from "@/lib/services/favorite-service";
 import {
-  getCharterRatingStats,
-  getCharterReviews,
+    getCharterRatingStats,
+    getCharterReviews,
 } from "@/lib/services/review-service";
 import type { Charter, Trip } from "@fishon/ui";
 import { MapPin } from "lucide-react";
@@ -478,7 +479,7 @@ export default async function CharterViewPage({
 
           {/* Right column: Booking Widget (Sticky) */}
           <div className="h-full md:self-start">
-            <div className="h-fit md:sticky md:top-6">
+            <div className="h-fit md:sticky md:top-6 space-y-4">
               <BookingWidget
                 trips={trips}
                 charterId={charterIdParam}
@@ -490,6 +491,15 @@ export default async function CharterViewPage({
                 blockedDates={blockedDates}
                 defaultPersons={persons}
               />
+              {/* Promotional Campaign Sidebar (Desktop Only) */}
+              <div className="hidden md:block">
+                <CampaignContainer
+                  placementKey="charter-detail-sidebar"
+                  currentPage="charter-detail"
+                  device="DESKTOP"
+                  locale={locale}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -523,6 +533,16 @@ export default async function CharterViewPage({
         />
         {/* Reviews (Real database reviews) */}
         <EnhancedReviewsList reviews={reviews as any} />
+
+        {/* Mobile Bottom Bar Campaign (Mobile Only) */}
+        <div className="md:hidden">
+          <CampaignContainer
+            placementKey="charter-detail-bottom-bar"
+            currentPage="charter-detail"
+            device="MOBILE"
+            locale={locale}
+          />
+        </div>
       </section>
     </main>
   );

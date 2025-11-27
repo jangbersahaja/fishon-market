@@ -307,7 +307,7 @@
       "selectTrip": "Select Trip",
       "forDays": "for {count} day{plural}",
       "startTimes": "Start Times:",
-      "seeDetails": "See Trip Details",
+      "seeDetails": "See Details",
       "checkAvailability": "Check Availability",
       "upToAnglers": "Up to {count} anglers"
     }
