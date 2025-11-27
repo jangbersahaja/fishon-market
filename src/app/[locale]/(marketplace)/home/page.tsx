@@ -1,4 +1,4 @@
-import { HomeWelcomeModal } from "@/components/campaigns/HomeWelcomeBar";
+import { HomeWelcomeModal } from "@/components/campaigns/HomeWelcomeModal";
 import SearchBox from "@/components/charters/SearchBox";
 import PopularDestination from "@/components/marketing/PopularDestination";
 import { authOptions } from "@/lib/auth/auth-options";
@@ -38,27 +38,28 @@ export default async function Home() {
     locale,
   };
 
-  // Fetch campaigns for home welcome bar
+  // Fetch campaigns for home welcome modal
   const campaigns = await campaignService.getActiveCampaigns(context);
   const campaign = campaigns.find((c) =>
-    c.placements.some((p) => p.placementKey === "home-welcome-bar")
+    c.placements.some((p) => p.placementKey === "home-welcome-modal")
   );
   const placement = campaign?.placements.find(
-    (p) => p.placementKey === "home-welcome-bar"
+    (p) => p.placementKey === "home-welcome-modal"
   );
   const content = campaign
     ? campaignService.getCampaignContent(campaign, locale)
     : null;
   const layoutConfig = placement?.layoutConfig as any;
   const variant = layoutConfig?.variant?.toLowerCase() || "modal";
-  const ctaHref = `/${locale}/register`;
+  // Use custom ctaHref from content, or default to register page
+  const ctaHref = content?.ctaHref || `/${locale}/register`;
 
   return (
     <div className="flex flex-col items-center min-h-screen font-sans">
       {/* Welcome modal - shows after 5 seconds */}
       <HomeWelcomeModal
         campaignId={campaign?.id || null}
-        placementKey="home-welcome-bar"
+        placementKey={placement?.placementKey || "home-welcome-modal"}
         content={content}
         variant={variant}
         ctaHref={ctaHref}

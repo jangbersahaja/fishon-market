@@ -7,6 +7,30 @@ import { routing } from "./src/i18n/navigation";
 // Create next-intl middleware with routing config
 const intlMiddleware = createMiddleware(routing);
 
+/**
+ * Ensure session ID cookie exists for campaign tracking
+ */
+function ensureSessionIdCookie(
+  request: NextRequest,
+  response: NextResponse
+): NextResponse {
+  const sessionId = request.cookies.get("fishon_session_id")?.value;
+
+  if (!sessionId) {
+    // Generate a new session ID
+    const newSessionId = crypto.randomUUID();
+    response.cookies.set("fishon_session_id", newSessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: "/",
+    });
+  }
+
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -32,11 +56,12 @@ export async function middleware(request: NextRequest) {
     }
 
     // Allow admin and dev routes to bypass i18n middleware
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return ensureSessionIdCookie(request, response);
   }
 
   // Handle i18n routing for user-facing routes
-  const intlResponse = intlMiddleware(request); // Extract locale from pathname for protected routes check
+  const intlResponse = intlMiddleware(request);
   const pathnameWithoutLocale = pathname.replace(/^\/(my|en)/, "") || "/";
 
   // 2. Protect /account routes (NextAuth-based)
@@ -58,10 +83,11 @@ export async function middleware(request: NextRequest) {
   // 3. Allow /book/payment to handle its own authentication
   // (it will redirect to login with proper bookingId context)
   if (pathnameWithoutLocale.startsWith("/book/payment")) {
-    return intlResponse;
+    return ensureSessionIdCookie(request, intlResponse);
   }
 
-  return intlResponse;
+  // Ensure session ID cookie exists for campaign tracking
+  return ensureSessionIdCookie(request, intlResponse);
 }
 
 export const config = {

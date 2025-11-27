@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/database/prisma";
 import type {
-  CampaignPlacement,
-  PromotionalCampaign,
-  UserRole,
+    CampaignPlacement,
+    PromotionalCampaign,
+    UserRole,
 } from "@prisma/client";
 
 export interface CampaignContext {
@@ -22,6 +22,7 @@ export interface CampaignContent {
   title: string;
   subtitle: string;
   cta: string;
+  ctaHref?: string; // Custom CTA link (defaults to /register if not provided)
   benefits?: string[];
 }
 
