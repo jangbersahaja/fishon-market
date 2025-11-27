@@ -15,6 +15,7 @@ import {
   calculateRefundAmount,
   initiateRefund,
 } from "@/lib/services/refund-service";
+import { sendCaptainBookingCancelledSMS } from "@/lib/services/sms-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { revalidatePath } from "next/cache";
@@ -446,6 +447,36 @@ export async function POST(req: Request) {
       });
     } catch (err) {
       console.error("Failed to send captain cancellation email:", err);
+    }
+  })();
+
+  // SMS captain about cancellation (non-blocking best-effort)
+  (async () => {
+    try {
+      // Fetch trip data to get captain info
+      const trip = await getTripById(updated.tripId);
+      if (!trip) return;
+
+      const captain = trip.charter.captain;
+      if (!captain?.phone) {
+        console.warn(
+          "Captain phone not available for cancellation SMS:",
+          updated.id
+        );
+        return;
+      }
+
+      const anglerName = updated.user?.name || "Angler";
+
+      await sendCaptainBookingCancelledSMS({
+        phone: captain.phone,
+        charterName: trip.charter.name,
+        anglerName: anglerName,
+        tripDate: updated.date.toISOString().slice(0, 10),
+        bookingId: updated.id,
+      });
+    } catch (err) {
+      console.error("Failed to send captain cancellation SMS:", err);
     }
   })();
 

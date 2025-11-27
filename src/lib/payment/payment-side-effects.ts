@@ -66,6 +66,7 @@ export async function triggerPaymentSideEffects({
     notifyCaptain(booking, source),
     notifyAngler(booking, source),
     sendCaptainPaymentEmail(bookingId, source),
+    sendCaptainPaymentSMS(bookingId, source),
     unlockConversation(bookingId, source),
     revalidatePages(bookingId),
   ]);
@@ -337,6 +338,105 @@ async function sendCaptainPaymentEmail(
   } catch (error) {
     console.error(
       `❌ [PAYMENT SIDE EFFECTS] Failed to send captain payment email (source: ${source}):`,
+      error
+    );
+  }
+}
+
+/**
+ * Side Effect 3b: Send Captain Payment SMS
+ *
+ * Sends SMS notification to captain when payment is confirmed.
+ */
+async function sendCaptainPaymentSMS(
+  bookingId: string,
+  source: string
+): Promise<void> {
+  try {
+    // Fetch booking with user info
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        tripId: true,
+        date: true,
+        captainEarnings: true,
+        user: {
+          select: {
+            name: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      console.error(
+        `❌ [PAYMENT SIDE EFFECTS] Booking not found for SMS (source: ${source}):`,
+        bookingId
+      );
+      return;
+    }
+
+    // Fetch trip and charter info
+    const trip = await getTripById(booking.tripId);
+    if (!trip || !trip.charter) {
+      console.error(
+        `❌ [PAYMENT SIDE EFFECTS] Trip or charter not found for SMS (source: ${source})`
+      );
+      return;
+    }
+
+    // Check if captain has phone number
+    if (!trip.charter.captain?.phone) {
+      console.warn(
+        `⚠️ [PAYMENT SIDE EFFECTS] Captain phone not found, skipping SMS (source: ${source})`
+      );
+      return;
+    }
+
+    // Format angler name
+    const anglerName =
+      booking.user?.name ||
+      (booking.user?.firstName && booking.user?.lastName
+        ? `${booking.user.firstName} ${booking.user.lastName}`
+        : "Angler");
+
+    // Format date
+    const tripDate = new Date(booking.date).toLocaleDateString("en-MY", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    const captainEarnings = Number(booking.captainEarnings || 0);
+
+    // Send SMS
+    const { sendCaptainBookingPaidSMS } = await import(
+      "@/lib/services/sms-service"
+    );
+
+    await sendCaptainBookingPaidSMS({
+      phone: trip.charter.captain.phone,
+      charterName: trip.charter.name,
+      anglerName,
+      tripDate,
+      captainEarnings: captainEarnings.toFixed(2),
+      bookingId,
+    });
+
+    console.log(
+      `✅ [PAYMENT SIDE EFFECTS] Captain payment SMS sent successfully (source: ${source})`,
+      {
+        bookingId,
+        captainPhone: trip.charter.captain.phone,
+        captainEarnings: `RM ${captainEarnings.toFixed(2)}`,
+      }
+    );
+  } catch (error) {
+    console.error(
+      `❌ [PAYMENT SIDE EFFECTS] Failed to send captain payment SMS (source: ${source}):`,
       error
     );
   }

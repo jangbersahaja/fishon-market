@@ -1,6 +1,6 @@
 # SMS Notification System Configuration
 
-**Last Updated**: 25 November 2025  
+**Last Updated**: 27 November 2025  
 **Status**: Production Ready ✅  
 **Provider**: Exabytes Bulk SMS  
 **Applies To**: fishon-market
@@ -9,22 +9,32 @@
 
 ## System Overview
 
-SMS notifications keep anglers informed of critical booking events via text message. The system integrates with Exabytes SMS Gateway for Malaysian phone numbers.
+SMS notifications keep both anglers and captains informed of critical booking events via text message. The system integrates with Exabytes SMS Gateway for Malaysian phone numbers.
 
 ### Supported Notification Types
 
-| Type | SMS Sent | Description |
-|------|----------|-------------|
-| `BOOKING_CREATED` | ✅ | Booking confirmation |
-| `BOOKING_APPROVED` | ✅ | Captain approval |
-| `BOOKING_REJECTED` | ✅ | Rejection notification |
-| `BOOKING_PAID` | ✅ | Payment confirmation |
-| `BOOKING_CANCELLED` | ✅ | Cancellation notice |
-| `PAYMENT_FAILED` | ✅ | Payment failure alert |
-| `PAYMENT_REFUNDED` | ✅ | Refund confirmation |
-| `REVIEW_SUBMITTED` | ✅ | Review received |
-| `REVIEW_APPROVED` | ✅ | Review published |
-| `ACCOUNT_VERIFIED` | ✅ | Account verification |
+#### Angler SMS
+
+| Type                | SMS Sent | Description            |
+| ------------------- | -------- | ---------------------- |
+| `BOOKING_CREATED`   | ✅       | Booking confirmation   |
+| `BOOKING_APPROVED`  | ✅       | Captain approval       |
+| `BOOKING_REJECTED`  | ✅       | Rejection notification |
+| `BOOKING_PAID`      | ✅       | Payment confirmation   |
+| `BOOKING_CANCELLED` | ✅       | Cancellation notice    |
+| `PAYMENT_FAILED`    | ✅       | Payment failure alert  |
+| `PAYMENT_REFUNDED`  | ✅       | Refund confirmation    |
+| `REVIEW_SUBMITTED`  | ✅       | Review received        |
+| `REVIEW_APPROVED`   | ✅       | Review published       |
+| `ACCOUNT_VERIFIED`  | ✅       | Account verification   |
+
+#### Captain SMS
+
+| Type                        | SMS Sent | Description                  |
+| --------------------------- | -------- | ---------------------------- |
+| `CAPTAIN_BOOKING_RECEIVED`  | ✅       | New booking request          |
+| `CAPTAIN_BOOKING_PAID`      | ✅       | Payment confirmed + earnings |
+| `CAPTAIN_BOOKING_CANCELLED` | ✅       | Angler cancelled             |
 
 ---
 
@@ -38,6 +48,66 @@ Check User SMS Preferences
 If Enabled → SMS Service
         ↓
 Exabytes API → User Phone
+        ↓
+Log to SMSLog table
+```
+
+---
+
+## SMS Logging
+
+All SMS activities are logged to the `sms_logs` table for monitoring and debugging.
+
+### SMSLog Schema
+
+```prisma
+model SMSLog {
+  id              String       @id
+  userId          String?      // User ID if authenticated
+  phone           String       // Normalized phone (60xxxxxxxxx)
+  messageType     String       // e.g., "BOOKING_CREATED"
+  message         String       // Full SMS content
+  status          SMSLogStatus // PENDING, SENT, FAILED, INVALID
+  messageId       String?      // Provider message ID
+  errorCode       String?      // Error code from provider
+  errorMessage    String?      // Error details
+  provider        String       // "EXABYTES"
+  requestPayload  Json?        // Request details
+  responsePayload Json?        // Provider response
+  sentAt          DateTime?    // When sent to provider
+  bookingId       String?      // Related booking
+  notificationId  String?      // Related notification
+  createdAt       DateTime
+}
+```
+
+### SMS Log Status
+
+| Status      | Description                       |
+| ----------- | --------------------------------- |
+| `PENDING`   | Queued for sending                |
+| `SENT`      | Successfully sent to provider     |
+| `DELIVERED` | Delivery confirmed (if supported) |
+| `FAILED`    | Send failed                       |
+| `INVALID`   | Invalid phone or config           |
+
+### Query Functions
+
+```typescript
+// Get logs with filtering
+const { logs, hasMore, nextCursor } = await getSMSLogs({
+  userId: "user-123",
+  status: "FAILED",
+  startDate: new Date("2025-11-01"),
+  limit: 50,
+});
+
+// Get statistics
+const stats = await getSMSStats({
+  startDate: new Date("2025-11-01"),
+  endDate: new Date("2025-11-30"),
+});
+// Returns: { total, sent, failed, invalid, successRate, byType }
 ```
 
 ---
@@ -123,22 +193,22 @@ model NotificationPreferences {
 
 ```typescript
 // Core functions
-normalizePhoneNumber(phone)     // 0xxxxxxxxx → 60xxxxxxxxx
-isValidMalaysianPhone(phone)    // Validates format
-truncateMessage(msg, max=160)   // Fits single SMS
-sendSMSViaExabytes(phone, msg)  // API call
+normalizePhoneNumber(phone); // 0xxxxxxxxx → 60xxxxxxxxx
+isValidMalaysianPhone(phone); // Validates format
+truncateMessage(msg, (max = 160)); // Fits single SMS
+sendSMSViaExabytes(phone, msg); // API call
 
 // Template functions
-sendBookingCreatedSMS(phone, charter, date, price)
-sendBookingApprovedSMS(phone, charter, date)
-sendBookingRejectedSMS(phone, charter)
-sendBookingPaidSMS(phone, charter)
-sendBookingCancelledSMS(phone, charter, date)
-sendPaymentRefundedSMS(phone, amount)
-sendPaymentFailedSMS(phone)
-sendReviewSubmittedSMS(phone)
-sendReviewApprovedSMS(phone)
-sendAccountVerifiedSMS(phone)
+sendBookingCreatedSMS(phone, charter, date, price);
+sendBookingApprovedSMS(phone, charter, date);
+sendBookingRejectedSMS(phone, charter);
+sendBookingPaidSMS(phone, charter);
+sendBookingCancelledSMS(phone, charter, date);
+sendPaymentRefundedSMS(phone, amount);
+sendPaymentFailedSMS(phone);
+sendReviewSubmittedSMS(phone);
+sendReviewApprovedSMS(phone);
+sendAccountVerifiedSMS(phone);
 ```
 
 ### Response Format
@@ -171,6 +241,7 @@ sendAccountVerifiedSMS(phone)
 **File**: `src/components/account/NotificationSettings.tsx`
 
 Features:
+
 - Toggle switches for each SMS type
 - "Enable All SMS" button
 - "Disable All SMS" button
@@ -182,11 +253,11 @@ Features:
 
 ### Supported Formats
 
-| Input | Normalized |
-|-------|------------|
-| `0123456789` | `60123456789` |
+| Input          | Normalized    |
+| -------------- | ------------- |
+| `0123456789`   | `60123456789` |
 | `+60123456789` | `60123456789` |
-| `60123456789` | `60123456789` |
+| `60123456789`  | `60123456789` |
 
 ### Validation Rules
 
@@ -198,12 +269,12 @@ Features:
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/services/sms-service.ts` | SMS sending & templates |
-| `src/lib/services/notification-service.ts` | SMS integration |
-| `src/components/account/NotificationSettings.tsx` | User preferences UI |
-| `prisma/schema.prisma` | SMS preference fields |
+| File                                              | Purpose                              |
+| ------------------------------------------------- | ------------------------------------ |
+| `src/lib/services/sms-service.ts`                 | SMS sending, templates & logging     |
+| `src/lib/services/notification-service.ts`        | SMS integration                      |
+| `src/components/account/NotificationSettings.tsx` | User preferences UI                  |
+| `prisma/schema.prisma`                            | SMS preference fields & SMSLog model |
 
 ---
 
@@ -235,6 +306,7 @@ node scripts/test-sms-delivery.js
 **Cause**: Exabytes has IP whitelisting enabled.
 
 **Solution**:
+
 1. Deploy to Vercel (production IPs whitelisted)
 2. Or add dev IP to Exabytes whitelist
 
