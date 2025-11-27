@@ -921,6 +921,54 @@ model UserCampaignInteraction {
   @@index([sessionId, action, createdAt])
 }
 
+// SMS Log - Stores all SMS activities for monitoring and debugging
+enum SMSLogStatus {
+  PENDING    // SMS queued for sending
+  SENT       // Successfully sent to provider
+  DELIVERED  // Confirmed delivery (if provider supports)
+  FAILED     // Send failed
+  INVALID    // Invalid phone number or config
+}
+
+model SMSLog {
+  id          String   @id @default(cuid())
+  
+  // Recipient info
+  userId      String?  // User ID if authenticated (nullable for system SMS)
+  phone       String   // Normalized phone number (60xxxxxxxxx)
+  
+  // Message details
+  messageType String   // e.g., "BOOKING_CREATED", "BOOKING_APPROVED", etc.
+  message     String   @db.Text // Full SMS message content
+  
+  // Provider response
+  status      SMSLogStatus @default(PENDING)
+  messageId   String?  // Provider message ID (from Exabytes response)
+  errorCode   String?  // Provider error code
+  errorMessage String? @db.Text // Error details
+  
+  // Request/Response metadata
+  provider    String   @default("EXABYTES") // SMS provider name
+  requestPayload  Json? // Request details (for debugging)
+  responsePayload Json? // Raw provider response
+  
+  // Timing
+  sentAt      DateTime? // When SMS was sent to provider
+  deliveredAt DateTime? // When delivery was confirmed (if supported)
+  createdAt   DateTime @default(now())
+  
+  // Related entities (optional)
+  bookingId   String?  // Related booking if applicable
+  notificationId String? // Related notification if triggered by notification service
+  
+  @@index([userId, createdAt])
+  @@index([phone, createdAt])
+  @@index([status, createdAt])
+  @@index([messageType, createdAt])
+  @@index([bookingId])
+  @@map("sms_logs")
+}
+
 // Payment Session - Stores booking data before DIRECT payment completion
 // Used for AUTO flow + DIRECT payment (FPX/E-wallet) where booking is created after payment
 model PaymentSession {

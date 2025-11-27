@@ -23,6 +23,7 @@ import {
   markPromoCodeUsed,
   validatePromoCode,
 } from "@/lib/services/promo-service";
+import { sendCaptainBookingReceivedSMS } from "@/lib/services/sms-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
 import { Prisma } from "@prisma/client";
@@ -1083,6 +1084,30 @@ async function createAuthenticatedBooking(session: any, body: any) {
         });
       } catch (err) {
         console.error("Failed to send captain booking email:", err);
+      }
+    })();
+
+    // SMS the captain (non-blocking best-effort)
+    (async () => {
+      try {
+        const captain = trip.charter.captain;
+        if (!captain?.phone) {
+          console.warn("Captain phone not available for booking:", booking.id);
+          return;
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: dbUserId } });
+        const anglerName = user?.name ?? "Guest";
+
+        await sendCaptainBookingReceivedSMS({
+          phone: captain.phone,
+          charterName: trip.charter.name,
+          anglerName: anglerName,
+          tripDate: booking.date.toISOString().slice(0, 10),
+          bookingId: booking.id,
+        });
+      } catch (err) {
+        console.error("Failed to send captain booking SMS:", err);
       }
     })();
 
