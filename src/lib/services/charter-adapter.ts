@@ -8,7 +8,6 @@ import type {
   BackendSchedule,
   BackendTrip,
 } from "@/lib/api/captain-api";
-import { getCityDistrict } from "@/lib/helpers/city-district-mapping";
 import type {
   Captain,
   Charter,
@@ -241,9 +240,10 @@ export function convertBackendCharterToFrontend(
 
   // Build location string
   // Note: backendCharter.district actually contains city name (aliased from city field in DB)
-  // We map it to actual administrative district for image matching
-  const actualDistrict = getCityDistrict(backendCharter.district);
-  const location = `${actualDistrict}, ${backendCharter.state}`;
+  // We keep the original city name for granular location display (e.g., "Puchong, Selangor")
+  // Image helpers will use city-district mapping to find appropriate images
+  const cityName = backendCharter.district.toLowerCase().trim();
+  const location = `${cityName}, ${backendCharter.state}`;
   const address = backendCharter.startingPoint;
 
   // Get coordinates

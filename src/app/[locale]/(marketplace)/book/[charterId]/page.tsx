@@ -1,10 +1,9 @@
 import { CampaignContainer } from "@/components/promotional";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
-import { calculateDays } from "@/lib/helpers/date-range-helpers";
 import {
-    getCharterById,
-    getCharterFlowType,
+  getCharterById,
+  getCharterFlowType,
 } from "@/lib/services/charter-service";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -39,21 +38,8 @@ export default async function CheckoutPage({
   const { charterId } = await params;
   const sp = await searchParams;
 
-  // Normalize date params: support both formats (date+days or startDate+endDate)
-  let normalizedDate: string | undefined;
-  let normalizedDays: number = 1;
-
-  if (sp.startDate && sp.endDate) {
-    // Convert range format to schema format
-    normalizedDate = sp.startDate;
-    normalizedDays = calculateDays(sp.startDate, sp.endDate);
-  } else if (sp.date) {
-    // Use schema format directly
-    normalizedDate = sp.date;
-    const parsedDays = parseInt(sp.days || "1", 10);
-    normalizedDays =
-      Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 1;
-  }
+  // Date params are available in sp.date, sp.days, sp.startDate, sp.endDate
+  // The CheckoutForm handles date normalization internally
 
   // Fetch charter data
   const charter = await getCharterById(charterId);
@@ -178,11 +164,7 @@ export default async function CheckoutPage({
       </div>
 
       {/* Pre-checkout modal campaign placement */}
-      <CampaignContainer
-        placementKey="pre-checkout-modal"
-        variant="modal"
-        charterId={charterId}
-      />
+      <CampaignContainer placementKey="pre-checkout-modal" variant="modal" />
     </main>
   );
 }

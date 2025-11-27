@@ -72,7 +72,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, isNewUser }) {
+    async signIn({ user, account }) {
       // Handle OAuth sign-in (Google)
       if (account?.provider === "google" && user.email) {
         const email = user.email.toLowerCase();
@@ -102,32 +102,6 @@ export const authOptions: NextAuthOptions = {
               user.name || undefined
             );
             console.log(`✅ Upgraded GUEST to ANGLER via OAuth: ${email}`);
-          }
-
-          // Case 2: Brand new user created by OAuth (PrismaAdapter creates them)
-          // isNewUser is true when NextAuth creates a new user via OAuth
-          if (isNewUser && !existingUser) {
-            // Find the newly created user to get their ID
-            const newUser = await prisma.user.findUnique({
-              where: { email },
-              select: { id: true, name: true },
-            });
-
-            if (newUser) {
-              // Ensure role is ANGLER (not default)
-              await prisma.user.update({
-                where: { id: newUser.id },
-                data: { role: "ANGLER" },
-              });
-
-              // Assign welcome promo code to new OAuth user
-              await assignWelcomePromoCode(
-                newUser.id,
-                email,
-                newUser.name || user.name || undefined
-              );
-              console.log(`✅ New OAuth user registered with promo: ${email}`);
-            }
           }
         } catch (error) {
           console.error("Error in OAuth signIn callback:", error);

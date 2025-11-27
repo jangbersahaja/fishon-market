@@ -12,6 +12,8 @@ export default function CharterCard({
   showFavoriteButton = true,
   initialIsFavorited = false,
   className = "",
+  averageRating,
+  reviewCount,
 }: Omit<CharterCardProps, "variant" | "imageAspect">) {
   return (
     <BaseCharterCard
@@ -22,6 +24,8 @@ export default function CharterCard({
       showFavoriteButton={showFavoriteButton}
       initialIsFavorited={initialIsFavorited}
       className={className}
+      averageRating={averageRating}
+      reviewCount={reviewCount}
     />
   );
 }

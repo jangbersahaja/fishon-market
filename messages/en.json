@@ -123,17 +123,17 @@
     "perTrip": "per trip",
     "duration": "Duration",
     "hours": "hours",
-    "capacity": "Capacity",
+    "capacityLabel": "Capacity",
     "people": "people",
-    "location": "Location",
+    "locationLabel": "Location",
     "fishingType": "Fishing Type",
     "technique": "Technique",
-    "amenities": "Amenities",
+    "amenitiesLabel": "Amenities",
     "aboutThisCharter": "About This Charter",
     "meetYourCaptain": "Meet Your Captain",
     "whatToExpect": "What to Expect",
     "availability": "Availability",
-    "reviews": "Reviews",
+    "reviewsLabel": "Reviews",
     "bookingPolicy": "Booking Policy",
     "notFoundTitle": "Charter not found",
     "notFoundDescription": "We couldn't find the charter with ID {id}. Please check the URL or return to the listings.",
@@ -1078,6 +1078,15 @@
       "backToBrowse": "Back to Browse",
       "seeAllTypes": "See all fishing types",
       "breadcrumb": "Fishing Techniques"
+    },
+    "destinations": {
+      "title": "Popular Destinations",
+      "description": "Explore fishing charters across Malaysia's top locations. Tap a destination to see all charters.",
+      "noDestinationsFound": "No destinations found yet.",
+      "backToBrowse": "Back to Browse",
+      "seeAllTypes": "See all fishing types",
+      "seeAllTechniques": "See all fishing techniques",
+      "breadcrumb": "Popular Destinations"
     }
   },
   "auth": {
