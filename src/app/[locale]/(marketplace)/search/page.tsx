@@ -3,8 +3,8 @@ import CharterCard from "@/components/charters/CharterCard";
 import CompactFiltersBar from "@/components/charters/CompactFiltersBar";
 import SearchBox from "@/components/charters/SearchBox";
 import { CampaignContainer } from "@/components/promotional";
-import { getAverageRating } from "@/lib/helpers/ratings";
 import { getCharters } from "@/lib/services/charter-service";
+import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 
 import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
@@ -166,6 +166,22 @@ export default async function SearchResults({
   // Fetch charters from backend or dummy data
   const charters = await getCharters();
 
+  // Fetch ratings for all charters in batch (server-side)
+  const charterIds = charters.map((c) => (c as any).backendId ?? String(c.id));
+  const ratingsMap = await getCharterRatingsBatch(charterIds);
+
+  // Helper to get rating for a charter
+  const getRating = (c: Charter): number | null => {
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.averageRating ?? null;
+  };
+
+  // Helper to get review count for a charter
+  const getReviewCount = (c: Charter): number => {
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.reviewCount ?? 0;
+  };
+
   let filtered = charters
     .filter((c) => matchesDestination(c, destinationTerms, destination))
     .filter((c) => capacityAllows(c, totalGuests))
@@ -247,9 +263,9 @@ export default async function SearchResults({
       // Boat type filter
       if (boatTypeParam && c.boat?.type !== boatTypeParam) return false;
 
-      // Rating filter
+      // Rating filter (now uses server-side ratings data)
       if (minRatingParam !== undefined || maxRatingParam !== undefined) {
-        const rating = getAverageRating(c.id) ?? 0;
+        const rating = getRating(c) ?? 0;
         if (minRatingParam !== undefined && rating < minRatingParam)
           return false;
         if (maxRatingParam !== undefined && rating > maxRatingParam)
@@ -350,6 +366,7 @@ export default async function SearchResults({
     /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
       userAgent
     );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const device = isMobileUA ? "MOBILE" : "DESKTOP";
   const currentPage = "search";
 
@@ -527,7 +544,7 @@ export default async function SearchResults({
             />
 
             {/* Results */}
-            <div className="grid grid-cols-1 gap-10 mt-8 md:grid-cols-2 lg:gap-15">
+            <div className="grid grid-cols-1 gap-10 my-8 lg:grid-cols-2">
               {filtered.length === 0 && (
                 <div className="p-12 text-center bg-white border shadow-sm col-span-full rounded-2xl border-slate-200">
                   <div className="flex flex-col items-center gap-4">
@@ -569,6 +586,8 @@ export default async function SearchResults({
                   key={(c as any).backendId ?? `d:${String(c.id)}`}
                   charter={c}
                   context={{ date, adults, children, guestsParam }}
+                  averageRating={getRating(c)}
+                  reviewCount={getReviewCount(c)}
                 />
               ))}
             </div>

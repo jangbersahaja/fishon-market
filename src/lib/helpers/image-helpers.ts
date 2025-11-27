@@ -4,9 +4,11 @@
  * Note on City vs District Naming:
  * - Database stores city names (e.g., "Klang", "Shah Alam", "Port Klang")
  * - Images are organized by administrative districts (e.g., "klang", "petaling")
- * - charter-adapter.ts uses city-district-mapping.ts to convert city → district
- * - This file expects district names for image lookups
+ * - This file tries city name first, then falls back to district image
+ * - Uses city-district-mapping.ts for the fallback lookup
  */
+
+import { getCityDistrict } from "./city-district-mapping";
 
 /**
  * Map state names to their folders in /public/images/locations/
@@ -216,7 +218,8 @@ const FISHING_TECHNIQUE_IMAGE_MAP: Record<string, string> = {
 
 /**
  * Get destination image path
- * @param location - Location string (e.g., "Klang", "Port Klang", "Selangor")
+ * Tries city/town name first, then falls back to district-level image
+ * @param location - Location string (e.g., "Puchong", "Port Klang", "Klang")
  * @param state - Optional state name for better matching
  */
 export function getDestinationImage(
@@ -226,22 +229,42 @@ export function getDestinationImage(
   const loc = location.toLowerCase().trim();
   const st = state?.toLowerCase().trim();
 
-  // Try direct match with state/location
+  // Try direct match with state/location (city-level)
   if (st) {
     const stateFolder = STATE_FOLDER_MAP[st];
     if (stateFolder) {
-      const key = `${stateFolder}/${loc}`;
-      if (LOCATION_IMAGE_MAP[key]) {
-        return `/images/locations/${LOCATION_IMAGE_MAP[key]}`;
+      const cityKey = `${stateFolder}/${loc}`;
+      if (LOCATION_IMAGE_MAP[cityKey]) {
+        return `/images/locations/${LOCATION_IMAGE_MAP[cityKey]}`;
+      }
+
+      // Try district fallback: map city to district and use district image
+      const district = getCityDistrict(loc);
+      if (district !== loc) {
+        const districtKey = `${stateFolder}/${district}`;
+        if (LOCATION_IMAGE_MAP[districtKey]) {
+          return `/images/locations/${LOCATION_IMAGE_MAP[districtKey]}`;
+        }
       }
     }
   }
 
-  // Try searching all states for this location
+  // Try searching all states for this location (city first)
   for (const [key, path] of Object.entries(LOCATION_IMAGE_MAP)) {
     const [, district] = key.split("/");
     if (district === loc) {
       return `/images/locations/${path}`;
+    }
+  }
+
+  // Try searching all states with district fallback
+  const districtFallback = getCityDistrict(loc);
+  if (districtFallback !== loc) {
+    for (const [key, path] of Object.entries(LOCATION_IMAGE_MAP)) {
+      const [, district] = key.split("/");
+      if (district === districtFallback) {
+        return `/images/locations/${path}`;
+      }
     }
   }
 

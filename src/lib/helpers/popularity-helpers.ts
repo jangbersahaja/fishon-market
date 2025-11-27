@@ -7,22 +7,22 @@ import type { Charter } from "@fishon/ui";
 
 /**
  * Extract location info from charter
- * Charter location format: "{district}, {state}"
- * e.g., "Klang, Selangor" or "Port Klang, Selangor"
+ * Charter location format: "{city}, {state}"
+ * e.g., "Puchong, Selangor" or "Port Klang, Selangor"
  */
 function extractLocationInfo(charter: Charter): {
-  district?: string;
+  city?: string;
   state?: string;
 } {
-  // Location format: "District, State"
+  // Location format: "City, State"
   const locationParts = charter.location
     .split(",")
     .map((part) => part.trim().toLowerCase());
 
-  const district = locationParts[0] || undefined;
+  const city = locationParts[0] || undefined;
   const state = locationParts[1] || undefined;
 
-  return { district, state };
+  return { city, state };
 }
 
 /**
@@ -33,12 +33,12 @@ function charterMatchesDestination(
   destination: string
 ): boolean {
   const searchTerms = expandDestinationSearchTerms(destination);
-  const { district } = extractLocationInfo(charter);
+  const { city } = extractLocationInfo(charter);
 
-  if (!district) return false;
+  if (!city) return false;
 
   for (const term of searchTerms) {
-    if (term && district.includes(term)) {
+    if (term && city.includes(term)) {
       return true;
     }
   }
@@ -65,42 +65,47 @@ export interface PopularDestination {
   name: string;
   count: number;
   state?: string;
+  /** First available charter image for this destination (fallback when no location image) */
+  charterImage?: string;
 }
 
 export function getPopularDestinations(
   charters: Charter[],
   limit?: number
 ): PopularDestination[] {
-  // Extract all unique districts from charters
-  const districtCounts = new Map<string, { count: number; state?: string }>();
+  // Extract all unique cities from charters
+  const cityCounts = new Map<
+    string,
+    { count: number; state?: string; charterImage?: string }
+  >();
 
   charters.forEach((charter) => {
-    const { district, state } = extractLocationInfo(charter);
+    const { city, state } = extractLocationInfo(charter);
 
-    if (!district || district.length < 3) return;
+    if (!city || city.length < 3) return;
 
-    // Normalize the district name
-    let normalized = district;
+    // Use the city name directly for granular grouping
+    // e.g., "puchong", "seri kembangan", "port klang"
+    const normalized = city.trim();
 
-    // Handle common variations
-    if (district.includes("port klang")) {
-      normalized = "port klang";
-    } else if (district.includes("kuala selangor")) {
-      normalized = "kuala selangor";
-    } else if (district.includes("klang") && !district.includes("port")) {
-      normalized = "klang";
-    }
-
-    const current = districtCounts.get(normalized);
+    const current = cityCounts.get(normalized);
     if (current) {
       current.count += 1;
+      // Keep the first charter image we find (prioritize charters with images)
+      if (!current.charterImage && charter.imageUrl) {
+        current.charterImage = charter.imageUrl;
+      }
     } else {
-      districtCounts.set(normalized, { count: 1, state });
+      cityCounts.set(normalized, {
+        count: 1,
+        state,
+        charterImage: charter.imageUrl,
+      });
     }
   });
 
   // Convert to array and sort by count
-  const destinations = Array.from(districtCounts.entries())
+  const destinations = Array.from(cityCounts.entries())
     .map(([name, data]) => ({
       // Capitalize first letter of each word for display
       name: name
@@ -109,6 +114,7 @@ export function getPopularDestinations(
         .join(" "),
       count: data.count,
       state: data.state,
+      charterImage: data.charterImage,
     }))
     .sort((a, b) => b.count - a.count);
 

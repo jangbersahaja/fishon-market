@@ -7,7 +7,6 @@ import StarRating from "@/components/ratings/StarRating";
 import PriceTag from "@/components/shared/PriceTag";
 import SafeImage from "@/components/shared/SafeImage";
 import { calculateDisplayPrice } from "@/lib/helpers/pricing-helpers";
-import { getAverageRating, getCharterReviews } from "@/lib/helpers/ratings";
 import {
   capitalize,
   formatCharterName,
@@ -55,6 +54,9 @@ export interface CharterCardProps {
   showFavoriteButton?: boolean;
   initialIsFavorited?: boolean;
   className?: string;
+  // Ratings (passed from server-side fetch)
+  averageRating?: number | null;
+  reviewCount?: number;
 }
 
 export default function BaseCharterCard({
@@ -68,6 +70,8 @@ export default function BaseCharterCard({
   showFavoriteButton = true,
   initialIsFavorited = false,
   className = "",
+  averageRating,
+  reviewCount = 0,
 }: CharterCardProps) {
   const locale = useLocale();
   const t = useTranslations("charter");
@@ -114,9 +118,9 @@ export default function BaseCharterCard({
   // Fishing type badge
   const fishingType = (c as any).fishingType as string | undefined;
 
-  // Ratings
-  const avg = getAverageRating(charter.id);
-  const reviews = getCharterReviews(charter.id);
+  // Ratings - use props passed from server-side fetch
+  const avg = averageRating ?? null;
+  const reviewCountValue = reviewCount ?? 0;
 
   // Prefer backendId for linking when available
   const idForLink = (c as any).backendId ?? String(c.id);
@@ -187,7 +191,7 @@ export default function BaseCharterCard({
             <StarRating
               value={avg ?? 0}
               size={14}
-              reviewCount={reviews.length}
+              reviewCount={reviewCountValue}
             />
           </div>
 
@@ -253,7 +257,7 @@ export default function BaseCharterCard({
               size={24}
               textSize="text-sm"
               variant="chrome"
-              reviewCount={reviews.length}
+              reviewCount={reviewCountValue}
             />
             {" · "}
             <span className="text-sm">{c.boat.type}</span>
@@ -416,7 +420,12 @@ export default function BaseCharterCard({
         </div>
       </div>
 
-      <Link href={href}>
+      <Link
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="flex flex-col"
+      >
         {/* Body */}
         <div className="px-3 my-3">
           {/* Location */}
@@ -432,13 +441,11 @@ export default function BaseCharterCard({
           {/* Trip list - Show first 4 trips with count */}
           {Array.isArray(c.trip) && c.trip.length > 0 && (
             <div className="text-[10px] mt-1">
-              <span className="font-semibold text-slate-900">
-                {t("trips")}:
-              </span>{" "}
+              <span className="font-semibold text-slate-900"></span>{" "}
               <span className="text-slate-700">
                 {(() => {
                   const tripNames = c.trip.map((t) => t.name).filter(Boolean);
-                  const shown = tripNames.slice(0, 3);
+                  const shown = tripNames.slice(0, 2);
                   const more = tripNames.length - shown.length;
                   return (
                     <>
@@ -501,54 +508,45 @@ export default function BaseCharterCard({
             </div>
 
             {/* Badges: species / techniques (first few) */}
-            <div className="flex flex-col gap-1.5 text-[10px]">
+            <div className="flex flex-wrap gap-1.5 text-[10px]">
               {/* Species badges - Blue theme with local names */}
-              <div className="flex gap-1.5">
-                {Array.isArray(c.species) &&
-                  c.species.slice(0, 3).map((s) => {
-                    const speciesData = ALL_SPECIES.find(
-                      (species) => species.id === s
-                    );
-                    const displayName = speciesData?.local_name || s;
-                    return (
-                      <span
-                        key={s}
-                        className="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200/60 text-blue-700 font-medium hover:border-blue-400 hover:bg-blue-100 transition-all duration-200"
-                      >
-                        {displayName}
-                      </span>
-                    );
-                  })}
-              </div>
-              {/* Techniques badges - Green theme */}
-              <div className="flex gap-1.5">
-                {Array.isArray(c.techniques) &&
-                  c.techniques.slice(0, 2).map((t) => (
+              {Array.isArray(c.species) &&
+                c.species.slice(0, 3).map((s) => {
+                  const speciesData = ALL_SPECIES.find(
+                    (species) => species.id === s
+                  );
+                  const displayName = speciesData?.local_name || s;
+                  return (
                     <span
-                      key={t}
-                      className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200/60 text-emerald-700 font-medium hover:border-emerald-400 hover:bg-emerald-100 transition-all duration-200"
+                      key={s}
+                      className="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200/60 text-blue-700 font-medium hover:border-blue-400 hover:bg-blue-100 transition-all duration-200"
                     >
-                      {t}
+                      {displayName}
                     </span>
-                  ))}
-              </div>
+                  );
+                })}
+              {/* Techniques badges - Green theme */}
+              {Array.isArray(c.techniques) &&
+                c.techniques.slice(0, 2).map((t) => (
+                  <span
+                    key={t}
+                    className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200/60 text-emerald-700 font-medium hover:border-emerald-400 hover:bg-emerald-100 transition-all duration-200"
+                  >
+                    {t}
+                  </span>
+                ))}
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-between w-full h-full">
-            <StarRating
-              value={avg ?? 0}
-              size={16}
-              reviewCount={reviews.length}
-              textSize="text-[14px]"
-            />
-            <div className="flex flex-col items-center w-full gap-3 pl-3">
+          <div className="flex flex-col items-center justify-between h-30">
+            <StarRating value={avg ?? 0} size={14} textSize="text-[10px]" />
+            <div className="flex flex-col items-center w-full gap-1 pl-3">
               {typeof minPrice === "number" && (
                 <div className="flex flex-col transition-all duration-200 font-oswald group-hover:scale-105">
-                  <PriceTag price={minPrice} size="lg" />
+                  <PriceTag price={minPrice} variant="per-day" size="md" />
                 </div>
               )}
-              <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white text-lg font-medium uppercase rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105 font-oswald">
+              <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white font-medium text-sm lg:text-lg uppercase rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105 font-oswald">
                 {t("bookNow")}
               </button>
             </div>

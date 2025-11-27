@@ -16,8 +16,6 @@ interface CampaignContainerProps {
   locale?: string;
   /** Optional variant override */
   variant?: "card" | "bar" | "modal";
-  /** Optional charter ID for context */
-  charterId?: string;
   /** Maximum number of campaigns to show (default: 1 for most, 3 for sidebars) */
   maxCampaigns?: number;
 }
@@ -82,7 +80,6 @@ export async function CampaignContainer({
   device,
   locale,
   variant: variantOverride,
-  charterId,
   maxCampaigns,
 }: CampaignContainerProps) {
   try {
