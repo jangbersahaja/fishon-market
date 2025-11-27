@@ -1,5 +1,4 @@
-import CategoryCard from "@/components/marketing/CategoryCard";
-import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
+import FishingTechniqueGrid from "@/components/marketing/FishingTechniqueGrid";
 import { getPopularTechniques } from "@/lib/helpers/popularity-helpers";
 
 import { useLocale, useTranslations } from "next-intl";
@@ -47,24 +46,10 @@ export default function TopTechniques({ charters }: TopTechniquesProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-5">
-          {topTechniques.map(({ name, count }) => {
-            const image = getFishingTechniqueImage(name);
-            return (
-              <CategoryCard
-                key={name}
-                href={`/${locale}/search/category/technique/${encodeURIComponent(
-                  name.toLowerCase()
-                )}`}
-                label={name}
-                count={count}
-                subtitle={t("chartersUsing", { technique: name.toLowerCase() })}
-                image={image}
-                alt={t("altText", { technique: name })}
-              />
-            );
-          })}
-        </div>
+        <FishingTechniqueGrid
+          techniques={topTechniques}
+          gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-5"
+        />
 
         <div className="flex justify-start mt-4 md:hidden">
           <Link

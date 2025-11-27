@@ -1,8 +1,8 @@
 // src/app/categories/techniques/page.tsx
-import CategoryCard from "@/components/marketing/CategoryCard";
+import FishingTechniqueGrid from "@/components/marketing/FishingTechniqueGrid";
 import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
 import { getCharters } from "@/lib/services/charter-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 function normalizeLabel(s: string) {
@@ -15,6 +15,11 @@ function normalizeLabel(s: string) {
 
 export default async function TechniquesCategoriesPage() {
   const locale = await getLocale();
+  const t = await getTranslations({
+    locale,
+    namespace: "categories.techniques",
+  });
+  const tNav = await getTranslations({ locale, namespace: "nav" });
   const charters = await getCharters();
 
   // Build a unique list of techniques with counts (case-insensitive)
@@ -42,39 +47,23 @@ export default async function TechniquesCategoriesPage() {
       {/* Breadcrumb */}
       <nav className="mb-4 text-sm text-gray-500">
         <Link href={`/${locale}/home`} className="hover:underline">
-          Home
+          {tNav("home")}
         </Link>{" "}
-        / <span className="font-medium text-gray-700">Fishing Techniques</span>
+        / <span className="font-medium text-gray-700">{t("breadcrumb")}</span>
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl font-bold md:text-3xl">
-          All Fishing Techniques
-        </h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Browse every technique available on Fishon. Tap a technique to see all
-          charters using it.
-        </p>
+        <h1 className="text-2xl font-bold md:text-3xl">{t("title")}</h1>
+        <p className="mt-1 text-sm text-gray-600">{t("description")}</p>
       </header>
 
       {items.length === 0 ? (
-        <p className="text-gray-600">No techniques found yet.</p>
+        <p className="text-gray-600">{t("noTechniquesFound")}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {items.map((t) => (
-            <CategoryCard
-              key={t.key}
-              href={`/${locale}/search/category/technique/${encodeURIComponent(
-                t.label.toLowerCase()
-              )}`}
-              label={t.label}
-              count={t.count}
-              image={t.image}
-              alt={`${t.label} technique`}
-              subtitle={`Charters using ${t.label.toLowerCase()}`}
-            />
-          ))}
-        </div>
+        <FishingTechniqueGrid
+          techniques={items}
+          gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        />
       )}
 
       {/* Back / Secondary nav */}
@@ -83,14 +72,14 @@ export default async function TechniquesCategoriesPage() {
           href={`/${locale}/home`}
           className="text-[#ec2227] hover:underline font-medium"
         >
-          ← Back to Browse
+          ← {t("backToBrowse")}
         </Link>
         <span className="text-gray-300">•</span>
         <Link
           href={`/${locale}/categories/types`}
           className="text-[#ec2227] hover:underline font-medium"
         >
-          See all fishing types
+          {t("seeAllTypes")}
         </Link>
       </div>
     </div>

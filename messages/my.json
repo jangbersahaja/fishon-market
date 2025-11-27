@@ -71,7 +71,7 @@
     "captainDescription": "Pendaftaran kapten dan charter kini tersedia di:",
     "captainCta": "Daftarkan charter anda, urus tempahan, dan jangkau pemancing di seluruh Malaysia.",
     "discoverTitle": "Temui charter memancing",
-    "discoverTitleBreak": "bertaraf tinggi",
+    "discoverTitleBreak": "terbaik di Malaysia",
     "bookYourNext": "Tempah trip memancing anda yang seterusnya",
     "exploreCharters": "Terokai Charter",
     "viewAll": "Lihat Semua",
@@ -96,7 +96,7 @@
       "noTripsNearby": "Tiada trip dalam radius 15 km dari lokasi semasa anda."
     },
     "browseByType": {
-      "title": "Layari Mengikut Jenis",
+      "title": "Semak Mengikut Jenis",
       "seeAll": "Lihat semua jenis memancing",
       "exploreTrips": "Terokai trip {type}",
       "altText": "Memancing {type}"
@@ -1062,6 +1062,24 @@
     "noChartersFoundTitle": "Tiada charter dijumpai",
     "noChartersFoundDescription": "Kami tidak dapat menemui charter yang sesuai dengan kriteria anda. Cuba ubahsuai penapis atau luaskan kawasan carian anda.",
     "clearAllFilters": "Kosongkan Semua Penapis"
+  },
+  "categories": {
+    "types": {
+      "title": "Semua Jenis Memancing",
+      "description": "Layari setiap jenis memancing yang tersedia di Fishon. Tekan jenis untuk melihat semua charter.",
+      "noTypesFound": "Tiada jenis memancing ditemui lagi.",
+      "backToBrowse": "Kembali ke Layari",
+      "seeAllTechniques": "Lihat semua teknik memancing",
+      "breadcrumb": "Jenis Memancing"
+    },
+    "techniques": {
+      "title": "Semua Teknik Memancing",
+      "description": "Layari setiap teknik yang tersedia di Fishon. Tekan teknik untuk melihat semua charter yang menggunakannya.",
+      "noTechniquesFound": "Tiada teknik ditemui lagi.",
+      "backToBrowse": "Kembali ke Layari",
+      "seeAllTypes": "Lihat semua jenis memancing",
+      "breadcrumb": "Teknik Memancing"
+    }
   },
   "auth": {
     "signIn": "Log Masuk",

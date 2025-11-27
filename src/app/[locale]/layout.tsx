@@ -7,9 +7,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { locales } from "@/i18n/config";
 import { auth } from "@/lib/auth/auth";
 import {
-    createOrganizationSchema,
-    createWebSiteSchema,
-    serializeSchema,
+  createOrganizationSchema,
+  createWebSiteSchema,
+  serializeSchema,
 } from "@/lib/seo";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";

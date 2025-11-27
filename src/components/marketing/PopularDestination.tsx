@@ -24,7 +24,7 @@ const Card = ({ name, count, image, locale }: Destination) => {
       className="flex flex-col gap-2 group"
       title={t("findChartersIn", { destination: name })}
     >
-      <div className="h-48 bg-gray-200 relative rounded-lg overflow-hidden">
+      <div className="relative h-48 overflow-hidden bg-gray-200 rounded-lg">
         {image ? (
           <Image
             src={image}
@@ -35,7 +35,7 @@ const Card = ({ name, count, image, locale }: Destination) => {
             priority={false}
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
+          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
         )}
       </div>
       <div className="flex flex-col">
@@ -70,8 +70,8 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
   }
 
   return (
-    <div className="flex px-2 md:px-0 w-full max-w-7xl items-center justify-center mx-auto">
-      <div className="w-full flex flex-col px-5">
+    <div className="flex items-center justify-center w-full px-2 mx-auto md:px-0 max-w-7xl">
+      <div className="flex flex-col w-full px-5">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold">{t("title")}</h2>
           <Link
@@ -81,7 +81,7 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
             {t("seeAll")}
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {destinationsWithImages.map((d) => (
             <Card
               key={d.name}
@@ -93,7 +93,7 @@ const PopularDestination = ({ charters }: PopularDestinationProps) => {
             />
           ))}
         </div>
-        <div className="mt-4 flex justify-start md:hidden">
+        <div className="flex justify-start mt-4 md:hidden">
           <Link
             href={`/${locale}/categories/destinations`}
             className="text-sm font-semibold text-[#ec2227] hover:underline"

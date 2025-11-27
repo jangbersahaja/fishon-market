@@ -1,6 +1,5 @@
 "use client";
-import CategoryCard from "@/components/marketing/CategoryCard";
-import { getFishingTypeImage } from "@/lib/helpers/image-helpers";
+import FishingTypeGrid from "@/components/marketing/FishingTypeGrid";
 import { getFishingTypesWithCounts } from "@/lib/helpers/popularity-helpers";
 
 import { useLocale, useTranslations } from "next-intl";
@@ -28,24 +27,8 @@ export default function BrowseByType({ charters }: BrowseByTypeProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-          {types.map((fishingType) => {
-            const image = getFishingTypeImage(fishingType.key);
-            return (
-              <CategoryCard
-                key={fishingType.key}
-                href={`/${locale}/search/category/type/${fishingType.key}`}
-                label={fishingType.label}
-                count={fishingType.count}
-                subtitle={t("exploreTrips", {
-                  type: fishingType.label.toLowerCase(),
-                })}
-                image={image}
-                alt={t("altText", { type: fishingType.label })}
-              />
-            );
-          })}
-        </div>
+        <FishingTypeGrid types={types} />
+
         <div className="flex justify-start mt-4 md:hidden">
           <Link
             href={`/${locale}/categories/types`}

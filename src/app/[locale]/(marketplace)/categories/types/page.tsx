@@ -1,13 +1,14 @@
 // src/app/categories/types/page.tsx
-import CategoryCard from "@/components/marketing/CategoryCard";
-import { getFishingTypeImage } from "@/lib/helpers/image-helpers";
+import FishingTypeGrid from "@/components/marketing/FishingTypeGrid";
 import { getFishingTypesWithCounts } from "@/lib/helpers/popularity-helpers";
 import { getCharters } from "@/lib/services/charter-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 export default async function TypesCategoriesPage() {
   const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: "categories.types" });
+  const tNav = await getTranslations({ locale, namespace: "nav" });
   const charters = await getCharters();
   const types = getFishingTypesWithCounts(charters);
 
@@ -16,38 +17,20 @@ export default async function TypesCategoriesPage() {
       {/* Breadcrumb */}
       <nav className="mb-4 text-sm text-gray-500">
         <Link href={`/${locale}/home`} className="hover:underline">
-          Home
+          {tNav("home")}
         </Link>{" "}
-        / <span className="font-medium text-gray-700">Fishing Types</span>
+        / <span className="font-medium text-gray-700">{t("breadcrumb")}</span>
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl font-bold md:text-3xl">All Fishing Types</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Browse every fishing type available on Fishon. Tap a type to see all
-          charters.
-        </p>
+        <h1 className="text-2xl font-bold md:text-3xl">{t("title")}</h1>
+        <p className="mt-1 text-sm text-gray-600">{t("description")}</p>
       </header>
 
       {types.length === 0 ? (
-        <p className="text-gray-600">No fishing types found yet.</p>
+        <p className="text-gray-600">{t("noTypesFound")}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {types.map((t) => {
-            const image = getFishingTypeImage(t.key);
-            return (
-              <CategoryCard
-                key={t.key}
-                href={`/${locale}/search/category/type/${t.key}`}
-                label={t.label}
-                count={t.count}
-                image={image}
-                alt={`${t.label} fishing`}
-                subtitle={`Explore ${t.label.toLowerCase()} trips`}
-              />
-            );
-          })}
-        </div>
+        <FishingTypeGrid types={types} />
       )}
 
       {/* Back / Secondary nav */}
@@ -56,14 +39,14 @@ export default async function TypesCategoriesPage() {
           href={`/${locale}/home`}
           className="text-[#ec2227] hover:underline font-medium"
         >
-          ← Back to Browse
+          ← {t("backToBrowse")}
         </Link>
         <span className="text-gray-300">•</span>
         <Link
           href={`/${locale}/categories/techniques`}
           className="text-[#ec2227] hover:underline font-medium"
         >
-          See all fishing techniques
+          {t("seeAllTechniques")}
         </Link>
       </div>
     </div>

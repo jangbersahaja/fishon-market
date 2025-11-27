@@ -2,8 +2,19 @@
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { CheckYourBookings } from "@/components/booking";
+import { UserNav } from "@/components/layout/UserNav";
 import { NotificationBell } from "@/components/notifications";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import {
+  Bell,
+  Calendar,
+  Heart,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  Star,
+  User,
+} from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
@@ -25,7 +36,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user;
   const { openModal } = useAuthModal();
-  const t = useTranslations("nav");
+  const t = useTranslations();
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -42,7 +53,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
 
   return (
     <header className={headerClass}>
-      <div className="flex items-center justify-between h-16 px-4 mx-auto max-w-7xl sm:px-6">
+      <div className="flex items-center justify-between h-16 px-5 mx-auto max-w-7xl">
         {/* Logo */}
         <Link
           href={`/${locale}/home`}
@@ -63,6 +74,8 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
 
         {/* Desktop nav */}
         <nav className="items-center hidden gap-6 md:flex" aria-label="Primary">
+          {/* Language Switcher */}
+          <LanguageSwitcher />
           {isAuthed ? (
             <>
               {/* Notification Bell */}
@@ -79,32 +92,11 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                     : "hover:underline hover:decoration-white"
                 }`}
               >
-                {t("messages")}
+                {t("nav.messages")}
               </Link>
-              <Link
-                href={`/${locale}/account`}
-                aria-current={
-                  isActive(`/${locale}/account`) ? "page" : undefined
-                }
-                className={`text-sm font-medium underline-offset-4 decoration-white/40 ${
-                  isActive(`/${locale}/account`)
-                    ? "underline"
-                    : "hover:underline hover:decoration-white"
-                }`}
-              >
-                {t("account")}
-              </Link>
-              <button
-                onClick={() =>
-                  signOut({
-                    callbackUrl:
-                      window.location.pathname + window.location.search,
-                  })
-                }
-                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] hover:translate-y-px transition"
-              >
-                {t("signOut")}
-              </button>
+
+              {/* User Dropdown */}
+              <UserNav />
             </>
           ) : (
             <>
@@ -113,47 +105,53 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
 
               <button
                 onClick={() => openModal("signin", pathname)}
-                className="text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
+                className="pl-6 text-sm font-medium border-l underline-offset-4 decoration-white/40 hover:underline hover:decoration-white border-white/40"
               >
-                {t("signIn")}
+                {t("nav.signIn")}
               </button>
               <button
                 onClick={() => openModal("register", pathname)}
                 className="text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
               >
-                {t("register")}
+                {t("nav.register")}
               </button>
             </>
           )}
 
-          {/* Language Switcher */}
-          <LanguageSwitcher />
-
-          <Link
-            href="https://fishon-captain.vercel.app/my/list-your-business"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-current={isActive("/list-your-business") ? "page" : undefined}
-            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
-              isActive("/list-your-business")
-                ? "bg-white/90 text-[#ec2227]"
-                : "bg-white text-[#ec2227] hover:translate-y-px"
-            }`}
-          >
-            {t("registerAsCaptain")}
-          </Link>
+          {!isAuthed && (
+            <Link
+              href="https://fishon-captain.vercel.app/my/list-your-business"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-current={
+                isActive("/list-your-business") ? "page" : undefined
+              }
+              className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+                isActive("/list-your-business")
+                  ? "bg-white/90 text-[#ec2227]"
+                  : "bg-white text-[#ec2227] hover:translate-y-px"
+              }`}
+            >
+              {t("nav.registerAsCaptain")}
+            </Link>
+          )}
         </nav>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          aria-label="Toggle menu"
-          className="inline-flex items-center justify-center p-2 rounded-md md:hidden"
-        >
-          {open ? <IoClose size={22} /> : <GiHamburgerMenu size={22} />}
-        </button>
+        <div className="flex items-center gap-3 md:hidden">
+          {/* Notification Bell */}
+          <NotificationBell />
+
+          {/* Mobile toggle */}
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label="Toggle menu"
+            className="inline-flex items-center justify-center p-2 rounded-md "
+          >
+            {open ? <IoClose size={22} /> : <GiHamburgerMenu size={22} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -169,34 +167,89 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
         >
           {isAuthed ? (
             <>
+              <div className="flex items-center gap-3 px-3 py-3 mb-2 border-b border-white/20">
+                {session?.user?.image ? (
+                  <div className="relative w-10 h-10 overflow-hidden rounded-full ring-2 ring-white/20">
+                    <Image
+                      src={session.user.image}
+                      alt={session?.user?.name || "User"}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-10 h-10 text-white rounded-full bg-white/10 ring-2 ring-white/20">
+                    <User className="w-5 h-5" />
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">
+                    {session?.user?.name || "User"}
+                  </span>
+                  <span className="text-xs text-white/70">
+                    {session?.user?.email}
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href={`/${locale}/account/overview`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
+                onClick={() => setOpen(false)}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                {t("account.overview")}
+              </Link>
+              <Link
+                href={`/${locale}/account/bookings`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
+                onClick={() => setOpen(false)}
+              >
+                <Calendar className="w-4 h-4" />
+                {t("account.bookings")}
+              </Link>
               <Link
                 href={`/${locale}/account/messages`}
-                aria-current={
-                  isActive(`/${locale}/account/messages`) ? "page" : undefined
-                }
-                className={`rounded-md px-3 py-2 text-sm font-medium ${
-                  isActive(`/${locale}/account/messages`)
-                    ? "bg-white/15"
-                    : "hover:bg-white/10"
-                }`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
                 onClick={() => setOpen(false)}
               >
-                {t("messages")}
+                <Bell className="w-4 h-4" />
+                {t("nav.messages")}
               </Link>
               <Link
-                href={`/${locale}/account`}
-                aria-current={
-                  isActive(`/${locale}/account`) ? "page" : undefined
-                }
-                className={`rounded-md px-3 py-2 text-sm font-medium ${
-                  isActive(`/${locale}/account`)
-                    ? "bg-white/15"
-                    : "hover:bg-white/10"
-                }`}
+                href={`/${locale}/account/reviews`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
                 onClick={() => setOpen(false)}
               >
-                {t("account")}
+                <Star className="w-4 h-4" />
+                {t("account.reviews")}
               </Link>
+              <Link
+                href={`/${locale}/account/favorites`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
+                onClick={() => setOpen(false)}
+              >
+                <Heart className="w-4 h-4" />
+                {t("account.favorites")}
+              </Link>
+              <Link
+                href={`/${locale}/account/profile`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
+                onClick={() => setOpen(false)}
+              >
+                <User className="w-4 h-4" />
+                {t("account.profile")}
+              </Link>
+              <Link
+                href={`/${locale}/support/help`}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
+                onClick={() => setOpen(false)}
+              >
+                <HelpCircle className="w-4 h-4" />
+                {t("footer.support")}
+              </Link>
+
               <button
                 onClick={() => {
                   setOpen(false);
@@ -205,9 +258,10 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                       window.location.pathname + window.location.search,
                   });
                 }}
-                className="mt-1 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-left"
+                className="flex items-center w-full gap-2 px-3 py-2 mt-1 text-sm font-semibold text-left bg-white rounded-md text-[#ec2227]"
               >
-                {t("signOut")}
+                <LogOut className="w-4 h-4" />
+                {t("nav.signOut")}
               </button>
             </>
           ) : (
@@ -224,7 +278,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }}
                 className="px-3 py-2 text-sm font-medium text-left rounded-md hover:bg-white/10"
               >
-                {t("signIn")}
+                {t("nav.signIn")}
               </button>
               <button
                 onClick={() => {
@@ -233,7 +287,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 }}
                 className="px-3 py-2 text-sm font-medium text-left rounded-md hover:bg-white/10"
               >
-                {t("register")}
+                {t("nav.register")}
               </button>
             </>
           )}
@@ -243,14 +297,16 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
             <LanguageSwitcher />
           </div>
 
-          <Link
-            href="https://fishon-captain.vercel.app/my/list-your-business"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-center hover:translate-y-px transition"
-          >
-            {t("listYourCharter")}
-          </Link>
+          {!isAuthed && (
+            <Link
+              href="https://fishon-captain.vercel.app/my/list-your-business"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-center hover:translate-y-px transition"
+            >
+              {t("nav.listYourCharter")}
+            </Link>
+          )}
         </nav>
       </div>
     </header>

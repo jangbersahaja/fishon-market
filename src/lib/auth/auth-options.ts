@@ -1,5 +1,10 @@
 import { validateTac } from "@/lib/auth/tac";
 import { prisma } from "@/lib/database/prisma";
+import { sendWelcomeEmail } from "@/lib/services/email-service";
+import {
+  assignPromoCodeToUser,
+  getPromoCodeByCode,
+} from "@/lib/services/promo-service";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
@@ -67,15 +72,18 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      // On OAuth sign-in, upgrade GUEST users to ANGLER
+    async signIn({ user, account, isNewUser }) {
+      // Handle OAuth sign-in (Google)
       if (account?.provider === "google" && user.email) {
+        const email = user.email.toLowerCase();
+
         try {
           const existingUser = await prisma.user.findUnique({
-            where: { email: user.email.toLowerCase() },
+            where: { email },
             select: { id: true, role: true },
           });
 
+          // Case 1: Upgrade GUEST user to ANGLER
           if (existingUser?.role === "GUEST") {
             await prisma.user.update({
               where: { id: existingUser.id },
@@ -83,16 +91,47 @@ export const authOptions: NextAuthOptions = {
                 role: "ANGLER",
                 name: user.name || undefined,
                 image: user.image || undefined,
-                emailVerified: new Date(), // OAuth = email verified
+                emailVerified: new Date(),
               },
             });
-            console.log(
-              `✅ Upgraded GUEST user to ANGLER via OAuth: ${user.email}`
+
+            // Assign welcome promo code to upgraded user
+            await assignWelcomePromoCode(
+              existingUser.id,
+              email,
+              user.name || undefined
             );
+            console.log(`✅ Upgraded GUEST to ANGLER via OAuth: ${email}`);
+          }
+
+          // Case 2: Brand new user created by OAuth (PrismaAdapter creates them)
+          // isNewUser is true when NextAuth creates a new user via OAuth
+          if (isNewUser && !existingUser) {
+            // Find the newly created user to get their ID
+            const newUser = await prisma.user.findUnique({
+              where: { email },
+              select: { id: true, name: true },
+            });
+
+            if (newUser) {
+              // Ensure role is ANGLER (not default)
+              await prisma.user.update({
+                where: { id: newUser.id },
+                data: { role: "ANGLER" },
+              });
+
+              // Assign welcome promo code to new OAuth user
+              await assignWelcomePromoCode(
+                newUser.id,
+                email,
+                newUser.name || user.name || undefined
+              );
+              console.log(`✅ New OAuth user registered with promo: ${email}`);
+            }
           }
         } catch (error) {
-          console.error("Error upgrading guest user on OAuth:", error);
-          // Don't block sign-in if upgrade fails
+          console.error("Error in OAuth signIn callback:", error);
+          // Don't block sign-in if promo assignment fails
         }
       }
       return true;
@@ -161,3 +200,41 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+/**
+ * Helper to assign welcome promo code and send welcome email
+ * Non-blocking - failures don't affect registration
+ */
+async function assignWelcomePromoCode(
+  userId: string,
+  email: string,
+  userName?: string
+): Promise<void> {
+  let assignedPromoCode: string | undefined;
+
+  try {
+    const welcomePromo = await getPromoCodeByCode("FISHONTRIP1");
+    if (welcomePromo) {
+      await assignPromoCodeToUser(userId, welcomePromo.id);
+      assignedPromoCode = welcomePromo.code;
+      console.log(
+        `✅ Assigned welcome promo ${assignedPromoCode} to user ${email}`
+      );
+    }
+  } catch (promoError) {
+    console.error("Failed to assign welcome promo code:", promoError);
+  }
+
+  // Send welcome email with promo code
+  try {
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://fishon.my"}/login`;
+    await sendWelcomeEmail({
+      to: email,
+      userName: userName || email.split("@")[0],
+      loginUrl,
+      promoCode: assignedPromoCode,
+    });
+  } catch (emailError) {
+    console.error("Failed to send welcome email:", emailError);
+  }
+}

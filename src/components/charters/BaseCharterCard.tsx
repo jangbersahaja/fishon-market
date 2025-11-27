@@ -538,17 +538,17 @@ export default function BaseCharterCard({
           <div className="flex flex-col items-center justify-between w-full h-full">
             <StarRating
               value={avg ?? 0}
-              size={16}
+              size={14}
               reviewCount={reviews.length}
-              textSize="text-[14px]"
+              textSize="text-[10px]"
             />
             <div className="flex flex-col items-center w-full gap-3 pl-3">
               {typeof minPrice === "number" && (
                 <div className="flex flex-col transition-all duration-200 font-oswald group-hover:scale-105">
-                  <PriceTag price={minPrice} size="lg" />
+                  <PriceTag price={minPrice} size="md" />
                 </div>
               )}
-              <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white text-lg font-medium uppercase rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105 font-oswald">
+              <button className="px-3 py-1.5 bg-[#ec2227] hover:bg-[#d11f24] text-white font-medium uppercase rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group-hover:scale-105 font-oswald">
                 {t("bookNow")}
               </button>
             </div>

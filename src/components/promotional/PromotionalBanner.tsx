@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Gift, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export interface CampaignContent {
   title: string;
@@ -48,15 +48,7 @@ export function PromotionalBanner({
   const [visible, setVisible] = useState(true);
   const [tracked, setTracked] = useState(false);
 
-  // Track impression on mount
-  useEffect(() => {
-    if (!tracked && visible) {
-      trackImpression();
-      setTracked(true);
-    }
-  }, [visible, tracked]);
-
-  const trackImpression = async () => {
+  const trackImpression = useCallback(async () => {
     try {
       await fetch("/api/campaigns/track", {
         method: "POST",
@@ -71,7 +63,15 @@ export function PromotionalBanner({
     } catch (error) {
       console.error("[PromotionalBanner] Failed to track impression:", error);
     }
-  };
+  }, [campaignId, placementKey, onImpression]);
+
+  // Track impression on mount
+  useEffect(() => {
+    if (!tracked && visible) {
+      trackImpression();
+      setTracked(true);
+    }
+  }, [visible, tracked, trackImpression]);
 
   const handleClick = async () => {
     try {
