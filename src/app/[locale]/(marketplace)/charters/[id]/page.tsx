@@ -473,7 +473,8 @@ export default async function CharterViewPage({
                 charterType={charter?.fishingType}
                 personsMax={personsMax}
                 childFriendly={!!charter?.policies?.childFriendly}
-                blockedDates={blockedDates}
+                schedule={charter?.schedule}
+                unavailability={charter?.unavailability}
                 defaultPersons={persons}
               />
               {/* Promotional Campaign Sidebar (Desktop Only) */}

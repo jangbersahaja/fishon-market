@@ -14,6 +14,8 @@ export type MapItem = {
   // These are placeholders that will be overridden by InfoWindow rendering
   ratingAvg?: number;
   ratingCount?: number;
+  // Availability for the selected date
+  isUnavailable?: boolean;
 };
 
 export interface MapItemsOptions {
@@ -22,13 +24,14 @@ export interface MapItemsOptions {
     string,
     { averageRating: number | null; reviewCount: number }
   >;
+  availabilityMap?: Record<string | number, boolean>;
 }
 
 export function buildMapItems(
   charters: Charter[],
   options: MapItemsOptions = {}
 ): MapItem[] {
-  const { locale = "en", ratingsMap } = options;
+  const { locale = "en", ratingsMap, availabilityMap } = options;
 
   return (charters as any[])
     .filter(
@@ -49,6 +52,11 @@ export function buildMapItems(
       // Get ratings from ratingsMap if provided
       const ratings = ratingsMap?.get(charterId);
 
+      // Get availability status if availabilityMap is provided
+      const isUnavailable = availabilityMap
+        ? availabilityMap[charterId] === false
+        : undefined;
+
       return {
         id: charterId,
         name: c.name,
@@ -62,6 +70,7 @@ export function buildMapItems(
           "",
         ratingAvg: ratings?.averageRating ?? undefined,
         ratingCount: ratings?.reviewCount ?? 0,
+        isUnavailable,
       };
     });
 }

@@ -1,6 +1,8 @@
 // src/app/search/page.tsx
 import SearchBox from "@/components/charters/SearchBox";
 import { CampaignContainer } from "@/components/promotional";
+import { isCharterAvailableOnDate } from "@/lib/helpers/availability-helpers";
+import { batchCheckBookingsForDate } from "@/lib/helpers/availability-helpers.server";
 import { getCharters } from "@/lib/services/charter-service";
 import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 import { buildMapItems } from "@/utils/mapItems";
@@ -279,8 +281,81 @@ export default async function SearchResults({
       return true;
     });
 
-  // Sorting
+  // Calculate availability for each charter when date is selected
+  // This checks both schedule (operational days) AND existing bookings
+  // Use backendId as key since c.id might be 0 for UUID-based backends
+  const availabilityMap = new Map<string, boolean>();
+  if (date) {
+    // Debug: Log schedule data for all charters
+    console.log("📅 [SEARCH] Checking availability for date:", date);
+    console.log(
+      "📅 [SEARCH] Charter schedule data:",
+      filtered.map((c) => ({
+        backendId: (c as any).backendId ?? String(c.id),
+        name: c.name,
+        schedule: c.schedule ?? "NO SCHEDULE SET",
+        unavailability: c.unavailability?.length ?? 0,
+      }))
+    );
+
+    // First, check schedule + unavailability + advance booking (client-side logic)
+    const scheduleAvailability = new Map<string, boolean>();
+    for (const c of filtered) {
+      const backendId = (c as any).backendId ?? String(c.id);
+      const { isAvailable, reason } = isCharterAvailableOnDate(
+        date,
+        c.schedule,
+        c.unavailability,
+        c.fishingType // Pass fishing type for 48h/72h advance booking check
+      );
+      scheduleAvailability.set(backendId, isAvailable);
+
+      // Debug logging for availability check
+      if (!isAvailable) {
+        console.log("🚫 [SEARCH] Charter unavailable:", {
+          charterId: backendId,
+          charterName: c.name,
+          date,
+          fishingType: c.fishingType,
+          schedule: c.schedule,
+          reason,
+        });
+      }
+    }
+
+    // Then, batch check bookings for all charters (server-side DB query)
+    // Get backend IDs for the booking check
+    const charterBackendIds = filtered.map(
+      (c) => (c as any).backendId ?? String(c.id)
+    );
+    const bookingsMap = await batchCheckBookingsForDate(
+      charterBackendIds,
+      date
+    );
+
+    // Combine: charter is available only if schedule allows AND no bookings
+    for (const c of filtered) {
+      const backendId = (c as any).backendId ?? String(c.id);
+      const scheduleOk = scheduleAvailability.get(backendId) ?? true;
+      const hasBooking = bookingsMap.get(backendId) ?? false;
+
+      availabilityMap.set(backendId, scheduleOk && !hasBooking);
+    }
+  }
+
+  // Sorting - with availability priority when date is selected
   filtered = filtered.sort((a, b) => {
+    // If date is selected, available charters come first
+    if (date) {
+      const aBackendId = (a as any).backendId ?? String(a.id);
+      const bBackendId = (b as any).backendId ?? String(b.id);
+      const aAvailable = availabilityMap.get(aBackendId) ?? true;
+      const bAvailable = availabilityMap.get(bBackendId) ?? true;
+      if (aAvailable !== bAvailable) {
+        return aAvailable ? -1 : 1; // Available first
+      }
+    }
+
     const aMin = minPrice(a) ?? Number.POSITIVE_INFINITY;
     const bMin = minPrice(b) ?? Number.POSITIVE_INFINITY;
     switch (orderby) {
@@ -361,10 +436,11 @@ export default async function SearchResults({
   const device = isMobileUA ? "MOBILE" : "DESKTOP";
   const currentPage = "search";
 
-  // Build map items for the fullscreen map (with locale and real ratings)
+  // Build map items for the fullscreen map (with locale, ratings, and availability)
   const mapItems = buildMapItems(filtered, {
     locale,
     ratingsMap,
+    availabilityMap: date ? Object.fromEntries(availabilityMap) : undefined,
   });
 
   // Calculate fallback center from filtered charters
@@ -441,6 +517,7 @@ export default async function SearchResults({
         mapItems={mapItems}
         fallbackCenter={fallbackCenter}
         ratingsMap={new Map(Object.entries(ratingsMapObj))}
+        availabilityMap={Object.fromEntries(availabilityMap)}
         sidebarCampaign={sidebarCampaign}
         mobileBottomCampaign={mobileBottomCampaign}
       />

@@ -57,6 +57,8 @@ export interface CharterCardProps {
   // Ratings (passed from server-side fetch)
   averageRating?: number | null;
   reviewCount?: number;
+  // Availability (when date is selected)
+  isUnavailable?: boolean;
 }
 
 export default function BaseCharterCard({
@@ -72,6 +74,7 @@ export default function BaseCharterCard({
   className = "",
   averageRating,
   reviewCount = 0,
+  isUnavailable = false,
 }: CharterCardProps) {
   const locale = useLocale();
   const t = useTranslations("charter");
@@ -368,7 +371,7 @@ export default function BaseCharterCard({
   // Default: "full" variant
   return (
     <article
-      className={`flex flex-col h-full transition-all duration-300 ease-in-out group hover:shadow-2xl hover:-translate-y-1 rounded-2xl bg-white border border-slate-200/60 overflow-hidden ${className}`}
+      className={`flex flex-col h-full transition-all duration-300 ease-in-out group hover:shadow-2xl hover:-translate-y-1 rounded-2xl bg-white border border-slate-200/60 overflow-hidden ${isUnavailable ? "opacity-75" : ""} ${className}`}
     >
       {/* Cover image(s) - Use mosaic for multiple images, single for one */}
       <div className="relative overflow-hidden">
@@ -388,12 +391,17 @@ export default function BaseCharterCard({
                   src={img}
                   alt={formatCharterName(c.name)}
                   fill
-                  className={`${imageObjectFit} transition-all duration-500 ease-in-out group-hover:scale-110 group-hover:rotate-1`}
+                  className={`${imageObjectFit} transition-all duration-500 ease-in-out group-hover:scale-110 group-hover:rotate-1 ${isUnavailable ? "grayscale-[30%]" : ""}`}
                 />
                 {/* Gradient overlay on hover */}
                 <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/20 via-transparent to-transparent group-hover:opacity-100"></div>
               </div>
             </Link>
+          )}
+
+          {/* Unavailable overlay */}
+          {isUnavailable && (
+            <div className="absolute inset-0 z-5 bg-slate-900/20 pointer-events-none" />
           )}
 
           {/* Favorite button overlay */}
@@ -410,10 +418,19 @@ export default function BaseCharterCard({
           )}
 
           {/* Top left badge */}
-          {fishingType && (
+          {fishingType && !isUnavailable && (
             <div className="absolute z-10 top-3 left-3">
               <span className="inline-flex items-center rounded-full bg-[#ec2227] text-white px-3 py-1.5 text-xs font-bold shadow-lg backdrop-blur-sm">
                 {capitalize(fishingType)}
+              </span>
+            </div>
+          )}
+
+          {/* Unavailable badge */}
+          {isUnavailable && (
+            <div className="absolute z-10 top-3 left-3">
+              <span className="inline-flex items-center rounded-full bg-slate-700 text-white px-3 py-1.5 text-xs font-bold shadow-lg backdrop-blur-sm">
+                {t("unavailableOnDate")}
               </span>
             </div>
           )}

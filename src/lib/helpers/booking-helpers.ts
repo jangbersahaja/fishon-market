@@ -451,8 +451,6 @@ export function getExpiresIn(expiresAt: Date): number {
  * Calculate minimum bookable date based on charter type and current time
  *
  * Rules:
- * - All fishing types: 24 hours advance booking required
- * - Offshore trips: Additional 12 hours (36 hours total)
  *
  * @param charterType - Type of fishing charter (e.g., "INSHORE", "OFFSHORE", "DEEP_SEA")
  * @returns Date object representing the earliest bookable date

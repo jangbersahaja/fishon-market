@@ -38,6 +38,8 @@ interface SearchResultsClientProps {
     string,
     { averageRating: number | null; reviewCount: number }
   >;
+  /** Map of charter backendId to availability status (only when date is selected) */
+  availabilityMap?: Record<string, boolean>;
   /** Server-rendered campaign slot for desktop sidebar */
   sidebarCampaign?: ReactNode;
   /** Server-rendered campaign slot for mobile bottom bar */
@@ -66,6 +68,7 @@ export default function SearchResultsClient({
   mapItems,
   fallbackCenter,
   ratingsMap,
+  availabilityMap,
   sidebarCampaign,
   mobileBottomCampaign,
 }: SearchResultsClientProps) {
@@ -198,7 +201,7 @@ export default function SearchResultsClient({
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
               {t("pageTitle")}
             </h1>
-            <p className="max-w-3xl text-sm text-white/90 sm:text-lg">
+            <p className="max-w-3xl text-xs text-white/90 sm:text-base">
               {destination ? (
                 <>
                   {t("showingTripsNear")}{" "}
@@ -269,7 +272,7 @@ export default function SearchResultsClient({
         <div className="flex flex-col gap-10 lg:flex-row ">
           {/* Desktop Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:w-[300px] lg:flex-shrink-0">
-            <div className="sticky space-y-5 top-30">
+            <div className="sticky space-y-10 top-30">
               {/* View on Map Button (Desktop) */}
               <button
                 id={openBtnId}
@@ -348,20 +351,29 @@ export default function SearchResultsClient({
                 </div>
               )}
 
-              {filtered.map((c) => (
-                <CharterCard
-                  key={(c as any).backendId ?? `d:${String(c.id)}`}
-                  charter={c}
-                  context={{
-                    date,
-                    adults,
-                    children: childrenCount,
-                    guestsParam: 0,
-                  }}
-                  averageRating={getRating(c)}
-                  reviewCount={getReviewCount(c)}
-                />
-              ))}
+              {filtered.map((c) => {
+                const charterId = (c as any).backendId ?? String(c.id);
+                const isUnavailable =
+                  date && availabilityMap
+                    ? availabilityMap[charterId] === false
+                    : false;
+
+                return (
+                  <CharterCard
+                    key={charterId}
+                    charter={c}
+                    context={{
+                      date,
+                      adults,
+                      children: childrenCount,
+                      guestsParam: 0,
+                    }}
+                    averageRating={getRating(c)}
+                    reviewCount={getReviewCount(c)}
+                    isUnavailable={isUnavailable}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>

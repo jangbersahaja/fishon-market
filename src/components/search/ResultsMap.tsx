@@ -264,6 +264,35 @@ export default function ResultsMap({
       .fo-iw-meta {
         display: none;
       }
+      /* Unavailable state styles */
+      .fo-iw-unavailable {
+        opacity: 0.85;
+      }
+      .fo-iw-img-unavailable {
+        filter: grayscale(30%);
+      }
+      .fo-iw-price-unavailable {
+        background: #64748b !important;
+        color: #fff !important;
+      }
+      .fo-iw-unavailable-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #64748b;
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+      .fo-iw-unavailable-inline {
+        font-size: 11px;
+        color: #64748b;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
     `;
     document.head.appendChild(style);
 
@@ -318,8 +347,10 @@ export default function ResultsMap({
   }
 
   // replace your current makePriceIcon with this:
-  function makePriceIcon(price?: number) {
+  function makePriceIcon(price?: number, isUnavailable?: boolean) {
     const label = price ? `RM${price}` : "RM–";
+    // Use gray for unavailable, red for available
+    const bgColor = isUnavailable ? "#64748b" : "#ec2227";
     const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="96" height="32">
       <defs>
@@ -328,7 +359,7 @@ export default function ResultsMap({
         </filter>
       </defs>
       <g filter="url(#shadow)">
-        <rect x="1" y="1" rx="16" ry="16" width="94" height="30" fill="#ec2227"/>
+        <rect x="1" y="1" rx="16" ry="16" width="94" height="30" fill="${bgColor}"/>
         <text x="48" y="22" text-anchor="middle" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto" font-size="13" font-weight="500" fill="#ffffff">${label}</text>
       </g>
     </svg>`;
@@ -395,13 +426,13 @@ export default function ResultsMap({
       renderList.forEach((it) => {
         const marker = new google.maps.Marker({
           position: { lat: it.lat, lng: it.lng },
-          icon: makePriceIcon(it.price),
+          icon: makePriceIcon(it.price, it.isUnavailable),
           title: it.name,
           map: fsMap,
         });
         marker.addListener("click", () => {
           fsInfoWindow.setContent(`
-          <div class="fo-iw">
+          <div class="fo-iw ${it.isUnavailable ? "fo-iw-unavailable" : ""}">
             <button type="button" class="fo-iw-close" aria-label="Close">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M2 2l8 8M10 2l-8 8"/>
@@ -410,8 +441,9 @@ export default function ResultsMap({
             ${
               it.image
                 ? `<div class="fo-iw-img-wrap">
-                <img src="${it.image}" alt="${it.name}" class="fo-iw-img">
-                <div class="fo-iw-price-tag">From RM${it.price.toLocaleString()}</div>
+                <img src="${it.image}" alt="${it.name}" class="fo-iw-img ${it.isUnavailable ? "fo-iw-img-unavailable" : ""}">
+                <div class="fo-iw-price-tag ${it.isUnavailable ? "fo-iw-price-unavailable" : ""}">From RM${it.price.toLocaleString()}</div>
+                ${it.isUnavailable ? '<div class="fo-iw-unavailable-badge">Not available</div>' : ""}
               </div>`
                 : ""
             }
@@ -720,17 +752,18 @@ export default function ResultsMap({
       renderList.forEach((it) => {
         const marker = new google.maps.Marker({
           position: { lat: it.lat, lng: it.lng },
-          icon: makePriceIcon(it.price),
+          icon: makePriceIcon(it.price, it.isUnavailable),
           title: it.name,
         });
         marker.addListener("click", () => {
           iw.setContent(`
-            <div class="fo-iw">
+            <div class="fo-iw ${it.isUnavailable ? "fo-iw-unavailable" : ""}">
               <button type="button" class="fo-iw-close" aria-label="Close">&times;</button>
               <div class="fo-iw-body">
-                ${it.image ? `<img src="${it.image}" alt="${it.name}" class="fo-iw-img">` : ""}
+                ${it.image ? `<img src="${it.image}" alt="${it.name}" class="fo-iw-img ${it.isUnavailable ? "fo-iw-img-unavailable" : ""}">` : ""}
                 <div class="fo-iw-meta">
                   <div class="fo-iw-title">${it.name}</div>
+                  ${it.isUnavailable ? '<div class="fo-iw-unavailable-inline">Not available on this date</div>' : ""}
                   <div class="fo-iw-rating">
                     <span class="fo-iw-star">★</span>
                     <span>${it.ratingAvg ? it.ratingAvg.toFixed(1) : "—"} (${it.ratingCount || 0} reviews)</span>

@@ -14,6 +14,7 @@ export default function CharterCard({
   className = "",
   averageRating,
   reviewCount,
+  isUnavailable,
 }: Omit<CharterCardProps, "variant" | "imageAspect">) {
   return (
     <BaseCharterCard
@@ -26,6 +27,7 @@ export default function CharterCard({
       className={className}
       averageRating={averageRating}
       reviewCount={reviewCount}
+      isUnavailable={isUnavailable}
     />
   );
 }
