@@ -5,10 +5,10 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { NotificationItem } from "./NotificationItem";
+import { useNotificationContext } from "./NotificationProvider";
 import { NotificationSkeleton } from "./NotificationSkeleton";
 
 interface NotificationDropdownProps {
@@ -18,7 +18,7 @@ interface NotificationDropdownProps {
 export function NotificationDropdown({ children }: NotificationDropdownProps) {
   const locale = useLocale();
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } =
-    useNotifications();
+    useNotificationContext();
 
   // Show recent 5 notifications
   const recentNotifications = notifications.slice(0, 5);

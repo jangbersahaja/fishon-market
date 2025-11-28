@@ -1,6 +1,7 @@
 import { BookingExpiredScreen } from "@/components/booking/BookingExpiredScreen";
 import { DateNoLongerAvailableScreen } from "@/components/booking/DateNoLongerAvailableScreen";
 import { ManualFlowPaymentForm } from "@/components/payment/ManualFlowPaymentForm";
+import { PaymentCancelledBanner } from "@/components/payment/PaymentCancelledBanner";
 import { PaymentContactCard } from "@/components/payment/shared/PaymentContactCard";
 import { PaymentTripSummaryCard } from "@/components/payment/shared/PaymentTripSummaryCard";
 import { Badge } from "@/components/ui/badge";
@@ -26,12 +27,19 @@ import { redirect } from "next/navigation";
 
 export default async function PaymentPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; bookingId: string }>;
+  searchParams: Promise<{ payment?: string; message?: string }>;
 }) {
   const { locale, bookingId } = await params;
+  const sp = await searchParams;
   const session = await auth();
   const t = await getTranslations({ locale, namespace: "booking.payment" });
+
+  // Check for payment cancellation/failure from return page
+  const showRetryBanner = sp.payment === "cancelled" || sp.payment === "failed";
+  const retryMessage = sp.message ? decodeURIComponent(sp.message) : undefined;
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -204,6 +212,9 @@ export default async function PaymentPage({
   return (
     <main className="bg-slate-50">
       <div className="w-full px-4 py-8 mx-auto max-w-7xl sm:px-6">
+        {/* Payment Retry Banner */}
+        {showRetryBanner && <PaymentCancelledBanner message={retryMessage} />}
+
         {/* Payment Deadline Timer */}
         {paymentDeadline && (
           <div className="p-4 mb-6 border rounded-lg bg-amber-50 border-amber-200">

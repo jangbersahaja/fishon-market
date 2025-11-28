@@ -178,7 +178,7 @@ export default async function PaymentReturnPage({
     );
   }
 
-  // Check if booking exists (TOKENIZED flow where booking was created before payment)
+  // Check if booking exists (MANUAL flow or TOKENIZED flow)
   console.log("🔍 [PAYMENT RETURN] Looking up Booking with ID:", order_id);
 
   const booking = await prisma.booking.findUnique({
@@ -190,6 +190,8 @@ export default async function PaymentReturnPage({
       paymentTransactionId: true,
       charterId: true,
       finalPrice: true,
+      bookingFlowType: true,
+      paymentDeadline: true,
     },
   });
 
@@ -197,6 +199,7 @@ export default async function PaymentReturnPage({
     found: !!booking,
     bookingId: booking?.id,
     status: booking?.status,
+    bookingFlowType: booking?.bookingFlowType,
   });
 
   if (!booking) {
@@ -248,6 +251,62 @@ export default async function PaymentReturnPage({
           transaction_id
       )}`
     );
+  }
+
+  // --- MANUAL FLOW: Handle payment cancellation/failure ---
+  // For MANUAL flow, booking exists in AWAITING_PAYMENT status
+  // If payment failed/cancelled, redirect back to payment page to retry
+  if (
+    booking.bookingFlowType === "MANUAL" &&
+    booking.status === "AWAITING_PAYMENT"
+  ) {
+    if (status_id !== "1") {
+      // Payment failed or cancelled for MANUAL flow
+      const cleanMessage = (
+        msg || "Payment was cancelled. You can try again when ready."
+      ).replace(/_/g, " ");
+
+      // Check if payment deadline has passed
+      const now = new Date();
+      const isDeadlineValid =
+        booking.paymentDeadline && now < booking.paymentDeadline;
+
+      if (isDeadlineValid) {
+        // Deadline still valid - redirect back to payment page to retry
+        console.log(
+          "🔄 [PAYMENT RETURN] MANUAL flow payment cancelled, redirecting to retry",
+          {
+            bookingId: order_id,
+            paymentDeadline: booking.paymentDeadline,
+          }
+        );
+
+        // Record the failed attempt
+        await prisma.booking.update({
+          where: { id: order_id },
+          data: {
+            paymentNote: `Payment attempt failed: ${cleanMessage}`,
+          },
+        });
+
+        redirect(
+          `/${locale}/book/payment/${order_id}?payment=cancelled&message=${encodeURIComponent(cleanMessage)}`
+        );
+      } else {
+        // Payment deadline passed - booking should be expired
+        console.log("⏰ [PAYMENT RETURN] MANUAL flow payment deadline passed", {
+          bookingId: order_id,
+          paymentDeadline: booking.paymentDeadline,
+        });
+
+        redirect(
+          `/${locale}/book/confirm?id=${order_id}&payment=expired&message=${encodeURIComponent(
+            "Your payment deadline has passed. Please contact support if you still want to book."
+          )}`
+        );
+      }
+    }
+    // If status_id === "1", fall through to process the successful payment below
   }
 
   // IDEMPOTENCY: Check if already processed by callback webhook

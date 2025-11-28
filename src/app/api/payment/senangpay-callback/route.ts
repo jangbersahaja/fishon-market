@@ -1,3 +1,4 @@
+import { addDaysUTC, hasConflicts, TimeSlot } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
@@ -115,6 +116,88 @@ export async function POST(request: NextRequest) {
           tripId: bookingData.tripId,
         });
         return new NextResponse("Not Found: Trip not found", { status: 404 });
+      }
+
+      // === CONFLICT CHECK ===
+      // Must verify no other booking was created for this slot while user was paying
+      // This prevents double-booking when two users pay simultaneously via DIRECT flow
+      const d = new Date(bookingData.date);
+      const ds = bookingData.days || 1;
+      const newStart = new Date(
+        Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+      );
+      const newEnd = addDaysUTC(newStart, ds - 1);
+
+      // Check for conflicting bookings (PAYMENT_AUTHORIZED or PAID status)
+      const existingBookings = await prisma.booking.findMany({
+        where: {
+          charterId: bookingData.charterId,
+          status: { in: ["PAYMENT_AUTHORIZED", "PAID"] },
+          date: { gte: newStart, lte: addDaysUTC(newEnd, ds) },
+        },
+        select: {
+          id: true,
+          date: true,
+          days: true,
+          startTime: true,
+          timeSlots: true,
+        },
+      });
+
+      const newTimeSlots = bookingData.timeSlots as TimeSlot[] | undefined;
+      // If startTimes exist, this charter uses time slots for availability
+      const usesStartTimes =
+        trip.startTimes.length > 0 && newTimeSlots && newTimeSlots.length > 0;
+
+      const conflictDetected = hasConflicts(
+        existingBookings.map((b) => ({
+          date: b.date,
+          days: b.days,
+          startTime: b.startTime,
+          timeSlots: b.timeSlots,
+        })),
+        newStart,
+        ds,
+        {
+          usesStartTimes: usesStartTimes || false,
+          selectedStartTime: bookingData.startTime,
+          newTimeSlots,
+        }
+      );
+
+      if (conflictDetected) {
+        console.error("❌ [SENANGPAY CALLBACK] Date conflict detected", {
+          sessionId: order_id,
+          charterId: bookingData.charterId,
+          date: bookingData.date,
+          existingBookings: existingBookings.map((b) => b.id),
+        });
+
+        // Mark session as conflict (will need refund)
+        // Store conflict reason in bookingData JSON for reference
+        const updatedBookingData = {
+          ...bookingData,
+          conflictReason: "Date was booked by another user during payment",
+          conflictDetectedAt: new Date().toISOString(),
+        };
+
+        await prisma.paymentSession.update({
+          where: { id: order_id },
+          data: {
+            status: "CONFLICT",
+            bookingData: updatedBookingData,
+          },
+        });
+
+        // TODO: Trigger refund process for the customer
+        // For now, log for manual refund processing
+        console.warn("⚠️ [SENANGPAY CALLBACK] REFUND REQUIRED", {
+          sessionId: order_id,
+          transactionId: transaction_id,
+          amount: pricingBreakdown.finalPrice,
+        });
+
+        return new NextResponse("OK", { status: 200 });
       }
 
       // Calculate expiry (24h for AUTO flow acknowledgment)

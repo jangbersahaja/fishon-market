@@ -19,7 +19,11 @@ export interface UnavailabilityPeriod {
 
 export interface PartialAvailability {
   date: string; // YYYY-MM-DD
-  unavailableTimeRanges: { startTime: string; endTime: string }[]; // HH:MM format
+  unavailableTimeRanges: {
+    startTime: string; // HH:MM format
+    endTime: string; // HH:MM format
+    bookedStartTime?: string; // Original trip start time (for granular multi-day blocking)
+  }[];
 }
 
 export interface BookedDatesResponse {
@@ -28,6 +32,7 @@ export interface BookedDatesResponse {
     date: string; // YYYY-MM-DD
     startTime: string; // HH:MM
     endTime: string; // HH:MM
+    bookedStartTime?: string; // Original trip start time
     isFullDay: boolean;
   }>;
 }
@@ -374,22 +379,20 @@ export function calculatePartialAvailability(
       const dateStr = block.date;
       const existing = partialAvailabilityMap.get(dateStr);
 
+      const timeRange = {
+        startTime: block.startTime,
+        endTime: block.endTime,
+        bookedStartTime: block.bookedStartTime, // Pass through for granular blocking
+      };
+
       if (existing) {
         // Add time range to existing entry
-        existing.unavailableTimeRanges.push({
-          startTime: block.startTime,
-          endTime: block.endTime,
-        });
+        existing.unavailableTimeRanges.push(timeRange);
       } else {
         // Create new entry
         partialAvailabilityMap.set(dateStr, {
           date: dateStr,
-          unavailableTimeRanges: [
-            {
-              startTime: block.startTime,
-              endTime: block.endTime,
-            },
-          ],
+          unavailableTimeRanges: [timeRange],
         });
       }
     });

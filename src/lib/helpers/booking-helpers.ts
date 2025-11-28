@@ -503,3 +503,114 @@ export function getAdvanceBookingMessage(charterType?: string): string {
 
   return "Bookings must be made at least 48 hours (2 days) in advance to allow captain preparation time.";
 }
+
+/**
+ * Get advance booking hours required based on charter type
+ *
+ * @param charterType - Type of fishing charter
+ * @returns Number of hours required in advance
+ */
+export function getAdvanceBookingHours(charterType?: string): number {
+  const isOffshore = charterType?.toUpperCase() === "OFFSHORE";
+  return isOffshore ? 72 : 48;
+}
+
+/**
+ * Calculate payment deadline for MANUAL flow bookings
+ *
+ * The payment deadline is calculated as the MINIMUM of:
+ * 1. Standard 48 hours from approval
+ * 2. Trip start time minus a buffer (to ensure payment before trip)
+ *
+ * This prevents scenarios where payment deadline extends past the trip date.
+ *
+ * @param tripDate - The booking trip date
+ * @param startTime - The trip start time (e.g., "08:00") or null
+ * @param bufferHours - Minimum hours before trip that payment must complete (default: 6h)
+ * @returns Object with paymentDeadline Date and metadata about calculation
+ */
+export function calculatePaymentDeadline(
+  tripDate: Date,
+  startTime: string | null,
+  bufferHours: number = 6
+): {
+  paymentDeadline: Date;
+  hoursUntilDeadline: number;
+  wasAdjusted: boolean;
+  adjustmentReason?: string;
+} {
+  const now = new Date();
+
+  // Calculate trip start datetime
+  const tripStart = new Date(tripDate);
+  if (startTime) {
+    const [hours, minutes] = startTime.split(":").map(Number);
+    tripStart.setHours(hours || 6, minutes || 0, 0, 0); // Default to 6 AM if parsing fails
+  } else {
+    tripStart.setHours(6, 0, 0, 0); // Default to 6 AM for safety
+  }
+
+  // Calculate latest possible payment time (trip start minus buffer)
+  const latestPaymentTime = new Date(
+    tripStart.getTime() - bufferHours * 60 * 60 * 1000
+  );
+
+  // Standard 48-hour deadline from now
+  const STANDARD_PAYMENT_HOURS = 48;
+  const standardDeadline = new Date(
+    now.getTime() + STANDARD_PAYMENT_HOURS * 60 * 60 * 1000
+  );
+
+  // Use whichever is earlier
+  const wasAdjusted = latestPaymentTime < standardDeadline;
+  const paymentDeadline = wasAdjusted ? latestPaymentTime : standardDeadline;
+
+  // Ensure deadline is at least a reasonable minimum from now (e.g., 2 hours)
+  const MIN_DEADLINE_HOURS = 2;
+  const minimumDeadline = new Date(
+    now.getTime() + MIN_DEADLINE_HOURS * 60 * 60 * 1000
+  );
+
+  let finalDeadline = paymentDeadline;
+  let adjustmentReason: string | undefined;
+
+  if (paymentDeadline < minimumDeadline) {
+    // Edge case: trip is too soon, captain shouldn't have approved
+    // Give at least 2 hours but flag this as urgent
+    finalDeadline = minimumDeadline;
+    adjustmentReason = "Trip too soon - minimum 2h deadline applied";
+  } else if (wasAdjusted) {
+    adjustmentReason = `Adjusted to ensure ${bufferHours}h buffer before trip`;
+  }
+
+  const hoursUntilDeadline = Math.max(
+    0,
+    (finalDeadline.getTime() - now.getTime()) / (60 * 60 * 1000)
+  );
+
+  return {
+    paymentDeadline: finalDeadline,
+    hoursUntilDeadline: Math.round(hoursUntilDeadline * 10) / 10, // Round to 1 decimal
+    wasAdjusted,
+    adjustmentReason,
+  };
+}
+
+/**
+ * Format payment deadline for display
+ *
+ * @param hoursUntilDeadline - Hours until payment deadline
+ * @returns Human-readable string like "48 hours", "24 hours", "12 hours", etc.
+ */
+export function formatPaymentDeadline(hoursUntilDeadline: number): string {
+  if (hoursUntilDeadline >= 48) {
+    return "48 hours";
+  } else if (hoursUntilDeadline >= 24) {
+    return `${Math.round(hoursUntilDeadline)} hours`;
+  } else if (hoursUntilDeadline >= 1) {
+    return `${Math.round(hoursUntilDeadline)} hours`;
+  } else {
+    const minutes = Math.round(hoursUntilDeadline * 60);
+    return `${minutes} minutes`;
+  }
+}

@@ -4,6 +4,10 @@ import { calculateTimeSlots } from "@/lib/booking/booking-time";
 import { addDaysUTC, hasConflicts } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import {
+  getAdvanceBookingHours,
+  getMinimumBookableDate,
+} from "@/lib/helpers/booking-helpers";
+import {
   createPaymentIntent,
   getPaymentFlow,
 } from "@/lib/payment/payment-gateway";
@@ -234,6 +238,29 @@ async function createAuthenticatedBooking(session: any, body: any) {
     if (!trip) {
       console.error("❌ Trip not found for ID:", tripId);
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
+    }
+
+    // Validate advance booking requirement (server-side enforcement)
+    // This ensures the booking date meets the minimum advance booking policy
+    // Use tripType as proxy for charter type (e.g., "offshore" requires 72h advance)
+    const tripTypeForAdvance = trip.tripType;
+    const minBookableDate = getMinimumBookableDate(tripTypeForAdvance);
+    const advanceHours = getAdvanceBookingHours(tripTypeForAdvance);
+
+    if (bookingDate < minBookableDate) {
+      console.log("❌ Advance booking check failed:", {
+        bookingDate: bookingDate.toISOString(),
+        minBookableDate: minBookableDate.toISOString(),
+        tripType: tripTypeForAdvance,
+        advanceHours,
+      });
+      return NextResponse.json(
+        {
+          error: `Bookings must be made at least ${advanceHours} hours in advance. Please select a later date.`,
+          minBookableDate: minBookableDate.toISOString().slice(0, 10),
+        },
+        { status: 400 }
+      );
     }
 
     // Use override price if set by admin, otherwise base price
@@ -589,8 +616,9 @@ async function createAuthenticatedBooking(session: any, body: any) {
     }
 
     // Availability guard: prevent overlapping bookings for the same charter
-    // Only PAID bookings block dates (confirmed and paid bookings) for AUTO flow.
-    // Manual flow blocks pending bookings to avoid duplicate requests in review window.
+    // MANUAL flow: blocks any booking in progress (pending through completed)
+    // AUTO flow: blocks PAYMENT_AUTHORIZED (CARD) and PAID
+    // Note: DIRECT payments (FPX/E-Wallet) go through PaymentSession (checked separately below)
     const blockingStatuses = isManualFlow
       ? ([
           "PENDING",
@@ -599,7 +627,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           "PAID",
           "COMPLETED",
         ] as const)
-      : (["PAID"] as const);
+      : (["PAYMENT_AUTHORIZED", "PAID"] as const);
 
     const newStart = new Date(
       Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
@@ -644,12 +672,75 @@ async function createAuthenticatedBooking(session: any, body: any) {
               },
             });
 
-            const conflicts = hasConflicts(candidates, newStart, ds, {
+            let conflicts = hasConflicts(candidates, newStart, ds, {
               usesStartTimes: trip.startTimes.length > 0,
               selectedStartTime:
                 trip.startTimes.length > 0 ? (startTime as string) : null,
               newTimeSlots: newTimeSlots,
             });
+
+            // Also check pending PaymentSessions (DIRECT payments in progress)
+            // This prevents double-booking when two users are paying via FPX/E-Wallet simultaneously
+            if (!conflicts && !isManualFlow) {
+              const pendingSessions = await tx.paymentSession.findMany({
+                where: {
+                  status: "PENDING",
+                  expiresAt: { gt: new Date() },
+                },
+                select: {
+                  id: true,
+                  bookingData: true,
+                },
+              });
+
+              // Filter sessions for this charter and check for overlaps
+              for (const session of pendingSessions) {
+                const sessionData = session.bookingData as any;
+                if (sessionData?.charterId !== trip.charter.id) continue;
+
+                const sessionDate = new Date(sessionData.date);
+                const sessionDays = sessionData.days || 1;
+                const sessionStart = new Date(
+                  Date.UTC(
+                    sessionDate.getUTCFullYear(),
+                    sessionDate.getUTCMonth(),
+                    sessionDate.getUTCDate()
+                  )
+                );
+
+                const sessionConflict = hasConflicts(
+                  [
+                    {
+                      date: sessionStart,
+                      days: sessionDays,
+                      startTime: sessionData.startTime || null,
+                      timeSlots: sessionData.timeSlots,
+                    },
+                  ],
+                  newStart,
+                  ds,
+                  {
+                    usesStartTimes: trip.startTimes.length > 0,
+                    selectedStartTime:
+                      trip.startTimes.length > 0 ? (startTime as string) : null,
+                    newTimeSlots: newTimeSlots,
+                  }
+                );
+
+                if (sessionConflict) {
+                  conflicts = true;
+                  console.log(
+                    "📍 [BOOKING CREATE] PaymentSession conflict detected",
+                    {
+                      sessionId: session.id,
+                      charterId: trip.charter.id,
+                      date: d.toISOString(),
+                    }
+                  );
+                  break;
+                }
+              }
+            }
 
             if (conflicts) {
               throw new Error("BOOKING_CONFLICT");

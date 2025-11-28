@@ -75,6 +75,7 @@ function convertTrip(backendTrip: BackendTrip): Trip {
     duration: `${backendTrip.durationHours} hour${
       backendTrip.durationHours !== 1 ? "s" : ""
     }`,
+    durationHours: backendTrip.durationHours, // Include numeric duration for calculations
     description: backendTrip.description || undefined,
     startTimes,
     maxAnglers: backendTrip.maxAnglers,

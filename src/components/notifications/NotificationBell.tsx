@@ -9,17 +9,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { useNotificationContext } from "./NotificationProvider";
 
 interface NotificationBellProps {
   className?: string;
 }
 
 export function NotificationBell({ className }: NotificationBellProps) {
-  const { unreadCount } = useNotifications();
+  const { unreadCount } = useNotificationContext();
   const hasUnread = unreadCount > 0;
 
   return (

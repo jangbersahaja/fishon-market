@@ -13,6 +13,7 @@ interface Trip {
   id?: string;
   name: string;
   duration?: string;
+  durationHours?: number; // Duration in hours (numeric) - for overlap calculations
   description?: string;
   price: number;
   priceOverride?: number; // Admin's active price override
@@ -34,24 +35,42 @@ interface TripSelectionCardProps {
 }
 
 /**
- * Check if a trip start time conflicts with unavailable time ranges
+ * Parse duration string (e.g. "4 hours", "8 hours") to numeric hours
+ * Fallback to 1 hour if parsing fails
  */
-function isTimeInConflict(
+function parseDurationToHours(duration?: string): number {
+  if (!duration) return 1;
+  const match = duration.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+}
+
+/**
+ * Check if a trip's time range conflicts with unavailable time ranges
+ *
+ * Properly detects overlaps by comparing the full trip time range
+ * (startTime → startTime + duration) against blocked ranges.
+ */
+function isTripTimeRangeInConflict(
   tripStartTime: string,
+  tripDurationHours: number,
   unavailableRanges: { startTime: string; endTime: string }[]
 ): boolean {
   const [tripHour, tripMin] = tripStartTime.split(":").map(Number);
-  const tripMinutes = tripHour * 60 + tripMin;
+  const tripStartMinutes = tripHour * 60 + tripMin;
+  const tripEndMinutes = tripStartMinutes + tripDurationHours * 60;
 
   return unavailableRanges.some((range) => {
     const [startHour, startMin] = range.startTime.split(":").map(Number);
     const [endHour, endMin] = range.endTime.split(":").map(Number);
 
-    const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
+    const blockedStartMinutes = startHour * 60 + startMin;
+    const blockedEndMinutes = endHour * 60 + endMin;
 
-    // Check if trip start time falls within unavailable range
-    return tripMinutes >= startMinutes && tripMinutes < endMinutes;
+    // Two ranges overlap if: start1 < end2 AND start2 < end1
+    return (
+      tripStartMinutes < blockedEndMinutes &&
+      blockedStartMinutes < tripEndMinutes
+    );
   });
 }
 
@@ -68,14 +87,31 @@ export default function TripSelectionCard({
   const t = useTranslations("booking.checkout.tripSelection");
 
   // Calculate trip availability based on time-based unavailability
+  // For multi-day bookings, check ALL dates in the range
   const tripsWithAvailability = useMemo(() => {
-    const selectedDatePartial =
-      selectedDate && partialAvailability
-        ? partialAvailability.get(selectedDate)
-        : undefined;
+    // Generate all dates in the booking range
+    const getDatesInRange = (startDate: string, numDays: number): string[] => {
+      const dates: string[] = [];
+      const [year, month, day] = startDate.split("-").map(Number);
+      const start = new Date(year, month - 1, day);
 
-    if (!selectedDatePartial) {
-      // No time-based unavailability - all trips available
+      for (let i = 0; i < numDays; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dayStr = String(d.getDate()).padStart(2, "0");
+        dates.push(`${y}-${m}-${dayStr}`);
+      }
+      return dates;
+    };
+
+    const datesToCheck = selectedDate
+      ? getDatesInRange(selectedDate, days)
+      : [];
+
+    // If no partial availability data, all trips available
+    if (!partialAvailability || datesToCheck.length === 0) {
       return trips.map((trip) => ({
         trip,
         isAvailable: true,
@@ -83,28 +119,56 @@ export default function TripSelectionCard({
       }));
     }
 
-    // Check each trip against unavailable time ranges
+    // Check each trip against unavailable time ranges across ALL dates
     return trips.map((trip) => {
       // If trip has no start times defined, assume available
       if (!trip.startTimes || trip.startTimes.length === 0) {
         return { trip, isAvailable: true, availableStartTimes: [] };
       }
 
-      // Filter available start times
-      const availableStartTimes = trip.startTimes.filter(
-        (startTime) =>
-          !isTimeInConflict(
+      // Get trip duration in hours
+      const durationHours =
+        trip.durationHours ?? parseDurationToHours(trip.duration);
+
+      // Check first day for time conflicts
+      const firstDayPartial = partialAvailability.get(datesToCheck[0]);
+
+      // Filter start times that don't conflict
+      const availableStartTimes = trip.startTimes.filter((startTime) => {
+        // Check first day conflict
+        if (firstDayPartial) {
+          const hasFirstDayConflict = isTripTimeRangeInConflict(
             startTime,
-            selectedDatePartial.unavailableTimeRanges
-          )
-      );
+            durationHours,
+            firstDayPartial.unavailableTimeRanges
+          );
+          if (hasFirstDayConflict) return false;
+        }
+
+        // For multi-day: check if THIS SPECIFIC start time is booked on any other day
+        // Only block if the same trip slot is already booked
+        if (days > 1) {
+          for (let i = 1; i < datesToCheck.length; i++) {
+            const dayPartial = partialAvailability.get(datesToCheck[i]);
+            if (dayPartial) {
+              // Check if this specific start time is booked on this day
+              const hasConflictingSlot = dayPartial.unavailableTimeRanges.some(
+                (range) => range.bookedStartTime === startTime
+              );
+              if (hasConflictingSlot) return false;
+            }
+          }
+        }
+
+        return true;
+      });
 
       // Trip is available if at least one start time is available
       const isAvailable = availableStartTimes.length > 0;
 
       return { trip, isAvailable, availableStartTimes };
     });
-  }, [trips, selectedDate, partialAvailability]);
+  }, [trips, selectedDate, days, partialAvailability]);
 
   // Early return after all hooks
   if (!trips || trips.length === 0) return null;
