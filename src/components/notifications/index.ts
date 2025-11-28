@@ -3,6 +3,11 @@ export { NotificationDropdown } from "./NotificationDropdown";
 export { NotificationErrorBoundary } from "./NotificationErrorBoundary";
 export { NotificationItem } from "./NotificationItem";
 export {
+  NotificationProvider,
+  useNotificationContext,
+} from "./NotificationProvider";
+export type { Notification } from "./NotificationProvider";
+export {
   NotificationListSkeleton,
   NotificationSkeleton,
 } from "./NotificationSkeleton";

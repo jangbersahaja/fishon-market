@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import {
+  capturePayment,
   createPaymentIntent,
   type PaymentMethod,
 } from "@/lib/payment/payment-gateway";
@@ -136,7 +137,8 @@ export async function POST(req: Request) {
         );
       }
 
-      // Process card tokenization
+      // Step 1: Tokenize the card
+      console.log("💳 [MANUAL PAY] Tokenizing card for booking:", id);
       const paymentResult = await createPaymentIntent({
         bookingId: booking.id,
         amount,
@@ -165,15 +167,69 @@ export async function POST(req: Request) {
         );
       }
 
-      // Card tokenized successfully - mark as PAYMENT_AUTHORIZED
+      console.log("✅ [MANUAL PAY] Card tokenized, now capturing payment");
+
+      // Step 2: Immediately capture the payment (captain already approved in MANUAL flow)
+      const captureResult = await capturePayment(
+        paymentResult.paymentIntentId!,
+        amount,
+        booking.id
+      );
+
+      if (!captureResult.success) {
+        console.error("❌ Card capture failed:", captureResult.error);
+        return NextResponse.json(
+          {
+            error:
+              captureResult.error ||
+              "Payment was declined. Please try a different card or payment method.",
+          },
+          { status: 400 }
+        );
+      }
+
+      console.log("✅ [MANUAL PAY] Payment captured successfully:", {
+        bookingId: id,
+        transactionId: captureResult.transactionId,
+      });
+
+      // Calculate financial breakdown
+      const { prismaCaptain } = await import("@/lib/database/prisma-captain");
+      const charter = await (prismaCaptain as any).charter.findUnique({
+        where: { id: booking.charterId },
+        select: { pricingPlan: true },
+      });
+
+      const commissionRate =
+        charter?.pricingPlan === "GOLD"
+          ? 0.05
+          : charter?.pricingPlan === "SILVER"
+            ? 0.08
+            : 0.1; // BASIC
+
+      const platformFee = Math.round(amount * commissionRate * 100) / 100;
+      const captainEarnings = amount - platformFee;
+
+      // Card captured successfully - mark as PAID
       await prisma.booking.update({
         where: { id },
         data: {
-          status: "PAYMENT_AUTHORIZED",
+          status: "PAID",
           paymentMethod: "CARD",
+          paymentFlow: "TOKENIZED",
           paymentIntentId: paymentResult.paymentIntentId,
+          paymentTransactionId: captureResult.transactionId,
+          paidAt: new Date(),
+          platformFee,
+          captainEarnings,
+          payoutStatus: "PENDING",
         },
       });
+
+      const updated = await prisma.booking.findUnique({ where: { id } });
+
+      // Trigger side effects (notifications, emails, webhooks)
+      await triggerPaymentSideEffects(updated!, session.user.id);
 
       return NextResponse.json({
         ok: true,

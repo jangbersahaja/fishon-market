@@ -9,6 +9,32 @@
 import { prisma } from "@/lib/database/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Extract time in HH:MM format in Malaysia timezone (UTC+8)
+ * This ensures consistent time display regardless of server timezone.
+ */
+function getMalaysiaTime(date: Date): string {
+  return date.toLocaleTimeString("en-GB", {
+    timeZone: "Asia/Kuala_Lumpur",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+/**
+ * Extract date in YYYY-MM-DD format in Malaysia timezone (UTC+8)
+ */
+function getMalaysiaDate(date: Date): string {
+  const parts = date.toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kuala_Lumpur",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return parts; // en-CA gives YYYY-MM-DD format
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -82,6 +108,7 @@ export async function GET(
       date: string;
       startTime: string;
       endTime: string;
+      bookedStartTime?: string; // Original trip start time for granular blocking
       isFullDay: boolean;
     }> = [];
 
@@ -111,22 +138,64 @@ export async function GET(
         }>;
 
         timeSlots.forEach((slot) => {
-          const slotDate = new Date(slot.date);
-          if (slotDate >= startDate && slotDate <= endDate) {
-            // Extract HH:MM from ISO datetime strings
-            const startTime = new Date(slot.startDateTime)
-              .toTimeString()
-              .substring(0, 5);
-            const endTime = new Date(slot.endDateTime)
-              .toTimeString()
-              .substring(0, 5);
+          const slotStartDate = new Date(slot.startDateTime);
+          const slotEndDate = new Date(slot.endDateTime);
 
-            timeBasedBlocks.push({
-              date: slot.date.split("T")[0], // YYYY-MM-DD
-              startTime,
-              endTime,
-              isFullDay: false,
-            });
+          // Use Malaysia timezone for consistent time extraction
+          const startTimeStr = getMalaysiaTime(slotStartDate);
+          const endTimeStr = getMalaysiaTime(slotEndDate);
+          const startDateMY = getMalaysiaDate(slotStartDate);
+          const endDateMY = getMalaysiaDate(slotEndDate);
+
+          // Check if this is an overnight booking (ends on a different day in Malaysia time)
+          const isOvernight = startDateMY !== endDateMY;
+
+          // Track the original booked start time for granular multi-day blocking
+          const bookedStartTime = booking.startTime || startTimeStr;
+
+          if (isOvernight) {
+            // OVERNIGHT BOOKING: Split into two blocks
+            // 1. Start day: startTime to 23:59
+            if (
+              startDateMY >= getMalaysiaDate(startDate) &&
+              startDateMY <= getMalaysiaDate(endDate)
+            ) {
+              timeBasedBlocks.push({
+                date: startDateMY,
+                startTime: startTimeStr,
+                endTime: "23:59",
+                bookedStartTime,
+                isFullDay: false,
+              });
+            }
+
+            // 2. End day: 00:00 to endTime
+            if (
+              endDateMY >= getMalaysiaDate(startDate) &&
+              endDateMY <= getMalaysiaDate(endDate)
+            ) {
+              timeBasedBlocks.push({
+                date: endDateMY,
+                startTime: "00:00",
+                endTime: endTimeStr,
+                bookedStartTime,
+                isFullDay: false,
+              });
+            }
+          } else {
+            // Same-day booking: single block
+            if (
+              startDateMY >= getMalaysiaDate(startDate) &&
+              startDateMY <= getMalaysiaDate(endDate)
+            ) {
+              timeBasedBlocks.push({
+                date: startDateMY,
+                startTime: startTimeStr,
+                endTime: endTimeStr,
+                bookedStartTime,
+                isFullDay: false,
+              });
+            }
           }
         });
       } else {
@@ -134,11 +203,12 @@ export async function GET(
         for (let i = 0; i < booking.days; i++) {
           const blockedDate = new Date(startYear, startMonth, startDay + i);
 
-          if (blockedDate >= startDate && blockedDate <= endDate) {
-            const y = blockedDate.getFullYear();
-            const m = String(blockedDate.getMonth() + 1).padStart(2, "0");
-            const day = String(blockedDate.getDate()).padStart(2, "0");
-            fullDayBlocks.add(`${y}-${m}-${day}`);
+          const blockedDateMY = getMalaysiaDate(blockedDate);
+          const startDateMY = getMalaysiaDate(startDate);
+          const endDateMY = getMalaysiaDate(endDate);
+
+          if (blockedDateMY >= startDateMY && blockedDateMY <= endDateMY) {
+            fullDayBlocks.add(blockedDateMY);
           }
         }
       }

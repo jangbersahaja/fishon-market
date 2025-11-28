@@ -404,18 +404,30 @@ export default function CheckoutForm({
   }, [trips, tripIndex, startTimes, charterFlowType]);
 
   // Calculate disabled start times based on partial availability for selected date
+  // For multi-day bookings, check ALL dates in the range
   const disabledStartTimes = useMemo(() => {
     if (!date || !partialAvailability || !effectiveStartTimes) {
       return [];
     }
 
-    const datePartial = partialAvailability.get(date);
-    if (
-      !datePartial?.unavailableTimeRanges ||
-      datePartial.unavailableTimeRanges.length === 0
-    ) {
-      return [];
-    }
+    // Generate all dates in the booking range
+    const getDatesInRange = (startDate: string, numDays: number): string[] => {
+      const dates: string[] = [];
+      const [year, month, day] = startDate.split("-").map(Number);
+      const start = new Date(year, month - 1, day);
+
+      for (let i = 0; i < numDays; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dayStr = String(d.getDate()).padStart(2, "0");
+        dates.push(`${y}-${m}-${dayStr}`);
+      }
+      return dates;
+    };
+
+    const datesToCheck = getDatesInRange(date, days);
 
     // Helper: Check if a time falls within unavailable ranges
     const isTimeInConflict = (
@@ -435,19 +447,45 @@ export default function CheckoutForm({
       });
     };
 
-    const disabled = effectiveStartTimes.filter((time) =>
-      isTimeInConflict(time, datePartial.unavailableTimeRanges)
-    );
+    // Check first day for time conflicts
+    const firstDayPartial = partialAvailability.get(date);
+
+    // Filter start times that conflict with ANY date in the range
+    const disabled = effectiveStartTimes.filter((time) => {
+      // Check first day time conflict
+      if (firstDayPartial?.unavailableTimeRanges?.length) {
+        if (isTimeInConflict(time, firstDayPartial.unavailableTimeRanges)) {
+          return true;
+        }
+      }
+
+      // For multi-day: check if THIS SPECIFIC start time is booked on any other day
+      // Only block if the same trip slot is already booked
+      if (days > 1) {
+        for (let i = 1; i < datesToCheck.length; i++) {
+          const dayPartial = partialAvailability.get(datesToCheck[i]);
+          if (dayPartial?.unavailableTimeRanges?.length) {
+            // Check if this specific start time is booked on this day
+            const hasConflictingSlot = dayPartial.unavailableTimeRanges.some(
+              (range) => range.bookedStartTime === time
+            );
+            if (hasConflictingSlot) return true;
+          }
+        }
+      }
+
+      return false;
+    });
 
     console.log("[CheckoutForm] Disabled start times:", {
       date,
-      unavailableRanges: datePartial.unavailableTimeRanges,
-      effectiveStartTimes,
+      days,
+      datesToCheck,
       disabled,
     });
 
     return disabled;
-  }, [date, partialAvailability, effectiveStartTimes]);
+  }, [date, days, partialAvailability, effectiveStartTimes]);
 
   const canSubmit = useMemo(() => {
     // Start time is always required for all charters

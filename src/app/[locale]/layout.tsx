@@ -1,6 +1,7 @@
 import AuthModal from "@/components/auth/AuthModal";
 import { AuthModalProvider } from "@/components/auth/AuthModalContext";
 import Chrome from "@/components/layout/Chrome";
+import { NotificationProvider } from "@/components/notifications/NotificationProvider";
 import { CampaignContainer } from "@/components/promotional";
 import SessionProvider from "@/components/shared/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
@@ -97,16 +98,18 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SessionProvider session={session}>
-            <AuthModalProvider>
-              <Chrome>{children}</Chrome>
-              <AuthModal />
-              <Toaster />
-              {/* Global bottom bar campaign placement */}
-              <CampaignContainer
-                placementKey="global-bottom-bar"
-                variant="bar"
-              />
-            </AuthModalProvider>
+            <NotificationProvider>
+              <AuthModalProvider>
+                <Chrome>{children}</Chrome>
+                <AuthModal />
+                <Toaster />
+                {/* Global bottom bar campaign placement */}
+                <CampaignContainer
+                  placementKey="global-bottom-bar"
+                  variant="bar"
+                />
+              </AuthModalProvider>
+            </NotificationProvider>
           </SessionProvider>
         </NextIntlClientProvider>
       </body>

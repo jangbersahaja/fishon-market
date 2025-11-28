@@ -7,7 +7,7 @@
 
 "use client";
 
-import type { Notification } from "@/hooks/useNotifications";
+import type { Notification } from "@/components/notifications/NotificationProvider";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import {

@@ -2,10 +2,10 @@
 
 import { NotificationErrorBoundary } from "@/components/notifications/NotificationErrorBoundary";
 import { NotificationItem } from "@/components/notifications/NotificationItem";
+import { useNotificationContext } from "@/components/notifications/NotificationProvider";
 import { NotificationListSkeleton } from "@/components/notifications/NotificationSkeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNotifications } from "@/hooks/useNotifications";
 import { Loader2, Settings } from "lucide-react";
 import { useLocale } from "next-intl";
 import Link from "next/link";
@@ -29,7 +29,7 @@ function NotificationsContent() {
     markAllAsRead,
     hasMore,
     fetchMore,
-  } = useNotifications();
+  } = useNotificationContext();
 
   const [filter, setFilter] = useState<"all" | "unread">("all");
 

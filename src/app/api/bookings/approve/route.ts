@@ -1,5 +1,9 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import {
+  calculatePaymentDeadline,
+  formatPaymentDeadline,
+} from "@/lib/helpers/booking-helpers";
 import { sendBookingApprovedEmail } from "@/lib/services/email-service";
 import { sendMessage } from "@/lib/services/message-service";
 import { bookingApprovedMessage } from "@/lib/services/message-templates";
@@ -70,12 +74,37 @@ export async function POST(req: Request) {
     }
 
     // --- MANUAL FLOW: PENDING → AWAITING_PAYMENT ---
-    // Transition to AWAITING_PAYMENT with 48-hour payment deadline
+    // Transition to AWAITING_PAYMENT with trip-date-aware payment deadline
     const finalStatus = "AWAITING_PAYMENT" as const;
-    const PAYMENT_DEADLINE_HOURS = 48;
-    const paymentDeadline = new Date(
-      Date.now() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000
+
+    // Calculate payment deadline anchored to trip date
+    // This ensures payment deadline never extends past the trip start
+    const {
+      paymentDeadline,
+      hoursUntilDeadline,
+      wasAdjusted,
+      adjustmentReason,
+    } = calculatePaymentDeadline(
+      booking.date,
+      booking.startTime,
+      6 // 6 hours buffer before trip
     );
+
+    // Log if deadline was adjusted for debugging
+    if (wasAdjusted) {
+      console.log(
+        `⏰ [APPROVE] Payment deadline adjusted for booking ${id}: ${adjustmentReason}`,
+        {
+          tripDate: booking.date.toISOString(),
+          startTime: booking.startTime,
+          paymentDeadline: paymentDeadline.toISOString(),
+          hoursUntilDeadline,
+        }
+      );
+    }
+
+    // Format deadline for notifications
+    const deadlineText = formatPaymentDeadline(hoursUntilDeadline);
 
     const updated = await prisma.booking.update({
       where: { id },
@@ -167,12 +196,12 @@ export async function POST(req: Request) {
 
         const trip = await getTripById(updated.tripId);
         if (trip) {
-          // Manual flow: Captain approved, angler needs to pay within 48h
+          // Manual flow: Captain approved, angler needs to pay within deadline
           await createNotification({
             userId: recipientUserId,
             type: "BOOKING_APPROVED",
             title: "Booking Approved! 🎉",
-            message: `${trip.charter.name} approved your booking for ${updated.date.toISOString().slice(0, 10)}. Complete your payment within 48 hours to confirm your spot!`,
+            message: `${trip.charter.name} approved your booking for ${updated.date.toISOString().slice(0, 10)}. Complete your payment within ${deadlineText} to confirm your spot!`,
             actionUrl: `/my/book/payment/${updated.id}`,
             actionLabel: "Complete Payment",
             bookingId: updated.id,
@@ -181,6 +210,8 @@ export async function POST(req: Request) {
               charterName: trip.charter.name,
               tripDate: updated.date.toISOString().slice(0, 10),
               paymentDeadline: paymentDeadline.toISOString(),
+              hoursUntilDeadline,
+              wasAdjusted,
             },
           });
         }

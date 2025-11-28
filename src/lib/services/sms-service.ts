@@ -363,7 +363,7 @@ interface SendBookingApprovedSMSParams {
 export async function sendBookingApprovedSMS(
   params: SendBookingApprovedSMSParams
 ) {
-  const message = `Berita baik! Tempahan anda untuk ${params.charterName} pada ${params.tripDate} telah diluluskan. Sila buat bayaran untuk sahkan.`;
+  const message = `Tempahan anda untuk ${params.charterName} pada ${params.tripDate} telah diluluskan. Sila buat bayaran untuk sahkan.`;
   return sendSMSViaExabytes(params.phone, message, {
     messageType: "BOOKING_APPROVED",
     userId: params.userId,
