@@ -1,6 +1,7 @@
 "use client";
 
 import { trackEvent } from "@/lib/analytics-tracking";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface VideoGalleryItem {
@@ -84,15 +85,20 @@ export function VideoGallery({
   if (!items.length) return null;
 
   return (
-    <div className={cx("w-full overflow-hidden", className)}>
-      <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 h-[200px] sm:h-[240px] items-stretch no-scrollbar overscroll-x-contain overscroll-y-none snap-x snap-mandatory min-w-0 carousel-scroll">
+    <div
+      className={cx(
+        "w-full overflow-hidden rounded-2xl bg-white shadow-lg border-3 border-white/20",
+        className
+      )}
+    >
+      <div className="flex gap-1 overflow-x-auto overflow-y-hidden h-[200px] sm:h-[240px] items-stretch no-scrollbar overscroll-x-contain overscroll-y-none snap-x snap-mandatory min-w-0 carousel-scroll">
         {items.map((v, i) => (
           <button
             key={v.url + i}
             type="button"
             aria-label={`Play video ${i + 1}`}
             onClick={() => open(i)}
-            className="relative h-full overflow-hidden rounded-lg group w-44 shrink-0 bg-slate-200 snap-start"
+            className="relative h-full overflow-hidden group w-44 shrink-0 bg-slate-200 snap-start"
           >
             {/* Thumbnail */}
             <VideoThumb src={v.thumbnailUrl} />
@@ -158,18 +164,15 @@ function VideoThumb({ src }: VideoThumbProps) {
     );
   }
   return (
-    <img
+    <Image
       src={src}
       alt="Video thumbnail"
-      style={{
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-        position: "absolute",
-        inset: 0,
-      }}
+      fill
+      style={{ objectFit: "cover" }}
       className="object-cover"
       onError={() => setErrored(true)}
+      sizes="(max-width: 640px) 176px, 128px"
+      priority
     />
   );
 }

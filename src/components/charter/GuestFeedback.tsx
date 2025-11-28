@@ -39,7 +39,7 @@ export function GuestFeedback({
   const highlightBadges = badgeSummary.slice(0, 3).map((item) => item.badge);
 
   return (
-    <section className="p-5 mt-8 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="p-5 mt-5 bg-white shadow-lg rounded-2xl">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>

@@ -107,12 +107,12 @@ export function PhotoGallery({
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,2fr)] sm:auto-rows-[minmax(0,1fr)]">
+      <div className="grid gap-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,2fr)] sm:auto-rows-[minmax(0,1fr)]">
         {/* Main tile (left) */}
         <button
           type="button"
           onClick={() => openAt(0)}
-          className="relative w-full h-120 overflow-hidden bg-gray-100 group rounded-xl sm:row-span-2 sm:h-auto sm:min-h-[500px]"
+          className="relative w-full h-120 overflow-hidden bg-gray-100 group sm:row-span-2 sm:h-auto sm:min-h-[500px]"
           aria-label={t("openGallery")}
         >
           <Image
@@ -165,7 +165,7 @@ export function PhotoGallery({
         </button>
 
         {/* Desktop right column (up to 4 extra tiles) */}
-        <div className="hidden sm:grid sm:row-span-2 sm:grid-cols-2 sm:grid-rows-2 sm:gap-3 sm:h-full">
+        <div className="hidden sm:grid sm:row-span-2 sm:grid-cols-2 sm:grid-rows-2 sm:gap-1 sm:h-full">
           {tiles.slice(1).map((m: (typeof media)[number], i: number) => {
             const idx = i + 1;
             const isLast =
@@ -175,7 +175,7 @@ export function PhotoGallery({
                 key={m.src + idx}
                 type="button"
                 onClick={() => openAt(idx)}
-                className="relative flex w-full h-full overflow-hidden bg-gray-100 group rounded-xl"
+                className="relative flex w-full h-full overflow-hidden bg-gray-100 group"
                 aria-label={t("openItem", { number: idx + 1 })}
               >
                 <Image
@@ -200,7 +200,7 @@ export function PhotoGallery({
       </div>
 
       {/* Mobile horizontal scroller */}
-      <div className="flex gap-2 mt-2 overflow-x-auto sm:hidden">
+      <div className="flex gap-1 mt-1 overflow-x-auto sm:hidden">
         {media.map((m: (typeof media)[number], idx: number) => (
           <button
             key={m.src + idx}
@@ -208,7 +208,7 @@ export function PhotoGallery({
             onClick={() => openAt(idx)}
             aria-label={t("openItem", { number: idx + 1 })}
             className={clsx(
-              "relative h-28 w-28 shrink-0 overflow-hidden rounded-lg border bg-gray-100",
+              "relative h-28 w-28 shrink-0 border bg-gray-100",
               idx === activeIdx ? "border-[#ec2227]" : "border-transparent"
             )}
           >

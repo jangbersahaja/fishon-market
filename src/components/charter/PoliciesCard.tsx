@@ -23,8 +23,10 @@ export default function PoliciesCard({ policies, pickup }: PoliciesCardProps) {
   if (!policies && !pickup) return null;
 
   return (
-    <section className="p-5 mt-6 bg-white border rounded-2xl border-black/10 sm:p-6">
-      <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>
+    <section className="p-5 bg-white shadow-lg rounded-2xl">
+      <h3 className="pb-2 text-base font-semibold border-b border-gray-200 sm:text-lg">
+        {t("title")}
+      </h3>
       <div className="grid grid-cols-1 gap-4 mt-2 text-sm text-gray-700 sm:grid-cols-2">
         {policies && (
           <ul className="space-y-1">

@@ -60,7 +60,11 @@
     "siteMap": "Site Map",
     "allDestination": "All Destination",
     "becomeCaptain": "Become a Captain",
-    "listYourBoat": "List Your Boat"
+    "listYourBoat": "List Your Boat",
+    "fishonCaptain": "Fishon Captain",
+    "manageYourCharter": "Manage Your Charter",
+    "listYourCharter": "List Your Charter",
+    "destinations": "Destinations"
   },
   "home": {
     "title": "Fishon — Malaysia's Fishing & Charter Booking",
@@ -154,6 +158,7 @@
     "moreTrips": "+ {count} more",
     "yearsExp": "{years} yrs exp",
     "capacity": "{count} pax",
+    "unavailableOnDate": "Not available on this date",
     "defaultDescription": "A great fishing charter operating in Malaysia. Trips available for lakes, rivers, inshore and offshore.",
     "gallery": {
       "viewAll": "View all",
@@ -307,9 +312,14 @@
       "selectTrip": "Select Trip",
       "forDays": "for {count} day{plural}",
       "startTimes": "Start Times:",
+      "availableTimes": "Available:",
       "seeDetails": "See Details",
       "checkAvailability": "Check Availability",
-      "upToAnglers": "Up to {count} anglers"
+      "upToAnglers": "Up to {count} anglers",
+      "dateNotAvailable": "Date not available",
+      "noTripsAvailable": "No trips available",
+      "unavailable": "Unavailable",
+      "limitedAvailability": "Limited"
     }
   },
   "booking": {
@@ -355,6 +365,10 @@
     "checkout": {
       "pageTitle": "Complete Your Booking",
       "pageSubtitle": "Review your trip details and tell the captain about yourself",
+      "paymentCancelledTitle": "Payment Cancelled",
+      "paymentCancelledMessage": "Your payment was cancelled. No charges were made. You can try again when you're ready.",
+      "sessionExpiredTitle": "Session Expired",
+      "sessionExpiredMessage": "Your payment session expired. Please submit your booking details again.",
       "manualNoticeTitle": "Captain approval required — no upfront payment",
       "manualNoticeDescription": "Submit your request now and pay only after the captain approves (typically within 48 hours).",
       "manualNoticeGuestNote": "Guests will verify their email with a TAC code before the request is sent.",

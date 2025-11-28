@@ -257,8 +257,8 @@ export default function EnhancedReviewsList({
   if (!reviews?.length) return null;
 
   return (
-    <section className="mt-6">
-      <div className="p-5 bg-white border rounded-2xl border-black/10 sm:p-6">
+    <section className="mt-5">
+      <div className="p-5 bg-white shadow-lg rounded-2xl">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>

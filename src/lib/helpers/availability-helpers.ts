@@ -399,6 +399,95 @@ export function calculatePartialAvailability(
 }
 
 /**
+ * Check if a charter is available on a specific date
+ *
+ * Checks:
+ * 1. Advance booking requirement (48h for all, 72h for offshore)
+ * 2. Schedule (operational days)
+ * 3. Unavailability periods
+ *
+ * Does NOT check existing bookings (that requires server-side DB access).
+ *
+ * @param date - Date to check (YYYY-MM-DD string or Date object)
+ * @param schedule - Charter operational schedule
+ * @param unavailability - Captain-defined unavailable periods
+ * @param fishingType - Type of fishing (e.g., "offshore", "inshore") for advance booking check
+ * @returns Object with availability status and reason
+ */
+export function isCharterAvailableOnDate(
+  date: string | Date,
+  schedule: CharterSchedule | null | undefined,
+  unavailability: UnavailabilityPeriod[] | null | undefined,
+  fishingType?: string | null
+): { isAvailable: boolean; reason?: string } {
+  // Parse date
+  const checkDate =
+    typeof date === "string"
+      ? (() => {
+          const [y, m, d] = date.split("-").map(Number);
+          return new Date(y, m - 1, d);
+        })()
+      : date;
+
+  // 0. Check advance booking requirement (48h for all, 72h for offshore)
+  const now = new Date();
+  const isOffshore = fishingType?.toLowerCase() === "offshore";
+  const hoursRequired = isOffshore ? 72 : 48;
+  const minBookableTime = new Date(
+    now.getTime() + hoursRequired * 60 * 60 * 1000
+  );
+
+  // Compare dates at midnight for fair comparison
+  const checkDateMidnight = new Date(checkDate);
+  checkDateMidnight.setHours(0, 0, 0, 0);
+  const minBookableMidnight = new Date(minBookableTime);
+  minBookableMidnight.setHours(0, 0, 0, 0);
+
+  if (checkDateMidnight < minBookableMidnight) {
+    return {
+      isAvailable: false,
+      reason: isOffshore ? "advance_booking_72h" : "advance_booking_48h",
+    };
+  }
+
+  // 1. Check schedule (operational days)
+  if (isDateBlockedBySchedule(checkDate, schedule)) {
+    return { isAvailable: false, reason: "not_operational" };
+  }
+
+  // 2. Check unavailability periods (only all-day blocks)
+  if (unavailability && unavailability.length > 0) {
+    const dateStr = formatDateYMD(checkDate);
+
+    for (const period of unavailability) {
+      // Only check all-day blocks
+      const isAllDayBlock = period.isAllDay !== false;
+      if (!isAllDayBlock) continue;
+
+      // Parse period dates
+      const periodStartStr =
+        typeof period.startDate === "string"
+          ? period.startDate.split("T")[0]
+          : formatDateYMD(period.startDate);
+      const periodEndStr =
+        typeof period.endDate === "string"
+          ? period.endDate.split("T")[0]
+          : formatDateYMD(period.endDate);
+
+      // Check if date falls within period
+      if (dateStr >= periodStartStr && dateStr <= periodEndStr) {
+        return {
+          isAvailable: false,
+          reason: period.reason || "unavailable",
+        };
+      }
+    }
+  }
+
+  return { isAvailable: true };
+}
+
+/**
  * ==========================================
  * BOOKING CONFLICT CHECKING (SERVER-ONLY)
  * ==========================================

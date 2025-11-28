@@ -14,8 +14,8 @@ export default function AboutSection({
   const t = useTranslations("charter.about");
 
   return (
-    <section className="mt-6">
-      <h3 className="text-base font-semibold sm:text-lg">
+    <section className="p-5 bg-white shadow-lg rounded-2xl">
+      <h3 className="pb-2 text-base font-semibold border-b border-gray-200 sm:text-lg">
         {title || t("title")}
       </h3>
       <div className="mt-2 text-sm leading-6 prose-sm prose text-gray-700 max-w-none">
@@ -38,7 +38,6 @@ export default function AboutSection({
           </p>
         ))}
       </div>
-      <div className="h-px mt-4 bg-black/10" />
     </section>
   );
 }

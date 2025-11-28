@@ -69,7 +69,7 @@ export default async function Home() {
       <main className="flex flex-col items-center w-full gap-8 mb-24 sm:items-start md:gap-10 ">
         {" "}
         {/* Home page with hero section */}
-        <section className="relative w-full h-[40vh] md:h-[50vh] lg:h-[60vh]">
+        <section className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh]">
           {/* wallpaper */}
           <Image
             src="/images/hero/hero-wallpaper.png"
@@ -81,20 +81,20 @@ export default async function Home() {
           />
           <div className="absolute bottom-0 w-full bg-gradient-to-t from-[#ec2227] to-white/0 h-1/4"></div>
           <div className="absolute flex justify-center w-full bottom-10">
-            <div className="flex flex-col w-full p-5 max-w-7xl">
+            <div className="flex flex-col w-full gap-3 p-5 mb-5 max-w-7xl">
               <h2 className="text-4xl font-bold text-white md:text-6xl drop-shadow-lg">
                 {t("discoverTitle")} <br /> {t("discoverTitleBreak")}
               </h2>
-              <h3 className="mt-2 text-xl font-bold text-white md:text-3xl drop-shadow-lg">
+              <h3 className="text-xl font-bold text-white md:text-3xl drop-shadow-lg">
                 {t("bookYourNext")}
               </h3>
             </div>
           </div>
           {/* overlayed search box */}
-          <div className="absolute inset-x-0 px-3 py-3 mx-auto -bottom-10 lg:-bottom-10 max-w-7xl">
+          <div className="absolute inset-x-0 p-5 mx-auto -bottom-10 lg:-bottom-10 max-w-7xl">
             <Suspense
               fallback={
-                <div className="flex flex-col w-full gap-3 p-3 bg-white rounded-lg shadow-lg min-h-16" />
+                <div className="flex flex-col w-full gap-3 p-5 bg-white rounded-lg shadow-lg min-h-16" />
               }
             >
               <SearchBox />

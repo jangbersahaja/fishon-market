@@ -212,7 +212,7 @@ const SearchBox = ({ className = "" }: { className?: string }) => {
       <form
         onSubmit={onSubmit}
         autoComplete="off"
-        className="w-full flex flex-col bg-white p-2 rounded-2xl gap-3 shadow-2xl ring-2 ring-[#ec2227]/60 hover:ring-[#ec2227] transition-all duration-300"
+        className="w-full flex flex-col bg-white p-2 rounded-2xl gap-3 shadow-lg ring-2 ring-[#ec2227]/60 hover:ring-[#ec2227] transition-all duration-300"
       >
         <div className="flex flex-col w-full lg:flex-row">
           {/* Destination */}

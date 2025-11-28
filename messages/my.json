@@ -60,7 +60,11 @@
     "siteMap": "Peta Laman",
     "allDestination": "Semua Destinasi",
     "becomeCaptain": "Jadi Kapten",
-    "listYourBoat": "Senaraikan Charter Anda"
+    "listYourBoat": "Senaraikan Charter Anda",
+    "fishonCaptain": "Fishon Captain",
+    "manageYourCharter": "Urus Charter Anda",
+    "listYourCharter": "Senaraikan Charter Anda",
+    "destinations": "Destinasi"
   },
   "home": {
     "title": "Fishon — Platform Tempahan Memancing & Charter Malaysia",
@@ -154,6 +158,7 @@
     "moreTrips": "+ {count} lagi",
     "yearsExp": "{years} thn pglmn",
     "capacity": "{count} org",
+    "unavailableOnDate": "Tidak tersedia pada tarikh ini",
     "defaultDescription": "Perkhidmatan pancing yang hebat beroperasi di Malaysia. Perjalanan tersedia untuk tasik, sungai, pesisir dan laut dalam.",
     "gallery": {
       "viewAll": "Lihat semua",
@@ -307,9 +312,14 @@
       "selectTrip": "Pilih Perjalanan",
       "forDays": "untuk {count} hari",
       "startTimes": "Masa Mula:",
+      "availableTimes": "Tersedia:",
       "seeDetails": "Lihat Butiran",
       "checkAvailability": "Semak Ketersediaan",
-      "upToAnglers": "Sehingga {count} pemancing"
+      "upToAnglers": "Sehingga {count} pemancing",
+      "dateNotAvailable": "Tarikh tidak tersedia",
+      "noTripsAvailable": "Tiada perjalanan tersedia",
+      "unavailable": "Tidak tersedia",
+      "limitedAvailability": "Terhad"
     }
   },
   "booking": {
@@ -355,6 +365,10 @@
     "checkout": {
       "pageTitle": "Lengkapkan Tempahan Anda",
       "pageSubtitle": "Semak butiran trip anda dan beritahu kapten tentang diri anda",
+      "paymentCancelledTitle": "Pembayaran Dibatalkan",
+      "paymentCancelledMessage": "Pembayaran anda telah dibatalkan. Tiada caj dikenakan. Anda boleh mencuba semula apabila bersedia.",
+      "sessionExpiredTitle": "Sesi Tamat Tempoh",
+      "sessionExpiredMessage": "Sesi pembayaran anda telah tamat. Sila hantar semula butiran tempahan anda.",
       "manualNoticeTitle": "Kelulusan kapten diperlukan — tiada bayaran awal",
       "manualNoticeDescription": "Hantar permintaan anda sekarang dan bayar hanya selepas kapten meluluskan (biasanya dalam 48 jam).",
       "manualNoticeGuestNote": "Tetamu akan mengesahkan emel mereka dengan kod TAC sebelum permintaan dihantar.",

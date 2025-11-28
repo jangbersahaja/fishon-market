@@ -70,7 +70,98 @@ export default async function PaymentReturnPage({
 
   console.log("✅ [PAYMENT RETURN] Hash verified successfully");
 
-  // Check if booking exists
+  // Check if this is a PaymentSession (AUTO + DIRECT flow) or a Booking (TOKENIZED flow)
+  // For AUTO + DIRECT, order_id is a PaymentSession.id, booking is created after successful payment
+  console.log(
+    "🔍 [PAYMENT RETURN] Looking up PaymentSession with ID:",
+    order_id
+  );
+
+  const paymentSession = await prisma.paymentSession.findUnique({
+    where: { id: order_id },
+    select: {
+      id: true,
+      status: true,
+      bookingData: true,
+    },
+  });
+
+  console.log("🔍 [PAYMENT RETURN] PaymentSession lookup result:", {
+    found: !!paymentSession,
+    sessionId: paymentSession?.id,
+    status: paymentSession?.status,
+  });
+
+  // If it's a PaymentSession and payment failed/cancelled
+  if (paymentSession) {
+    if (status_id !== "1") {
+      // Payment failed or cancelled - update session status
+      console.log("❌ [PAYMENT RETURN] Payment cancelled/failed for session", {
+        sessionId: order_id,
+        reason: msg,
+      });
+
+      await prisma.paymentSession.update({
+        where: { id: order_id },
+        data: { status: "FAILED" },
+      });
+
+      // Get charterId from booking data to redirect back to booking page
+      const bookingData = paymentSession.bookingData as any;
+      const charterId = bookingData?.charterId;
+
+      if (charterId) {
+        // Redirect back to charter booking page with message
+        redirect(
+          `/${locale}/book/${charterId}?payment=cancelled&message=${encodeURIComponent(
+            msg || "Payment was cancelled. You can try again when ready."
+          )}`
+        );
+      } else {
+        // Fallback to home if no charterId
+        redirect(
+          `/${locale}/home?payment=cancelled&message=${encodeURIComponent(
+            msg || "Payment was cancelled."
+          )}`
+        );
+      }
+    }
+
+    // Payment successful for PaymentSession - callback webhook should handle booking creation
+    // Just redirect to a holding page that will show success once callback processes
+    console.log(
+      "✅ [PAYMENT RETURN] Payment successful for session, awaiting callback",
+      {
+        sessionId: order_id,
+        transactionId: transaction_id,
+      }
+    );
+
+    // Check if callback already created the booking
+    // Look for a booking created from this session (by matching transaction ID)
+    const createdBooking = await prisma.booking.findFirst({
+      where: {
+        paymentTransactionId: transaction_id,
+      },
+      select: { id: true },
+    });
+
+    if (createdBooking) {
+      redirect(
+        `/${locale}/book/confirm?id=${createdBooking.id}&payment=success`
+      );
+    }
+
+    // Callback hasn't processed yet - redirect to a waiting state
+    // The confirm page will poll for the booking
+    redirect(
+      `/${locale}/book/payment/processing?session=${order_id}&tx=${transaction_id}`
+    );
+  }
+
+  // Check if booking exists (TOKENIZED flow where booking was created before payment)
+  console.log("🔍 [PAYMENT RETURN] Looking up Booking with ID:", order_id);
+
   const booking = await prisma.booking.findUnique({
     where: { id: order_id },
     select: {
@@ -83,11 +174,60 @@ export default async function PaymentReturnPage({
     },
   });
 
+  console.log("🔍 [PAYMENT RETURN] Booking lookup result:", {
+    found: !!booking,
+    bookingId: booking?.id,
+    status: booking?.status,
+  });
+
   if (!booking) {
-    console.error("❌ [PAYMENT RETURN] Booking not found", {
+    console.error("❌ [PAYMENT RETURN] Neither booking nor session found", {
       orderId: order_id,
+      orderIdLength: order_id.length,
+      orderIdType: typeof order_id,
+      transactionId: transaction_id,
+      statusId: status_id,
     });
-    redirect(`/${locale}/book/confirm?error=booking_not_found`);
+
+    // Last resort: try to find by transaction ID (in case order_id was corrupted)
+    const bookingByTx = await prisma.booking.findFirst({
+      where: { paymentTransactionId: transaction_id },
+      select: { id: true, charterId: true },
+    });
+
+    if (bookingByTx) {
+      console.log(
+        "🔍 [PAYMENT RETURN] Found booking by transaction ID:",
+        bookingByTx.id
+      );
+      if (status_id === "1") {
+        redirect(
+          `/${locale}/book/confirm?id=${bookingByTx.id}&payment=success`
+        );
+      } else {
+        redirect(`/${locale}/book/confirm?id=${bookingByTx.id}&payment=failed`);
+      }
+    }
+
+    // If payment was cancelled (status_id !== "1"), redirect to home with message
+    if (status_id !== "1") {
+      console.log(
+        "❌ [PAYMENT RETURN] Payment was cancelled, no matching records found"
+      );
+      redirect(
+        `/${locale}/home?payment=cancelled&message=${encodeURIComponent(
+          msg || "Payment was cancelled. You can try again when ready."
+        )}`
+      );
+    }
+
+    // Payment was successful but we can't find the booking - this is a problem
+    redirect(
+      `/${locale}/home?payment=error&message=${encodeURIComponent(
+        "We couldn't find your booking. If you were charged, please contact support with transaction ID: " +
+          transaction_id
+      )}`
+    );
   }
 
   // IDEMPOTENCY: Check if already processed by callback webhook

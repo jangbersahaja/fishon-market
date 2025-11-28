@@ -175,7 +175,7 @@ export async function CampaignContainer({
 
     // Render multiple banners stacked for sidebar placements
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {matchingCampaigns.map((campaign) => {
           const placement = campaign.placements.find(
             (p) => p.placementKey === placementKey

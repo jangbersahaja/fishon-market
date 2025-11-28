@@ -73,7 +73,7 @@ export function OperationalScheduleCard({
 
         return (
           <div>
-            <p className="text-sm text-gray-700 mb-3">{t("custom.prefix")}</p>
+            <p className="mb-3 text-sm text-gray-700">{t("custom.prefix")}</p>
             <div className="flex flex-wrap gap-2">
               {DAYS_SHORT.map((day, index) => {
                 const isOperational = operationalDays.includes(index);
@@ -93,7 +93,7 @@ export function OperationalScheduleCard({
                 );
               })}
             </div>
-            <p className="text-xs text-gray-600 mt-2">
+            <p className="mt-2 text-xs text-gray-600">
               {t("custom.operatingDays")}: {dayNames.join(", ")}
             </p>
           </div>
@@ -106,12 +106,11 @@ export function OperationalScheduleCard({
 
   return (
     <div
-      className={[
-        "rounded-2xl border border-black/10 bg-white p-5 sm:p-6",
-        className,
-      ].join(" ")}
+      className={["rounded-2xl bg-white p-5 shadow-lg", className].join(" ")}
     >
-      <h3 className="text-base font-semibold sm:text-lg mb-3">{t("title")}</h3>
+      <h3 className="pb-2 mb-2 text-base font-semibold border-b border-gray-200 sm:text-lg">
+        {t("title")}
+      </h3>
       {renderScheduleDescription()}
     </div>
   );

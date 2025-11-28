@@ -74,12 +74,9 @@ export const AmenitiesCard = React.memo(function AmenitiesCard({
 
   return (
     <section
-      className={
-        "mt-6 rounded-2xl border border-black/10 bg-white p-5 sm:p-6 " +
-        (className || "")
-      }
+      className={"rounded-2xl  bg-white p-5 shadow-lg " + (className || "")}
     >
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-3 pb-2 border-b border-gray-200">
         <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>
         <p className="text-xs text-gray-500 sm:text-sm">
           {t("included", { count: included.length })}

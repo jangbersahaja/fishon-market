@@ -5,8 +5,30 @@ import type { Charter } from "@fishon/ui";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 
-export default function ResultsGrid({ items }: { items: Charter[] }) {
+interface ResultsGridProps {
+  items: Charter[];
+  ratingsMap?: Map<
+    string,
+    { averageRating: number | null; reviewCount: number }
+  >;
+}
+
+export default function ResultsGrid({ items, ratingsMap }: ResultsGridProps) {
   const locale = useLocale();
+
+  // Helper to get rating for a charter
+  const getRating = (c: Charter): number | null => {
+    if (!ratingsMap) return null;
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.averageRating ?? null;
+  };
+
+  // Helper to get review count for a charter
+  const getReviewCount = (c: Charter): number => {
+    if (!ratingsMap) return 0;
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.reviewCount ?? 0;
+  };
 
   if (!items.length) {
     return (
@@ -28,7 +50,12 @@ export default function ResultsGrid({ items }: { items: Charter[] }) {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2">
       {items.map((c) => (
-        <CharterCard key={c.id} charter={c} />
+        <CharterCard
+          key={c.id}
+          charter={c}
+          averageRating={getRating(c)}
+          reviewCount={getReviewCount(c)}
+        />
       ))}
     </div>
   );

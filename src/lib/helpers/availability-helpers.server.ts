@@ -146,6 +146,90 @@ export async function checkDateAvailability(
 }
 
 /**
+ * Batch check if multiple charters have bookings on a specific date
+ *
+ * Efficiently queries all PAID bookings for the given date across multiple charters.
+ * Returns a map of charterId -> hasBooking boolean.
+ *
+ * @param charterIds - Array of charter IDs to check
+ * @param date - Date to check (YYYY-MM-DD string or Date object)
+ * @returns Map of charterId -> true if charter has PAID booking on that date
+ *
+ * @example
+ * ```typescript
+ * const bookedMap = await batchCheckBookingsForDate(
+ *   ["charter-1", "charter-2", "charter-3"],
+ *   "2025-07-19"
+ * );
+ * // bookedMap.get("charter-1") === true means charter-1 has a booking
+ * ```
+ */
+export async function batchCheckBookingsForDate(
+  charterIds: string[],
+  date: string | Date
+): Promise<Map<string, boolean>> {
+  const result = new Map<string, boolean>();
+
+  // Initialize all charters as not booked
+  for (const id of charterIds) {
+    result.set(id, false);
+  }
+
+  if (charterIds.length === 0) return result;
+
+  // Parse date
+  const checkDate =
+    typeof date === "string"
+      ? (() => {
+          const [y, m, d] = date.split("-").map(Number);
+          return new Date(Date.UTC(y, m - 1, d));
+        })()
+      : new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+
+  try {
+    // Query all PAID bookings for the given date across all charters
+    // A booking covers a date if: booking.date <= checkDate AND booking.date + days - 1 >= checkDate
+    const bookings = await prisma.booking.findMany({
+      where: {
+        charterId: { in: charterIds },
+        date: { lte: checkDate },
+        status: "PAID",
+      },
+      select: {
+        id: true,
+        charterId: true,
+        date: true,
+        days: true,
+      },
+    });
+
+    // Filter to only bookings that actually cover the check date
+    for (const booking of bookings) {
+      const bookingEndDate = new Date(booking.date);
+      bookingEndDate.setUTCDate(bookingEndDate.getUTCDate() + booking.days - 1);
+
+      if (bookingEndDate >= checkDate) {
+        result.set(booking.charterId, true);
+      }
+    }
+
+    console.log("📊 [BATCH AVAILABILITY] Checked bookings for date:", {
+      date: checkDate.toISOString().split("T")[0],
+      charterCount: charterIds.length,
+      bookingsFound: bookings.length,
+      chartersWithBookings: [...result.entries()]
+        .filter(([, v]) => v)
+        .map(([k]) => k),
+    });
+  } catch (error) {
+    console.error("[BATCH AVAILABILITY] Error checking bookings:", error);
+    // On error, return empty map (conservative: assume all available)
+  }
+
+  return result;
+}
+
+/**
  * Get next N available dates for a charter (excludes PAID bookings)
  *
  * Scans forward from startDate to find available dates.

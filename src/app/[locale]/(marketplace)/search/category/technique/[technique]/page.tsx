@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
-import TechniqueResultsClient from "./TechniqueResultsClient";
 import { getChartersByTechnique } from "@/lib/services/charter-service";
+import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
+import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
+import TechniqueResultsClient from "./TechniqueResultsClient";
 
 type Params = { technique: string };
 
@@ -17,9 +19,29 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
   };
 }
 
-export default async function TechniqueResultsPage({ params }: { params: Params }) {
+export default async function TechniqueResultsPage({
+  params,
+}: {
+  params: Params;
+}) {
+  const locale = await getLocale();
   // pass through the raw segment to the client component
   const raw = decodeURIComponent(params.technique || "");
   const charters = await getChartersByTechnique(raw);
-  return <TechniqueResultsClient rawTechnique={raw} charters={charters} />;
+
+  // Fetch ratings for all charters in batch (server-side)
+  const charterIds = charters.map((c) => (c as any).backendId ?? String(c.id));
+  const ratingsMap = await getCharterRatingsBatch(charterIds);
+
+  // Convert ratingsMap to a plain object for serialization
+  const ratingsMapObj = Object.fromEntries(ratingsMap);
+
+  return (
+    <TechniqueResultsClient
+      rawTechnique={raw}
+      charters={charters}
+      locale={locale}
+      ratingsMap={new Map(Object.entries(ratingsMapObj))}
+    />
+  );
 }

@@ -4,8 +4,9 @@ import BaseCharterCard from "@/components/charters/BaseCharterCard";
 import type { Charter } from "@fishon/ui";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MdError } from "react-icons/md";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { MdLocationOff } from "react-icons/md";
 
 // Haversine distance in km
 function distanceKm(
@@ -32,6 +33,7 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   // Read existing booking context so we can carry it into charter links
   const sp = useSearchParams();
@@ -87,7 +89,21 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
-  const updateScrollState = () => {
+  const getStep = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return 0;
+    const first = el.querySelector("article");
+    if (!(first instanceof HTMLElement))
+      return Math.round(el.clientWidth * 0.9); // Fallback if no card found
+    const rect = first.getBoundingClientRect();
+    // The gap in the flex container is 40px (gap-10), but it's not part of the element's margin.
+    // We need to account for the gap.
+    // However, the scroll snap usually aligns to the start of the element.
+    // Let's just use the card width + gap (24px from gap-6) as the step.
+    return Math.round(rect.width + 24);
+  }, []);
+
+  const updateScrollState = useCallback(() => {
     const el = trackRef.current;
     if (!el) return;
     const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
@@ -96,7 +112,13 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
     const EPS = 6; // px
     setCanScrollPrev(left > EPS);
     setCanScrollNext(left < maxScroll - EPS);
-  };
+
+    // Update active index
+    const step = getStep();
+    if (step > 0) {
+      setActiveIndex(Math.round(left / step));
+    }
+  }, [getStep]);
 
   useEffect(() => {
     // run a few times after mount to catch image/font/layout shifts
@@ -127,21 +149,7 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
       ro.disconnect();
       window.removeEventListener("load", onLoad);
     };
-  }, [nearby.length]);
-
-  const getStep = () => {
-    const el = trackRef.current;
-    if (!el) return 0;
-    const first = el.querySelector("article");
-    if (!(first instanceof HTMLElement))
-      return Math.round(el.clientWidth * 0.9);
-    const rect = first.getBoundingClientRect();
-    const styles = window.getComputedStyle(first);
-    const margin =
-      parseFloat(styles.marginLeft || "0") +
-      parseFloat(styles.marginRight || "0");
-    return Math.round(rect.width + margin);
-  };
+  }, [nearby.length, updateScrollState]);
 
   const scrollToSnap = (dir: "prev" | "next") => {
     const el = trackRef.current;
@@ -167,32 +175,69 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
       <div className="w-full px-5 mx-auto max-w-7xl">
         {/* Status */}
         {!coords && !error && (
-          <div className="text-sm text-white">{t("detectingLocation")}</div>
+          <div className="flex flex-col items-center justify-center py-10 text-white/80">
+            <div className="w-6 h-6 mb-2 border-2 border-white rounded-full border-t-transparent animate-spin" />
+            <p className="text-sm">{t("detectingLocation")}</p>
+          </div>
         )}
         {error && (
-          <div className="flex items-center gap-2 text-sm text-white">
-            <MdError className="text-3xl" />
-            <p>
-              {t("locationError", { error })}
-              <br /> {t("browseTripsBelowFallback")}
+          <div className="flex flex-col items-center justify-center py-8 text-center text-white">
+            <MdLocationOff className="mb-2 text-4xl opacity-80" />
+            <p className="font-medium">{t("locationError", { error })}</p>
+            <p className="text-sm opacity-80">
+              {t("browseTripsBelowFallback")}
             </p>
           </div>
         )}
         {coords && nearby.length === 0 && !error && (
-          <div className="text-sm text-white">{t("noTripsNearby")}</div>
+          <div className="flex flex-col items-center justify-center py-10 text-white">
+            <p className="text-lg font-medium">{t("noTripsNearby")}</p>
+            <p className="text-sm opacity-80">
+              Try searching for a different location
+            </p>
+          </div>
         )}
 
         {/* Cards (carousel) */}
         {nearby.length > 0 && (
           <>
-            <h2 className="text-3xl font-bold text-center text-white">
-              {t("title")}
-            </h2>
-            <div className="relative">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white md:text-3xl">
+                {t("title")}
+              </h2>
+              <div className="hidden gap-2 md:flex">
+                <button
+                  onClick={() => scrollToSnap("prev")}
+                  disabled={!canScrollPrev}
+                  className={`flex items-center justify-center w-10 h-10 transition-all rounded-full ${
+                    canScrollPrev
+                      ? "bg-white text-[#ec2227] hover:bg-gray-100 shadow-lg"
+                      : "bg-white/20 text-white/40 cursor-not-allowed"
+                  }`}
+                  aria-label="Previous"
+                >
+                  <FaChevronLeft className="text-lg" />
+                </button>
+                <button
+                  onClick={() => scrollToSnap("next")}
+                  disabled={!canScrollNext}
+                  className={`flex items-center justify-center w-10 h-10 transition-all rounded-full ${
+                    canScrollNext
+                      ? "bg-white text-[#ec2227] hover:bg-gray-100 shadow-lg"
+                      : "bg-white/20 text-white/40 cursor-not-allowed"
+                  }`}
+                  aria-label="Next"
+                >
+                  <FaChevronRight className="text-lg" />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative group">
               {/* track */}
               <div
                 ref={trackRef}
-                className="flex gap-10 py-10 overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                className="flex gap-6 py-4 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
                 {nearby.map((c) => {
                   // Build booking context if present
@@ -217,51 +262,55 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
                       context={context}
                       distance={c._distance}
                       showFavoriteButton={true}
-                      className="w-80 shrink-0 snap-start"
+                      className="shrink-0 snap-start w-[300px] md:w-[320px]"
                     />
                   );
                 })}
               </div>
 
-              {/* arrows: shown on mobile and larger; hidden if cannot scroll in that direction */}
-              {canScrollPrev && (
-                <button
-                  type="button"
-                  aria-label="Previous"
-                  onClick={() => scrollToSnap("prev")}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    scrollToSnap("prev");
-                  }}
-                  onTouchEnd={(e) => e.preventDefault()}
-                  className="absolute z-10 flex items-center justify-center -translate-y-1/2 border rounded-full shadow pointer-events-auto left-2 top-1/2 h-9 w-9 border-black/10 bg-white/90"
-                >
-                  ‹
-                </button>
-              )}
-              {canScrollNext && (
-                <button
-                  type="button"
-                  aria-label="Next"
-                  onClick={() => scrollToSnap("next")}
-                  className="absolute z-10 flex items-center justify-center -translate-y-1/2 border rounded-full shadow pointer-events-auto right-2 top-1/2 h-9 w-9 border-black/10 bg-white/90"
-                >
-                  ›
-                </button>
-              )}
-
-              {/* mobile position indicators (optional) */}
-              <div className="flex justify-center gap-1 mt-2 lg:hidden">
-                {/* Dots are approximate (chunks of ~2 cards per viewport) */}
-                {Array.from({
-                  length: Math.max(1, Math.ceil(nearby.length / 2)),
-                }).map((_, i) => (
-                  <span
-                    key={i}
-                    className="h-1.5 w-1.5 rounded-full bg-black/20"
-                  />
-                ))}
+              {/* Mobile Navigation Overlay Buttons */}
+              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none md:hidden">
+                {canScrollPrev && (
+                  <button
+                    onClick={() => scrollToSnap("prev")}
+                    className="flex items-center justify-center w-8 h-8 ml-2 bg-white rounded-full shadow-lg pointer-events-auto text-[#ec2227] opacity-90"
+                  >
+                    <FaChevronLeft />
+                  </button>
+                )}
               </div>
+              <div className="absolute inset-y-0 right-0 flex items-center pointer-events-none md:hidden">
+                {canScrollNext && (
+                  <button
+                    onClick={() => scrollToSnap("next")}
+                    className="flex items-center justify-center w-8 h-8 mr-2 bg-white rounded-full shadow-lg pointer-events-auto text-[#ec2227] opacity-90"
+                  >
+                    <FaChevronRight />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Progress Indicators */}
+            <div className="flex justify-center gap-2 mt-6">
+              {nearby.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    const el = trackRef.current;
+                    if (el) {
+                      const step = getStep();
+                      el.scrollTo({ left: i * step, behavior: "smooth" });
+                    }
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === activeIndex
+                      ? "w-6 bg-white"
+                      : "w-1.5 bg-white/30 hover:bg-white/50"
+                  }`}
+                  aria-label={`Go to item ${i + 1}`}
+                />
+              ))}
             </div>
           </>
         )}

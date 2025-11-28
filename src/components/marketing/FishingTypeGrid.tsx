@@ -23,7 +23,9 @@ export default function FishingTypeGrid({ types }: FishingTypeGridProps) {
         return (
           <CategoryCard
             key={fishingType.key}
-            href={`/${locale}/search/category/type/${fishingType.key}`}
+            href={`/${locale}/search?fishing_type=${encodeURIComponent(
+              fishingType.key
+            )}`}
             label={fishingType.label}
             count={fishingType.count}
             subtitle={t("exploreTrips", {
