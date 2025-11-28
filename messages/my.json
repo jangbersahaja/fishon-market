@@ -714,6 +714,10 @@
         "catchAndKeep": "Tangkapan & simpan dibenarkan dalam peraturan tempatan.",
         "catchAndRelease": "Tangkapan & lepas digalakkan untuk spesies trofi.",
         "safetyBrief": "Kapten akan memberi taklimat keselamatan dan polisi tangkapan di dok."
+      },
+      "retryBanner": {
+        "title": "Sedia untuk cuba lagi",
+        "description": "Bayaran sebelum ini telah dibatalkan. Anda boleh cuba lagi dengan kaedah bayaran yang sama atau berbeza."
       }
     },
     "payment": {

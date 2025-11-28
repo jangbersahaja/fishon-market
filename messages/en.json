@@ -713,6 +713,10 @@
         "catchAndKeep": "Catch & keep allowed within local regulations.",
         "catchAndRelease": "Catch & release encouraged for trophy species.",
         "safetyBrief": "Captain will brief everyone on safety and catch policies at the dock."
+      },
+      "retryBanner": {
+        "title": "Ready to try again",
+        "description": "Your previous payment was cancelled. You can try again with the same or a different payment method."
       }
     },
     "payment": {
