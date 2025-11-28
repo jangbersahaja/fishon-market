@@ -67,15 +67,6 @@ export default async function CheckoutPage({
       ? sp.start_time
       : undefined;
 
-  // Debug logging for start times
-  console.log(`[CheckoutPage] Charter ${charterId}, Trip ${tripIndex}:`, {
-    hasTrips: trips.length > 0,
-    selectedTrip: selectedTrip?.name,
-    startTimes,
-    defaultStartTime,
-    charterFlowType,
-  });
-
   // Prefill user details if available
   let defaultUser:
     | {

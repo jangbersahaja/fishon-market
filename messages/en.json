@@ -405,6 +405,14 @@
     "checkout": {
       "pageTitle": "Complete Your Booking",
       "pageSubtitle": "Review your trip details and tell the captain about yourself",
+      "steps": {
+        "tripDetails": "Trip Details",
+        "tripDetailsDesc": "Select your date, trip package, and departure time",
+        "yourInformation": "Your Information",
+        "yourInformationDesc": "Tell us about yourself and your fellow anglers",
+        "additionalInfo": "Additional Info",
+        "additionalInfoDesc": "Add notes and safety contacts"
+      },
       "paymentCancelledTitle": "Payment Cancelled",
       "paymentCancelledMessage": "Your payment was cancelled. No charges were made. You can try again when you're ready.",
       "sessionExpiredTitle": "Session Expired",
@@ -437,13 +445,14 @@
         "phonePlaceholder": "+60 12-345 6789",
         "relationshipPlaceholder": "e.g., Spouse, Parent, Sibling"
       },
-      "startConversation": {
-        "title": "Say hello to captain",
+      "noteToCaptain": {
+        "title": "Note to Captain",
         "yearsExperience": "{years} years experience",
         "crew": "{count} crew",
         "greeting": "Hello, welcome to {charterName}. Thanks for your interest! Let me know who'll be joining the trip, what fish you're aiming to catch, and any special requests — I'll make sure everything's ready for you.",
-        "placeholder": "Introduce yourself to {captainFirstName}. Share your fishing experience, what you hope to catch, or any special requests...",
-        "note": "This message will be sent to the captain with your booking request."
+        "placeholder": "Share your fishing experience, what species you're targeting, or any special requests...",
+        "note": "This message will be sent to the captain with your booking request.",
+        "optional": "Optional"
       },
       "summary": {
         "title": "Charter Summary",
@@ -540,12 +549,15 @@
         "title": "Participant List",
         "description": "Add all participants for this trip (maximum {guests} based on your guest selection). At least one participant is required.",
         "participantN": "Participant {number}",
+        "leadAngler": "Lead Angler",
         "thisIsMe": "This is me",
         "name": "Name",
         "phone": "Phone",
         "namePlaceholder": "Participant name",
         "phonePlaceholder": "+60 12-345 6789",
         "addButton": "Add Participant",
+        "remaining": "remaining",
+        "allAdded": "All participants added",
         "maxCapacity": "({current}/{max} max)"
       },
       "tripSelection": {
@@ -572,7 +584,9 @@
       },
       "startTime": {
         "title": "Select start time",
-        "warningMessage": "Please select a start time to continue"
+        "warningMessage": "Please select a start time to continue",
+        "noStartTimes": "No departure times available for this trip",
+        "selectTripFirst": "Select a trip package above to see available departure times"
       },
       "guestVerification": {
         "titleEmail": "Verify Your Email",

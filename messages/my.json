@@ -404,6 +404,14 @@
     "checkout": {
       "pageTitle": "Lengkapkan Tempahan Anda",
       "pageSubtitle": "Semak butiran trip anda dan beritahu kapten tentang diri anda",
+      "steps": {
+        "tripDetails": "Butiran Trip",
+        "tripDetailsDesc": "Pilih tarikh, pakej trip, dan masa berlepas",
+        "yourInformation": "Maklumat Anda",
+        "yourInformationDesc": "Beritahu kami tentang diri anda dan rakan pemancing",
+        "additionalInfo": "Info Tambahan",
+        "additionalInfoDesc": "Tambah nota dan kenalan keselamatan"
+      },
       "paymentCancelledTitle": "Pembayaran Dibatalkan",
       "paymentCancelledMessage": "Pembayaran anda telah dibatalkan. Tiada caj dikenakan. Anda boleh mencuba semula apabila bersedia.",
       "sessionExpiredTitle": "Sesi Tamat Tempoh",
@@ -436,13 +444,14 @@
         "phonePlaceholder": "+60 12-345 6789",
         "relationshipPlaceholder": "cth., Suami/Isteri, Ibu Bapa, Adik Beradik"
       },
-      "startConversation": {
-        "title": "Salam kepada kapten",
+      "noteToCaptain": {
+        "title": "Nota kepada Kapten",
         "yearsExperience": "{years} tahun pengalaman",
         "crew": "{count} krew",
         "greeting": "Hello, selamat datang ke {charterName}. Terima kasih atas minat anda! Beritahu saya siapa yang akan menyertai trip, ikan apa yang anda sasarkan, dan sebarang permintaan khas — saya akan pastikan semuanya sedia untuk anda.",
-        "placeholder": "Perkenalkan diri anda kepada {captainFirstName}. Kongsikan pengalaman memancing anda, apa yang anda harap tangkap, atau sebarang permintaan khas...",
-        "note": "Mesej ini akan dihantar kepada kapten bersama permintaan tempahan anda."
+        "placeholder": "Kongsikan pengalaman memancing anda, spesies yang anda sasarkan, atau sebarang permintaan khas...",
+        "note": "Mesej ini akan dihantar kepada kapten bersama permintaan tempahan anda.",
+        "optional": "Pilihan"
       },
       "summary": {
         "title": "Ringkasan Charter",
@@ -539,12 +548,15 @@
         "title": "Senarai Peserta",
         "description": "Tambah semua peserta untuk lawatan ini (maksimum {guests} berdasarkan pilihan tetamu anda). Sekurang-kurangnya satu peserta diperlukan.",
         "participantN": "Peserta {number}",
+        "leadAngler": "Ketua Pemancing",
         "thisIsMe": "Ini saya",
         "name": "Nama",
         "phone": "Nombor Telefon",
         "namePlaceholder": "Nama peserta",
         "phonePlaceholder": "+60 12-345 6789",
         "addButton": "Tambah Peserta",
+        "remaining": "lagi",
+        "allAdded": "Semua peserta ditambah",
         "maxCapacity": "({current}/{max} maksimum)"
       },
       "tripSelection": {
@@ -571,7 +583,9 @@
       },
       "startTime": {
         "title": "Pilih masa mula",
-        "warningMessage": "Sila pilih masa mula untuk meneruskan"
+        "warningMessage": "Sila pilih masa mula untuk meneruskan",
+        "noStartTimes": "Tiada masa berlepas tersedia untuk perjalanan ini",
+        "selectTripFirst": "Pilih pakej perjalanan di atas untuk melihat masa berlepas yang tersedia"
       },
       "guestVerification": {
         "titleEmail": "Sahkan E-mel Anda",

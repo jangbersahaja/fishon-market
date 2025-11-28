@@ -52,8 +52,6 @@ export default function DateGuestsCard({
   ) => void;
   dateError?: string;
 }) {
-  console.log("[DateGuestsCard] Component rendered", { charterId });
-
   const t = useTranslations("booking.checkout.dateGuests");
   const [open, setOpen] = useState<null | "days" | "guests">(null);
   const [bookedDatesData, setBookedDatesData] = useState<{
@@ -75,20 +73,9 @@ export default function DateGuestsCard({
   // If blockedDatesSet is not provided, fetch and calculate it locally
   const shouldFetchLocally = !blockedDatesSet;
 
-  console.log("[DateGuestsCard] Fetch decision:", {
-    blockedDatesSet: !!blockedDatesSet,
-    shouldFetchLocally,
-    charterId,
-  });
-
   // Fetch booked dates from API (only if not provided by parent)
   useEffect(() => {
-    console.log("[DateGuestsCard] useEffect triggered", {
-      shouldFetchLocally,
-      charterId,
-    });
     if (!shouldFetchLocally) {
-      console.log("[DateGuestsCard] Skipping fetch - parent provided data");
       return;
     }
 
@@ -114,11 +101,6 @@ export default function DateGuestsCard({
 
         if (response.ok) {
           const data = await response.json();
-          console.log("[DateGuestsCard] Booked dates API response:", {
-            fullDayBlocks: data.fullDayBlocks?.length || 0,
-            timeBasedBlocks: data.timeBasedBlocks?.length || 0,
-            sample: data.timeBasedBlocks?.slice(0, 3),
-          });
           // Support both new format and legacy format
           if (data.fullDayBlocks) {
             setBookedDatesData({
@@ -158,26 +140,12 @@ export default function DateGuestsCard({
       endDate
     );
 
-    console.log("[DateGuestsCard] Blocked dates calculated:", {
-      count: blocked.size,
-      sample: Array.from(blocked).slice(0, 5),
-    });
-
     return blocked;
   }, [schedule, unavailability, bookedDatesData, shouldFetchLocally]);
 
   // Calculate partial availability (time-based unavailability)
   // Only calculate if not provided by parent
   const localPartialAvailability = useMemo(() => {
-    console.log("[DateGuestsCard] Calculating partial availability:", {
-      hasParentPartialAvailability: !!partialAvailability,
-      hasUnavailability: !!unavailability,
-      hasBookedDatesData: !!bookedDatesData,
-      bookedDatesDataKeys: bookedDatesData
-        ? Object.keys(bookedDatesData)
-        : null,
-    });
-
     if (partialAvailability) return new Map();
     if (!unavailability && !bookedDatesData) return new Map();
 
@@ -303,53 +271,6 @@ export default function DateGuestsCard({
           )}
         </div>
 
-        {/* Days field */}
-        <div className="relative hidden sm:col-span-2">
-          <button
-            type="button"
-            onClick={() => setOpen(open === "days" ? null : "days")}
-            className="flex items-center justify-between w-full px-3 py-2 text-left border border-gray-300 rounded-lg hover:border-gray-400"
-            aria-haspopup="dialog"
-            aria-expanded={open === "days"}
-          >
-            <span className="text-xs font-medium text-gray-700">
-              {t("days")}
-            </span>
-            <span className="text-sm text-gray-900">{days}</span>
-            <ChevronDown className="w-4 h-4 ml-2 text-gray-500" />
-          </button>
-          {open === "days" && (
-            <div className="absolute z-10 w-full p-3 mt-2 bg-white border shadow-lg rounded-xl border-black/10">
-              <div className="flex items-center justify-between h-10 px-3 border border-gray-300 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => onDaysChange(Math.max(1, days - 1))}
-                  className="text-sm leading-none border border-gray-300 rounded-full h-7 w-7 hover:bg-gray-50"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="min-w-[2ch] text-sm text-center">{days}</span>
-                <button
-                  type="button"
-                  onClick={() => onDaysChange(days + 1)}
-                  className="text-sm leading-none border border-gray-300 rounded-full h-7 w-7 hover:bg-gray-50"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex justify-end mt-3">
-                <button
-                  type="button"
-                  onClick={() => setOpen(null)}
-                  className="px-3 py-1.5 text-sm font-medium text-white rounded-md bg-[#ec2227]"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Guests field */}
         <div className="relative sm:col-span-4">
           <button
@@ -370,7 +291,7 @@ export default function DateGuestsCard({
             <ChevronDown className="w-4 h-4 ml-2 text-gray-500" />
           </button>
           {open === "guests" && (
-            <div className="absolute z-10 w-full p-3 mt-2 bg-white border shadow-lg rounded-xl border-black/10">
+            <div className="absolute z-50 w-full p-3 mt-2 bg-white border shadow-lg rounded-xl border-black/10">
               <div className="flex items-center justify-between gap-4">
                 {/* Adults */}
                 <div className="flex items-center gap-2">

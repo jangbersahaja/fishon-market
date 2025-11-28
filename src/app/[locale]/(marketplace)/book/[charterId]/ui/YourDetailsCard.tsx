@@ -31,7 +31,7 @@ export default function YourDetailsCard({
   const isPrefilled = isLoggedIn && (!!firstName || !!lastName || !!email);
 
   return (
-    <section className="pb-5 border-b border-black/10">
+    <section>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold sm:text-lg">{t("title")}</h2>
         {isPrefilled && (
