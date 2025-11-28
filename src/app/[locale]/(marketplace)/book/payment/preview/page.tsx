@@ -1,3 +1,4 @@
+import { PaymentCancelledBanner } from "@/components/payment/PaymentCancelledBanner";
 import { PaymentGuard } from "@/components/payment/PaymentGuard";
 import { PaymentPreviewForm } from "@/components/payment/PaymentPreviewForm";
 import { PaymentSessionTimer } from "@/components/payment/PaymentSessionTimer";
@@ -66,12 +67,93 @@ function decodeBookingData(encoded: string): BookingPreviewData | null {
   }
 }
 
+/**
+ * Hydrate BookingPreviewData from a PaymentSession
+ * Used when user retries payment after cancellation
+ */
+async function getBookingDataFromSession(
+  sessionId: string
+): Promise<{
+  data: BookingPreviewData;
+  isRetry: boolean;
+  message?: string;
+} | null> {
+  const paymentSession = await prisma.paymentSession.findUnique({
+    where: { id: sessionId },
+    select: {
+      id: true,
+      status: true,
+      bookingData: true,
+      expiresAt: true,
+      createdAt: true,
+    },
+  });
+
+  if (!paymentSession) {
+    return null;
+  }
+
+  // Check if session is expired
+  const now = new Date();
+  if (now > paymentSession.expiresAt) {
+    return null;
+  }
+
+  // Parse booking data from session
+  const bookingData = paymentSession.bookingData as Record<string, any>;
+  if (!bookingData) {
+    return null;
+  }
+
+  // Reset session status to PENDING for retry
+  if (paymentSession.status === "FAILED") {
+    await prisma.paymentSession.update({
+      where: { id: sessionId },
+      data: { status: "PENDING" },
+    });
+  }
+
+  // Convert session bookingData to BookingPreviewData format
+  // The bookingData from PaymentSession should already match the format
+  const previewData: BookingPreviewData = {
+    charterId: bookingData.charterId,
+    tripId: bookingData.tripId,
+    date: bookingData.date,
+    days: bookingData.days || 1,
+    startTime: bookingData.startTime || "",
+    adults: bookingData.adults || 1,
+    children: bookingData.children || 0,
+    firstName: bookingData.firstName || "",
+    lastName: bookingData.lastName || "",
+    email: bookingData.email || "",
+    phone: bookingData.phone || "",
+    emergencyName: bookingData.emergencyName || "",
+    emergencyPhone: bookingData.emergencyPhone || "",
+    emergencyRelation: bookingData.emergencyRelation || "",
+    note: bookingData.note,
+    participants: bookingData.participants,
+    guestVerification: bookingData.guestVerification,
+    sessionStart: paymentSession.createdAt.getTime(),
+    promoCode: bookingData.promoCode,
+  };
+
+  return {
+    data: previewData,
+    isRetry:
+      paymentSession.status === "FAILED" || paymentSession.status === "PENDING",
+    message:
+      paymentSession.status === "FAILED"
+        ? "Your previous payment was cancelled. You can try again or choose a different payment method."
+        : undefined,
+  };
+}
+
 export default async function PaymentPreviewPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ data?: string }>;
+  searchParams: Promise<{ data?: string; session?: string; message?: string }>;
 }) {
   const { locale } = await params;
   const sp = await searchParams;
@@ -81,13 +163,37 @@ export default async function PaymentPreviewPage({
     namespace: "booking.paymentPreview",
   });
 
-  // Decode booking data
-  const encodedData = sp.data;
-  if (!encodedData) {
-    redirect(`/${locale}/home`);
+  // Support two modes:
+  // 1. Fresh flow: ?data=base64EncodedBookingData
+  // 2. Retry flow: ?session=paymentSessionId (for retry after cancellation)
+
+  let bookingData: BookingPreviewData | null = null;
+  let isRetry = false;
+  let retryMessage: string | undefined = sp.message;
+
+  // Try session-based hydration first (retry flow)
+  if (sp.session) {
+    const sessionResult = await getBookingDataFromSession(sp.session);
+    if (sessionResult) {
+      bookingData = sessionResult.data;
+      isRetry = sessionResult.isRetry;
+      retryMessage = retryMessage || sessionResult.message;
+    } else {
+      // Session not found or expired - redirect to home with error
+      redirect(
+        `/${locale}/home?error=session_expired&message=${encodeURIComponent(
+          "Your payment session has expired. Please start a new booking."
+        )}`
+      );
+    }
   }
 
-  const bookingData = decodeBookingData(encodedData);
+  // Fall back to base64 encoded data (fresh flow)
+  if (!bookingData && sp.data) {
+    bookingData = decodeBookingData(sp.data);
+  }
+
+  // Neither mode provided valid data
   if (!bookingData) {
     redirect(`/${locale}/home`);
   }
@@ -240,6 +346,8 @@ export default async function PaymentPreviewPage({
           expiresAt={expiresAt}
           charterId={bookingData.charterId}
         />
+
+        {isRetry && <PaymentCancelledBanner message={retryMessage} />}
 
         <header className="pb-6 space-y-3 border-b border-border">
           <div className="space-y-2">

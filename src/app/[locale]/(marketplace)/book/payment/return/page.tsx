@@ -83,6 +83,7 @@ export default async function PaymentReturnPage({
       id: true,
       status: true,
       bookingData: true,
+      expiresAt: true,
     },
   });
 
@@ -106,22 +107,40 @@ export default async function PaymentReturnPage({
         data: { status: "FAILED" },
       });
 
-      // Get charterId from booking data to redirect back to booking page
-      const bookingData = paymentSession.bookingData as any;
-      const charterId = bookingData?.charterId;
+      // Clean up message from Senang Pay (they use underscores instead of spaces)
+      const cleanMessage = (
+        msg || "Payment was cancelled. You can try again when ready."
+      ).replace(/_/g, " ");
 
-      if (charterId) {
-        // Redirect back to charter booking page with message
+      // Check if session is still valid (not expired)
+      const now = new Date();
+      const isSessionValid = now < paymentSession.expiresAt;
+
+      if (isSessionValid) {
+        // Session still valid - redirect to payment preview to retry
+        // User can choose different payment method or retry same one
+        console.log(
+          "🔄 [PAYMENT RETURN] Redirecting to payment preview for retry",
+          {
+            sessionId: order_id,
+            expiresAt: paymentSession.expiresAt,
+          }
+        );
         redirect(
-          `/${locale}/book/${charterId}?payment=cancelled&message=${encodeURIComponent(
-            msg || "Payment was cancelled. You can try again when ready."
-          )}`
+          `/${locale}/book/payment/preview?session=${order_id}&message=${encodeURIComponent(cleanMessage)}`
         );
       } else {
-        // Fallback to home if no charterId
+        // Session expired - redirect to home with message
+        console.log(
+          "⏰ [PAYMENT RETURN] Session expired, redirecting to home",
+          {
+            sessionId: order_id,
+            expiresAt: paymentSession.expiresAt,
+          }
+        );
         redirect(
-          `/${locale}/home?payment=cancelled&message=${encodeURIComponent(
-            msg || "Payment was cancelled."
+          `/${locale}/home?payment=expired&message=${encodeURIComponent(
+            "Your booking session has expired. Please start a new booking."
           )}`
         );
       }
@@ -214,10 +233,11 @@ export default async function PaymentReturnPage({
       console.log(
         "❌ [PAYMENT RETURN] Payment was cancelled, no matching records found"
       );
+      const cleanMsg = (
+        msg || "Payment was cancelled. You can try again when ready."
+      ).replace(/_/g, " ");
       redirect(
-        `/${locale}/home?payment=cancelled&message=${encodeURIComponent(
-          msg || "Payment was cancelled. You can try again when ready."
-        )}`
+        `/${locale}/home?payment=cancelled&message=${encodeURIComponent(cleanMsg)}`
       );
     }
 
@@ -344,10 +364,13 @@ export default async function PaymentReturnPage({
     });
 
     try {
+      // Clean up message from Senang Pay (they use underscores instead of spaces)
+      const cleanMsg = msg.replace(/_/g, " ");
+
       await prisma.booking.update({
         where: { id: order_id },
         data: {
-          paymentNote: `Payment Failed: ${msg}`,
+          paymentNote: `Payment Failed: ${cleanMsg}`,
         },
       });
 
@@ -356,7 +379,7 @@ export default async function PaymentReturnPage({
       });
 
       redirect(
-        `/${locale}/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(msg)}`
+        `/${locale}/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(cleanMsg)}`
       );
     } catch (error) {
       console.error("❌ [PAYMENT RETURN] Failed to record payment failure", {
