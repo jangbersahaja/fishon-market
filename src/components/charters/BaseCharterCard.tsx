@@ -230,13 +230,13 @@ export default function BaseCharterCard({
             </div>
           )}
           {distance !== undefined && (
-            <span className="absolute top-3 left-3 px-3 py-1.5 bg-white font-medium rounded-full text-xs">
+            <span className="absolute px-3 py-1 text-xs font-medium bg-white rounded-full top-3 left-3">
               {t("distanceFromYou", { distance: distance.toFixed(1) })}
             </span>
           )}
           <div className="absolute bottom-0 w-full ">
             <div className="bg-gradient-to-t from-[#ec2227] to-[#ec2227]/0 w-full flex flex-col items-center">
-              <h3 className="pt-10 pb-2 text-2xl font-semibold text-center text-white uppercase line-clamp-1 font-oswald">
+              <h3 className="pt-10 text-2xl font-semibold text-center text-white uppercase line-clamp-1 font-oswald">
                 {formatCharterName(c.name)}
               </h3>
             </div>
@@ -248,19 +248,19 @@ export default function BaseCharterCard({
           </p>
           <div className="flex items-center gap-1 text-gray-200">
             <Clock className="w-3 h-3" />
-            <span className="text-sm">
+            <span className="text-xs">
               {t("experienceYears", { years: c.captain.yearsExperience })}
             </span>
             {" · "}
             <StarRating
               value={avg ?? 0}
-              size={24}
-              textSize="text-sm"
+              size={14}
+              textSize="text-xs"
               variant="chrome"
               reviewCount={reviewCountValue}
             />
             {" · "}
-            <span className="text-sm">{c.boat.type}</span>
+            <span className="text-xs">{c.boat.type}</span>
           </div>
 
           <div className="flex flex-col items-center w-full gap-2 p-3 text-xs border border-white/20 rounded-2xl font-oswald">

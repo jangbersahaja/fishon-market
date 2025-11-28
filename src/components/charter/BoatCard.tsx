@@ -91,8 +91,10 @@ export function BoatCard({ boat, locale = "en" }: BoatCardProps) {
     );
   }
   return (
-    <div className="p-5 mt-6 bg-white border rounded-2xl border-black/10 sm:p-6">
-      <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>
+    <div className="p-5 bg-white shadow-lg rounded-2xl ">
+      <h3 className="pb-2 text-base font-semibold border-b border-gray-200 sm:text-lg">
+        {t("title")}
+      </h3>
       <ul className="grid grid-cols-1 gap-2 mt-2 text-sm text-gray-700 sm:grid-cols-2">
         {boat.name && (
           <li>

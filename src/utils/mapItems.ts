@@ -1,22 +1,35 @@
 //utils/mapItems.ts
 // Convert charters to the lightweight data the map needs.
 import type { Charter } from "@fishon/ui";
-import { getRatingMap } from "./ratings";
 
 export type MapItem = {
-  id: number;
+  id: string;
   name: string;
   lat: number;
   lng: number;
   price: number;
   href: string;
   image: string;
-  ratingAvg: number;
-  ratingCount: number;
+  // Note: ratings should be provided separately via ratingsMap
+  // These are placeholders that will be overridden by InfoWindow rendering
+  ratingAvg?: number;
+  ratingCount?: number;
 };
 
-export function buildMapItems(charters: Charter[]): MapItem[] {
-  const ratingMap = getRatingMap();
+export interface MapItemsOptions {
+  locale?: string;
+  ratingsMap?: Map<
+    string,
+    { averageRating: number | null; reviewCount: number }
+  >;
+}
+
+export function buildMapItems(
+  charters: Charter[],
+  options: MapItemsOptions = {}
+): MapItem[] {
+  const { locale = "en", ratingsMap } = options;
+
   return (charters as any[])
     .filter(
       (c: any) =>
@@ -29,20 +42,26 @@ export function buildMapItems(charters: Charter[]): MapItem[] {
         Array.isArray(c.trip) && c.trip.length
           ? Math.min(...c.trip.map((t: any) => Number(t.price || 0)))
           : 0;
-      const rr = ratingMap[Number(c.id)] || { avg: 0, count: 0 };
+
+      // Use backendId if available (from fishon-captain), otherwise use id
+      const charterId = c.backendId ?? String(c.id);
+
+      // Get ratings from ratingsMap if provided
+      const ratings = ratingsMap?.get(charterId);
+
       return {
-        id: c.id,
+        id: charterId,
         name: c.name,
         lat: c.coordinates.lat,
         lng: c.coordinates.lng,
         price: minPrice,
-        href: `/charters/view/${c.id}`,
+        href: `/${locale}/charters/${charterId}`,
         image:
           (Array.isArray(c.images) && c.images.length > 0 && c.images[0]) ||
           c.imageUrl ||
           "",
-        ratingAvg: rr.avg,
-        ratingCount: rr.count,
+        ratingAvg: ratings?.averageRating ?? undefined,
+        ratingCount: ratings?.reviewCount ?? 0,
       };
     });
 }

@@ -60,7 +60,11 @@
     "siteMap": "Site Map",
     "allDestination": "All Destination",
     "becomeCaptain": "Become a Captain",
-    "listYourBoat": "List Your Boat"
+    "listYourBoat": "List Your Boat",
+    "fishonCaptain": "Fishon Captain",
+    "manageYourCharter": "Manage Your Charter",
+    "listYourCharter": "List Your Charter",
+    "destinations": "Destinations"
   },
   "home": {
     "title": "Fishon — Malaysia's Fishing & Charter Booking",

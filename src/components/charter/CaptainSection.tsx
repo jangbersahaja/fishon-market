@@ -29,8 +29,8 @@ export default function CaptainSection({
   if (!charter?.captain) return null;
   const c = charter.captain;
   return (
-    <section className="p-5 mt-6 bg-white border rounded-2xl border-black/10 sm:p-6">
-      <h3 className="text-base font-semibold sm:text-lg">
+    <section className="p-5 bg-white border rounded-2xl ">
+      <h3 className="pb-2 text-base font-semibold border-b border-gray-200 sm:text-lg">
         {title || t("title")}
       </h3>
       <div className="flex flex-col items-start gap-4 mt-3 lg:flex-row">

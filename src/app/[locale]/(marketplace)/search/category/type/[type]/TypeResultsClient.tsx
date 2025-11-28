@@ -11,15 +11,34 @@ export default function TypeResultsClient({
   mapItems,
   fallbackCenter,
   title,
+  ratingsMap,
 }: {
   prettyType: string;
   items: Charter[];
   mapItems: MapItem[];
   fallbackCenter: { lat: number; lng: number };
   title: string;
+  ratingsMap?: Map<
+    string,
+    { averageRating: number | null; reviewCount: number }
+  >;
 }) {
   // keep the rail light
   const sideItems = items.slice(0, 12);
+
+  // Helper to get rating for a charter
+  const getRating = (c: Charter): number | null => {
+    if (!ratingsMap) return null;
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.averageRating ?? null;
+  };
+
+  // Helper to get review count for a charter
+  const getReviewCount = (c: Charter): number => {
+    if (!ratingsMap) return 0;
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.reviewCount ?? 0;
+  };
 
   return (
     <main className="w-full mx-auto">
@@ -63,6 +82,8 @@ export default function TypeResultsClient({
                     variant="compact"
                     imageAspect="square"
                     showFavoriteButton={true}
+                    averageRating={getRating(c)}
+                    reviewCount={getReviewCount(c)}
                   />
                 ))}
               </div>

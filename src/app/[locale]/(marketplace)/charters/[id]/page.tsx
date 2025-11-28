@@ -1,20 +1,20 @@
 import { FavoriteButton } from "@/components/account";
 import {
-    AboutSection,
-    AmenitiesCard,
-    BoatCard,
-    BookingWidget,
-    CaptainSection,
-    CharterViewTracker,
-    EnhancedReviewsList,
-    GuestFeedback,
-    LocationMap,
-    OperationalScheduleCard,
-    PhotoGallery,
-    PoliciesCard,
-    ShareButton,
-    TripCard,
-    VideoGallery,
+  AboutSection,
+  AmenitiesCard,
+  BoatCard,
+  BookingWidget,
+  CaptainSection,
+  CharterViewTracker,
+  EnhancedReviewsList,
+  GuestFeedback,
+  LocationMap,
+  OperationalScheduleCard,
+  PhotoGallery,
+  PoliciesCard,
+  ShareButton,
+  TripCard,
+  VideoGallery,
 } from "@/components/charter";
 import SearchBox from "@/components/charters/SearchBox";
 import { CampaignContainer } from "@/components/promotional";
@@ -25,8 +25,8 @@ import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
 import { getCharterById } from "@/lib/services/charter-service";
 import { isFavorited } from "@/lib/services/favorite-service";
 import {
-    getCharterRatingStats,
-    getCharterReviews,
+  getCharterRatingStats,
+  getCharterReviews,
 } from "@/lib/services/review-service";
 import type { Charter, Trip } from "@fishon/ui";
 import { MapPin } from "lucide-react";
@@ -315,7 +315,7 @@ export default async function CharterViewPage({
   }
 
   return (
-    <main className="bg-white min-h-dvh">
+    <main className="bg-white min-h-dvh bg-gradient-to-br from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
       {/* Track charter view */}
       <CharterViewTracker
         charterId={id}
@@ -323,11 +323,11 @@ export default async function CharterViewPage({
         userId={session?.user?.id}
       />
 
-      <section className="bg-gradient-to-br from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
-        <div className="w-full px-3 py-3 mx-auto max-w-7xl">
+      <section className="">
+        <div className="w-full px-5 py-5 mx-auto max-w-7xl">
           <SearchBox />
         </div>
-        <div className="px-4 pt-5 mx-auto max-w-7xl sm:px-6">
+        <div className="px-5 pt-5 mx-auto 6 max-w-7xl">
           {/* Breadcrumbs */}
           <nav className="text-sm text-gray-100">
             <Link href={`/${locale}/home`} className="hover:underline">
@@ -396,7 +396,7 @@ export default async function CharterViewPage({
             </div>
           </header>
           {/* Gallery */}
-          <div className="p-3 pb-0 mt-3 -mx-3 bg-white rounded-t-2xl">
+          <div className="mt-3 overflow-hidden bg-white shadow-lg border-3 rounded-2xl border-white/20">
             <PhotoGallery
               images={images}
               title={title}
@@ -407,11 +407,11 @@ export default async function CharterViewPage({
           </div>
         </div>
       </section>
-      <section className="px-4 pb-10 mx-auto max-w-7xl sm:px-6">
+      <section className="px-5 pb-10 mx-auto max-w-7xl">
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-3">
           {/* Left column */}
-          <div className="md:col-span-2">
+          <div className="flex flex-col gap-5 md:col-span-2">
             <AboutSection description={desc} />
 
             {/* Video Gallery */}
@@ -424,52 +424,37 @@ export default async function CharterViewPage({
               />
             )}
 
-            {/* Operational Schedule */}
-            {charter?.schedule && (
-              <OperationalScheduleCard
-                scheduleType={charter.schedule.type}
-                operationalDays={charter.schedule.operationalDays}
-              />
-            )}
+            {/* Amenities */}
+            <AmenitiesCard includes={charter?.includes ?? []} locale={locale} />
 
-            <div className="grid grid-cols-1 gap-5">
-              {/* Amenities */}
-              <AmenitiesCard
-                includes={charter?.includes ?? []}
-                locale={locale}
-              />
-
+            <div className="grid grid-cols-1 gap-5 p-5 bg-white shadow-lg rounded-2xl">
               {/* Trip Cards - Under the map in left column */}
-              <div className="mt-6">
-                <h2 className="mb-4 text-xl font-bold">
-                  {t("availableTrips")}
-                </h2>
-                <div className="flex flex-col gap-3">
-                  {trips.map((trip, idx) => {
-                    // Since species and techniques are at charter level (not per-trip),
-                    // only show them on the first trip card to avoid repetition
-                    const showSpecies = idx === 0;
-                    const showTechniques = idx === 0;
+              <h2 className="text-xl font-bold">{t("availableTrips")}</h2>
+              <div className="flex flex-col gap-3">
+                {trips.map((trip, idx) => {
+                  // Since species and techniques are at charter level (not per-trip),
+                  // only show them on the first trip card to avoid repetition
+                  const showSpecies = idx === 0;
+                  const showTechniques = idx === 0;
 
-                    return (
-                      <TripCard
-                        key={trip.id || trip.name}
-                        id={`trip-${idx}`}
-                        name={trip.name}
-                        price={trip.price}
-                        priceOverride={trip.priceOverride}
-                        duration={trip.duration}
-                        description={trip.description}
-                        species={charter?.species ?? []}
-                        techniques={charter?.techniques ?? []}
-                        maxAnglers={trip.maxAnglers}
-                        startTimes={trip.startTimes}
-                        showSpecies={showSpecies}
-                        showTechniques={showTechniques}
-                      />
-                    );
-                  })}
-                </div>
+                  return (
+                    <TripCard
+                      key={trip.id || trip.name}
+                      id={`trip-${idx}`}
+                      name={trip.name}
+                      price={trip.price}
+                      priceOverride={trip.priceOverride}
+                      duration={trip.duration}
+                      description={trip.description}
+                      species={charter?.species ?? []}
+                      techniques={charter?.techniques ?? []}
+                      maxAnglers={trip.maxAnglers}
+                      startTimes={trip.startTimes}
+                      showSpecies={showSpecies}
+                      showTechniques={showTechniques}
+                    />
+                  );
+                })}
               </div>
             </div>
 
@@ -479,7 +464,7 @@ export default async function CharterViewPage({
 
           {/* Right column: Booking Widget (Sticky) */}
           <div className="h-full md:self-start">
-            <div className="h-fit md:sticky md:top-6 space-y-4">
+            <div className="space-y-5 h-fit md:sticky md:top-5">
               <BookingWidget
                 trips={trips}
                 charterId={charterIdParam}
@@ -503,27 +488,35 @@ export default async function CharterViewPage({
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-5">
-          <div className="col-span-3">
+        <div className="grid grid-cols-1 gap-0 mt-5 md:gap-5 md:grid-cols-5">
+          <div className="flex flex-col col-span-3 gap-5">
             {/* Captain */}
             <CaptainSection charter={charter} />
+            <PoliciesCard
+              policies={charter.policies as any}
+              pickup={
+                {
+                  available: !!charter.pickup?.available,
+                  fee: charter.pickup?.fee ?? null,
+                  areas: charter.pickup?.areas ?? [],
+                  notes: charter.pickup?.notes,
+                } as any
+              }
+            />
           </div>
-          <div className="col-span-2">
+          <div className="flex flex-col col-span-2 gap-5 mt-5 md:mt-0">
             {/* Boat */}
             <BoatCard boat={uiBoat as any} locale={locale} />
+            {/* Operational Schedule */}
+            {charter?.schedule && (
+              <OperationalScheduleCard
+                scheduleType={charter.schedule.type}
+                operationalDays={charter.schedule.operationalDays}
+              />
+            )}
           </div>
         </div>
-        <PoliciesCard
-          policies={charter.policies as any}
-          pickup={
-            {
-              available: !!charter.pickup?.available,
-              fee: charter.pickup?.fee ?? null,
-              areas: charter.pickup?.areas ?? [],
-              notes: charter.pickup?.notes,
-            } as any
-          }
-        />
+
         {/* Feedback summary */}
         <GuestFeedback
           reviews={reviews as any}

@@ -8,11 +8,18 @@ import type { Charter } from "@fishon/ui";
 type Props = {
   rawTechnique: string;
   charters: Charter[];
+  locale?: string;
+  ratingsMap?: Map<
+    string,
+    { averageRating: number | null; reviewCount: number }
+  >;
 };
 
 export default function TechniqueResultsClient({
   rawTechnique,
   charters,
+  locale = "en",
+  ratingsMap,
 }: Props) {
   const raw = rawTechnique || "";
   const filtered = charters;
@@ -23,10 +30,23 @@ export default function TechniqueResultsClient({
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
       .join(" ") || "Technique";
 
-  const mapItems = buildMapItems(filtered as Charter[]);
-  const fallbackCenter = mapItems[0]
-    ? { lat: mapItems[0].lat, lng: mapItems[0].lng }
-    : { lat: 3.139, lng: 101.6869 };
+  const mapItems = buildMapItems(filtered as Charter[], { locale, ratingsMap });
+
+  // Calculate fallback center from charters
+  const chartersWithCoords = filtered.filter(
+    (c) => c.coordinates?.lat && c.coordinates?.lng
+  );
+  const fallbackCenter =
+    chartersWithCoords.length > 0
+      ? {
+          lat:
+            chartersWithCoords.reduce((sum, c) => sum + c.coordinates!.lat, 0) /
+            chartersWithCoords.length,
+          lng:
+            chartersWithCoords.reduce((sum, c) => sum + c.coordinates!.lng, 0) /
+            chartersWithCoords.length,
+        }
+      : { lat: 3.139, lng: 101.6869 };
 
   return (
     <main className="mx-auto w-full">
@@ -62,7 +82,7 @@ export default function TechniqueResultsClient({
           }
         />
 
-        <ResultsGrid items={filtered as Charter[]} />
+        <ResultsGrid items={filtered as Charter[]} ratingsMap={ratingsMap} />
       </section>
     </main>
   );

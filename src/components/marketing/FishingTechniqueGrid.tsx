@@ -32,9 +32,7 @@ export default function FishingTechniqueGrid({
         return (
           <CategoryCard
             key={key}
-            href={`/${locale}/search/category/technique/${encodeURIComponent(
-              name.toLowerCase()
-            )}`}
+            href={`/${locale}/search?techniques=${encodeURIComponent(name)}`}
             label={name}
             count={tech.count}
             subtitle={t("chartersUsing", { technique: name.toLowerCase() })}

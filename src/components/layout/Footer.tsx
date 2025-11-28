@@ -35,7 +35,6 @@ const Footer = () => {
       key: "blog",
       link: `/${locale}/blog`,
     },
-
     {
       key: "contactUs",
       link: `/${locale}/support/contact`,
@@ -55,9 +54,16 @@ const Footer = () => {
       key: "fishSpecies",
       link: "",
     },
+  ];
+
+  const captain = [
     {
-      key: "fishNearMe",
-      link: "",
+      key: "listYourCharter",
+      link: "https://fishon-captain.vercel.app/list-your-business",
+    },
+    {
+      key: "manageYourCharter",
+      link: "https://fishon-captain.vercel.app",
     },
   ];
 
@@ -81,109 +87,151 @@ const Footer = () => {
   ];
 
   return (
-    <main className="flex flex-col w-full bg-gray-100">
-      <section className="grid w-full grid-cols-1 px-5 py-10 mx-auto max-w-7xl md:grid-cols-3 lg:grid-cols-5 gap-7">
-        <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">{t("aboutFishon")}</span>
-          <ul className="flex flex-col gap-2">
-            {abouts.map((a) => (
-              <li key={a.key}>
-                <Link
-                  href={a.link}
-                  className={
-                    a.link != ""
-                      ? ""
-                      : "disabled cursor-not-allowed text-slate-500"
-                  }
-                >
-                  {t(a.key as any)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">{t("discover")}</span>
-          <ul className="flex flex-col gap-2">
-            {discover.map((a) => (
-              <li key={a.key}>
-                <Link
-                  href={a.link}
-                  className={
-                    a.link != ""
-                      ? ""
-                      : "disabled cursor-not-allowed text-slate-500"
-                  }
-                >
-                  {t(a.key as any)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">{t("siteMap")}</span>
-          <ul className="flex flex-col gap-2">
-            <li>{t("allDestination")}</li>
-            <li>Selangor</li>
-            <li>Perak</li>
-          </ul>
-        </div>
-        <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">{t("support")}</span>
-          <ul className="flex flex-col gap-2">
-            {support.map((a) => (
-              <li key={a.key}>
-                <Link
-                  href={a.link}
-                  className={
-                    a.link != ""
-                      ? ""
-                      : "disabled cursor-not-allowed text-slate-500"
-                  }
-                >
-                  {t(a.key as any)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex flex-col gap-3 text-sm">
-          <span className="font-bold">{t("becomeCaptain")}</span>
-          <ul className="flex flex-col gap-2">
-            <li>
-              <Link href="https://fishon-captain.vercel.app/list-your-business">
-                {t("listYourBoat")}
+    <footer className="w-full bg-[#ec2227] text-white">
+      <div className="grid w-full grid-cols-1 gap-10 px-6 py-16 mx-auto max-w-7xl md:grid-cols-2 lg:grid-cols-5">
+        {/* Brand Column */}
+        <div className="flex flex-col gap-6 lg:col-span-1">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-4xl font-bold text-white">Fishon</h2>
+            <p className="text-sm text-white/80">plan • book • fish</p>
+          </div>
+          <div className="flex gap-4">
+            {socials.map((s) => (
+              <Link
+                key={s.name}
+                href={s.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xl transition-colors text-white/80 hover:text-white"
+                aria-label={s.name}
+              >
+                {s.icon}
               </Link>
-            </li>
-          </ul>
+            ))}
+          </div>
         </div>
-      </section>
-      <section className="w-full bg-[#ec2227] ">
-        <div className="flex flex-wrap items-center justify-between w-full h-24 gap-3 px-5 py-3 mx-auto max-w-7xl text-white/90">
-          <h3 className="font-bold">
-            © 2025 Fishon. {t("allRightsReserved")}.
-          </h3>
-          <nav aria-label="Social links">
-            <ul className="flex items-center gap-4 text-xl">
-              {/* Add more links as they go live */}
-              {socials.map((s) => (
-                <li key={s.name}>
-                  <Link
-                    href={s.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline decoration-white/40 underline-offset-4 hover:decoration-white"
-                  >
-                    {s.icon}
-                  </Link>
+
+        {/* Support & About */}
+        <div className="flex flex-col gap-8 lg:border-l-2 lg:border-white/10 lg:pl-4">
+          <div className="flex flex-col gap-4">
+            <h3 className="font-semibold text-white">{t("support")}</h3>
+            <ul className="flex flex-col gap-3 text-sm text-white/80">
+              {support.map((item) => (
+                <li key={item.key}>
+                  {item.link ? (
+                    <Link
+                      href={item.link}
+                      className="transition-colors hover:text-white"
+                    >
+                      {t(item.key as any)}
+                    </Link>
+                  ) : (
+                    <span className="cursor-not-allowed opacity-70">
+                      {t(item.key as any)}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
-          </nav>
+          </div>
+
+          <div className="flex flex-col gap-4 ">
+            <h3 className="font-semibold text-white">{t("aboutUs")}</h3>
+            <ul className="flex flex-col gap-3 text-sm text-white/80">
+              {abouts.map((item) => (
+                <li key={item.key}>
+                  {item.link ? (
+                    <Link
+                      href={item.link}
+                      className="transition-colors hover:text-white"
+                    >
+                      {t(item.key as any)}
+                    </Link>
+                  ) : (
+                    <span className="cursor-not-allowed opacity-70">
+                      {t(item.key as any)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </section>
-    </main>
+
+        {/* Discover */}
+        <div className="flex flex-col gap-4">
+          <h3 className="font-semibold text-white">{t("discover")}</h3>
+          <ul className="flex flex-col gap-3 text-sm text-white/80">
+            {discover.map((item) => (
+              <li key={item.key}>
+                {item.link ? (
+                  <Link
+                    href={item.link}
+                    className="transition-colors hover:text-white"
+                  >
+                    {t(item.key as any)}
+                  </Link>
+                ) : (
+                  <span className="cursor-not-allowed opacity-70">
+                    {t(item.key as any)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Destinations */}
+        <div className="flex flex-col gap-4">
+          <h3 className="font-semibold text-white">{t("destinations")}</h3>
+          <ul className="flex flex-col gap-3 text-sm text-white/80">
+            <li>
+              <span className="cursor-not-allowed opacity-70">
+                {t("allDestination")}
+              </span>
+            </li>
+            <li>
+              <span className="cursor-not-allowed opacity-70">Selangor</span>
+            </li>
+            <li>
+              <span className="cursor-not-allowed opacity-70">Perak</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Fishon Captain */}
+        <div className="flex flex-col gap-4">
+          <h3 className="font-semibold text-white">{t("fishonCaptain")}</h3>
+          <ul className="flex flex-col gap-3 text-sm text-white/80">
+            {captain.map((item) => (
+              <li key={item.key}>
+                {item.link ? (
+                  <Link
+                    href={item.link}
+                    className="transition-colors hover:text-white"
+                  >
+                    {t(item.key as any)}
+                  </Link>
+                ) : (
+                  <span className="cursor-not-allowed opacity-70">
+                    {t(item.key as any)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="w-full border-t border-white/10 bg-[#c81e23]">
+        <div className="flex flex-col items-center justify-between w-full gap-4 px-6 py-6 mx-auto max-w-7xl md:flex-row text-white/60">
+          <p className="text-sm">
+            © {new Date().getFullYear()} Fishon. {t("allRightsReserved")}.
+          </p>
+        </div>
+      </div>
+    </footer>
   );
 };
 

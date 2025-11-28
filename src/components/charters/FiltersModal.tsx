@@ -140,6 +140,8 @@ const CalendarIcon = () => (
 type Props = {
   isOpen: boolean;
   onClose: () => void;
+  /** Optional callback to show results on map (opens map overlay after closing modal) */
+  onShowOnMap?: () => void;
   priceRange?: string;
   tripType?: string;
   pickup?: string;
@@ -552,26 +554,39 @@ export default function FiltersModal(props: Props) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                router.push(props.clearAllUrl);
-                props.onClose();
-              }}
-              className="px-6 py-3 bg-white border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
-            >
-              Reset All
-            </button>
-            <button
-              type="button"
-              onClick={props.onClose}
-              className="flex-1 px-6 py-3 bg-[#ec2227] hover:bg-[#d11f24] text-white font-semibold rounded-xl transition-colors"
-            >
-              {props.filteredCount === 0
-                ? "No Exact Matches"
-                : `Show ${props.filteredCount} Result${props.filteredCount === 1 ? "" : "s"}`}
-            </button>
+          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-3">
+            {/* Primary action row */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(props.clearAllUrl);
+                  props.onClose();
+                }}
+                className="px-6 py-3 bg-white border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                Reset All
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onClose();
+                  // If opened from map, trigger the map callback after modal closes
+                  if (props.onShowOnMap) {
+                    setTimeout(() => {
+                      props.onShowOnMap?.();
+                    }, 100);
+                  }
+                }}
+                className="flex-1 px-6 py-3 bg-[#ec2227] hover:bg-[#d11f24] text-white font-semibold rounded-xl transition-colors"
+              >
+                {props.filteredCount === 0
+                  ? "No Exact Matches"
+                  : props.onShowOnMap
+                    ? `Show ${props.filteredCount} on Map`
+                    : `Show ${props.filteredCount} Result${props.filteredCount === 1 ? "" : "s"}`}
+              </button>
+            </div>
           </div>
         </div>
       </div>

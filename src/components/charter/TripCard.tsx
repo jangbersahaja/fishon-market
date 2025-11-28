@@ -40,7 +40,7 @@ export const TripCard: React.FC<TripCardProps> = ({
   return (
     <div
       id={id}
-      className="mb-4 overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl scroll-mt-6"
+      className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl scroll-mt-6"
     >
       <div className="flex flex-col gap-3 p-4">
         {/* Header row: name, price, duration */}
