@@ -22,28 +22,38 @@ function DestinationCard({ destination, locale }: DestinationCardProps) {
   return (
     <Link
       href={`/${locale}/search?destination=${encodeURIComponent(destination.name)}`}
-      className="flex flex-col gap-2 group"
+      className="group relative flex h-64 w-full flex-col overflow-hidden rounded-2xl shadow-md transition-all hover:shadow-xl sm:h-80"
       title={t("findChartersIn", { destination: destination.name })}
     >
-      <div className="relative h-48 overflow-hidden bg-gray-200 rounded-lg">
+      {/* Image Background */}
+      <div className="absolute inset-0 h-full w-full">
         {destination.charterImage ? (
           <Image
             src={destination.charterImage}
             alt={t("altText", { destination: destination.name })}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
             priority={false}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
+          <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
         )}
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity group-hover:opacity-100" />
       </div>
-      <div className="flex flex-col">
-        <span className="text-sm font-bold">{destination.name}</span>
-        <span className="text-xs">
-          {t("chartersAvailable", { count: destination.count })}
-        </span>
+
+      {/* Content Overlay */}
+      <div className="absolute bottom-0 left-0 w-full p-5 text-white">
+        <h3 className="text-xl font-bold tracking-tight md:text-2xl drop-shadow-md">
+          {destination.name}
+        </h3>
+        <p className="mt-1 flex items-center gap-2 text-sm font-medium text-white/90">
+          <span>{t("chartersAvailable", { count: destination.count })}</span>
+          <span className="inline-block opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100">
+            →
+          </span>
+        </p>
       </div>
     </Link>
   );
@@ -73,11 +83,13 @@ export function DestinationGridSkeleton({ count = 12 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-2 animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-lg" />
-          <div className="flex flex-col gap-1">
-            <div className="w-24 h-4 bg-gray-300 rounded" />
-            <div className="w-16 h-3 bg-gray-200 rounded" />
+        <div
+          key={i}
+          className="relative h-64 w-full overflow-hidden rounded-2xl bg-gray-200 animate-pulse sm:h-80"
+        >
+          <div className="absolute bottom-0 left-0 w-full p-5">
+            <div className="mb-2 h-6 w-3/4 rounded bg-gray-300" />
+            <div className="h-4 w-1/2 rounded bg-gray-300" />
           </div>
         </div>
       ))}

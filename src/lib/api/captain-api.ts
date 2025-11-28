@@ -23,6 +23,9 @@ export type BackendBoat = {
   type: string;
   lengthFt: number;
   capacity: number;
+  imageUrl?: string | null;
+  features?: string[];
+  images?: Array<{ id: string; url: string; sortOrder: number }>;
 };
 
 export type BackendTrip = {
@@ -74,6 +77,7 @@ export type BackendCharter = {
   latitude: number | null;
   longitude: number | null;
   description: string;
+  descriptionMy?: string | null; // Malay description
   pricingPlan: "BASIC" | "SILVER" | "GOLD";
   captainId: string; // ID of the captain profile (operator)
   ownerId?: string | null; // ID of the user who owns this charter

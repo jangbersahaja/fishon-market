@@ -3,6 +3,7 @@
 import { AMENITIES_OPTIONS } from "@/data/amenities";
 import {
   Apple,
+  Check,
   Coffee,
   CupSoda,
   Fish,
@@ -31,19 +32,17 @@ export interface AmenitiesCardProps {
 
 function getAmenityIcon(label: string) {
   const l = label.toLowerCase();
-  if (l.includes("live bait")) return <Fish className="w-5 h-5 text-primary" />;
-  if (l.includes("lures")) return <Package className="w-5 h-5 text-primary" />;
+  const iconClass = "w-4 h-4";
+  if (l.includes("live bait")) return <Fish className={iconClass} />;
+  if (l.includes("lures")) return <Package className={iconClass} />;
   if (l.includes("rod") || l.includes("reel"))
-    return <Wrench className="w-5 h-5 text-primary" />;
-  if (l.includes("terminal tackle"))
-    return <Wrench className="w-5 h-5 text-primary" />;
-  if (l.includes("snack")) return <Apple className="w-5 h-5 text-primary" />;
-  if (l.includes("drinks")) return <CupSoda className="w-5 h-5 text-primary" />;
-  if (l.includes("meals"))
-    return <UtensilsCrossed className="w-5 h-5 text-primary" />;
-  if (l.includes("life jacket"))
-    return <ShieldCheck className="w-5 h-5 text-primary" />;
-  return <Coffee className="w-5 h-5 text-primary" />;
+    return <Wrench className={iconClass} />;
+  if (l.includes("terminal tackle")) return <Wrench className={iconClass} />;
+  if (l.includes("snack")) return <Apple className={iconClass} />;
+  if (l.includes("drinks")) return <CupSoda className={iconClass} />;
+  if (l.includes("meals")) return <UtensilsCrossed className={iconClass} />;
+  if (l.includes("life jacket")) return <ShieldCheck className={iconClass} />;
+  return <Coffee className={iconClass} />;
 }
 
 /**
@@ -74,33 +73,36 @@ export const AmenitiesCard = React.memo(function AmenitiesCard({
 
   return (
     <section
-      className={"rounded-2xl  bg-white p-5 shadow-lg " + (className || "")}
+      className={"rounded-2xl bg-white p-5 shadow-lg " + (className || "")}
     >
-      <div className="flex items-baseline justify-between gap-3 pb-2 border-b border-gray-200">
-        <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>
-        <p className="text-xs text-gray-500 sm:text-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900">{t("title")}</h3>
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-[#ec2227] text-xs font-medium">
+          <Check className="w-3 h-3" />
           {t("included", { count: included.length })}
-        </p>
+        </span>
       </div>
-      <div className="mt-3">
-        <h4 className="text-sm font-semibold text-gray-700">
-          {t("includedLabel")}
-        </h4>
-        <ul className="grid grid-cols-2 mt-2 text-sm text-gray-800 gap-x-4 gap-y-4 sm:grid-cols-2">
+
+      <div className="mt-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {included.map((amenity) => {
             const displayLabel =
               locale === "my" ? amenity.labelMy : amenity.label;
             return (
-              <li
+              <div
                 key={`inc-${amenity.key}`}
-                className="flex items-center gap-3"
+                className="flex items-center gap-3 py-2"
               >
-                {getAmenityIcon(amenity.label)}
-                <span>{displayLabel}</span>
-              </li>
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-red-50 text-[#ec2227]">
+                  {getAmenityIcon(amenity.label)}
+                </div>
+                <span className="text-sm font-medium text-gray-900">
+                  {displayLabel}
+                </span>
+              </div>
             );
           })}
-        </ul>
+        </div>
       </div>
     </section>
   );

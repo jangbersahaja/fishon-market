@@ -212,7 +212,7 @@ export default function BaseCharterCard({
   if (variant === "nearby") {
     return (
       <article
-        className={`overflow-hidden shadow-sm rounded-xl transition-all duration-300 ease-in-out group hover:shadow-2xl hover:-translate-y-1 ${className}`}
+        className={`overflow-hidden shadow-sm rounded-xl transition-all duration-300 ease-in-out group hover:shadow-lg hover:-translate-y-1 ${className}`}
       >
         <div className={`relative w-full ${imageHeight} bg-gray-100`}>
           <SafeImage
@@ -401,7 +401,7 @@ export default function BaseCharterCard({
 
           {/* Unavailable overlay */}
           {isUnavailable && (
-            <div className="absolute inset-0 z-5 bg-slate-900/20 pointer-events-none" />
+            <div className="absolute inset-0 pointer-events-none z-5 bg-slate-900/20" />
           )}
 
           {/* Favorite button overlay */}

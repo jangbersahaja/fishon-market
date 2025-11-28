@@ -27,8 +27,14 @@ export default async function TechniquesCategoriesPage() {
 
   charters.forEach((c) => {
     (c.techniques || []).forEach((raw: string) => {
-      const key = (raw || "").toLowerCase().trim();
+      let key = (raw || "").toLowerCase().trim();
       if (!key) return;
+
+      // Merge "bottom" into "bottom fishing"
+      if (key === "bottom") {
+        key = "bottom fishing";
+      }
+
       map.set(key, (map.get(key) || 0) + 1);
     });
   });

@@ -12,6 +12,7 @@ const config: Config = {
         "slide-down": "slideDown 0.3s ease-out",
         "fade-in": "fadeIn 0.3s ease-out",
         "scale-in": "scaleIn 0.3s ease-out",
+        "slow-zoom": "slowZoom 20s linear infinite alternate",
       },
       keyframes: {
         slideDown: {
@@ -25,6 +26,10 @@ const config: Config = {
         scaleIn: {
           "0%": { transform: "scale(0.95)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        slowZoom: {
+          "0%": { transform: "scale(1)" },
+          "100%": { transform: "scale(1.1)" },
         },
       },
     },

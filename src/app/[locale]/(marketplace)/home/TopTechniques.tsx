@@ -34,30 +34,28 @@ export default function TopTechniques({ charters }: TopTechniquesProps) {
   }
 
   return (
-    <section className="w-full px-2 mx-auto max-w-7xl md:px-0">
-      <div className="w-full px-5">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold">{t("title")}</h2>
-          <Link
-            href={`/${locale}/categories/techniques`}
-            className="hidden text-sm font-medium text-[#ec2227] hover:underline md:inline"
-          >
-            {t("seeAll")}
-          </Link>
-        </div>
+    <section className="w-full bg-white py-16 md:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
+        <div className="flex flex-col w-full">
+          <div className="mb-10 flex flex-col items-center text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {t("title")}
+            </h2>
+            <p className="mt-2 text-lg text-gray-600 max-w-2xl">
+              {t("subtitle")}
+            </p>
+          </div>
 
-        <FishingTechniqueGrid
-          techniques={topTechniques}
-          gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-5"
-        />
+          <FishingTechniqueGrid techniques={topTechniques} />
 
-        <div className="flex justify-start mt-4 md:hidden">
-          <Link
-            href={`/${locale}/categories/techniques`}
-            className="text-sm font-semibold text-[#ec2227] hover:underline"
-          >
-            {t("seeAll")}
-          </Link>
+          <div className="mt-10 flex justify-center">
+            <Link
+              href={`/${locale}/categories/techniques`}
+              className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            >
+              {t("seeAll")}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

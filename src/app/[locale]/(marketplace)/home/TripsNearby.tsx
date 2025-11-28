@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
-import { MdLocationOff } from "react-icons/md";
+import { MdLocationOff, MdNearMe } from "react-icons/md";
 
 // Haversine distance in km
 function distanceKm(
@@ -26,6 +26,26 @@ function distanceKm(
 }
 
 type Nearby = Charter & { _distance: number };
+
+function TripsNearbySkeleton() {
+  return (
+    <div className="flex gap-6 overflow-hidden py-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="h-[380px] w-[300px] shrink-0 animate-pulse rounded-2xl bg-white/10 md:w-[320px]"
+        >
+          <div className="h-48 w-full rounded-t-2xl bg-white/20" />
+          <div className="p-4 space-y-3">
+            <div className="h-6 w-3/4 rounded bg-white/20" />
+            <div className="h-4 w-1/2 rounded bg-white/20" />
+            <div className="mt-4 h-10 w-full rounded bg-white/20" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function TripsNearby({ charters }: { charters: Charter[] }) {
   const t = useTranslations("home.tripsNearby");
@@ -82,7 +102,7 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
         unique.push(c);
       }
     }
-    return unique.filter((c) => c._distance <= 25).slice(0, 20);
+    return unique.filter((c) => c._distance <= 50).slice(0, 20); // Increased radius to 50km
   }, [coords, charters]);
 
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -96,10 +116,6 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
     if (!(first instanceof HTMLElement))
       return Math.round(el.clientWidth * 0.9); // Fallback if no card found
     const rect = first.getBoundingClientRect();
-    // The gap in the flex container is 40px (gap-10), but it's not part of the element's margin.
-    // We need to account for the gap.
-    // However, the scroll snap usually aligns to the start of the element.
-    // Let's just use the card width + gap (24px from gap-6) as the step.
     return Math.round(rect.width + 24);
   }, []);
 
@@ -108,12 +124,10 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
     if (!el) return;
     const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
     const left = Math.max(0, Math.round(el.scrollLeft));
-    // tolerate small sub-pixel scroll on mobile; hide prev at start
-    const EPS = 6; // px
+    const EPS = 6;
     setCanScrollPrev(left > EPS);
     setCanScrollNext(left < maxScroll - EPS);
 
-    // Update active index
     const step = getStep();
     if (step > 0) {
       setActiveIndex(Math.round(left / step));
@@ -121,7 +135,6 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
   }, [getStep]);
 
   useEffect(() => {
-    // run a few times after mount to catch image/font/layout shifts
     const ticks = [0, 60, 180, 360];
     const timers = ticks.map((t) => setTimeout(updateScrollState, t));
     const raf = requestAnimationFrame(() => updateScrollState());
@@ -165,154 +178,145 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
       target = Math.max(0, Math.floor((current - 1) / step) * step);
     }
     el.scrollTo({ left: target, behavior: "smooth" });
-    // refresh state during/after the scroll animation
     requestAnimationFrame(updateScrollState);
     setTimeout(updateScrollState, 220);
   };
 
   return (
     <section className="w-full">
-      <div className="w-full px-5 mx-auto max-w-7xl">
-        {/* Status */}
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
+        {/* Header */}
+        <div className="mb-8 flex items-end justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-white/80">
+              <MdNearMe className="text-xl" />
+              <span className="text-sm font-medium uppercase tracking-wider">
+                Near You
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold text-white md:text-4xl">
+              {t("title")}
+            </h2>
+          </div>
+
+          {/* Desktop Controls */}
+          {nearby.length > 0 && (
+            <div className="hidden gap-3 md:flex">
+              <button
+                onClick={() => scrollToSnap("prev")}
+                disabled={!canScrollPrev}
+                className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
+                  canScrollPrev
+                    ? "bg-white text-[#ec2227] shadow-lg hover:bg-gray-50 hover:scale-105"
+                    : "bg-white/10 text-white/30 cursor-not-allowed"
+                }`}
+                aria-label="Previous"
+              >
+                <FaChevronLeft className="text-lg" />
+              </button>
+              <button
+                onClick={() => scrollToSnap("next")}
+                disabled={!canScrollNext}
+                className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
+                  canScrollNext
+                    ? "bg-white text-[#ec2227] shadow-lg hover:bg-gray-50 hover:scale-105"
+                    : "bg-white/10 text-white/30 cursor-not-allowed"
+                }`}
+                aria-label="Next"
+              >
+                <FaChevronRight className="text-lg" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Status States */}
         {!coords && !error && (
-          <div className="flex flex-col items-center justify-center py-10 text-white/80">
-            <div className="w-6 h-6 mb-2 border-2 border-white rounded-full border-t-transparent animate-spin" />
-            <p className="text-sm">{t("detectingLocation")}</p>
+          <div className="py-4">
+            <div className="mb-4 flex items-center gap-3 text-white/80">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <p className="text-sm font-medium">{t("detectingLocation")}</p>
+            </div>
+            <TripsNearbySkeleton />
           </div>
         )}
+
         {error && (
-          <div className="flex flex-col items-center justify-center py-8 text-center text-white">
-            <MdLocationOff className="mb-2 text-4xl opacity-80" />
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-white/10 py-12 text-center text-white backdrop-blur-sm">
+            <MdLocationOff className="mb-3 text-4xl opacity-80" />
             <p className="font-medium">{t("locationError", { error })}</p>
-            <p className="text-sm opacity-80">
+            <p className="mt-1 text-sm opacity-80">
               {t("browseTripsBelowFallback")}
             </p>
           </div>
         )}
+
         {coords && nearby.length === 0 && !error && (
-          <div className="flex flex-col items-center justify-center py-10 text-white">
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-white/10 py-12 text-white backdrop-blur-sm">
             <p className="text-lg font-medium">{t("noTripsNearby")}</p>
-            <p className="text-sm opacity-80">
+            <p className="mt-1 text-sm opacity-80">
               Try searching for a different location
             </p>
           </div>
         )}
 
-        {/* Cards (carousel) */}
+        {/* Cards Carousel */}
         {nearby.length > 0 && (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white md:text-3xl">
-                {t("title")}
-              </h2>
-              <div className="hidden gap-2 md:flex">
+          <div className="relative group">
+            <div
+              ref={trackRef}
+              className="flex gap-6 overflow-x-auto pb-8 pt-2 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {nearby.map((c) => {
+                const context = {
+                  date: date || undefined,
+                  adults:
+                    typeof adults === "number" && !Number.isNaN(adults)
+                      ? adults
+                      : undefined,
+                  children:
+                    typeof children === "number" && !Number.isNaN(children)
+                      ? children
+                      : undefined,
+                };
+
+                return (
+                  <BaseCharterCard
+                    key={getCharterKey(c as any)}
+                    charter={c}
+                    variant="nearby"
+                    imageAspect="square"
+                    context={context}
+                    distance={c._distance}
+                    showFavoriteButton={true}
+                    className="shrink-0 snap-start w-[300px] md:w-[320px] transition-transform hover:-translate-y-1"
+                  />
+                );
+              })}
+            </div>
+
+            {/* Mobile Navigation Overlay Buttons */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center md:hidden">
+              {canScrollPrev && (
                 <button
                   onClick={() => scrollToSnap("prev")}
-                  disabled={!canScrollPrev}
-                  className={`flex items-center justify-center w-10 h-10 transition-all rounded-full ${
-                    canScrollPrev
-                      ? "bg-white text-[#ec2227] hover:bg-gray-100 shadow-lg"
-                      : "bg-white/20 text-white/40 cursor-not-allowed"
-                  }`}
-                  aria-label="Previous"
+                  className="pointer-events-auto ml-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#ec2227] shadow-lg opacity-90"
                 >
-                  <FaChevronLeft className="text-lg" />
+                  <FaChevronLeft />
                 </button>
+              )}
+            </div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center md:hidden">
+              {canScrollNext && (
                 <button
                   onClick={() => scrollToSnap("next")}
-                  disabled={!canScrollNext}
-                  className={`flex items-center justify-center w-10 h-10 transition-all rounded-full ${
-                    canScrollNext
-                      ? "bg-white text-[#ec2227] hover:bg-gray-100 shadow-lg"
-                      : "bg-white/20 text-white/40 cursor-not-allowed"
-                  }`}
-                  aria-label="Next"
+                  className="pointer-events-auto mr-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#ec2227] shadow-lg opacity-90"
                 >
-                  <FaChevronRight className="text-lg" />
+                  <FaChevronRight />
                 </button>
-              </div>
+              )}
             </div>
-
-            <div className="relative group">
-              {/* track */}
-              <div
-                ref={trackRef}
-                className="flex gap-6 py-4 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {nearby.map((c) => {
-                  // Build booking context if present
-                  const context = {
-                    date: date || undefined,
-                    adults:
-                      typeof adults === "number" && !Number.isNaN(adults)
-                        ? adults
-                        : undefined,
-                    children:
-                      typeof children === "number" && !Number.isNaN(children)
-                        ? children
-                        : undefined,
-                  };
-
-                  return (
-                    <BaseCharterCard
-                      key={getCharterKey(c as any)}
-                      charter={c}
-                      variant="nearby"
-                      imageAspect="square"
-                      context={context}
-                      distance={c._distance}
-                      showFavoriteButton={true}
-                      className="shrink-0 snap-start w-[300px] md:w-[320px]"
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Mobile Navigation Overlay Buttons */}
-              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none md:hidden">
-                {canScrollPrev && (
-                  <button
-                    onClick={() => scrollToSnap("prev")}
-                    className="flex items-center justify-center w-8 h-8 ml-2 bg-white rounded-full shadow-lg pointer-events-auto text-[#ec2227] opacity-90"
-                  >
-                    <FaChevronLeft />
-                  </button>
-                )}
-              </div>
-              <div className="absolute inset-y-0 right-0 flex items-center pointer-events-none md:hidden">
-                {canScrollNext && (
-                  <button
-                    onClick={() => scrollToSnap("next")}
-                    className="flex items-center justify-center w-8 h-8 mr-2 bg-white rounded-full shadow-lg pointer-events-auto text-[#ec2227] opacity-90"
-                  >
-                    <FaChevronRight />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Progress Indicators */}
-            <div className="flex justify-center gap-2 mt-6">
-              {nearby.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    const el = trackRef.current;
-                    if (el) {
-                      const step = getStep();
-                      el.scrollTo({ left: i * step, behavior: "smooth" });
-                    }
-                  }}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === activeIndex
-                      ? "w-6 bg-white"
-                      : "w-1.5 bg-white/30 hover:bg-white/50"
-                  }`}
-                  aria-label={`Go to item ${i + 1}`}
-                />
-              ))}
-            </div>
-          </>
+          </div>
         )}
       </div>
     </section>
