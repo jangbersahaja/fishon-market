@@ -228,6 +228,7 @@ export async function POST(request: NextRequest) {
           date: new Date(bookingData.date),
           days: bookingData.days,
           startTime: bookingData.startTime,
+          timeSlots: bookingData.timeSlots || null, // Include timeSlots from session
           guests: guestsData,
           tripPrice: pricingBreakdown.tripPrice,
           finalPrice: pricingBreakdown.finalPrice,
@@ -242,8 +243,8 @@ export async function POST(request: NextRequest) {
               } as any)
             : null,
           expiresAt,
-          status: "PAID", // Payment already confirmed
-          paidAt: new Date(),
+          status: "PAYMENT_AUTHORIZED", // Payment captured, awaiting captain acknowledgment
+          paymentAuthorizedAt: new Date(),
           bookingFlowType: "AUTO",
           acknowledgmentDeadline: expiresAt,
           paymentMethod: paymentSession.paymentMethod,

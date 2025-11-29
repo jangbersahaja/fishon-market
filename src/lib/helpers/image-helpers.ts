@@ -214,6 +214,7 @@ const FISHING_TECHNIQUE_IMAGE_MAP: Record<string, string> = {
   eging: "/images/fishing-techniques/Eging.png",
   "deep sea fishing": "/images/fishing-techniques/Deep Sea Fishing.jpeg",
   "prawn fishing": "/images/fishing-techniques/Prawn Fishing.png",
+  apollo: "/images/fishing-techniques/Apollo.jpg",
 };
 
 /**

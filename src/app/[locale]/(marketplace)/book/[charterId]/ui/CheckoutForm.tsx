@@ -302,6 +302,7 @@ export default function CheckoutForm({
     trigger,
     setError: setFormError,
     clearErrors,
+    control,
   } = useForm<BookingFormData>({
     resolver: zodResolver(baseBookingSchema),
     defaultValues: {
@@ -1022,6 +1023,7 @@ export default function CheckoutForm({
             <YourDetailsCard
               register={register}
               errors={errors}
+              control={control}
               firstName={firstName}
               lastName={lastName}
               email={email}
@@ -1034,6 +1036,7 @@ export default function CheckoutForm({
               errors={errors}
               watch={watch}
               setValue={setValue}
+              control={control}
               guests={adults + (children || 0)}
             />
           </div>
@@ -1058,6 +1061,7 @@ export default function CheckoutForm({
             <EmergencyContactCard
               register={register}
               errors={errors}
+              control={control}
               emergencyName={watch("emergencyName")}
               emergencyPhone={watch("emergencyPhone")}
               emergencyRelation={watch("emergencyRelation")}

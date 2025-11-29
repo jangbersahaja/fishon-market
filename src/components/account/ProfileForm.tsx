@@ -1,5 +1,7 @@
 "use client";
 
+import { PhoneInput } from "@/components/shared/PhoneInput";
+import { RelationshipSelect } from "@/components/shared/RelationshipSelect";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -183,18 +185,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
             >
               Phone Number
             </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
+            <PhoneInput
               value={formData.phone}
-              onChange={handleChange}
-              placeholder="+60123456789"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent"
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, phone: value }))
+              }
+              placeholder="12 345 6789"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Include country code (e.g., +60 for Malaysia)
-            </p>
           </div>
         </div>
       </div>
@@ -345,14 +342,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
             >
               Contact Phone
             </label>
-            <input
-              type="tel"
-              id="emergencyPhone"
-              name="emergencyPhone"
+            <PhoneInput
               value={formData.emergencyPhone}
-              onChange={handleChange}
-              placeholder="+60123456789"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent"
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, emergencyPhone: value }))
+              }
+              placeholder="12 345 6789"
             />
           </div>
 
@@ -363,14 +358,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
             >
               Relationship
             </label>
-            <input
-              type="text"
-              id="emergencyRelation"
-              name="emergencyRelation"
+            <RelationshipSelect
               value={formData.emergencyRelation}
-              onChange={handleChange}
-              placeholder="e.g., Spouse, Parent, Sibling"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent"
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, emergencyRelation: value }))
+              }
             />
           </div>
         </div>

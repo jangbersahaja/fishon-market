@@ -1,13 +1,21 @@
 "use client";
 
+import { PhoneInput } from "@/components/shared/PhoneInput";
+import { RelationshipSelect } from "@/components/shared/RelationshipSelect";
 import { Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { FieldErrors, UseFormRegister } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  UseFormRegister,
+} from "react-hook-form";
 import type { BookingFormData } from "./types";
 
 interface EmergencyContactCardProps {
   register: UseFormRegister<BookingFormData>;
   errors: FieldErrors<BookingFormData>;
+  control: Control<BookingFormData>;
   emergencyName?: string;
   emergencyPhone?: string;
   emergencyRelation?: string;
@@ -16,6 +24,7 @@ interface EmergencyContactCardProps {
 export default function EmergencyContactCard({
   register,
   errors,
+  control,
 }: EmergencyContactCardProps) {
   const t = useTranslations("booking.checkout.emergencyContact");
 
@@ -54,13 +63,17 @@ export default function EmergencyContactCard({
             <span className="block mb-2 font-medium text-slate-800">
               {t("contactPhone")}
             </span>
-            <input
-              type="tel"
-              {...register("emergencyPhone")}
-              placeholder={t("phonePlaceholder")}
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
-                errors.emergencyPhone ? "border-red-500" : "border-black/10"
-              }`}
+            <Controller
+              name="emergencyPhone"
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  placeholder={t("phonePlaceholder")}
+                  hasError={!!errors.emergencyPhone}
+                />
+              )}
             />
             {errors.emergencyPhone && (
               <span className="block mt-1 text-xs text-red-600">
@@ -69,24 +82,28 @@ export default function EmergencyContactCard({
             )}
           </label>
 
-          <label className="block text-sm">
+          <div className="block text-sm">
             <span className="block mb-2 font-medium text-slate-800">
               {t("relationship")}
             </span>
-            <input
-              type="text"
-              {...register("emergencyRelation")}
-              placeholder={t("relationshipPlaceholder")}
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
-                errors.emergencyRelation ? "border-red-500" : "border-black/10"
-              }`}
+            <Controller
+              name="emergencyRelation"
+              control={control}
+              render={({ field }) => (
+                <RelationshipSelect
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  placeholder={t("relationshipPlaceholder")}
+                  hasError={!!errors.emergencyRelation}
+                />
+              )}
             />
             {errors.emergencyRelation && (
               <span className="block mt-1 text-xs text-red-600">
                 {errors.emergencyRelation.message}
               </span>
             )}
-          </label>
+          </div>
         </div>
       </div>
     </section>

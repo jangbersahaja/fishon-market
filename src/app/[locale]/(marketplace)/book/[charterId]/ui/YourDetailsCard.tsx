@@ -1,14 +1,21 @@
 "use client";
 
 import { useAuthModal } from "@/components/auth/AuthModalContext";
+import { PhoneInput } from "@/components/shared/PhoneInput";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { FieldErrors, UseFormRegister } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  UseFormRegister,
+} from "react-hook-form";
 import type { BookingFormData } from "./types";
 
 interface YourDetailsCardProps {
   register: UseFormRegister<BookingFormData>;
   errors: FieldErrors<BookingFormData>;
+  control: Control<BookingFormData>;
   firstName: string;
   lastName: string;
   email: string;
@@ -18,6 +25,7 @@ interface YourDetailsCardProps {
 export default function YourDetailsCard({
   register,
   errors,
+  control,
   firstName,
   lastName,
   email,
@@ -135,13 +143,17 @@ export default function YourDetailsCard({
             <span className="block mb-2 font-medium text-slate-800">
               {t("phone")} <span className="text-red-500">*</span>
             </span>
-            <input
-              type="tel"
-              {...register("phone")}
-              placeholder={t("phonePlaceholder")}
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 focus:ring-[#ec2227] focus:border-transparent transition-shadow ${
-                errors.phone ? "border-red-500" : "border-black/10"
-              }`}
+            <Controller
+              name="phone"
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  placeholder={t("phonePlaceholder")}
+                  hasError={!!errors.phone}
+                />
+              )}
             />
             {errors.phone && (
               <span className="block mt-1 text-xs text-red-600">

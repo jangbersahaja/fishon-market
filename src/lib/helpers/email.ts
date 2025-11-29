@@ -1,18 +1,23 @@
 /**
- * Legacy Email Helper - SMTP Transport Only
+ * Email Helper - Resend (Primary) + SMTP (Fallback)
  *
- * This file contains the basic SMTP transport setup.
- * It is kept for backward compatibility with auth routes that still use direct sendMail().
+ * This file provides email transport with automatic fallback:
+ * 1. Resend API (HTTP-based, works reliably on Vercel serverless)
+ * 2. SMTP via Nodemailer (fallback if Resend is not configured or fails)
  *
  * NEW EMAIL SYSTEM: Use @fishon/email package via src/lib/services/email-service.ts
  *
  * Migration Date: October 28, 2025
  * Package: @fishon/email (git+https://github.com/jangbersahaja/fishon-email)
  *
- * Note: Email template functions have been removed - use @fishon/email package instead.
+ * Updated: November 29, 2025
+ * - Added Resend as primary transport (HTTP API, no SMTP connection issues)
+ * - SMTP kept as fallback with increased timeouts
+ * - Retry logic with exponential backoff for transient failures
  */
 
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export type MailInput = {
   to: string;
@@ -20,10 +25,55 @@ export type MailInput = {
   html: string;
 };
 
-let transporter: any | null = null;
+// Resend client (lazy initialized)
+let resendClient: Resend | null = null;
 
-function getTransporter(): any {
-  if (transporter) return transporter;
+function getResendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
+
+/**
+ * Send email via Resend API (HTTP-based, reliable on serverless)
+ */
+async function sendViaResend({
+  to,
+  subject,
+  html,
+}: MailInput): Promise<{ success: true; messageId: string }> {
+  const resend = getResendClient();
+  if (!resend) {
+    throw new Error("Resend not configured");
+  }
+
+  const from = process.env.RESEND_FROM_EMAIL || process.env.SMTP_USER;
+  if (!from) {
+    throw new Error(
+      "No from email configured (RESEND_FROM_EMAIL or SMTP_USER)"
+    );
+  }
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    throw new Error(`Resend error: ${error.message}`);
+  }
+
+  return { success: true, messageId: data?.id || "unknown" };
+}
+
+// Don't cache transporter in serverless - each invocation may be a new container
+function createTransporter() {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 465);
   const secure =
@@ -34,53 +84,132 @@ function getTransporter(): any {
   if (!host || !user || !pass) {
     throw new Error("SMTP not configured. Missing SMTP_HOST/USER/PASS");
   }
-  transporter = nodemailer.createTransport({
+
+  return nodemailer.createTransport({
     host,
     port,
     secure,
     auth: { user, pass },
-    // Connection pooling for better performance
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    // Reduce connection timeout
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 5000, // 5 seconds
+    // Disable pooling for serverless (each function invocation is isolated)
+    pool: false,
+    // Increased timeouts for Vercel serverless cold starts
+    // Vercel functions can take 5-10s to cold start, SMTP handshake needs time after that
+    connectionTimeout: 30000, // 30 seconds (was 10s)
+    greetingTimeout: 15000, // 15 seconds (was 5s)
+    socketTimeout: 60000, // 60 seconds for socket operations
+    // DNS resolution timeout
+    dnsTimeout: 10000, // 10 seconds
   });
-  // In development, optionally verify the transporter to surface config errors early
-  if (
-    process.env.NODE_ENV !== "production" &&
-    process.env.EMAIL_VERIFY_AT_START
-  ) {
-    transporter
-      .verify()
-      .then(() => {
-        console.info("[email] SMTP transporter verified (dev)");
-      })
-      .catch((err: unknown) => {
-        console.error("[email] SMTP transporter verify failed", err);
-      });
-  }
-  return transporter;
 }
 
 /**
- * Send email using SMTP transport.
+ * Helper to wait for a specified time (for retry backoff)
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Check if error is retryable (transient network issues)
+ */
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const code = (err as NodeJS.ErrnoException).code;
+    // Retry on connection timeouts, resets, and temporary failures
+    return [
+      "ETIMEDOUT",
+      "ECONNRESET",
+      "ECONNREFUSED",
+      "ENETUNREACH",
+      "EHOSTUNREACH",
+      "ESOCKET",
+      "ENOTFOUND",
+    ].includes(code || "");
+  }
+  return false;
+}
+
+/**
+ * Send email via SMTP with retry logic (fallback transport)
+ */
+async function sendViaSMTP({ to, subject, html }: MailInput) {
+  const from = process.env.SMTP_USER!;
+  const maxRetries = 3;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Create fresh transporter for each attempt (serverless best practice)
+      const transporter = createTransporter();
+      const info = await transporter.sendMail({ from, to, subject, html });
+
+      console.info("[email] sent via SMTP", {
+        to,
+        subject,
+        messageId: info?.messageId,
+        attempt,
+      });
+      return info;
+    } catch (err) {
+      lastError = err;
+      console.error("[email] SMTP send failed", {
+        to,
+        subject,
+        err,
+        attempt,
+        maxRetries,
+        willRetry: attempt < maxRetries && isRetryableError(err),
+      });
+
+      // Only retry on transient connection errors
+      if (attempt < maxRetries && isRetryableError(err)) {
+        // Exponential backoff: 2s, 4s, 8s...
+        const backoffMs = Math.pow(2, attempt) * 1000;
+        console.info(`[email] retrying SMTP in ${backoffMs}ms...`);
+        await sleep(backoffMs);
+      } else {
+        // Non-retryable error or max retries reached
+        break;
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Send email using Resend (primary) with SMTP fallback.
  * Used by auth routes and email-service.ts as a low-level transport.
  *
  * For booking/notification emails, use email-service.ts functions instead.
+ *
+ * Transport priority:
+ * 1. Resend API (HTTP-based, works reliably on Vercel serverless)
+ * 2. SMTP via Nodemailer (fallback if Resend fails or not configured)
  */
 export async function sendMail({ to, subject, html }: MailInput) {
-  const from = process.env.SMTP_USER!;
-  const t = getTransporter();
-  try {
-    const info = await t.sendMail({ from, to, subject, html });
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[email] sent", { to, subject, messageId: info?.messageId });
+  const resend = getResendClient();
+
+  // Try Resend first if configured
+  if (resend) {
+    try {
+      const result = await sendViaResend({ to, subject, html });
+      console.info("[email] sent via Resend", {
+        to,
+        subject,
+        messageId: result.messageId,
+      });
+      return result;
+    } catch (err) {
+      console.warn("[email] Resend failed, falling back to SMTP", {
+        to,
+        subject,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Fall through to SMTP
     }
-    return info;
-  } catch (err) {
-    console.error("[email] send failed", { to, subject, err });
-    throw err;
   }
+
+  // Fallback to SMTP
+  return sendViaSMTP({ to, subject, html });
 }

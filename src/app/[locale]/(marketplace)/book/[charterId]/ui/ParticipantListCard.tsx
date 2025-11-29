@@ -1,9 +1,12 @@
 "use client";
 
+import { PhoneInput } from "@/components/shared/PhoneInput";
 import { Plus, Trash2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import {
+  Control,
+  Controller,
   FieldErrors,
   UseFormRegister,
   UseFormSetValue,
@@ -16,6 +19,7 @@ interface ParticipantListCardProps {
   errors: FieldErrors<BookingFormData>;
   watch: UseFormWatch<BookingFormData>;
   setValue: UseFormSetValue<BookingFormData>;
+  control: Control<BookingFormData>;
   guests: number;
 }
 
@@ -24,6 +28,7 @@ export default function ParticipantListCard({
   errors,
   watch,
   setValue,
+  control,
   guests,
 }: ParticipantListCardProps) {
   const t = useTranslations("booking.checkout.participants");
@@ -174,16 +179,18 @@ export default function ParticipantListCard({
                 <span className="block mb-2 font-medium text-slate-800">
                   {t("phone")} <span className="text-red-500">*</span>
                 </span>
-                <input
-                  type="tel"
-                  {...register(`participants.${index}.phone`)}
-                  placeholder={t("phonePlaceholder")}
-                  disabled={participant.isBooker}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent transition-shadow disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                    errors.participants?.[index]?.phone
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
+                <Controller
+                  name={`participants.${index}.phone`}
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder={t("phonePlaceholder")}
+                      disabled={participant.isBooker}
+                      hasError={!!errors.participants?.[index]?.phone}
+                    />
+                  )}
                 />
                 {errors.participants?.[index]?.phone && (
                   <span className="block mt-1 text-xs text-red-600">
