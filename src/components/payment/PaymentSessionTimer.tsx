@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ export function PaymentSessionTimer({
   charterId,
 }: PaymentSessionTimerProps) {
   const router = useRouter();
+  const t = useTranslations("booking.paymentPreview.sessionTimer");
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [warningShown, setWarningShown] = useState(false);
 
@@ -27,17 +29,17 @@ export function PaymentSessionTimer({
 
       if (remaining <= 0) {
         // Session expired - redirect with warning
-        toast.error("Payment session expired. Please try again.");
+        toast.error(t("expired"));
         router.push(
           `/book/${charterId}?error=session_expired&message=${encodeURIComponent(
-            "Your payment session expired. Please submit your booking details again."
+            t("expiredMessage")
           )}`
         );
         return;
       }
 
       if (remaining <= PAYMENT_SESSION_WARNING_MS && !warningShown) {
-        toast.warning("5 minutes remaining to complete payment!", {
+        toast.warning(t("warningMinutes"), {
           duration: 5000,
         });
         setWarningShown(true);
@@ -47,7 +49,7 @@ export function PaymentSessionTimer({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [expiresAt, charterId, router, warningShown]);
+  }, [expiresAt, charterId, router, warningShown, t]);
 
   const minutes = Math.floor(timeLeft / (1000 * 60));
   const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
@@ -76,7 +78,7 @@ export function PaymentSessionTimer({
               isUrgent ? "text-red-900" : "text-amber-900"
             )}
           >
-            Session expires in
+            {t("expiresIn")}
           </p>
           <p
             className={cn(

@@ -392,6 +392,15 @@ async function createAuthenticatedBooking(session: any, body: any) {
           );
         }
 
+        // Calculate timeSlots for DIRECT flow - needed for conflict detection in callback
+        const directFlowTimeSlots = calculateTimeSlots({
+          date: d,
+          startTime:
+            trip.startTimes.length > 0 ? (startTime as string) : "08:00",
+          durationHours: trip.durationHours,
+          days: ds,
+        });
+
         // Create payment session with booking data
         const paymentSession = await prisma.paymentSession.create({
           data: {
@@ -405,6 +414,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
               date: d.toISOString(),
               days: ds,
               startTime: trip.startTimes.length > 0 ? startTime : null,
+              timeSlots: directFlowTimeSlots, // Include for conflict detection and booking creation
               adults: ad,
               children: ch,
               phone,

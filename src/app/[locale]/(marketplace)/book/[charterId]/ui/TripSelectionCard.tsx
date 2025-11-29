@@ -19,8 +19,8 @@ interface Trip {
   priceOverride?: number; // Admin's active price override
   maxAnglers?: number;
   startTimes?: string[];
-  targetSpecies?: string[];
-  techniques?: string[];
+  species?: string[]; // Target species for this trip
+  techniques?: string[]; // Fishing techniques for this trip
 }
 
 interface TripSelectionCardProps {
@@ -187,8 +187,8 @@ export default function TripSelectionCard({
             });
 
             const speciesToShow =
-              trip.targetSpecies && trip.targetSpecies.length > 0
-                ? trip.targetSpecies
+              trip.species && trip.species.length > 0
+                ? trip.species
                 : charterSpecies;
             const techniquesToShow =
               trip.techniques && trip.techniques.length > 0
@@ -204,7 +204,7 @@ export default function TripSelectionCard({
             return (
               <div
                 key={trip.name + index}
-                className={`relative overflow-hidden rounded-lg ring  transition-all ${
+                className={`relative rounded-lg ring transition-all ${
                   !isAvailable
                     ? "bg-gray-50 ring-gray-200 opacity-60 cursor-not-allowed"
                     : hasPartialAvailability
@@ -224,13 +224,13 @@ export default function TripSelectionCard({
                 <div className="p-3">
                   {/* Availability Badge */}
                   {!isAvailable && (
-                    <div className="absolute top-2 right-2 bg-gray-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                    <div className="absolute flex items-center gap-1 px-2 py-1 text-xs text-white bg-gray-500 rounded -top-3 right-2">
                       <Clock className="w-3 h-3" />
                       {t("unavailable")}
                     </div>
                   )}
                   {hasPartialAvailability && (
-                    <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                    <div className="absolute flex items-center gap-1 px-2 py-1 text-xs text-white bg-orange-500 rounded -top-3 right-2">
                       <Clock className="w-3 h-3" />
                       {t("limitedAvailability")}
                     </div>
@@ -240,7 +240,7 @@ export default function TripSelectionCard({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-base font-semibold">{trip.name}</h3>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                      <div className="flex flex-wrap items-center mt-1 gap-x-3 gap-y-1">
                         {trip.duration && (
                           <span className="inline-flex items-center gap-1 text-xs text-gray-600">
                             <Clock className="w-3 h-3" />
@@ -374,7 +374,7 @@ export default function TripSelectionCard({
                               {availableStartTimes.map((time) => (
                                 <span
                                   key={time}
-                                  className="inline-flex items-center px-3 py-1 text-xs font-medium bg-orange-100 border border-orange-300 rounded-full text-orange-700"
+                                  className="inline-flex items-center px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 border border-orange-300 rounded-full"
                                 >
                                   {time}
                                 </span>

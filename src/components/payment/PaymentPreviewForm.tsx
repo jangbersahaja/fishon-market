@@ -99,7 +99,7 @@ export function PaymentPreviewForm({
 
       if (!validation.valid) {
         if (validation.code === "SESSION_EXPIRED") {
-          toast.error("Payment session expired. Redirecting...");
+          toast.error(t("sessionExpiredRedirecting"));
           router.push(
             `/${locale}/book/${bookingData.charterId}?error=session_expired&message=${encodeURIComponent(
               validation.error || "Session expired"
@@ -109,20 +109,20 @@ export function PaymentPreviewForm({
         }
 
         if (validation.code === "DATE_UNAVAILABLE") {
-          toast.error(validation.error || "Date no longer available");
+          toast.error(validation.error || t("dateUnavailable"));
           router.push(`/${locale}/book/${bookingData.charterId}`);
           return;
         }
 
         if (validation.code === "PRICE_CHANGED") {
           toast.error(
-            `Price changed to RM ${validation.newPrice?.toFixed(2)}. Please review and try again.`
+            t("priceChanged", { price: validation.newPrice?.toFixed(2) })
           );
           router.push(`/${locale}/book/${bookingData.charterId}`);
           return;
         }
 
-        toast.error(validation.error || "Validation failed");
+        toast.error(validation.error || t("validationFailed"));
         setIsSubmitting(false);
         return;
       }
@@ -130,7 +130,7 @@ export function PaymentPreviewForm({
       // Validate card details for Card payment
       if (paymentMethod === "CARD") {
         if (!cardNumber || !cardExpMonth || !cardExpYear || !cardCvv) {
-          toast.error("Please fill in all card details");
+          toast.error(t("fillCardDetails"));
           setIsSubmitting(false);
           return;
         }
@@ -214,12 +214,12 @@ export function PaymentPreviewForm({
         return;
       }
 
-      toast.success("Booking created successfully!");
+      toast.success(t("bookingCreated"));
       router.push(`/${locale}/book/${bookingData.charterId}`);
       return;
     } catch (error: any) {
       console.error("Payment error:", error);
-      toast.error(error.message || "Failed to process payment");
+      toast.error(error.message || t("failedToProcess"));
       setIsSubmitting(false);
     }
   };
@@ -228,7 +228,7 @@ export function PaymentPreviewForm({
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>Payment Method</CardTitle>
+          <CardTitle>{t("paymentMethodTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Payment Method Selection - Shared Component */}

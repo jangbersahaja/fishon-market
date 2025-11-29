@@ -1,6 +1,7 @@
 "use client";
 
 import DestinationGrid from "@/components/marketing/DestinationGrid";
+import { getDestinationImage } from "@/lib/helpers/location-image-helpers";
 import { getPopularDestinations } from "@/lib/helpers/popularity-helpers";
 import type { Charter } from "@fishon/ui";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,12 +14,14 @@ interface PopularDestinationProps {
 const PopularDestination = ({ charters }: PopularDestinationProps) => {
   const locale = useLocale();
   const t = useTranslations("home.popularDestinations");
-  // Get all popular destinations with charter images
+  // Get all popular destinations
   const allDestinations = getPopularDestinations(charters, 50);
 
-  // Use charter images for all destinations, limit to top 10
+  // Filter destinations that have either landmark image or charter image, limit to top 10
   const destinationsWithImages = allDestinations
-    .filter((d) => d.charterImage)
+    .filter(
+      (d) => getDestinationImage(d.name, d.state, d.charterImage) !== undefined
+    )
     .slice(0, 10);
 
   if (destinationsWithImages.length === 0) {

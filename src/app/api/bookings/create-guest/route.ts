@@ -332,6 +332,15 @@ export async function POST(req: Request) {
       // DIRECT PAYMENT (FPX/E-WALLET): Create payment session instead of booking
       // Booking will be created after payment callback confirms success
       if (paymentMethod === "FPX" || paymentMethod === "EWALLET") {
+        // Calculate timeSlots for DIRECT flow - needed for conflict detection in callback
+        const directFlowTimeSlots = calculateTimeSlots({
+          date: d,
+          startTime:
+            trip.startTimes.length > 0 ? (startTime as string) : "08:00",
+          durationHours: trip.durationHours,
+          days: ds,
+        });
+
         // Create payment session with booking data
         const paymentSession = await prisma.paymentSession.create({
           data: {
@@ -345,6 +354,7 @@ export async function POST(req: Request) {
               date: d.toISOString(),
               days: ds,
               startTime: trip.startTimes.length > 0 ? startTime : null,
+              timeSlots: directFlowTimeSlots, // Include for conflict detection and booking creation
               adults: ad,
               children: ch,
               phone,

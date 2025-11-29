@@ -22,7 +22,21 @@
     "from": "Dari",
     "total": "Jumlah",
     "perDay": "/Hari",
-    "perTrip": "/Trip"
+    "perTrip": "/Trip",
+    "relationships": {
+      "selectRelationship": "Pilih hubungan",
+      "spouse": "Pasangan",
+      "parent": "Ibu/Bapa",
+      "sibling": "Adik-beradik",
+      "child": "Anak",
+      "friend": "Kawan",
+      "partner": "Teman Hidup",
+      "relative": "Saudara",
+      "colleague": "Rakan Sekerja",
+      "other": "Lain-lain (nyatakan)",
+      "customPlaceholder": "Nyatakan hubungan",
+      "backToList": "Kembali"
+    }
   },
   "nav": {
     "home": "Laman Utama",
@@ -118,6 +132,7 @@
     },
     "popularDestinations": {
       "title": "Destinasi Popular",
+      "subtitle": "Terokai lokasi memancing terbaik di seluruh Malaysia",
       "seeAll": "Lihat semua destinasi",
       "findChartersIn": "Cari charter di {destination}",
       "altText": "Destinasi memancing {destination}",
@@ -728,7 +743,15 @@
         "metadataNote": "Kami melampirkan metadata sesi ini (peserta, ringkasan harga, dan butiran hubungan) kepada bayaran supaya kapten boleh semak sebelum memberi kebenaran.",
         "sessionMetadataNote": "Kami melampirkan metadata sesi ini (peserta, ringkasan harga, dan butiran hubungan) kepada bayaran supaya kapten boleh semak sebelum memberi kebenaran.",
         "payButton": "Bayar RM {amount}",
-        "processing": "Memproses..."
+        "processing": "Memproses...",
+        "paymentMethodTitle": "Kaedah Bayaran",
+        "sessionExpiredRedirecting": "Sesi bayaran tamat. Mengalihkan...",
+        "dateUnavailable": "Tarikh tidak lagi tersedia",
+        "priceChanged": "Harga berubah kepada RM {price}. Sila semak dan cuba lagi.",
+        "validationFailed": "Pengesahan gagal",
+        "fillCardDetails": "Sila isi semua butiran kad",
+        "bookingCreated": "Tempahan berjaya dibuat!",
+        "failedToProcess": "Gagal memproses bayaran"
       },
       "contacts": {
         "title": "Kenalan",
@@ -771,6 +794,12 @@
       "retryBanner": {
         "title": "Sedia untuk cuba lagi",
         "description": "Bayaran sebelum ini telah dibatalkan. Anda boleh cuba lagi dengan kaedah bayaran yang sama atau berbeza."
+      },
+      "sessionTimer": {
+        "expiresIn": "Sesi tamat dalam",
+        "expired": "Sesi bayaran telah tamat. Sila cuba lagi.",
+        "expiredMessage": "Sesi bayaran anda telah tamat. Sila hantar semula butiran tempahan anda.",
+        "warningMinutes": "5 minit lagi untuk melengkapkan bayaran!"
       }
     },
     "payment": {

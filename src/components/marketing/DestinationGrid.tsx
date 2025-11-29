@@ -1,5 +1,6 @@
 "use client";
 
+import { getDestinationImage } from "@/lib/helpers/location-image-helpers";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,6 +20,13 @@ interface DestinationCardProps {
 function DestinationCard({ destination, locale }: DestinationCardProps) {
   const t = useTranslations("home.popularDestinations");
 
+  // Get destination image: landmark first, then charter image as fallback
+  const imageUrl = getDestinationImage(
+    destination.name,
+    destination.state,
+    destination.charterImage
+  );
+
   return (
     <Link
       href={`/${locale}/search?destination=${encodeURIComponent(destination.name)}`}
@@ -27,9 +35,9 @@ function DestinationCard({ destination, locale }: DestinationCardProps) {
     >
       {/* Image Background */}
       <div className="absolute inset-0 h-full w-full">
-        {destination.charterImage ? (
+        {imageUrl ? (
           <Image
-            src={destination.charterImage}
+            src={imageUrl}
             alt={t("altText", { destination: destination.name })}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"

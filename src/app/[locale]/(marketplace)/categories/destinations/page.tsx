@@ -1,6 +1,7 @@
 import DestinationGrid, {
   DestinationGridSkeleton,
 } from "@/components/marketing/DestinationGrid";
+import { getDestinationImage } from "@/lib/helpers/location-image-helpers";
 import { getPopularDestinations } from "@/lib/helpers/popularity-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -30,9 +31,11 @@ async function DestinationsContent() {
   // Get more destinations to filter
   const allDestinations = getPopularDestinations(charters, 100);
 
-  // Use charter images for all destinations (more visually appealing)
+  // Filter destinations that have either landmark image or charter image
   const destinationsWithImages = allDestinations.filter(
-    (dest) => dest.charterImage
+    (dest) =>
+      getDestinationImage(dest.name, dest.state, dest.charterImage) !==
+      undefined
   );
 
   if (destinationsWithImages.length === 0) {
