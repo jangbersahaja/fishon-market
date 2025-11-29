@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "check:env": "node scripts/check-env.js",
     "prisma:generate": "prisma generate",
+    "postinstall": "npm run prisma:generate",
+    "prebuild": "npm run prisma:generate && npm run check:env && npm run typecheck",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate-deploy": "prisma migrate deploy",
     "seed:blog": "tsx prisma/seed-blog.ts",

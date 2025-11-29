@@ -359,6 +359,8 @@ async function createManualBooking(session: any, body: any) {
         startTime: booking.startTime || undefined,
         totalPrice: pricing.finalPrice.toFixed(2),
         confirmationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/my/account/bookings/${booking.id}`,
+        userId: session.user.id,
+        bookingId: booking.id,
       });
 
       // Email to captain
@@ -374,6 +376,7 @@ async function createManualBooking(session: any, body: any) {
         startTime: booking.startTime || undefined,
         totalPrice: pricing.finalPrice.toFixed(2),
         bookingUrl: `${process.env.NEXT_PUBLIC_CAPTAIN_DASHBOARD_URL}/bookings/${booking.id}`,
+        bookingId: booking.id,
       });
     } catch (emailErr) {
       console.error("Failed to send emails:", emailErr);

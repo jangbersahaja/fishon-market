@@ -68,7 +68,10 @@ export const bookingCancelledMessage = (
   cancelledBy?: "angler" | "captain",
   reason?: string
 ): MessageTemplate => ({
-  content: `❌ Booking ${cancelledBy === "angler" ? "Cancelled" : "Cancelled"}\n${reason ? `Reason: ${reason}` : "The booking has been cancelled."}`,
+  content:
+    cancelledBy === "captain"
+      ? `❌ Booking Cancelled by Captain\n${reason ? `Reason: ${reason}\n\n` : ""}The captain has cancelled your confirmed booking. You will receive a full refund within 3-5 business days.`
+      : `❌ Booking Cancelled\n${reason ? `Reason: ${reason}` : "The booking has been cancelled."}`,
   systemType: "booking_cancelled",
 });
 

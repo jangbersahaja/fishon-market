@@ -417,6 +417,8 @@ async function sendNotificationEmail(userId: string, notification: any) {
             tripDate: notification.metadata.tripDate,
             paymentUrl: `${baseUrl}${localePrefix}/bookings/${notification.bookingId}/pay`,
             confirmationUrl: `${baseUrl}${localePrefix}/bookings/${notification.bookingId}`,
+            userId,
+            bookingId: notification.bookingId,
           });
         }
         break;
@@ -432,6 +434,8 @@ async function sendNotificationEmail(userId: string, notification: any) {
             charterName: notification.metadata.charterName,
             reason: notification.metadata.reason,
             searchUrl: `${baseUrl}${localePrefix}/charters`,
+            userId,
+            bookingId: notification.bookingId,
           });
         }
         break;
@@ -478,6 +482,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             charterName: notification.metadata.charterName,
             tripDate: notification.metadata.tripDate,
             totalPrice: notification.metadata.totalPrice,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -491,6 +498,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             phone: user.phone,
             charterName: notification.metadata.charterName,
             tripDate: notification.metadata.tripDate,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -501,6 +511,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             phone: user.phone,
             charterName: notification.metadata.charterName,
             reason: notification.metadata?.reason,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -515,6 +528,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             charterName: notification.metadata.charterName,
             tripDate: notification.metadata.tripDate,
             tripName: notification.metadata?.tripName,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -526,6 +542,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             charterName: notification.metadata.charterName,
             tripDate: notification.metadata?.tripDate || "",
             reason: notification.metadata?.reason,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -539,6 +558,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             phone: user.phone,
             charterName: notification.metadata.charterName,
             refundAmount: notification.metadata.refundAmount,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -552,6 +574,9 @@ async function sendNotificationSMS(userId: string, notification: any) {
             phone: user.phone,
             charterName: notification.metadata.charterName,
             tripDate: notification.metadata.tripDate,
+            userId,
+            bookingId: notification.bookingId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -561,6 +586,8 @@ async function sendNotificationSMS(userId: string, notification: any) {
           await sendReviewSubmittedSMS({
             phone: user.phone,
             charterName: notification.metadata.charterName,
+            userId,
+            notificationId: notification.id,
           });
         }
         break;
@@ -570,6 +597,8 @@ async function sendNotificationSMS(userId: string, notification: any) {
           await sendReviewApprovedSMS({
             phone: user.phone,
             charterName: notification.metadata.charterName,
+            userId,
+            notificationId: notification.id,
           });
         }
         break;

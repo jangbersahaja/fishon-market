@@ -896,6 +896,8 @@ export async function POST(req: Request) {
             totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
             confirmationUrl,
             paymentFlow: undefined, // No payment yet
+            userId: guestUser.id,
+            bookingId: booking.id,
           });
         } else {
           // Auto flow: "Payment received"
@@ -914,6 +916,8 @@ export async function POST(req: Request) {
               | "TOKENIZED"
               | "DIRECT"
               | undefined,
+            userId: guestUser.id,
+            bookingId: booking.id,
           });
         }
       } catch (emailErr) {
@@ -953,6 +957,7 @@ export async function POST(req: Request) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           bookingUrl,
+          bookingId: booking.id,
         });
       } catch (emailErr) {
         console.error("Failed to send captain booking email:", emailErr);

@@ -486,11 +486,11 @@
         "paymentInfoManual": "No payment is required now. Once your booking is confirmed, the captain will send you a secure payment link.",
         "paymentInfoAuto": "For card payments: Your card will be authorized (not charged) when you submit. If the captain confirms your booking, your card will be charged automatically. If rejected, the authorization will be released.",
         "cancellationNotes": "Cancellation notes",
-        "cancellationPolicy1": "More than 30 days before trip: 80% refund",
-        "cancellationPolicy2": "15-30 days before trip: 50% refund",
-        "cancellationPolicy3": "Less than 15 days before trip: No refund",
-        "cancellationRefund": "If the captain rejects your booking, you'll receive a full refund",
-        "refundTiming": "Refunds typically take 5-7 business days"
+        "cancellationPolicy1": "Customer cancellations are non-refundable",
+        "cancellationPolicy2": "Up to 50% refund may be issued at company's discretion, minus processing fees",
+        "cancellationPolicy3": "Less than 7 days before trip: Strictly non-refundable",
+        "cancellationRefund": "If the captain cancels your confirmed booking, you'll receive a full refund (borne by operator)",
+        "refundTiming": "Refunds typically take 5-14 business days"
       },
       "promo": {
         "label": "Promo Code",
@@ -654,6 +654,7 @@
         "rejected": "The captain was unable to accommodate your request.",
         "expired": "This booking hold has expired.",
         "cancelled": "This booking has been cancelled.",
+        "cancelledByCaptain": "The captain cancelled your confirmed booking. You will receive a full refund within 3-5 business days.",
         "default": "View your booking details below."
       },
       "paymentStatus": {

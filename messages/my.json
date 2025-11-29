@@ -486,11 +486,11 @@
         "paymentInfoManual": "Tiada bayaran diperlukan sekarang. Sebaik sahaja tempahan anda disahkan, kapten akan menghantar pautan pembayaran yang selamat.",
         "paymentInfoAuto": "Untuk pembayaran kad: Kad anda akan dibenarkan (tidak dicaj) apabila anda hantar. Jika kapten mengesahkan tempahan anda, kad anda akan dicaj secara automatik. Jika ditolak, kebenaran akan dibebaskan.",
         "cancellationNotes": "Nota pembatalan",
-        "cancellationPolicy1": "Lebih daripada 30 hari sebelum trip: 80% bayaran balik",
-        "cancellationPolicy2": "15-30 hari sebelum trip: 50% bayaran balik",
-        "cancellationPolicy3": "Kurang daripada 15 hari sebelum trip: Tiada bayaran balik",
-        "cancellationRefund": "Jika kapten menolak tempahan anda, anda akan menerima bayaran balik penuh",
-        "refundTiming": "Bayaran balik biasanya mengambil masa 5-7 hari bekerja"
+        "cancellationPolicy1": "Pembatalan oleh pelanggan tidak akan dipulangkan",
+        "cancellationPolicy2": "Sehingga 50% bayaran balik mungkin diberikan atas budi bicara syarikat, tolak yuran pemprosesan",
+        "cancellationPolicy3": "Kurang daripada 7 hari sebelum trip: Tiada bayaran balik",
+        "cancellationRefund": "Jika pengendali membatalkan tempahan yang disahkan, anda akan menerima bayaran balik penuh (ditanggung oleh pengendali)",
+        "refundTiming": "Bayaran balik biasanya mengambil masa 5-14 hari bekerja"
       },
       "promo": {
         "label": "Kod Promo",
@@ -654,6 +654,7 @@
         "rejected": "Kapten tidak dapat menampung permintaan anda.",
         "expired": "Tempahan ini telah tamat tempoh.",
         "cancelled": "Tempahan ini telah dibatalkan.",
+        "cancelledByCaptain": "Kapten telah membatalkan tempahan anda yang telah disahkan. Anda akan menerima bayaran balik penuh dalam masa 3-5 hari bekerja.",
         "default": "Lihat butiran tempahan anda di bawah."
       },
       "paymentStatus": {

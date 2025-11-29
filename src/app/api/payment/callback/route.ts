@@ -271,6 +271,8 @@ async function handleCallback(req: NextRequest) {
             | "TOKENIZED"
             | "DIRECT"
             | undefined,
+          userId: booking.userId ?? undefined,
+          bookingId: booking.id,
         });
       } catch (err) {
         console.error("Failed to send payment confirmation email:", err);
@@ -301,6 +303,7 @@ async function handleCallback(req: NextRequest) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           bookingUrl,
+          bookingId: booking.id,
         });
       } catch (err) {
         console.error("Failed to send captain booking email:", err);
