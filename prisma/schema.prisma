@@ -331,6 +331,7 @@ model Booking {
 
   // === BOOKING STATUS ===
   status             BookingStatus @default(PENDING)
+  cancelledBy        String?       // Who cancelled: "ANGLER", "CAPTAIN", "SYSTEM", "ADMIN"
   cancellationReason String?
   rejectionReason    String?
   captainDecisionAt  DateTime?
@@ -967,6 +968,80 @@ model SMSLog {
   @@index([messageType, createdAt])
   @@index([bookingId])
   @@map("sms_logs")
+}
+
+// Email Log - Track all email delivery attempts and status
+// Used for debugging email delivery issues and monitoring
+enum EmailStatus {
+  PENDING    // Email queued for sending
+  SENT       // Successfully sent to provider
+  DELIVERED  // Delivery confirmed (if webhook configured)
+  FAILED     // Failed to send
+  BOUNCED    // Email bounced
+}
+
+enum EmailProvider {
+  RESEND     // Resend API (primary)
+  SMTP       // Nodemailer SMTP (fallback)
+}
+
+enum EmailType {
+  VERIFICATION_CODE     // Email verification (registration, login, guest booking)
+  BOOKING_CREATED       // Booking request received
+  BOOKING_APPROVED      // Captain approved booking
+  BOOKING_REJECTED      // Captain rejected booking
+  BOOKING_CONFIRMED     // Payment confirmed
+  BOOKING_CANCELLED     // Booking cancelled
+  BOOKING_REMINDER      // Upcoming trip reminder
+  PAYMENT_REMINDER      // Payment deadline reminder
+  WELCOME               // Welcome email after registration
+  PASSWORD_CHANGED      // Password change notification
+  PASSWORD_RESET        // Password reset code
+  CAPTAIN_NOTIFICATION  // Notification to captain
+  OTHER                 // Other email types
+}
+
+model EmailLog {
+  id          String       @id @default(cuid())
+  
+  // Recipient info
+  to          String       @db.VarChar(255)
+  subject     String       @db.VarChar(500)
+  
+  // Email classification
+  emailType   EmailType    @default(OTHER)
+  
+  // Delivery status
+  status      EmailStatus  @default(PENDING)
+  provider    EmailProvider
+  
+  // Provider response
+  messageId   String?      @db.VarChar(255) // Resend ID or SMTP message ID
+  errorCode   String?      @db.VarChar(100) // Error code if failed
+  errorMessage String?     @db.Text         // Full error message
+  
+  // Retry tracking
+  attempts    Int          @default(1)
+  usedFallback Boolean     @default(false)  // True if SMTP fallback was used
+  
+  // Timing
+  sentAt      DateTime?    // When successfully sent
+  createdAt   DateTime     @default(now())
+  
+  // Related entities (optional)
+  userId      String?      // User.id if sent to registered user
+  bookingId   String?      // Related booking if applicable
+  
+  // Request metadata (for debugging)
+  metadata    Json?        // Additional context (IP, user agent, etc.)
+  
+  @@index([to, createdAt])
+  @@index([status, createdAt])
+  @@index([emailType, createdAt])
+  @@index([provider, createdAt])
+  @@index([userId, createdAt])
+  @@index([bookingId])
+  @@map("email_logs")
 }
 
 // Payment Session - Stores booking data before DIRECT payment completion

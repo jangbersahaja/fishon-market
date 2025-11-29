@@ -14,8 +14,14 @@
  * - Added Resend as primary transport (HTTP API, no SMTP connection issues)
  * - SMTP kept as fallback with increased timeouts
  * - Retry logic with exponential backoff for transient failures
+ * - Database logging for all email attempts (success/failure)
  */
 
+import {
+  logEmailFailure,
+  logEmailSuccess,
+} from "@/lib/services/email-log-service";
+import type { EmailType } from "@prisma/client";
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
@@ -23,6 +29,12 @@ export type MailInput = {
   to: string;
   subject: string;
   html: string;
+};
+
+export type MailInputWithContext = MailInput & {
+  emailType?: EmailType;
+  userId?: string;
+  bookingId?: string;
 };
 
 // Resend client (lazy initialized)
@@ -186,9 +198,20 @@ async function sendViaSMTP({ to, subject, html }: MailInput) {
  * Transport priority:
  * 1. Resend API (HTTP-based, works reliably on Vercel serverless)
  * 2. SMTP via Nodemailer (fallback if Resend fails or not configured)
+ *
+ * All email attempts are logged to the database for monitoring.
  */
-export async function sendMail({ to, subject, html }: MailInput) {
+export async function sendMail({
+  to,
+  subject,
+  html,
+  emailType,
+  userId,
+  bookingId,
+}: MailInputWithContext) {
   const resend = getResendClient();
+  let usedFallback = false;
+  let resendError: Error | null = null;
 
   // Try Resend first if configured
   if (resend) {
@@ -199,17 +222,71 @@ export async function sendMail({ to, subject, html }: MailInput) {
         subject,
         messageId: result.messageId,
       });
+
+      // Log success to database (async, don't block)
+      logEmailSuccess({
+        to,
+        subject,
+        emailType,
+        provider: "RESEND",
+        messageId: result.messageId,
+        usedFallback: false,
+        userId,
+        bookingId,
+      }).catch((err) =>
+        console.error("[email-log] Failed to log success:", err)
+      );
+
       return result;
     } catch (err) {
+      resendError = err instanceof Error ? err : new Error(String(err));
       console.warn("[email] Resend failed, falling back to SMTP", {
         to,
         subject,
-        error: err instanceof Error ? err.message : String(err),
+        error: resendError.message,
       });
+      usedFallback = true;
       // Fall through to SMTP
     }
   }
 
   // Fallback to SMTP
-  return sendViaSMTP({ to, subject, html });
+  try {
+    const result = await sendViaSMTP({ to, subject, html });
+
+    // Log success with fallback info
+    logEmailSuccess({
+      to,
+      subject,
+      emailType,
+      provider: "SMTP",
+      messageId: result?.messageId || "unknown",
+      usedFallback,
+      userId,
+      bookingId,
+    }).catch((err) => console.error("[email-log] Failed to log success:", err));
+
+    return result;
+  } catch (smtpError) {
+    const error =
+      smtpError instanceof Error ? smtpError : new Error(String(smtpError));
+    const errorCode = (error as NodeJS.ErrnoException).code;
+
+    // Log failure to database
+    logEmailFailure({
+      to,
+      subject,
+      emailType,
+      provider: usedFallback ? "SMTP" : resend ? "RESEND" : "SMTP",
+      errorCode: errorCode || undefined,
+      errorMessage: resendError
+        ? `Resend: ${resendError.message}, SMTP: ${error.message}`
+        : error.message,
+      usedFallback,
+      userId,
+      bookingId,
+    }).catch((err) => console.error("[email-log] Failed to log failure:", err));
+
+    throw smtpError;
+  }
 }

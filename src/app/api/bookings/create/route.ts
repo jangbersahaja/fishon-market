@@ -1146,6 +1146,8 @@ async function createAuthenticatedBooking(session: any, body: any) {
             | "TOKENIZED"
             | "DIRECT"
             | undefined,
+          userId: user.id,
+          bookingId: booking.id,
         });
       } catch (err) {
         console.error("Failed to send booking created email:", err);
@@ -1182,6 +1184,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           startTime: booking.startTime ?? undefined,
           totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
           bookingUrl,
+          bookingId: booking.id,
         });
       } catch (err) {
         console.error("Failed to send captain booking email:", err);

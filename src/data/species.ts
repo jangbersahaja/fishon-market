@@ -602,6 +602,12 @@ const FRESH_WATER_SPECIES = [
     local_name: "Temperas",
     image: "/images/species/freshwater/Temperas - Beardless Barb.png",
   },
+  {
+    id: "indo-pacific-tarpon",
+    english_name: "Indo Pacific Tarpon",
+    local_name: "Ikan bulan",
+    image: "/images/species/freshwater/Ikan Bulan - Indo-Pacific tarpon.png",
+  },
 ].map((s) => ({ ...s, category: SPECIES_CATEGORIES.FRESHWATER }));
 
 // --- Squid Species ---

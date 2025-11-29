@@ -79,6 +79,8 @@ export async function POST(req: Request) {
               tripDate: updated.date.toISOString().slice(0, 10),
               paymentUrl,
               confirmationUrl,
+              userId: user.id,
+              bookingId: updated.id,
             });
           } else {
             const searchUrl = `${base}/search`;
@@ -87,6 +89,8 @@ export async function POST(req: Request) {
               userName: user.name ?? "there",
               charterName: trip.charter.name,
               searchUrl,
+              userId: user.id,
+              bookingId: updated.id,
             });
           }
         }

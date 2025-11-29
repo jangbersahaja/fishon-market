@@ -248,6 +248,8 @@ export async function POST(req: Request) {
             tripDate: updated.date.toISOString().slice(0, 10),
             paymentUrl,
             confirmationUrl,
+            userId: updated.userId,
+            bookingId: updated.id,
           });
           console.log(
             "✅ Booking approved email sent (AWAITING_PAYMENT status)"

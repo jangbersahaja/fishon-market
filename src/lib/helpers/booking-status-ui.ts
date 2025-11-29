@@ -419,7 +419,7 @@ export function getStatusMessage(
       return `${context?.captainName || "The captain"} couldn't accommodate this booking. You have not been charged.`;
 
     case "CANCELLED":
-      return "You cancelled this booking. Any refund will be processed according to the cancellation policy.";
+      return "You cancelled this booking. Customer cancellations are non-refundable per our cancellation policy.";
 
     case "EXPIRED":
       if (bookingFlowType === "MANUAL" && status === "EXPIRED") {

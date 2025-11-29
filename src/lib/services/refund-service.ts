@@ -2,15 +2,19 @@
  * Refund Service
  *
  * Handles refund processing for bookings with support for:
- * - Full refunds (captain rejection, expired authorization)
- * - Policy-based refunds (angler cancellation with time-based rules)
+ * - Full refunds (captain rejection, operator cancellation - borne by operator)
+ * - Policy-based refunds (angler cancellation - non-refundable by default)
  * - Refund status tracking and automation
  *
- * Cancellation Policy:
- * - >30 days before trip: 80% refund (20% to captain + platform)
- * - 15-30 days before: 50% refund (50% to captain + platform)
- * - <15 days before: No refund (100% to captain + platform)
- * - Emergency cases: Manual review by staff
+ * Cancellation Policy (Customer Cancellations):
+ * - All customer cancellations are non-refundable by default
+ * - Up to 50% refund may be issued at company's discretion, minus processing fees
+ * - Less than 7 days before trip: Strictly non-refundable
+ * - Fishon may issue credit voucher at discretion
+ *
+ * Operator Cancellations:
+ * - Full refund including service fees (borne entirely by operator)
+ * - Operators cancelling without reasonable cause may face penalties
  */
 
 import { prisma } from "@/lib/database/prisma";
@@ -20,6 +24,7 @@ import type { Decimal } from "@prisma/client/runtime/library";
 export type RefundType = "FULL" | "POLICY_BASED" | "NONE" | "MANUAL";
 export type RefundReason =
   | "CAPTAIN_REJECTION"
+  | "CAPTAIN_CANCELLATION"
   | "ANGLER_CANCELLATION"
   | "AUTHORIZATION_EXPIRED"
   | "PAYMENT_FAILED"
@@ -69,22 +74,20 @@ export function calculateRefundAmount(
   let refundPercentage = 0;
   let policyApplied = "";
 
-  if (daysBeforeTrip > 30) {
-    // More than 30 days: 80% refund
-    refundPercentage = 0.8;
-    policyApplied = "More than 30 days before trip";
-  } else if (daysBeforeTrip >= 15) {
-    // 15-30 days: 50% refund
-    refundPercentage = 0.5;
-    policyApplied = "15-30 days before trip";
-  } else if (daysBeforeTrip >= 0) {
-    // Less than 15 days: No refund
-    refundPercentage = 0;
-    policyApplied = "Less than 15 days before trip";
-  } else {
+  if (daysBeforeTrip < 0) {
     // Trip already passed: No refund
     refundPercentage = 0;
     policyApplied = "Trip date has passed";
+  } else if (daysBeforeTrip < 7) {
+    // Less than 7 days: Strictly non-refundable
+    refundPercentage = 0;
+    policyApplied = "Less than 7 days before trip - non-refundable";
+  } else {
+    // 7+ days before trip: Non-refundable by default
+    // Up to 50% may be issued at company's discretion (handled via MANUAL refund type)
+    refundPercentage = 0;
+    policyApplied =
+      "Customer cancellation - non-refundable (contact support for discretionary review)";
   }
 
   const refundAmount = Math.round(finalPrice * refundPercentage * 100) / 100;
@@ -171,26 +174,33 @@ export async function initiateRefund(params: InitiateRefundParams) {
 
   switch (refundType) {
     case "FULL":
-      // Full refund (captain rejection, expired auth)
+      // Full refund (captain rejection, captain cancellation, expired auth)
       refundAmount = Number(booking.finalPrice);
-      refundReasonText =
-        reason === "CAPTAIN_REJECTION"
-          ? "Captain declined your booking request"
-          : "Authorization expired";
+      if (reason === "CAPTAIN_REJECTION") {
+        refundReasonText = "Captain declined your booking request";
+      } else if (reason === "CAPTAIN_CANCELLATION") {
+        refundReasonText =
+          "Captain cancelled your confirmed booking - full refund issued";
+      } else {
+        refundReasonText = "Authorization expired";
+      }
       break;
 
     case "POLICY_BASED":
-      // Policy-based refund (angler cancellation)
+      // Policy-based refund (angler cancellation - non-refundable by default)
       refundCalculation = calculateRefundAmount(booking);
       refundAmount = refundCalculation.refundAmount;
-      refundReasonText = `Cancellation ${refundCalculation.daysBeforeTrip} days before trip (${refundCalculation.refundPercentage * 100}% refund)`;
+      refundReasonText =
+        refundCalculation.daysBeforeTrip < 7
+          ? `Cancellation ${refundCalculation.daysBeforeTrip} days before trip - strictly non-refundable`
+          : `Customer cancellation - non-refundable (contact support for discretionary review)`;
       break;
 
     case "NONE":
-      // No refund (late cancellation)
+      // No refund (customer cancellation - non-refundable by policy)
       refundAmount = 0;
       refundReasonText =
-        "No refund per cancellation policy (less than 15 days)";
+        "No refund per cancellation policy - customer cancellations are non-refundable";
       break;
 
     case "MANUAL":
