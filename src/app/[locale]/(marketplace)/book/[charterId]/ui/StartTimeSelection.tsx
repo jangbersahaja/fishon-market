@@ -1,6 +1,7 @@
 "use client";
 
 import { convert24to12Hour } from "@/lib/helpers/booking-helpers";
+import { Clock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface StartTimeSelectionProps {
@@ -8,6 +9,7 @@ interface StartTimeSelectionProps {
   startTime: string;
   disabledTimes?: string[];
   onStartTimeChange: (time: string) => void;
+  tripSelected?: boolean;
 }
 
 export default function StartTimeSelection({
@@ -15,13 +17,29 @@ export default function StartTimeSelection({
   startTime,
   disabledTimes = [],
   onStartTimeChange,
+  tripSelected = true,
 }: StartTimeSelectionProps) {
   const t = useTranslations("booking.checkout.startTime");
 
-  if (!startTimes || startTimes.length === 0) return null;
+  const hasStartTimes = startTimes && startTimes.length > 0;
+
+  // Always render section to prevent layout shift
+  if (!hasStartTimes) {
+    return (
+      <section>
+        <h2 className="mb-3 text-base font-semibold sm:text-lg">
+          {t("title")}
+        </h2>
+        <div className="flex items-center gap-2 p-3 text-sm text-gray-500 rounded-lg bg-slate-50">
+          <Clock className="w-4 h-4" />
+          <span>{tripSelected ? t("noStartTimes") : t("selectTripFirst")}</span>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="pb-5 border-b border-black/10">
+    <section>
       <h2 className="mb-3 text-base font-semibold sm:text-lg">{t("title")}</h2>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {startTimes.map((time) => {

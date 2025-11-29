@@ -62,6 +62,33 @@ function convertTrip(backendTrip: BackendTrip): Trip {
       .filter(Boolean); // Remove empty strings
   }
 
+  // Handle species and techniques - same format handling as startTimes
+  let species: string[] = [];
+  if (Array.isArray(backendTrip.species)) {
+    species = backendTrip.species
+      .map((s) => {
+        if (typeof s === "string") return s;
+        if (typeof s === "object" && s !== null && "value" in s) {
+          return (s as { value: string }).value;
+        }
+        return "";
+      })
+      .filter(Boolean);
+  }
+
+  let techniques: string[] = [];
+  if (Array.isArray(backendTrip.techniques)) {
+    techniques = backendTrip.techniques
+      .map((t) => {
+        if (typeof t === "string") return t;
+        if (typeof t === "object" && t !== null && "value" in t) {
+          return (t as { value: string }).value;
+        }
+        return "";
+      })
+      .filter(Boolean);
+  }
+
   return {
     id: backendTrip.id, // Include trip ID for booking creation
     name: backendTrip.name,
@@ -80,6 +107,8 @@ function convertTrip(backendTrip: BackendTrip): Trip {
     startTimes,
     maxAnglers: backendTrip.maxAnglers,
     private: backendTrip.style === "PRIVATE",
+    species: species.length > 0 ? species : undefined,
+    techniques: techniques.length > 0 ? techniques : undefined,
   };
 }
 
@@ -289,7 +318,9 @@ export function convertBackendCharterToFrontend(
         type: backendCharter.boat.type,
         length: `${backendCharter.boat.lengthFt} ft`,
         capacity: backendCharter.boat.capacity,
-        features: features,
+        features: backendCharter.boat.features || features,
+        imageUrl: backendCharter.boat.imageUrl || undefined,
+        images: backendCharter.boat.images || [],
       }
     : {
         name: "N/A",
@@ -332,6 +363,7 @@ export function convertBackendCharterToFrontend(
     tier: mapTier(backendCharter.pricingPlan),
     schedule: convertSchedule(backendCharter.schedule),
     unavailability: convertUnavailability(backendCharter.unavailability),
+    descriptionMy: backendCharter.descriptionMy || undefined,
   };
 }
 

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { trackEvent } from "@/lib/analytics-tracking";
 import { Check, Copy, Share2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 interface ShareButtonProps {
@@ -32,15 +32,16 @@ export function ShareButton({
 }: ShareButtonProps) {
   const t = useTranslations("charter");
   const tShare = useTranslations("charter.share");
+  const locale = useLocale();
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState("");
 
   useEffect(() => {
     // Build URL on client side to ensure correct origin
     if (typeof window !== "undefined") {
-      setUrl(`${window.location.origin}/charters/${charterId}`);
+      setUrl(`${window.location.origin}/${locale}/charters/${charterId}`);
     }
-  }, [charterId]);
+  }, [charterId, locale]);
 
   const handleCopyLink = async () => {
     try {

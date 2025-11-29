@@ -23,8 +23,9 @@ import BookingSummaryCard from "./BookingSummaryCard";
 import DateGuestsCard from "./DateGuestsCard";
 import EmergencyContactCard from "./EmergencyContactCard";
 import ParticipantListCard from "./ParticipantListCard";
-import StartConversationCard from "./StartConversationCard";
+import NoteToCaptainCard from "./StartConversationCard";
 import StartTimeSelection from "./StartTimeSelection";
+import StepHeader from "./StepHeader";
 import TripSelectionCard from "./TripSelectionCard";
 import YourDetailsCard from "./YourDetailsCard";
 import type { BookingFormData } from "./types";
@@ -391,15 +392,6 @@ export default function CheckoutForm({
         ? (tripStartTimes as string[])
         : startTimes;
 
-    console.log(`[CheckoutForm] effectiveStartTimes:`, {
-      tripIndex,
-      tripName: t?.name,
-      tripStartTimes,
-      propStartTimes: startTimes,
-      result,
-      charterFlowType,
-    });
-
     return result;
   }, [trips, tripIndex, startTimes, charterFlowType]);
 
@@ -475,13 +467,6 @@ export default function CheckoutForm({
       }
 
       return false;
-    });
-
-    console.log("[CheckoutForm] Disabled start times:", {
-      date,
-      days,
-      datesToCheck,
-      disabled,
     });
 
     return disabled;
@@ -609,8 +594,6 @@ export default function CheckoutForm({
 
   const onSubmit = handleSubmit(
     async (formData) => {
-      console.log("✅ Validation passed, submitting booking...");
-
       // Authenticated user flow
       if (isLoggedIn) {
         try {
@@ -711,10 +694,8 @@ export default function CheckoutForm({
       setShowVerificationModal(true);
       return;
     },
-    (errors) => {
-      // Validation failed - log errors for debugging
-      console.error("❌ Form validation failed:", errors);
-      console.log("Current form values:", watch());
+    () => {
+      // Validation failed - errors are shown in UI
     }
   );
 
@@ -807,7 +788,6 @@ export default function CheckoutForm({
 
         // Check if payment requires redirect (FPX/E-wallet DIRECT flow)
         if (data.requiresRedirect && data.redirectUrl) {
-          console.log("🏦 Redirecting to payment gateway:", data.redirectUrl);
           window.location.href = data.redirectUrl;
         } else {
           // TOKENIZED flow (Card) or MOCK - go to confirmation
@@ -963,50 +943,18 @@ export default function CheckoutForm({
         </div>
       )}
 
-      {/* Mobile: Summary first */}
-      <div className="mb-3 lg:hidden">
-        <BookingSummaryCard
-          charter={charter}
-          captain={charter?.captain}
-          pricingBreakdown={pricingBreakdown}
-        />
-      </div>
-
       {/* Main grid */}
       <section className="grid gap-3 sm:gap-5 lg:grid-cols-3 ">
         {/* Left column: Form sections */}
         <div className="space-y-3 lg:col-span-2 ">
+          {/* STEP 1: Trip Details */}
           <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
-            {/* Your Details */}
-            <YourDetailsCard
-              register={register}
-              errors={errors}
-              firstName={firstName}
-              lastName={lastName}
-              email={email}
-              phone={phone || ""}
+            <StepHeader
+              step={1}
+              title={t("steps.tripDetails")}
+              description={t("steps.tripDetailsDesc")}
             />
 
-            {/* Emergency Contact */}
-            <EmergencyContactCard
-              register={register}
-              errors={errors}
-              emergencyName={watch("emergencyName")}
-              emergencyPhone={watch("emergencyPhone")}
-              emergencyRelation={watch("emergencyRelation")}
-            />
-
-            {/* Participant List */}
-            <ParticipantListCard
-              register={register}
-              errors={errors}
-              watch={watch}
-              setValue={setValue}
-              guests={adults + (children || 0)}
-            />
-          </div>
-
-          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
             {/* Date + Guests (Search box style) */}
             <DateGuestsCard
               schedule={charter?.schedule}
@@ -1052,33 +1000,73 @@ export default function CheckoutForm({
               onTripSelect={handleTripSelect}
             />
 
-            {/* Start Time Selection */}
-            {effectiveStartTimes && effectiveStartTimes.length > 0 && (
-              <StartTimeSelection
-                startTimes={effectiveStartTimes}
-                startTime={startTime}
-                disabledTimes={disabledStartTimes}
-                onStartTimeChange={(v) => setValue("startTime", v)}
-              />
-            )}
-          </div>
-
-          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
-            {/* Start Conversation */}
-            <StartConversationCard
-              captain={charter?.captain}
-              charterName={charter?.name}
-              location={charter?.location}
-              species={charter?.species || []}
-              techniques={charter?.techniques || []}
-              register={register}
-              errors={errors}
+            {/* Start Time Selection - Always show to prevent layout shift */}
+            <StartTimeSelection
+              startTimes={effectiveStartTimes}
+              startTime={startTime}
+              disabledTimes={disabledStartTimes}
+              onStartTimeChange={(v) => setValue("startTime", v)}
+              tripSelected={tripIndex >= 0}
             />
           </div>
 
-          {/* Promo Code (only for logged-in users) */}
+          {/* STEP 2: Your Information */}
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            <StepHeader
+              step={2}
+              title={t("steps.yourInformation")}
+              description={t("steps.yourInformationDesc")}
+            />
+
+            {/* Your Details */}
+            <YourDetailsCard
+              register={register}
+              errors={errors}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              phone={phone || ""}
+            />
+
+            {/* Participant List */}
+            <ParticipantListCard
+              register={register}
+              errors={errors}
+              watch={watch}
+              setValue={setValue}
+              guests={adults + (children || 0)}
+            />
+          </div>
+
+          {/* STEP 3: Additional Info */}
+          <div className="p-3 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
+            <StepHeader
+              step={3}
+              title={t("steps.additionalInfo")}
+              description={t("steps.additionalInfoDesc")}
+            />
+
+            {/* Note to Captain */}
+            <NoteToCaptainCard
+              captain={charter?.captain}
+              charterName={charter?.name}
+              register={register}
+              errors={errors}
+            />
+
+            {/* Emergency Contact */}
+            <EmergencyContactCard
+              register={register}
+              errors={errors}
+              emergencyName={watch("emergencyName")}
+              emergencyPhone={watch("emergencyPhone")}
+              emergencyRelation={watch("emergencyRelation")}
+            />
+          </div>
+
+          {/* Promo Code - Mobile/Tablet (only for logged-in users) */}
           {isLoggedIn && pricingBreakdown && (
-            <div className="flex flex-col p-3 space-y-3 bg-white border rounded-lg md:hidden border-black/10 sm:p-5">
+            <div className="flex flex-col p-3 space-y-3 bg-white border rounded-lg lg:hidden border-black/10 sm:p-5">
               <PromoCodeInput
                 charterId={charterId || ""}
                 subtotal={pricingBreakdown.subtotal}
@@ -1220,7 +1208,7 @@ export default function CheckoutForm({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
+              className="hidden lg:block w-full rounded-lg bg-[#ec2227] text-white px-8 py-3.5 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
             >
               {isSubmitting
                 ? t("buttons.submitting")
@@ -1303,6 +1291,35 @@ export default function CheckoutForm({
           )}
         </div>
       </section>
+
+      {/* Mobile Sticky Submit Button */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t border-gray-200 shadow-lg lg:hidden">
+        <div className="flex items-center justify-between max-w-lg gap-4 mx-auto">
+          {/* Price summary */}
+          {pricingBreakdown && (
+            <div className="flex-shrink-0">
+              <p className="text-xs text-gray-500">{t("summary.total")}</p>
+              <p className="text-lg font-bold text-[#ec2227]">
+                RM{pricingBreakdown.finalPrice.toFixed(2)}
+              </p>
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg bg-[#ec2227] text-white px-6 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d01f24] transition-colors"
+          >
+            {isSubmitting
+              ? t("buttons.submitting")
+              : charterFlowType === "MANUAL"
+                ? t("buttons.requestBooking")
+                : t("buttons.proceedToPayment")}
+          </button>
+        </div>
+      </div>
+
+      {/* Spacer for mobile sticky button */}
+      <div className="h-24 lg:hidden" />
 
       {/* Guest Booking Verification Modal */}
       <GuestBookingVerificationModal

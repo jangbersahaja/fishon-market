@@ -9,12 +9,13 @@ import {
   EnhancedReviewsList,
   GuestFeedback,
   LocationMap,
+  MediaGallery,
+  MobileStickyBar,
   OperationalScheduleCard,
-  PhotoGallery,
   PoliciesCard,
+  QuickFacts,
   ShareButton,
   TripCard,
-  VideoGallery,
 } from "@/components/charter";
 import SearchBox from "@/components/charters/SearchBox";
 import { CampaignContainer } from "@/components/promotional";
@@ -147,6 +148,7 @@ export default async function CharterViewPage({
   const location = charter?.location || "Malaysia";
   const address = charter?.address;
   const desc = charter?.description || t("defaultDescription");
+  const descMy = charter?.descriptionMy || null;
 
   const images: string[] = getImagesArray(charter);
 
@@ -161,6 +163,8 @@ export default async function CharterViewPage({
             : (boat as any).lengthFeet,
         capacity: boat.capacity,
         features: boat.features,
+        imageUrl: (boat as any).imageUrl,
+        images: (boat as any).images,
       }
     : undefined;
   const tripMaxAnglers =
@@ -395,10 +399,12 @@ export default async function CharterViewPage({
               </div>
             </div>
           </header>
-          {/* Gallery */}
+          <div className="flex gap-3"></div>
+          {/* Unified Media Gallery */}
           <div className="mt-3 overflow-hidden bg-white shadow-lg border-3 rounded-2xl border-white/20">
-            <PhotoGallery
+            <MediaGallery
               images={images}
+              videos={charter.videos}
               title={title}
               charterId={id}
               ownerId={charter.ownerId}
@@ -407,35 +413,25 @@ export default async function CharterViewPage({
           </div>
         </div>
       </section>
-      <section className="px-5 pb-10 mx-auto max-w-7xl">
+      <section className="px-5 pb-24 mx-auto max-w-7xl md:pb-10">
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-5 mt-5 md:grid-cols-3">
           {/* Left column */}
           <div className="flex flex-col gap-5 md:col-span-2">
-            <AboutSection description={desc} />
-
-            {/* Video Gallery */}
-            {charter?.videos && charter.videos.length > 0 && (
-              <VideoGallery
-                videos={charter.videos}
-                charterId={id}
-                ownerId={charter.ownerId}
-                userId={session?.user?.id}
-              />
-            )}
-
-            {/* Amenities */}
-            <AmenitiesCard includes={charter?.includes ?? []} locale={locale} />
-
-            <div className="grid grid-cols-1 gap-5 p-5 bg-white shadow-lg rounded-2xl">
-              {/* Trip Cards - Under the map in left column */}
-              <h2 className="text-xl font-bold">{t("availableTrips")}</h2>
+            {/* Trip Selector - MOVED TO TOP (Priority: CRITICAL per redesign) */}
+            <div className="grid grid-cols-1 gap-5 ">
               <div className="flex flex-col gap-3">
                 {trips.map((trip, idx) => {
-                  // Since species and techniques are at charter level (not per-trip),
-                  // only show them on the first trip card to avoid repetition
-                  const showSpecies = idx === 0;
-                  const showTechniques = idx === 0;
+                  // First trip is marked as "Most Popular" per redesign plan
+                  const isPopular = idx === 0 && trips.length > 1;
+
+                  // Use trip-specific species/techniques if available, fallback to charter-level
+                  const tripSpecies = trip.species?.length
+                    ? trip.species
+                    : (charter?.species ?? []);
+                  const tripTechniques = trip.techniques?.length
+                    ? trip.techniques
+                    : (charter?.techniques ?? []);
 
                   return (
                     <TripCard
@@ -446,24 +442,29 @@ export default async function CharterViewPage({
                       priceOverride={trip.priceOverride}
                       duration={trip.duration}
                       description={trip.description}
-                      species={charter?.species ?? []}
-                      techniques={charter?.techniques ?? []}
+                      species={tripSpecies}
+                      techniques={tripTechniques}
                       maxAnglers={trip.maxAnglers}
                       startTimes={trip.startTimes}
-                      showSpecies={showSpecies}
-                      showTechniques={showTechniques}
+                      isPopular={isPopular}
                     />
                   );
                 })}
               </div>
             </div>
 
-            {/* Map */}
-            <LocationMap title={title} mapEmbedSrc={mapEmbedSrc} />
+            {/* Quick Facts - NEW section */}
+            <QuickFacts charter={charter} maxCapacity={personsMax} />
+
+            {/* About Charter */}
+            <AboutSection description={desc} descriptionMy={descMy} />
+
+            {/* Amenities */}
+            <AmenitiesCard includes={charter?.includes ?? []} locale={locale} />
           </div>
 
           {/* Right column: Booking Widget (Sticky) */}
-          <div className="h-full md:self-start">
+          <div className="h-full md:self-start" data-booking-widget>
             <div className="space-y-5 h-fit md:sticky md:top-5">
               <BookingWidget
                 trips={trips}
@@ -491,8 +492,13 @@ export default async function CharterViewPage({
         </div>
         <div className="grid grid-cols-1 gap-0 mt-5 md:gap-5 md:grid-cols-5">
           <div className="flex flex-col col-span-3 gap-5">
+            {/* Boat - moved before Captain per redesign plan */}
+            <BoatCard boat={uiBoat as any} locale={locale} />
             {/* Captain */}
             <CaptainSection charter={charter} />
+          </div>
+          <div className="flex flex-col col-span-2 gap-5 mt-5 md:mt-0">
+            {/* Policies */}
             <PoliciesCard
               policies={charter.policies as any}
               pickup={
@@ -504,10 +510,6 @@ export default async function CharterViewPage({
                 } as any
               }
             />
-          </div>
-          <div className="flex flex-col col-span-2 gap-5 mt-5 md:mt-0">
-            {/* Boat */}
-            <BoatCard boat={uiBoat as any} locale={locale} />
             {/* Operational Schedule */}
             {charter?.schedule && (
               <OperationalScheduleCard
@@ -517,6 +519,9 @@ export default async function CharterViewPage({
             )}
           </div>
         </div>
+
+        {/* Map - moved down as reference material */}
+        <LocationMap title={title} mapEmbedSrc={mapEmbedSrc} />
 
         {/* Feedback summary */}
         <GuestFeedback
@@ -538,6 +543,11 @@ export default async function CharterViewPage({
           />
         </div>
       </section>
+
+      {/* Mobile Sticky Bar - shows price and Book Now CTA */}
+      <MobileStickyBar
+        minPrice={Math.min(...trips.map((t) => t.priceOverride ?? t.price))}
+      />
     </main>
   );
 }

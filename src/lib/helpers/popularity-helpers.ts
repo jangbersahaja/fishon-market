@@ -139,7 +139,14 @@ export function countChartersByTechnique(
 ): number {
   const normalized = technique.toLowerCase();
   return charters.filter((c) =>
-    c.techniques.some((t) => t.toLowerCase().includes(normalized))
+    c.techniques.some((t) => {
+      const tLower = t.toLowerCase();
+      // Special handling: "Bottom Fishing" should also match "Bottom"
+      if (normalized === "bottom fishing" && tLower === "bottom") {
+        return true;
+      }
+      return tLower.includes(normalized);
+    })
   ).length;
 }
 

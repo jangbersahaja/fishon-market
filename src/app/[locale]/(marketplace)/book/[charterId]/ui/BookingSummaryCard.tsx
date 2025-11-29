@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { AMENITIES_OPTIONS } from "@/data/amenities";
 import { BOAT_FEATURE_OPTIONS } from "@/data/boatFeatures";
 import { MapPin, Ship } from "lucide-react";
@@ -303,30 +309,38 @@ export default function BookingSummaryCard({
             )}
           </div>
 
-          {/* Payment Info */}
-          <details className="mt-3 text-xs text-gray-600">
-            <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
-              {t("paymentInfo")}
-            </summary>
-            <p className="mt-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50">
-              {pricingBreakdown ? t("paymentInfoAuto") : t("paymentInfoManual")}
-            </p>
-          </details>
+          {/* Payment Info & Cancellation Policy */}
+          <Accordion type="multiple" className="mt-3">
+            <AccordionItem value="payment-info" className="border-0">
+              <AccordionTrigger className="py-2 text-xs font-medium text-gray-600 hover:no-underline hover:text-gray-900">
+                {t("paymentInfo")}
+              </AccordionTrigger>
+              <AccordionContent className="pt-0 pb-2">
+                <p className="text-xs leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50 text-gray-600">
+                  {pricingBreakdown
+                    ? t("paymentInfoAuto")
+                    : t("paymentInfoManual")}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Cancellation Policy Note */}
-
-          <details className="mt-3 text-xs text-gray-600">
-            <summary className="font-medium cursor-pointer select-none hover:text-gray-900">
-              {t("cancellationNotes")}
-            </summary>
-            <ul className="space-y-0.5 my-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50">
-              <li>• {t("cancellationPolicy1")}</li>
-              <li>• {t("cancellationPolicy2")}</li>
-              <li>• {t("cancellationPolicy3")}</li>
-            </ul>
-            <p>{t("cancellationRefund")}</p>
-            <p>{t("refundTiming")}</p>
-          </details>
+            <AccordionItem value="cancellation" className="border-0">
+              <AccordionTrigger className="py-2 text-xs font-medium text-gray-600 hover:no-underline hover:text-gray-900">
+                {t("cancellationNotes")}
+              </AccordionTrigger>
+              <AccordionContent className="pt-0 pb-2">
+                <ul className="space-y-0.5 mb-1.5 leading-relaxed p-2 border rounded-md border-slate-200 bg-slate-50 text-xs text-gray-600">
+                  <li>• {t("cancellationPolicy1")}</li>
+                  <li>• {t("cancellationPolicy2")}</li>
+                  <li>• {t("cancellationPolicy3")}</li>
+                </ul>
+                <p className="text-xs text-gray-600">
+                  {t("cancellationRefund")}
+                </p>
+                <p className="text-xs text-gray-600">{t("refundTiming")}</p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </>
       )}
     </aside>

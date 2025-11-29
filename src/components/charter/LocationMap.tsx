@@ -12,7 +12,7 @@ export default function LocationMap({
   const t = useTranslations("charter.location");
 
   return (
-    <section className="p-5 bg-white shadow-lg rounded-2xl">
+    <section className="p-5 mt-5 bg-white shadow-lg rounded-2xl">
       <div className="px-0">
         <h3 className="text-base font-semibold sm:text-lg">{t("title")}</h3>
         <p className="mt-1 text-xs text-gray-500">{t("subtitle")}</p>

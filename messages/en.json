@@ -87,17 +87,21 @@
     "bookDescription": "Easy and secure booking process with instant confirmation",
     "enjoyYourTrip": "Enjoy Your Trip",
     "enjoyDescription": "Have an amazing fishing experience with professional captains",
-    "brandTitle": "Fishon.my — Malaysia's first online fishing booking platform",
+    "brandTitle": "— Malaysia's first online fishing booking platform",
     "brandDescription": "Fishon.my is Malaysia's first online fishing booking platform and marketplace helping anglers find and book fishing charters. Explore trips across lakes, rivers, inshore and offshore destinations around Malaysia — plan, book, fish.",
     "listYourBusiness": "List your business on Fishon",
     "findCustomers": "Find customers and earn more",
     "listWithUs": "List With Us",
+    "captainBadge": "For Captains & Operators",
+    "captainBenefit1": "Reach thousands of anglers",
+    "captainBenefit2": "Manage bookings easily",
+    "captainBenefit3": "Secure payments",
     "tripsNearby": {
       "title": "Discover Trip Near You",
       "detectingLocation": "Detecting your location…",
       "locationError": "Unable to fetch your location: {error}.",
       "browseTripsBelowFallback": "You can still browse trips below.",
-      "noTripsNearby": "No trips within 15 km of your current location."
+      "noTripsNearby": "No trips within 50 km of your current location."
     },
     "browseByType": {
       "title": "Browse By Type",
@@ -107,12 +111,14 @@
     },
     "topTechniques": {
       "title": "Top Fishing Techniques",
+      "subtitle": "Find charters specializing in your favorite fishing style",
       "seeAll": "See all fishing techniques",
       "chartersUsing": "Charters using {technique}",
       "altText": "{technique} technique"
     },
     "popularDestinations": {
       "title": "Popular Destinations",
+      "subtitle": "Explore the best fishing spots across Malaysia",
       "seeAll": "See all destinations",
       "findChartersIn": "Find charters in {destination}",
       "altText": "{destination} fishing destination",
@@ -174,10 +180,22 @@
       "goToItem": "Go to item {number}",
       "shareCharter": "Share charter"
     },
+    "mediaGallery": {
+      "photos": "Photos ({count})",
+      "videos": "Videos ({count})",
+      "noMedia": "No media available"
+    },
+    "mobileStickyBar": {
+      "from": "From",
+      "perTrip": "/Trip",
+      "bookNow": "Book Now"
+    },
     "trip": {
       "perDay": "/Day",
       "upToAnglers": "Up to {count} anglers",
-      "startTimes": "Start Times:"
+      "startTimes": "Start Times:",
+      "mostPopular": "Most Popular",
+      "bookThisTrip": "Book This Trip"
     },
     "share": {
       "whatsapp": "Share on WhatsApp",
@@ -189,7 +207,9 @@
       "linkCopied": "Link Copied!"
     },
     "about": {
-      "title": "About this charter"
+      "title": "About this charter",
+      "readMore": "Read more",
+      "readLess": "Read less"
     },
     "amenities": {
       "title": "Amenities",
@@ -320,6 +340,26 @@
       "noTripsAvailable": "No trips available",
       "unavailable": "Unavailable",
       "limitedAvailability": "Limited"
+    },
+    "quickFacts": {
+      "title": "Quick Facts",
+      "maxCapacity": "Max Capacity",
+      "anglers": "{count} anglers",
+      "fishingType": "Fishing Type",
+      "offshore": "Offshore",
+      "inshore": "Inshore",
+      "lake": "Lake",
+      "stream": "Stream",
+      "tripsAvailable": "Trips Available",
+      "trips": "{count} trips",
+      "targetSpecies": "Target Species",
+      "species": "{count} species",
+      "amenities": "Amenities",
+      "included": "{count} included",
+      "pickup": "Pickup",
+      "pickupWithFee": "RM {fee}",
+      "pickupFree": "Free",
+      "pickupNotAvailable": "Not available"
     }
   },
   "booking": {
@@ -365,6 +405,14 @@
     "checkout": {
       "pageTitle": "Complete Your Booking",
       "pageSubtitle": "Review your trip details and tell the captain about yourself",
+      "steps": {
+        "tripDetails": "Trip Details",
+        "tripDetailsDesc": "Select your date, trip package, and departure time",
+        "yourInformation": "Your Information",
+        "yourInformationDesc": "Tell us about yourself and your fellow anglers",
+        "additionalInfo": "Additional Info",
+        "additionalInfoDesc": "Add notes and safety contacts"
+      },
       "paymentCancelledTitle": "Payment Cancelled",
       "paymentCancelledMessage": "Your payment was cancelled. No charges were made. You can try again when you're ready.",
       "sessionExpiredTitle": "Session Expired",
@@ -397,13 +445,14 @@
         "phonePlaceholder": "+60 12-345 6789",
         "relationshipPlaceholder": "e.g., Spouse, Parent, Sibling"
       },
-      "startConversation": {
-        "title": "Say hello to captain",
+      "noteToCaptain": {
+        "title": "Note to Captain",
         "yearsExperience": "{years} years experience",
         "crew": "{count} crew",
         "greeting": "Hello, welcome to {charterName}. Thanks for your interest! Let me know who'll be joining the trip, what fish you're aiming to catch, and any special requests — I'll make sure everything's ready for you.",
-        "placeholder": "Introduce yourself to {captainFirstName}. Share your fishing experience, what you hope to catch, or any special requests...",
-        "note": "This message will be sent to the captain with your booking request."
+        "placeholder": "Share your fishing experience, what species you're targeting, or any special requests...",
+        "note": "This message will be sent to the captain with your booking request.",
+        "optional": "Optional"
       },
       "summary": {
         "title": "Charter Summary",
@@ -500,12 +549,15 @@
         "title": "Participant List",
         "description": "Add all participants for this trip (maximum {guests} based on your guest selection). At least one participant is required.",
         "participantN": "Participant {number}",
+        "leadAngler": "Lead Angler",
         "thisIsMe": "This is me",
         "name": "Name",
         "phone": "Phone",
         "namePlaceholder": "Participant name",
         "phonePlaceholder": "+60 12-345 6789",
         "addButton": "Add Participant",
+        "remaining": "remaining",
+        "allAdded": "All participants added",
         "maxCapacity": "({current}/{max} max)"
       },
       "tripSelection": {
@@ -532,7 +584,9 @@
       },
       "startTime": {
         "title": "Select start time",
-        "warningMessage": "Please select a start time to continue"
+        "warningMessage": "Please select a start time to continue",
+        "noStartTimes": "No departure times available for this trip",
+        "selectTripFirst": "Select a trip package above to see available departure times"
       },
       "guestVerification": {
         "titleEmail": "Verify Your Email",

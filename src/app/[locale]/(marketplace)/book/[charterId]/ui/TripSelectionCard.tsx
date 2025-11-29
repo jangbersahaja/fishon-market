@@ -4,9 +4,9 @@ import type { PartialAvailability } from "@/lib/helpers/availability-helpers";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import type { SpeciesItem } from "@fishon/ui";
 import { SPECIES_BY_ID } from "@fishon/ui";
-import { SpeciesPills } from "@fishon/ui/charter";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useMemo } from "react";
 
 interface Trip {
@@ -173,30 +173,6 @@ export default function TripSelectionCard({
   // Early return after all hooks
   if (!trips || trips.length === 0) return null;
 
-  // Map species strings (id/english/local) to rich pill items with image + local name
-  const mapSpeciesToPills = (list: string[]) =>
-    list.map((nameOrId) => {
-      // Try id match first (allow undefined at runtime)
-      let found: SpeciesItem | undefined = (
-        SPECIES_BY_ID as Record<string, SpeciesItem | undefined>
-      )[nameOrId];
-      if (!found) {
-        const lower = nameOrId.toLowerCase();
-        found = Object.values(SPECIES_BY_ID).find(
-          (sp) =>
-            sp.english_name.toLowerCase() === lower ||
-            sp.local_name.toLowerCase() === lower
-        );
-      }
-      if (!found) return { label: nameOrId };
-      return {
-        id: found.id,
-        english: found.english_name,
-        local: found.local_name,
-        imageSrc: found.image,
-      };
-    });
-
   return (
     <section className="pb-5 border-b border-black/10">
       <h2 className="mb-3 text-base font-semibold sm:text-lg">{t("title")}</h2>
@@ -264,13 +240,20 @@ export default function TripSelectionCard({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-base font-semibold">{trip.name}</h3>
-                      {trip.duration && (
-                        <p className="text-xs text-gray-600">
-                          {trip.duration}
-                          {trip.maxAnglers &&
-                            ` • ${t("upToAnglers", { count: trip.maxAnglers })}`}
-                        </p>
-                      )}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                        {trip.duration && (
+                          <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                            <Clock className="w-3 h-3" />
+                            {trip.duration}
+                          </span>
+                        )}
+                        {trip.maxAnglers && (
+                          <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                            <Users className="w-3 h-3" />
+                            {t("upToAnglers", { count: trip.maxAnglers })}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-start gap-3">
@@ -298,29 +281,70 @@ export default function TripSelectionCard({
                     </div>
                   </div>
 
-                  {/* Expanded details when selected */}
-                  {isSelected && (
-                    <div className="pt-3 mt-3 space-y-3 border-t border-black/10">
-                      {trip.description && (
-                        <p className="text-xs leading-relaxed text-gray-700">
-                          {trip.description}
-                        </p>
-                      )}
+                  {/* Description - only when selected */}
+                  {isSelected && trip.description && (
+                    <p className="mt-3 text-xs leading-relaxed text-gray-700">
+                      {trip.description}
+                    </p>
+                  )}
 
+                  {/* Species & Techniques - always visible */}
+                  {(speciesToShow.length > 0 ||
+                    techniquesToShow.length > 0) && (
+                    <div className="pt-3 mt-3 space-y-3 border-t border-black/10">
+                      {/* Target Species - compact inline display */}
                       {speciesToShow.length > 0 && (
                         <div>
                           <h4 className="mb-2 text-xs font-semibold text-gray-600 uppercase">
                             {t("targetSpecies")}
                           </h4>
-                          <SpeciesPills
-                            items={mapSpeciesToPills(speciesToShow)}
-                            size="sm"
-                            stackedNames
-                            showImage
-                          />
+                          <div className="flex flex-wrap items-center gap-2">
+                            {speciesToShow.slice(0, 5).map((speciesId) => {
+                              const species = (
+                                SPECIES_BY_ID as Record<
+                                  string,
+                                  SpeciesItem | undefined
+                                >
+                              )[speciesId];
+                              if (!species) {
+                                return (
+                                  <span
+                                    key={speciesId}
+                                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-white border rounded-full shadow-sm border-gray-200 text-gray-700"
+                                  >
+                                    {speciesId}
+                                  </span>
+                                );
+                              }
+                              return (
+                                <div
+                                  key={speciesId}
+                                  className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border rounded-full shadow-sm border-gray-200"
+                                >
+                                  <div className="relative w-5 h-5 overflow-hidden rounded-full bg-gradient-to-tr from-[#ec2227] to-[#d11f24]">
+                                    <Image
+                                      src={species.image}
+                                      alt={species.english_name}
+                                      fill
+                                      className="object-contain p-0.5"
+                                    />
+                                  </div>
+                                  <span className="text-xs font-medium text-gray-700">
+                                    {species.local_name}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            {speciesToShow.length > 5 && (
+                              <span className="text-xs text-gray-500">
+                                +{speciesToShow.length - 5} more
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
 
+                      {/* Techniques - pill badges */}
                       {techniquesToShow.length > 0 && (
                         <div>
                           <h4 className="mb-2 text-xs font-semibold text-gray-600 uppercase">
@@ -330,7 +354,7 @@ export default function TripSelectionCard({
                             {techniquesToShow.map((technique) => (
                               <span
                                 key={technique}
-                                className="inline-flex items-center px-3 py-1 text-xs font-medium bg-white border rounded-full shadow-sm border-neutral-200 text-slate-700"
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-[#ec2227] bg-gradient-to-r from-[#ec2227]/10 to-[#ec2227]/20 border border-[#ec2227]/30 rounded-full"
                               >
                                 {technique}
                               </span>

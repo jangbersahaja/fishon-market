@@ -87,17 +87,21 @@
     "bookDescription": "Proses tempahan yang mudah dan selamat dengan pengesahan serta-merta",
     "enjoyYourTrip": "Nikmati Trip Anda",
     "enjoyDescription": "Dapatkan pengalaman memancing yang menakjubkan dengan kapten profesional",
-    "brandTitle": "Fishon.my — Platform tempahan memancing dalam talian pertama di Malaysia",
+    "brandTitle": "— Platform tempahan memancing dalam talian pertama di Malaysia",
     "brandDescription": "Fishon.my ialah platform tempahan memancing dalam talian dan marketplace pertama di Malaysia yang membantu pemancing mencari dan menempah charter memancing. Terokai trip merentasi tasik, sungai, destinasi inshore dan offshore di seluruh Malaysia — rancang, tempah, pancing.",
     "listYourBusiness": "Senaraikan perniagaan anda di Fishon",
     "findCustomers": "Cari pelanggan dan jana lebih pendapatan",
     "listWithUs": "Senarai Bersama Kami",
+    "captainBadge": "Untuk Kapten & Pengendali",
+    "captainBenefit1": "Jangkau beribu-ribu pemancing",
+    "captainBenefit2": "Urus tempahan dengan mudah",
+    "captainBenefit3": "Bayaran yang selamat",
     "tripsNearby": {
       "title": "Temui Trip Berhampiran Anda",
       "detectingLocation": "Mengesan lokasi anda…",
       "locationError": "Tidak dapat mendapatkan lokasi anda: {error}.",
       "browseTripsBelowFallback": "Anda masih boleh layari trip di bawah.",
-      "noTripsNearby": "Tiada trip dalam radius 15 km dari lokasi semasa anda."
+      "noTripsNearby": "Tiada trip dalam radius 50 km dari lokasi semasa anda."
     },
     "browseByType": {
       "title": "Semak Mengikut Jenis",
@@ -107,6 +111,7 @@
     },
     "topTechniques": {
       "title": "Teknik Memancing Teratas",
+      "subtitle": "Cari charter yang pakar dalam gaya memancing kegemaran anda",
       "seeAll": "Lihat semua teknik memancing",
       "chartersUsing": "Charter menggunakan {technique}",
       "altText": "Teknik {technique}"
@@ -174,10 +179,22 @@
       "goToItem": "Pergi ke item {number}",
       "shareCharter": "Kongsi perkhidmatan"
     },
+    "mediaGallery": {
+      "photos": "Foto ({count})",
+      "videos": "Video ({count})",
+      "noMedia": "Tiada media tersedia"
+    },
+    "mobileStickyBar": {
+      "from": "Dari",
+      "perTrip": "/Perjalanan",
+      "bookNow": "Tempah Sekarang"
+    },
     "trip": {
       "perDay": "/Hari",
       "upToAnglers": "Sehingga {count} pemancing",
-      "startTimes": "Masa Mula:"
+      "startTimes": "Masa Mula:",
+      "mostPopular": "Paling Popular",
+      "bookThisTrip": "Tempah Perjalanan Ini"
     },
     "share": {
       "whatsapp": "Kongsi di WhatsApp",
@@ -189,7 +206,9 @@
       "linkCopied": "Pautan Disalin!"
     },
     "about": {
-      "title": "Tentang perkhidmatan ini"
+      "title": "Tentang perkhidmatan ini",
+      "readMore": "Baca lagi",
+      "readLess": "Baca kurang"
     },
     "amenities": {
       "title": "Kemudahan",
@@ -320,6 +339,26 @@
       "noTripsAvailable": "Tiada perjalanan tersedia",
       "unavailable": "Tidak tersedia",
       "limitedAvailability": "Terhad"
+    },
+    "quickFacts": {
+      "title": "Maklumat Pantas",
+      "maxCapacity": "Kapasiti Maksimum",
+      "anglers": "{count} pemancing",
+      "fishingType": "Jenis Memancing",
+      "offshore": "Laut Dalam",
+      "inshore": "Pantai",
+      "lake": "Tasik",
+      "stream": "Sungai",
+      "tripsAvailable": "Perjalanan Tersedia",
+      "trips": "{count} perjalanan",
+      "targetSpecies": "Spesies Sasaran",
+      "species": "{count} spesies",
+      "amenities": "Kemudahan",
+      "included": "{count} disediakan",
+      "pickup": "Pengambilan",
+      "pickupWithFee": "RM {fee}",
+      "pickupFree": "Percuma",
+      "pickupNotAvailable": "Tidak tersedia"
     }
   },
   "booking": {
@@ -365,6 +404,14 @@
     "checkout": {
       "pageTitle": "Lengkapkan Tempahan Anda",
       "pageSubtitle": "Semak butiran trip anda dan beritahu kapten tentang diri anda",
+      "steps": {
+        "tripDetails": "Butiran Trip",
+        "tripDetailsDesc": "Pilih tarikh, pakej trip, dan masa berlepas",
+        "yourInformation": "Maklumat Anda",
+        "yourInformationDesc": "Beritahu kami tentang diri anda dan rakan pemancing",
+        "additionalInfo": "Info Tambahan",
+        "additionalInfoDesc": "Tambah nota dan kenalan keselamatan"
+      },
       "paymentCancelledTitle": "Pembayaran Dibatalkan",
       "paymentCancelledMessage": "Pembayaran anda telah dibatalkan. Tiada caj dikenakan. Anda boleh mencuba semula apabila bersedia.",
       "sessionExpiredTitle": "Sesi Tamat Tempoh",
@@ -397,13 +444,14 @@
         "phonePlaceholder": "+60 12-345 6789",
         "relationshipPlaceholder": "cth., Suami/Isteri, Ibu Bapa, Adik Beradik"
       },
-      "startConversation": {
-        "title": "Salam kepada kapten",
+      "noteToCaptain": {
+        "title": "Nota kepada Kapten",
         "yearsExperience": "{years} tahun pengalaman",
         "crew": "{count} krew",
         "greeting": "Hello, selamat datang ke {charterName}. Terima kasih atas minat anda! Beritahu saya siapa yang akan menyertai trip, ikan apa yang anda sasarkan, dan sebarang permintaan khas — saya akan pastikan semuanya sedia untuk anda.",
-        "placeholder": "Perkenalkan diri anda kepada {captainFirstName}. Kongsikan pengalaman memancing anda, apa yang anda harap tangkap, atau sebarang permintaan khas...",
-        "note": "Mesej ini akan dihantar kepada kapten bersama permintaan tempahan anda."
+        "placeholder": "Kongsikan pengalaman memancing anda, spesies yang anda sasarkan, atau sebarang permintaan khas...",
+        "note": "Mesej ini akan dihantar kepada kapten bersama permintaan tempahan anda.",
+        "optional": "Pilihan"
       },
       "summary": {
         "title": "Ringkasan Charter",
@@ -500,12 +548,15 @@
         "title": "Senarai Peserta",
         "description": "Tambah semua peserta untuk lawatan ini (maksimum {guests} berdasarkan pilihan tetamu anda). Sekurang-kurangnya satu peserta diperlukan.",
         "participantN": "Peserta {number}",
+        "leadAngler": "Ketua Pemancing",
         "thisIsMe": "Ini saya",
         "name": "Nama",
         "phone": "Nombor Telefon",
         "namePlaceholder": "Nama peserta",
         "phonePlaceholder": "+60 12-345 6789",
         "addButton": "Tambah Peserta",
+        "remaining": "lagi",
+        "allAdded": "Semua peserta ditambah",
         "maxCapacity": "({current}/{max} maksimum)"
       },
       "tripSelection": {
@@ -532,7 +583,9 @@
       },
       "startTime": {
         "title": "Pilih masa mula",
-        "warningMessage": "Sila pilih masa mula untuk meneruskan"
+        "warningMessage": "Sila pilih masa mula untuk meneruskan",
+        "noStartTimes": "Tiada masa berlepas tersedia untuk perjalanan ini",
+        "selectTripFirst": "Pilih pakej perjalanan di atas untuk melihat masa berlepas yang tersedia"
       },
       "guestVerification": {
         "titleEmail": "Sahkan E-mel Anda",

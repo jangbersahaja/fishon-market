@@ -1,5 +1,4 @@
 import { HomeWelcomeModal } from "@/components/campaigns/HomeWelcomeModal";
-import SearchBox from "@/components/charters/SearchBox";
 import PopularDestination from "@/components/marketing/PopularDestination";
 import { authOptions } from "@/lib/auth/auth-options";
 import type { CampaignContext } from "@/lib/services/campaign-service";
@@ -7,19 +6,18 @@ import { campaignService } from "@/lib/services/campaign-service";
 import { getCharters } from "@/lib/services/charter-service";
 import type { UserRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale } from "next-intl/server";
 import { cookies } from "next/headers";
-import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
+import BrandSection from "./BrandSection";
 import BrowseByType from "./BrowseByType";
+import HeroSection from "./HeroSection";
 import TopTechniques from "./TopTechniques";
 import TripsNearby from "./TripsNearby";
 
 export default async function Home() {
   const locale = await getLocale();
   const charters = await getCharters();
-  const t = await getTranslations({ locale, namespace: "home" });
 
   // Fetch campaign data server-side
   const session = await getServerSession(authOptions);
@@ -55,7 +53,7 @@ export default async function Home() {
   const ctaHref = content?.ctaHref || `/${locale}/register`;
 
   return (
-    <div className="flex flex-col items-center min-h-screen font-sans">
+    <div className="flex flex-col items-center min-h-screen font-sans bg-gray-50">
       {/* Welcome modal - shows after 5 seconds */}
       <HomeWelcomeModal
         campaignId={campaign?.id || null}
@@ -66,42 +64,12 @@ export default async function Home() {
         className={layoutConfig?.className || ""}
       />
 
-      <main className="flex flex-col items-center w-full gap-8 mb-24 sm:items-start md:gap-10 ">
-        {" "}
-        {/* Home page with hero section */}
-        <section className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh]">
-          {/* wallpaper */}
-          <Image
-            src="/images/hero/hero-wallpaper.png"
-            alt="Fishing wallpaper"
-            className="object-cover"
-            priority
-            sizes="100vw"
-            fill
-          />
-          <div className="absolute bottom-0 w-full bg-gradient-to-t from-[#ec2227] to-white/0 h-1/4"></div>
-          <div className="absolute flex justify-center w-full bottom-10">
-            <div className="flex flex-col w-full gap-3 p-5 mb-5 max-w-7xl">
-              <h2 className="text-4xl font-bold text-white md:text-6xl drop-shadow-lg">
-                {t("discoverTitle")} <br /> {t("discoverTitleBreak")}
-              </h2>
-              <h3 className="text-xl font-bold text-white md:text-3xl drop-shadow-lg">
-                {t("bookYourNext")}
-              </h3>
-            </div>
-          </div>
-          {/* overlayed search box */}
-          <div className="absolute inset-x-0 p-5 mx-auto -bottom-10 lg:-bottom-10 max-w-7xl">
-            <Suspense
-              fallback={
-                <div className="flex flex-col w-full gap-3 p-5 bg-white rounded-lg shadow-lg min-h-16" />
-              }
-            >
-              <SearchBox />
-            </Suspense>
-          </div>
-        </section>
-        <div className="flex w-full -mt-10 pt-20 pb-10 justify-center mx-auto bg-gradient-to-b from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
+      <main className="w-full">
+        {/* Hero Section with Search */}
+        <HeroSection />
+
+        {/* Trips Nearby - Seamlessly connected to Hero's bottom gradient */}
+        <div className="w-full bg-[#ec2227] pb-12 pt-8 -mt-1 relative z-10">
           <Suspense
             fallback={
               <div className="w-full px-5 mx-auto max-w-7xl py-7 text-white/80">
@@ -112,46 +80,14 @@ export default async function Home() {
             <TripsNearby charters={charters} />
           </Suspense>
         </div>
-        <PopularDestination charters={charters} />
-        {/* Brand explainer + CTA */}
-        <section className="w-full bg-gray-100">
-          <div className="flex flex-col items-center w-full gap-10 p-5 mx-auto max-w-7xl md:flex-row">
-            <div className="flex-1">
-              <h3 className="text-lg font-bold">{t("brandTitle")}</h3>
-              <p className="mt-1 text-sm text-gray-700">
-                {t("brandDescription")}
-              </p>
-            </div>
 
-            <div className="flex items-center gap-5">
-              <div className="relative w-40 h-40 ml-auto md:h-56 md:w-56">
-                <Image
-                  src="/Fishon-logo.png"
-                  alt="Fishon brand graphic"
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 160px, 224px"
-                  priority
-                />
-              </div>
-
-              <div className="flex flex-col justify-center">
-                <h3 className="font-bold">{t("listYourBusiness")}</h3>
-                <p className="text-sm text-gray-700">{t("findCustomers")}</p>
-                <Link
-                  href="https://fishon-captain.vercel.app/my/list-your-business"
-                  className="mt-5 w-full rounded-md bg-[#ec2227] p-2 text-center font-bold text-white transition hover:bg-red-700"
-                >
-                  {t("listWithUs")}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-        {/* Browse by type */}
-        <BrowseByType charters={charters} />
-        {/* Top fishing techniques */}
-        <TopTechniques charters={charters} />
+        {/* Main Content */}
+        <div className="flex flex-col w-full">
+          <PopularDestination charters={charters} />
+          <BrandSection />
+          <BrowseByType charters={charters} />
+          <TopTechniques charters={charters} />
+        </div>
       </main>
     </div>
   );

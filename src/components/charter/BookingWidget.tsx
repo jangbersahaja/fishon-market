@@ -550,7 +550,7 @@ function BookingWidget({
                   key={trip.id || idx}
                   onClick={() => isAvailable && setSelectedTripIndex(idx)}
                   className={`
-                  relative overflow-hidden rounded-xl border transition-all
+                  relative rounded-xl border transition-all
                   ${
                     !isAvailable
                       ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
@@ -570,14 +570,14 @@ function BookingWidget({
                 >
                   {/* Unavailable badge */}
                   {!isAvailable && (
-                    <div className="absolute top-2 right-2 bg-gray-500 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
+                    <div className="absolute -top-2.5 right-2 bg-gray-500 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {t("unavailable")}
                     </div>
                   )}
                   {/* Limited availability badge */}
                   {hasPartialAvailability && (
-                    <div className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
+                    <div className="absolute -top-2.5 right-2 bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {t("limitedAvailability")}
                     </div>
@@ -688,7 +688,7 @@ function BookingWidget({
       <div className="mt-4">
         <button
           type="button"
-          className="w-full rounded-xl bg-[#ec2227] px-4 py-2 text-sm font-semibold text-white hover:translate-y-px transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl bg-[#ec2227] px-4 py-4 text-sm font-semibold text-white hover:translate-y-px transition disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={
             !date ||
             adults < 1 ||
