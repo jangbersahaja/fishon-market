@@ -4,16 +4,19 @@ import SearchBar from "@/components/blog/SearchBar";
 import { prisma } from "@/lib/database/prisma";
 import { getBlogPosts, getFeaturedPosts } from "@/lib/services/blog-service";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Fishing Blog & Guides | Fishon.my",
-  description:
-    "Discover expert fishing tips, charter guides, destination reviews, and techniques for Malaysian waters. Learn from local anglers and captains.",
-  alternates: {
-    canonical: "https://www.fishon.my/blog",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("blogPage.metadata");
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: {
+      canonical: "https://www.fishon.my/blog",
+    },
+  };
+}
 
 // JSON-LD structured data for blog
 const blogSchema = {
@@ -47,6 +50,7 @@ export default async function BlogPage({
     to?: string;
   }>;
 }) {
+  const t = await getTranslations("blogPage");
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const perPage = 12;
@@ -84,12 +88,10 @@ export default async function BlogPage({
       <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
         <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Fishing Blog & Guides
+            {t("hero.title")}
           </h1>
           <p className="mt-4 text-lg/7 text-white/90">
-            Expert tips, destination guides, and fishing techniques for
-            Malaysian waters. Learn from experienced anglers and charter
-            captains.
+            {t("hero.description")}
           </p>
 
           {/* Search Bar */}
@@ -101,7 +103,7 @@ export default async function BlogPage({
           {categories.length > 0 && (
             <nav
               className="flex flex-wrap gap-2 mt-8"
-              aria-label="Blog categories"
+              aria-label={t("categories.ariaLabel")}
             >
               {categories.map((category) => (
                 <Link
@@ -121,7 +123,7 @@ export default async function BlogPage({
         {/* Featured Posts */}
         {featuredPosts.length > 0 && (
           <section className="mb-12">
-            <h2 className="mb-6 text-2xl font-bold">Featured Articles</h2>
+            <h2 className="mb-6 text-2xl font-bold">{t("featured.title")}</h2>
 
             {/* Desktop: Large card on left, small cards on right */}
             {/* Mobile: Stacked - large card first, then small cards */}
@@ -149,13 +151,11 @@ export default async function BlogPage({
 
         {/* Recent Posts */}
         <section>
-          <h2 className="mb-6 text-2xl font-bold">Recent Articles</h2>
+          <h2 className="mb-6 text-2xl font-bold">{t("recent.title")}</h2>
 
           {posts.length === 0 ? (
             <div className="p-12 text-center border border-gray-200 rounded-lg bg-gray-50">
-              <p className="text-gray-600">
-                No blog posts yet. Check back soon for fishing tips and guides!
-              </p>
+              <p className="text-gray-600">{t("recent.noPosts")}</p>
             </div>
           ) : (
             <>
@@ -169,14 +169,14 @@ export default async function BlogPage({
               {totalPages > 1 && (
                 <nav
                   className="flex justify-center gap-2 mt-12"
-                  aria-label="Pagination"
+                  aria-label={t("pagination.ariaLabel")}
                 >
                   {page > 1 && (
                     <Link
                       href={`/blog?page=${page - 1}`}
                       className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                     >
-                      Previous
+                      {t("pagination.previous")}
                     </Link>
                   )}
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -200,7 +200,7 @@ export default async function BlogPage({
                       href={`/blog?page=${page + 1}`}
                       className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                     >
-                      Next
+                      {t("pagination.next")}
                     </Link>
                   )}
                 </nav>
@@ -211,22 +211,19 @@ export default async function BlogPage({
 
         {/* Newsletter Signup */}
         <section className="mt-16 rounded-2xl bg-gradient-to-r from-[#ec2227]/10 to-[#ec2227]/5 p-8 text-center">
-          <h2 className="text-2xl font-bold">Stay Updated</h2>
-          <p className="mt-2 text-gray-600">
-            Get the latest fishing tips and destination guides delivered to your
-            inbox.
-          </p>
+          <h2 className="text-2xl font-bold">{t("newsletter.title")}</h2>
+          <p className="mt-2 text-gray-600">{t("newsletter.description")}</p>
           <form className="flex flex-col justify-center gap-3 mt-6 sm:flex-row">
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder={t("newsletter.emailPlaceholder")}
               className="rounded-lg border border-gray-300 px-4 py-2 focus:border-[#ec2227] focus:outline-none focus:ring-2 focus:ring-[#ec2227]/20"
             />
             <button
               type="submit"
               className="rounded-lg bg-[#ec2227] px-6 py-2 font-semibold text-white hover:bg-[#c41d22] transition"
             >
-              Subscribe
+              {t("newsletter.subscribe")}
             </button>
           </form>
         </section>

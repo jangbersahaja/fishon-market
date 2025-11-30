@@ -352,7 +352,7 @@ async function triggerPaymentSideEffects(
         type: "BOOKING_PAID",
         title: "Payment Confirmed! ✅",
         message: `Your payment for ${trip.charter.name} on ${booking.date.toISOString().slice(0, 10)} has been confirmed. Get ready for an amazing trip!`,
-        actionUrl: `/my/book/confirm?id=${booking.id}`,
+        actionUrl: `/ms/book/confirm?id=${booking.id}`,
         actionLabel: "View Booking Details",
         bookingId: booking.id,
         charterId: trip.charter.id,
@@ -383,7 +383,7 @@ async function triggerPaymentSideEffects(
 
       const base =
         process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-      const bookingUrl = `${base}/my/book/confirm?id=${encodeURIComponent(
+      const bookingUrl = `${base}/ms/book/confirm?id=${encodeURIComponent(
         booking.id
       )}`;
 

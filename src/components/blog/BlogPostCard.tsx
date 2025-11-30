@@ -1,13 +1,17 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Clock, Calendar } from "lucide-react";
 import type { BlogPostWithDetails } from "@/lib/services/blog-service";
+import { Calendar, Clock } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
+import Link from "next/link";
 
 type BlogPostCardProps = {
   post: BlogPostWithDetails;
 };
 
 export default function BlogPostCard({ post }: BlogPostCardProps) {
+  const locale = useLocale();
+  const t = useTranslations("common");
+
   return (
     <article className="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
       <Link href={`/blog/${post.slug}`}>
@@ -62,18 +66,23 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
               <div className="flex items-center gap-1">
                 <Calendar size={14} />
                 <time dateTime={post.publishedAt.toISOString()}>
-                  {new Date(post.publishedAt).toLocaleDateString("en-MY", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {new Date(post.publishedAt).toLocaleDateString(
+                    locale === "ms" ? "ms-MY" : "en-MY",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }
+                  )}
                 </time>
               </div>
             )}
             {post.readingTime && (
               <div className="flex items-center gap-1">
                 <Clock size={14} />
-                <span>{post.readingTime} min</span>
+                <span>
+                  {post.readingTime} {t("min")}
+                </span>
               </div>
             )}
           </div>

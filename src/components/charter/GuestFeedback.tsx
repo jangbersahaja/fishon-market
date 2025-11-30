@@ -8,7 +8,7 @@ function formatDate(iso: string | undefined, locale: string) {
   if (!iso) return "—";
   try {
     return new Date(iso).toLocaleDateString(
-      locale === "my" ? "ms-MY" : "en-MY",
+      locale === "ms" ? "ms-MY" : "en-MY",
       {
         year: "numeric",
         month: "short",

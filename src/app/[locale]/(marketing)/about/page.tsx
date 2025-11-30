@@ -1,30 +1,45 @@
+import {
+  Anchor,
+  Award,
+  Calendar,
+  CheckCircle2,
+  CreditCard,
+  Globe2,
+  HeartHandshake,
+  LifeBuoy,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import type { Metadata } from "next";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 // --- SEO metadata ---
-export const metadata: Metadata = {
-  title: "About Us | Fishon.my",
-  description:
-    "Fishon.my is Malaysia’s #1 fishing charter booking platform — built by anglers, for anglers. Discover our mission, safety standards, captain verification, awards, and roadmap.",
-  alternates: {
-    canonical: "https://www.fishon.my/about",
-  },
-  openGraph: {
-    title: "About Fishon.my",
-    description:
-      "Plan, book, and go fishing — safer and easier. Learn how we connect anglers and captains across Malaysia.",
-    url: "https://www.fishon.my/about",
-    siteName: "Fishon.my",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "About Fishon.my",
-    description:
-      "Malaysia’s #1 fishing charter booking platform — built by anglers, for anglers.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("aboutPage.metadata");
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: {
+      canonical: "https://www.fishon.my/about",
+    },
+    openGraph: {
+      title: "About Fishon.my",
+      description:
+        "Plan, book, and go fishing — safer and easier. Learn how we connect anglers and captains across Malaysia.",
+      url: "https://www.fishon.my/about",
+      siteName: "Fishon.my",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "About Fishon.my",
+      description:
+        "Malaysia’s #1 fishing charter booking platform — built by anglers, for anglers.",
+    },
+  };
+}
 
 // --- Structured data (JSON-LD) ---
 const orgSchema = {
@@ -53,407 +68,491 @@ const orgSchema = {
 };
 
 export default async function AboutPage() {
+  const t = await getTranslations("aboutPage");
   const locale = await getLocale();
 
   return (
-    <main className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <main className="bg-white">
       {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
       />
 
-      {/* Hero */}
-      <section className="mb-14">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          About <span className="text-[#EC2227]">Fishon.my</span>
-        </h1>
-        <p className="mt-4 text-base/7 text-neutral-600">
-          Fishon.my is Malaysia’s #1 online platform for fishing charter
-          bookings, connecting anglers with verified captains and boats across
-          the country — from the East Coast to Sabah &amp; Sarawak. We simplify
-          discovery, scheduling, and payments so you can focus on the one thing
-          that matters: a memorable day on the water.
-        </p>
-
-        <div className="grid gap-4 mt-6 sm:grid-cols-3">
-          <Stat label="Founded" value="2025" />
-          <Stat label="Focus" value="Malaysia, expanding regionally" />
-          <Stat label="Tagline" value="Plan, Book &amp; Go Fishing." />
+      {/* Hero Section */}
+      <div className="relative isolate overflow-hidden bg-slate-900 py-24 sm:py-32">
+        <div className="absolute inset-0 -z-10 h-full w-full object-cover opacity-20">
+          {/* Placeholder for a real hero image - using a gradient for now */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
         </div>
-      </section>
 
-      {/* Mission & Why we exist */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">Our Mission</h2>
-        <p className="mt-3 text-neutral-700">
-          We’re building a safer, more transparent, and more professional
-          fishing ecosystem. Historically, booking a charter relied on
-          word-of-mouth, scattered social posts, and slow messaging threads —
-          often leading to unclear pricing, double bookings, or last‑minute
-          cancellations. Fishon.my brings everything together in one reliable
-          place.
-        </p>
-
-        <div className="grid gap-6 mt-6 sm:grid-cols-2">
-          <Card title="What we solve">
-            <ul className="pl-5 space-y-2 list-disc">
-              <li>Limited visibility of great spots and captains.</li>
-              <li>Slow or inconsistent communication.</li>
-              <li>No centralized calendar — risk of double booking.</li>
-              <li>Payment uncertainty and refund confusion.</li>
-              <li>
-                Lack of standardised information on price, packages &amp;
-                facilities.
-              </li>
-            </ul>
-          </Card>
-          <Card title="How we solve it">
-            <ul className="pl-5 space-y-2 list-disc">
-              <li>Unified search across locations and techniques.</li>
-              <li>Complete charter profiles with verified documents.</li>
-              <li>Real‑time availability &amp; booking calendar.</li>
-              <li>Secure, streamlined payments.</li>
-              <li>Ratings &amp; reviews to build trustworthy reputations.</li>
-            </ul>
-          </Card>
-        </div>
-      </section>
-
-      {/* How Fishon works */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          How Fishon Works
-        </h2>
-        <ol className="grid gap-6 mt-4 sm:grid-cols-3">
-          <Step num="01" title="Discover">
-            Browse charters by location, target species, boat type, and budget.
-            Save your favourites for quick access later.
-          </Step>
-          <Step num="02" title="Book">
-            See real‑time availability, choose add‑ons (gear, bait, meal), and
-            confirm with secure payment.
-          </Step>
-          <Step num="03" title="Go Fishing">
-            Chat with your captain, get directions to the jetty, and enjoy the
-            trip. Leave a review to help the community.
-          </Step>
-        </ol>
-      </section>
-
-      {/* Safety & Captain Verification */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">Safety First</h2>
-        <p className="mt-3 text-neutral-700">
-          Angler safety is our top priority. Captains and operators on Fishon.my
-          go through a verification process before listings go live.
-        </p>
-        <div className="grid gap-6 mt-6 sm:grid-cols-2">
-          <Card title="Verification may include">
-            <ul className="pl-5 space-y-2 list-disc">
-              <li>
-                Seafarer ID / Boat Registration Certificate (for maritime
-                charters).
-              </li>
-              <li>SSM / Business Registration and insurance policy.</li>
-              <li>
-                Supporting certifications (CPR/First Aid, IGFA Captain,
-                permits).
-              </li>
-              <li>
-                Proof of vessel ownership/permission and relevant licenses.
-              </li>
-            </ul>
-          </Card>
-          <Card title="On‑trip conduct">
-            <ul className="pl-5 space-y-2 list-disc">
-              <li>Safety briefings and adherence to local regulations.</li>
-              <li>Weather &amp; sea condition checks prior to departure.</li>
-              <li>Well‑maintained vessels and safety equipment onboard.</li>
-              <li>Professional crew conduct and responsible angling.</li>
-            </ul>
-          </Card>
-        </div>
-      </section>
-
-      {/* For Captains */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          For Captains &amp; Operators
-        </h2>
-        <p className="mt-3 text-neutral-700">
-          Fishon.my helps you fill your calendar and reduce admin — so you can
-          focus on delivering great trips.
-        </p>
-        <div className="grid gap-6 mt-6 sm:grid-cols-3">
-          <Benefit title="Wider Exposure">
-            Reach anglers nationwide and visiting tourists via web and social.
-          </Benefit>
-          <Benefit title="Systematic Bookings">
-            Centralised calendar reduces clashes and protects your time.
-          </Benefit>
-          <Benefit title="Marketing Support">
-            We amplify your listing with content, ads and campaign placements.
-          </Benefit>
-          <Benefit title="Safer Payments">
-            Clear, secure flows that increase trust and professionalism.
-          </Benefit>
-          <Benefit title="Reputation &amp; Reviews">
-            Build a public track record that converts more bookings.
-          </Benefit>
-          <Benefit title="Long‑term Opportunities">
-            Collaborate with events, brands and travel partners.
-          </Benefit>
-        </div>
-      </section>
-
-      {/* Recognition */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Badges &amp; Awards
-        </h2>
-        <div className="grid gap-6 mt-6 sm:grid-cols-2">
-          <Card title="Angler’s Choice Badge">
-            <p>
-              Monthly recognition for captains who consistently deliver
-              exceptional service and high ratings. Awarded badges appear on
-              listings to signal quality at a glance.
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
+          <div className="mx-auto max-w-2xl">
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+              {t("hero.title")}{" "}
+              <span className="text-[#EC2227]">Fishon.my</span>
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              {t("hero.subtitle")}
             </p>
-          </Card>
-          <Card title="Best Spot / Location Award">
-            <p>
-              Periodic grants for top captains within a location to upgrade
-              service quality — assessed every six months.
+          </div>
+
+          {/* Stats Overlay */}
+          <div className="mx-auto mt-10 max-w-2xl lg:mx-0 lg:max-w-none">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-6 text-base font-semibold leading-7 text-white sm:grid-cols-2 md:flex lg:gap-x-10 justify-center">
+              <div className="flex flex-col items-center gap-1">
+                <dt className="text-gray-400 text-sm font-normal">
+                  {t("hero.stats.founded.label")}
+                </dt>
+                <dd className="text-2xl">{t("hero.stats.founded.value")}</dd>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <dt className="text-gray-400 text-sm font-normal">
+                  {t("hero.stats.focus.label")}
+                </dt>
+                <dd className="text-2xl">{t("hero.stats.focus.value")}</dd>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <dt className="text-gray-400 text-sm font-normal">
+                  {t("hero.stats.mission.label")}
+                </dt>
+                <dd className="text-2xl">{t("hero.stats.mission.value")}</dd>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mission Section */}
+      <section className="py-24 sm:py-32 bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center">
+            <h2 className="text-base font-semibold leading-7 text-[#EC2227]">
+              {t("mission.label")}
+            </h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {t("mission.title")}
             </p>
-          </Card>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              {t("mission.description")}
+            </p>
+          </div>
+
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-2">
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
+                  <LifeBuoy
+                    className="h-5 w-5 flex-none text-[#EC2227]"
+                    aria-hidden="true"
+                  />
+                  {t("mission.problem.title")}
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                  <ul className="space-y-3">
+                    <li className="flex gap-2">
+                      <span className="text-red-500">•</span>{" "}
+                      {t("mission.problem.list.visibility")}
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-red-500">•</span>{" "}
+                      {t("mission.problem.list.communication")}
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-red-500">•</span>{" "}
+                      {t("mission.problem.list.calendar")}
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-red-500">•</span>{" "}
+                      {t("mission.problem.list.payment")}
+                    </li>
+                  </ul>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
+                  <CheckCircle2
+                    className="h-5 w-5 flex-none text-[#EC2227]"
+                    aria-hidden="true"
+                  />
+                  {t("mission.solution.title")}
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                  <ul className="space-y-3">
+                    <li className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 shrink-0" />{" "}
+                      {t("mission.solution.list.search")}
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 shrink-0" />{" "}
+                      {t("mission.solution.list.profiles")}
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 shrink-0" />{" "}
+                      {t("mission.solution.list.calendar")}
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 shrink-0" />{" "}
+                      {t("mission.solution.list.payment")}
+                    </li>
+                  </ul>
+                </dd>
+              </div>
+            </dl>
+          </div>
         </div>
       </section>
 
-      {/* Pricing models for captains */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Flexible Partnership Options
-        </h2>
-        <p className="mt-3 text-neutral-700">
-          Choose the plan that aligns with your goals. You can change plans
-          anytime.
-        </p>
-        <div className="grid gap-6 mt-6 md:grid-cols-3">
-          <Plan
-            rate="10% commission"
-            summary="For established captains who only need incremental bookings."
-            features={[
-              "Listing & 24/7 support",
-              "Real‑time calendar & reviews",
-              "Direct chat with clients",
-              "Performance tools & basic ads",
-            ]}
-          />
-          <Plan
-            rate="20% commission"
-            summary="For competitive locations — more visibility and conversion."
-            features={[
-              "Everything in 10%",
-              "Top Listing Optimisation",
-              "Charter Ads placements",
-              "Multi‑channel ad campaigns",
-            ]}
-            highlight
-          />
-          <Plan
-            rate="30% commission"
-            summary="For new captains in hot markets who want to maximise demand."
-            features={[
-              "Everything in 20%",
-              "Monthly video ad shoots",
-              "Extra campaign budgets",
-              "Concierge growth support",
-            ]}
-          />
+      {/* How It Works */}
+      <section className="bg-gray-50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {t("howItWorks.title")}
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              {t("howItWorks.subtitle")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <StepCard
+              icon={Search}
+              title={t("howItWorks.steps.discover.title")}
+              description={t("howItWorks.steps.discover.description")}
+            />
+            <StepCard
+              icon={Calendar}
+              title={t("howItWorks.steps.book.title")}
+              description={t("howItWorks.steps.book.description")}
+            />
+            <StepCard
+              icon={Anchor}
+              title={t("howItWorks.steps.goFishing.title")}
+              description={t("howItWorks.steps.goFishing.description")}
+            />
+          </div>
         </div>
       </section>
 
-      {/* Roadmap */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">Roadmap</h2>
-        <div className="grid gap-6 mt-6 md:grid-cols-2">
-          <Card title="Phase 1 — Launch &amp; Core Experience">
-            <ul className="pl-5 space-y-2 list-disc">
-              <li>
-                Marketing rollout and app integrations for seamless access.
-              </li>
-              <li>Real‑time booking calendar to prevent double bookings.</li>
-              <li>Add‑ons at checkout: meals, rod rental, bait.</li>
-              <li>Nearby tackle shop recommendations.</li>
-            </ul>
-          </Card>
-          <Card title="Phase 2 — Growth &amp; Diversification">
-            <ul className="pl-5 space-y-2 list-disc">
-              <li>Tackle marketplace integration.</li>
-              <li>Charter + accommodation bundles.</li>
-              <li>
-                New categories: house raft &amp; kelong, kayak, jetski, cruise.
-              </li>
-              <li>International categories: Fly, Ice &amp; Spear fishing.</li>
-            </ul>
-          </Card>
+      {/* Safety Section */}
+      <section className="py-24 sm:py-32 bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
+            <div className="flex justify-center mb-4">
+              <div className="rounded-full bg-red-100 p-3">
+                <ShieldCheck className="h-8 w-8 text-[#EC2227]" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {t("safety.title")}
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              {t("safety.description")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {t("safety.verification.title")}
+              </h3>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.verification.list.id")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.verification.list.license")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.verification.list.boat")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.verification.list.insurance")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.verification.list.firstAid")}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {t("safety.conduct.title")}
+              </h3>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.conduct.list.briefing")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.conduct.list.weather")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.conduct.list.maintenance")}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span>{t("safety.conduct.list.crew")}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Team */}
-      <section className="mb-14">
-        <h2 className="text-2xl font-semibold tracking-tight">Team</h2>
-        <p className="mt-3 text-neutral-700">
-          A multidisciplinary crew of anglers, technologists and creators.
-        </p>
-        <div className="grid gap-6 mt-6 sm:grid-cols-2 md:grid-cols-3">
-          <TeamCard name="Fais Faudzi" role="Managing Director" />
-          <TeamCard name="Azam Shah" role="Operation Manager" />
-          <TeamCard name="Ismail Bob Hasim" role="Marketing Director" />
-          <TeamCard name="Farhan" role="Branding Operation" />
-          <TeamCard name="Jang" role="Platform Manager" />
-          <TeamCard name="Shafiq Jalil" role="Public Relation" />
-          <TeamCard name="Adib Zulhatta" role="Head of Finance" />
-          <TeamCard name="FZ" role="Customer Support" />
+      {/* Captains Section */}
+      <section className="bg-slate-900 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              {t("captains.title")}
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-300">
+              {t("captains.description")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <BenefitCard
+              icon={Globe2}
+              title={t("captains.benefits.exposure.title")}
+              desc={t("captains.benefits.exposure.description")}
+            />
+            <BenefitCard
+              icon={Calendar}
+              title={t("captains.benefits.bookings.title")}
+              desc={t("captains.benefits.bookings.description")}
+            />
+            <BenefitCard
+              icon={Users}
+              title={t("captains.benefits.marketing.title")}
+              desc={t("captains.benefits.marketing.description")}
+            />
+            <BenefitCard
+              icon={CreditCard}
+              title={t("captains.benefits.payments.title")}
+              desc={t("captains.benefits.payments.description")}
+            />
+            <BenefitCard
+              icon={Award}
+              title={t("captains.benefits.reputation.title")}
+              desc={t("captains.benefits.reputation.description")}
+            />
+            <BenefitCard
+              icon={HeartHandshake}
+              title={t("captains.benefits.opportunities.title")}
+              desc={t("captains.benefits.opportunities.description")}
+            />
+          </div>
         </div>
       </section>
 
-      {/* Call to action */}
-      <section className="p-6 mb-6 border rounded-lg border-neutral-200">
-        <h2 className="text-2xl font-semibold tracking-tight">Work With Us</h2>
-        <p className="mt-3 text-neutral-700">
-          Whether you’re an angler planning your next trip or a captain ready to
-          grow, we’d love to help.
-        </p>
-        <div className="flex flex-wrap gap-3 mt-4">
-          <Link
-            href={`/${locale}/home`}
-            className="inline-flex items-center rounded-md bg-[#EC2227] px-4 py-2 text-white shadow hover:opacity-95"
-          >
-            Browse Charters
-          </Link>
-          <Link
-            href="https://fishon-captain.vercel.app/my/list-your-business"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-4 py-2 border rounded-md border-neutral-300 text-neutral-900 hover:bg-neutral-50"
-          >
-            List Your Charter
-          </Link>
-          <Link
-            href="mailto:support@fishon.my"
-            className="inline-flex items-center px-4 py-2 border rounded-md border-neutral-300 text-neutral-900 hover:bg-neutral-50"
-          >
-            Contact Us
-          </Link>
+      {/* Pricing Section */}
+      <section className="py-24 sm:py-32 bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {t("pricing.title")}
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              {t("pricing.subtitle")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="rounded-3xl p-8 ring-1 ring-gray-200 xl:p-10 bg-white shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-2 -mr-2 w-24 h-24 bg-[#EC2227] opacity-10 rounded-full blur-2xl"></div>
+              <h3 className="text-lg font-semibold leading-8 text-gray-900">
+                {t("pricing.basic.title")}
+              </h3>
+              <p className="mt-4 text-sm leading-6 text-gray-600">
+                {t("pricing.basic.description")}
+              </p>
+              <p className="mt-6 flex items-baseline gap-x-1">
+                <span className="text-4xl font-bold tracking-tight text-gray-900">
+                  10%
+                </span>
+                <span className="text-sm font-semibold leading-6 text-gray-600">
+                  {t("pricing.basic.commission")}
+                </span>
+              </p>
+              <ul
+                role="list"
+                className="mt-8 space-y-3 text-sm leading-6 text-gray-600"
+              >
+                <li className="flex gap-x-3">
+                  <CheckCircle2 className="h-6 w-5 flex-none text-[#EC2227]" />{" "}
+                  {t("pricing.basic.features.listing")}
+                </li>
+                <li className="flex gap-x-3">
+                  <CheckCircle2 className="h-6 w-5 flex-none text-[#EC2227]" />{" "}
+                  {t("pricing.basic.features.calendar")}
+                </li>
+                <li className="flex gap-x-3">
+                  <CheckCircle2 className="h-6 w-5 flex-none text-[#EC2227]" />{" "}
+                  {t("pricing.basic.features.chat")}
+                </li>
+                <li className="flex gap-x-3">
+                  <CheckCircle2 className="h-6 w-5 flex-none text-[#EC2227]" />{" "}
+                  {t("pricing.basic.features.tools")}
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-3xl p-8 ring-1 ring-gray-200 xl:p-10 bg-gray-50 lg:col-span-2 flex flex-col justify-center items-center text-center">
+              <div className="rounded-full bg-gray-200 p-3 mb-4">
+                <Award className="h-6 w-6 text-gray-500" />
+              </div>
+              <h3 className="text-lg font-semibold leading-8 text-gray-900">
+                {t("pricing.premium.title")}
+              </h3>
+              <p className="mt-4 text-sm leading-6 text-gray-600 max-w-md">
+                {t("pricing.premium.description")}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Team Section */}
+      <section className="bg-gray-50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {t("team.title")}
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              {t("team.subtitle")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <TeamMember
+              name="Fais Faudzi"
+              role={t("team.roles.managingDirector")}
+            />
+            <TeamMember
+              name="Azam Shah"
+              role={t("team.roles.operationManager")}
+            />
+            <TeamMember
+              name="Ismail Bob Hasim"
+              role={t("team.roles.marketingDirector")}
+            />
+            <TeamMember
+              name="Farhan"
+              role={t("team.roles.brandingOperation")}
+            />
+            <TeamMember name="Jang" role={t("team.roles.platformManager")} />
+            <TeamMember
+              name="Shafiq Jalil"
+              role={t("team.roles.publicRelation")}
+            />
+            <TeamMember
+              name="Adib Zulhatta"
+              role={t("team.roles.headOfFinance")}
+            />
+            <TeamMember name="FZ" role={t("team.roles.customerSupport")} />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <div className="bg-white">
+        <div className="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="relative isolate overflow-hidden bg-slate-900 px-6 py-24 text-center shadow-2xl sm:rounded-3xl sm:px-16">
+            <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              {t("cta.title")}
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
+              {t("cta.description")}
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Link
+                href={`/${locale}/home`}
+                className="rounded-md bg-[#EC2227] px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d61f24] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {t("cta.browse")}
+              </Link>
+              <Link
+                href="https://fishon-captain.vercel.app/ms/list-your-business"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold leading-6 text-white"
+              >
+                {t("cta.list")} <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+            <div className="mt-8 text-xs text-gray-500">
+              {t("cta.footer")} <strong>Kartel Motion Ventures</strong>{" "}
+              (202203267096 (003441013-T)).
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
 
-/* ---------- Small UI building blocks ---------- */
+/* ---------- UI Components ---------- */
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="p-4 border rounded-lg border-neutral-200">
-      <p className="text-sm text-neutral-600">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function Card({
+function StepCard({
+  icon: Icon,
   title,
-  children,
+  description,
 }: {
+  icon: any;
   title: string;
-  children: React.ReactNode;
+  description: string;
 }) {
   return (
-    <div className="p-5 border rounded-xl border-neutral-200">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <div className="mt-3 text-neutral-700">{children}</div>
+    <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+      <div className="rounded-full bg-red-50 p-4 mb-4">
+        <Icon className="h-8 w-8 text-[#EC2227]" />
+      </div>
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-600">{description}</p>
     </div>
   );
 }
 
-function Step({
-  num,
+function BenefitCard({
+  icon: Icon,
   title,
-  children,
+  desc,
 }: {
-  num: string;
+  icon: any;
   title: string;
-  children: React.ReactNode;
+  desc: string;
 }) {
   return (
-    <li className="relative p-5 border rounded-xl border-neutral-200">
-      <span className="absolute -top-3 left-5 inline-flex items-center justify-center rounded-full bg-[#EC2227] px-2 py-1 text-xs font-semibold text-white">
-        {num}
-      </span>
-      <h3 className="mt-1 text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-neutral-700">{children}</p>
-    </li>
-  );
-}
-
-function Benefit({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="p-5 border rounded-xl border-neutral-200">
-      <h3 className="text-base font-semibold">{title}</h3>
-      <p className="mt-2 text-neutral-700">{children}</p>
+    <div className="flex flex-col bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-colors">
+      <div className="mb-4">
+        <Icon className="h-6 w-6 text-[#EC2227]" />
+      </div>
+      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+      <p className="text-gray-400 text-sm">{desc}</p>
     </div>
   );
 }
 
-function Plan({
-  rate,
-  summary,
-  features,
-  highlight = false,
-}: {
-  rate: string;
-  summary: string;
-  features: string[];
-  highlight?: boolean;
-}) {
+function TeamMember({ name, role }: { name: string; role: string }) {
   return (
-    <div
-      className={[
-        "flex flex-col rounded-xl border p-6",
-        highlight
-          ? "border-[#EC2227] ring-2 ring-[#EC2227]/10"
-          : "border-neutral-200",
-      ].join(" ")}
-    >
-      <p className="text-sm font-medium text-[#EC2227]">{rate}</p>
-      <p className="mt-1 text-base font-semibold">{summary}</p>
-      <ul className="pl-5 mt-4 space-y-2 list-disc text-neutral-700">
-        {features.map((f) => (
-          <li key={f}>{f}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function TeamCard({ name, role }: { name: string; role: string }) {
-  return (
-    <div className="flex items-center gap-4 p-4 border rounded-xl border-neutral-200">
-      <div
-        className="w-12 h-12 rounded-full shrink-0 bg-neutral-200"
-        aria-hidden
-      />
+    <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+      <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-lg">
+        {name.charAt(0)}
+      </div>
       <div>
-        <p className="font-semibold">{name}</p>
-        <p className="text-sm text-neutral-600">{role}</p>
+        <h3 className="text-sm font-bold text-gray-900">{name}</h3>
+        <p className="text-xs text-gray-500">{role}</p>
       </div>
     </div>
   );

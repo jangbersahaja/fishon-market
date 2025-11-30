@@ -400,8 +400,8 @@ async function sendNotificationEmail(userId: string, notification: any) {
     if (!user?.email) return;
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://fishon.my";
-    // Use default locale "my" for email URLs - middleware will redirect to user's preferred locale
-    const localePrefix = "/my";
+    // Use default locale "ms" for email URLs - middleware will redirect to user's preferred locale
+    const localePrefix = "/ms";
 
     // Send appropriate email based on notification type
     switch (notification.type) {

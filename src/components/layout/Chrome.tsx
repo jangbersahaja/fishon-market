@@ -9,11 +9,11 @@ export default function Chrome({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/";
 
   // 1) Hide Navbar & Footer on main page
-  const hideChrome = pathname === "/my" || pathname === "/en";
+  const hideChrome = pathname === "/ms" || pathname === "/en";
 
   // 2) Transparent on top for hero pages (e.g., home pages)
   const transparentOnTop =
-    pathname.startsWith("/my/home") || pathname.startsWith("/en/home");
+    pathname.startsWith("/ms/home") || pathname.startsWith("/en/home");
 
   if (hideChrome) return <> {children}</>;
 

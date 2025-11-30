@@ -238,7 +238,7 @@ export async function POST(req: Request) {
               type: "BOOKING_REJECTED",
               title: "Booking Expired",
               message,
-              actionUrl: "/my/search",
+              actionUrl: "/ms/search",
               actionLabel: "Find Another Charter",
               bookingId: booking.id,
               charterId: booking.charterId,

@@ -152,7 +152,7 @@ export async function POST(
     }
 
     // Revalidate messages page for Server Component refresh (all locales)
-    const locales = ["my", "en"];
+    const locales = ["ms", "en"];
     for (const locale of locales) {
       revalidatePath(`/${locale}/account/messages`);
       revalidatePath(`/${locale}/account/messages/${id}`);

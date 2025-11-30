@@ -1,9 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 
+// Mock next-intl/server
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn().mockResolvedValue((key: string) => {
+    if (key === "title") return "About Fishon.my";
+    if (key === "description") return "About description";
+    return key;
+  }),
+  getLocale: vi.fn().mockResolvedValue("en"),
+}));
+
 // Mock the interactive components to prevent React JSX errors in test environment
 vi.mock("../about/page", async () => {
-  const actual = await vi.importActual("../about/page");
-  return actual;
+  const actual =
+    await vi.importActual<typeof import("../about/page")>("../about/page");
+  return {
+    ...actual,
+    default: () => null,
+  };
 });
 vi.mock("../terms/TermsInteractive", () => ({
   default: () => null,
@@ -15,43 +29,49 @@ vi.mock("../refund-policy/RefundPolicyInteractive", () => ({
   default: () => null,
 }));
 
-import { metadata as aboutMetadata } from "../about/page";
+import { generateMetadata as generateAboutMetadata } from "../about/page";
 import { metadata as privacyMetadata } from "../privacy/page";
 import { metadata as refundMetadata } from "../refund-policy/page";
 import { metadata as termsMetadata } from "../terms/page";
 
 describe("Marketing Pages - Metadata", () => {
   describe("About Page", () => {
-    it("should have proper title", () => {
-      expect(aboutMetadata.title).toBeTruthy();
-      expect(String(aboutMetadata.title)).toContain("About");
+    it("should have proper title", async () => {
+      const metadata = await generateAboutMetadata();
+      expect(metadata.title).toBeTruthy();
+      expect(String(metadata.title)).toContain("About");
     });
 
-    it("should have description", () => {
-      expect(aboutMetadata.description).toBeTruthy();
-      expect(aboutMetadata.description?.length).toBeGreaterThan(0);
+    it("should have description", async () => {
+      const metadata = await generateAboutMetadata();
+      expect(metadata.description).toBeTruthy();
+      expect(metadata.description?.length).toBeGreaterThan(0);
     });
 
-    it("should allow indexing", () => {
-      expect(aboutMetadata.robots).not.toEqual({ index: false });
+    it("should allow indexing", async () => {
+      const metadata = await generateAboutMetadata();
+      expect(metadata.robots).not.toEqual({ index: false });
     });
 
-    it("should have canonical URL", () => {
-      expect(aboutMetadata.alternates?.canonical).toBeTruthy();
-      expect(String(aboutMetadata.alternates?.canonical)).toContain("/about");
+    it("should have canonical URL", async () => {
+      const metadata = await generateAboutMetadata();
+      expect(metadata.alternates?.canonical).toBeTruthy();
+      expect(String(metadata.alternates?.canonical)).toContain("/about");
     });
 
-    it("should have OpenGraph metadata", () => {
-      expect(aboutMetadata.openGraph).toBeTruthy();
-      expect(aboutMetadata.openGraph?.title).toBeTruthy();
-      expect(aboutMetadata.openGraph?.description).toBeTruthy();
-      expect(aboutMetadata.openGraph?.url).toBeTruthy();
+    it("should have OpenGraph metadata", async () => {
+      const metadata = await generateAboutMetadata();
+      expect(metadata.openGraph).toBeTruthy();
+      expect(metadata.openGraph?.title).toBeTruthy();
+      expect(metadata.openGraph?.description).toBeTruthy();
+      expect(metadata.openGraph?.url).toBeTruthy();
     });
 
-    it("should have Twitter metadata", () => {
-      expect(aboutMetadata.twitter).toBeTruthy();
-      expect(aboutMetadata.twitter?.title).toBeTruthy();
-      expect(aboutMetadata.twitter?.description).toBeTruthy();
+    it("should have Twitter metadata", async () => {
+      const metadata = await generateAboutMetadata();
+      expect(metadata.twitter).toBeTruthy();
+      expect(metadata.twitter?.title).toBeTruthy();
+      expect(metadata.twitter?.description).toBeTruthy();
     });
   });
 

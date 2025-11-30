@@ -1099,7 +1099,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           type: "BOOKING_CREATED",
           title: "Booking Request Submitted! 🎣",
           message: `Your booking request for ${trip.charter.name} has been sent to the captain. You'll be notified once they review it.`,
-          actionUrl: `/my/book/confirm?id=${booking.id}`,
+          actionUrl: `/ms/book/confirm?id=${booking.id}`,
           actionLabel: "View Booking",
           bookingId: booking.id,
           charterId: trip.charter.id,
@@ -1127,7 +1127,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
         if (!user?.email) return;
         const base =
           process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/my/book/confirm?id=${encodeURIComponent(
+        const confirmationUrl = `${base}/ms/book/confirm?id=${encodeURIComponent(
           booking.id
         )}`;
 
@@ -1254,7 +1254,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
       });
 
       // Revalidate booking list and confirmation page for all locales
-      const locales = ["my", "en"];
+      const locales = ["ms", "en"];
       for (const locale of locales) {
         revalidatePath(`/${locale}/account/bookings`, "page");
         revalidatePath(`/${locale}/book/confirm`, "page");

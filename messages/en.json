@@ -23,6 +23,9 @@
     "total": "Total",
     "perDay": "/Day",
     "perTrip": "/Trip",
+    "min": "min",
+    "featured": "Featured",
+    "minRead": "min read",
     "relationships": {
       "selectRelationship": "Select relationship",
       "spouse": "Spouse",
@@ -1225,5 +1228,500 @@
     "serverError": "Server error",
     "networkError": "Network error",
     "tryAgain": "Please try again later"
+  },
+  "aboutPage": {
+    "metadata": {
+      "title": "About Us | Fishon.my",
+      "description": "Fishon.my is Malaysia’s #1 fishing charter booking platform — built by anglers, for anglers. Discover our mission, safety standards, captain verification, awards, and roadmap."
+    },
+    "hero": {
+      "title": "About",
+      "subtitle": "Malaysia’s #1 online platform for fishing charter bookings. We connect anglers with verified captains across the country — simplifying discovery, scheduling, and payments so you can focus on the catch.",
+      "stats": {
+        "founded": {
+          "label": "Founded",
+          "value": "2025"
+        },
+        "focus": {
+          "label": "Focus",
+          "value": "Malaysia & Regional"
+        },
+        "mission": {
+          "label": "Mission",
+          "value": "Plan, Book & Go Fishing"
+        }
+      }
+    },
+    "mission": {
+      "label": "Our Mission",
+      "title": "Building a safer, transparent fishing ecosystem",
+      "description": "Historically, booking a charter relied on word-of-mouth and slow messaging threads. Fishon.my brings everything together in one reliable place.",
+      "problem": {
+        "title": "The Problem",
+        "list": {
+          "visibility": "Limited visibility of great spots and captains.",
+          "communication": "Slow or inconsistent communication.",
+          "calendar": "No centralized calendar — risk of double booking.",
+          "payment": "Payment uncertainty and refund confusion."
+        }
+      },
+      "solution": {
+        "title": "The Solution",
+        "list": {
+          "search": "Unified search across locations and techniques.",
+          "profiles": "Complete charter profiles with verified documents.",
+          "calendar": "Real‑time availability & booking calendar.",
+          "payment": "Secure, streamlined payments."
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "How Fishon Works",
+      "subtitle": "Your next fishing adventure is just three steps away.",
+      "steps": {
+        "discover": {
+          "title": "1. Discover",
+          "description": "Browse charters by location, target species, boat type, and budget. Save your favourites for quick access later."
+        },
+        "book": {
+          "title": "2. Book",
+          "description": "Check real‑time availability and choose your trip. Securely pay via FPX, E-Wallet, or Card to confirm your spot."
+        },
+        "goFishing": {
+          "title": "3. Go Fishing",
+          "description": "Chat with your captain, get directions to the jetty, and enjoy the trip. Leave a review to help the community."
+        }
+      }
+    },
+    "safety": {
+      "title": "Safety First",
+      "description": "Angler safety is our top priority. Captains and operators on Fishon.my go through a verification process before listings go live.",
+      "verification": {
+        "title": "Verification Requirements",
+        "list": {
+          "id": "Identification Card / Company Registration (SSM)",
+          "license": "Seafarer ID / Maritime License (where applicable)",
+          "boat": "Boat Registration Certificate",
+          "insurance": "Vessel & Public Liability Insurance",
+          "firstAid": "First Aid Certification & Safety Briefing"
+        }
+      },
+      "conduct": {
+        "title": "On‑trip Conduct",
+        "list": {
+          "briefing": "Safety briefings and adherence to local regulations",
+          "weather": "Weather & sea condition checks prior to departure",
+          "maintenance": "Well‑maintained vessels and safety equipment onboard",
+          "crew": "Professional crew conduct and responsible angling"
+        }
+      }
+    },
+    "captains": {
+      "title": "For Captains & Operators",
+      "description": "Fishon.my helps you fill your calendar and reduce admin — so you can focus on delivering great trips.",
+      "benefits": {
+        "exposure": {
+          "title": "Wider Exposure",
+          "description": "Reach anglers nationwide and visiting tourists via web and social."
+        },
+        "bookings": {
+          "title": "Systematic Bookings",
+          "description": "Centralised calendar reduces clashes and protects your time."
+        },
+        "marketing": {
+          "title": "Marketing Support",
+          "description": "We amplify your listing with content, ads and campaign placements."
+        },
+        "payments": {
+          "title": "Safer Payments",
+          "description": "Clear, secure flows that increase trust and professionalism."
+        },
+        "reputation": {
+          "title": "Reputation & Reviews",
+          "description": "Build a public track record that converts more bookings."
+        },
+        "opportunities": {
+          "title": "Long‑term Opportunities",
+          "description": "Collaborate with events, brands and travel partners."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Flexible Partnership Options",
+      "subtitle": "Start for free. We only make money when you do.",
+      "basic": {
+        "title": "Basic Plan",
+        "description": "For established captains who need incremental bookings.",
+        "commission": "commission",
+        "features": {
+          "listing": "Listing & 24/7 support",
+          "calendar": "Real‑time calendar & reviews",
+          "chat": "Direct chat with clients",
+          "tools": "Performance tools & basic ads"
+        }
+      },
+      "premium": {
+        "title": "Premium Tiers Coming Soon",
+        "description": "We are working on advanced plans with lower commissions, dedicated marketing campaigns, and video production services. Stay tuned!"
+      }
+    },
+    "team": {
+      "title": "Meet the Team",
+      "subtitle": "A multidisciplinary crew of anglers, technologists and creators.",
+      "roles": {
+        "managingDirector": "Managing Director",
+        "operationManager": "Operation Manager",
+        "marketingDirector": "Marketing Director",
+        "brandingOperation": "Branding Operation",
+        "platformManager": "Platform Manager",
+        "publicRelation": "Public Relation",
+        "headOfFinance": "Head of Finance",
+        "customerSupport": "Customer Support"
+      }
+    },
+    "cta": {
+      "title": "Ready to start your adventure?",
+      "description": "Whether you’re an angler planning your next trip or a captain ready to grow, we’d love to help.",
+      "browse": "Browse Charters",
+      "list": "List Your Charter",
+      "footer": "Fishon.my is owned and operated by"
+    }
+  },
+  "blogPage": {
+    "metadata": {
+      "title": "Fishing Blog & Guides | Fishon.my",
+      "description": "Discover expert fishing tips, charter guides, destination reviews, and techniques for Malaysian waters. Learn from local anglers and captains."
+    },
+    "hero": {
+      "title": "Fishing Blog & Guides",
+      "description": "Expert tips, destination guides, and fishing techniques for Malaysian waters. Learn from experienced anglers and charter captains."
+    },
+    "featured": {
+      "title": "Featured Articles"
+    },
+    "categories": {
+      "ariaLabel": "Blog categories"
+    },
+    "recent": {
+      "title": "Recent Articles",
+      "noPosts": "No blog posts yet. Check back later for fishing tips and guides!"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "ariaLabel": "Pagination"
+    },
+    "newsletter": {
+      "title": "Stay Updated",
+      "description": "Get the latest fishing tips and destination guides delivered to your inbox.",
+      "emailPlaceholder": "Enter your email",
+      "subscribe": "Subscribe"
+    },
+    "layout": {
+      "title": "Fishing Blog & Guides | Fishon.my",
+      "description": "Discover expert fishing tips, charter guides, destination reviews, and techniques for Malaysian waters. Your complete resource for fishing adventures.",
+      "ogTitle": "Fishing Blog & Guides | Fishon.my",
+      "ogDescription": "Expert fishing tips, charter guides, and destination reviews for Malaysian anglers."
+    },
+    "searchBar": {
+      "placeholder": "Search blog posts...",
+      "button": "Search"
+    }
+  },
+  "blogPost": {
+    "notFound": "Post Not Found | Fishon.my",
+    "defaultDescription": "Read this article on Fishon.my",
+    "breadcrumbs": {
+      "home": "Home",
+      "blog": "Blog"
+    },
+    "meta": {
+      "by": "By {author}",
+      "minRead": "min read"
+    },
+    "share": {
+      "title": "Share this article"
+    },
+    "author": {
+      "about": "About the Author"
+    },
+    "related": {
+      "title": "Related Articles"
+    }
+  },
+  "blogComments": {
+    "title": "Comments ({count})",
+    "noComments": "No comments yet. Be the first to comment!",
+    "leaveComment": "Leave a Comment",
+    "name": "Name *",
+    "namePlaceholder": "Your name",
+    "email": "Email *",
+    "emailPlaceholder": "your@email.com",
+    "comment": "Comment *",
+    "commentPlaceholder": "Share your thoughts...",
+    "submit": "Post Comment",
+    "submitting": "Submitting...",
+    "reviewNotice": "Your comment will be reviewed before appearing on the site.",
+    "success": "Comment submitted! It will appear after approval.",
+    "error": "Failed to submit comment. Please try again.",
+    "networkError": "Network error. Please check your connection and try again."
+  },
+  "blogNewsletter": {
+    "title": "Subscribe to our Newsletter",
+    "description": "Get the latest fishing tips, charter updates, and exclusive offers straight to your inbox.",
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "success": "Subscribed! Check your email for confirmation.",
+    "error": "Failed to subscribe. Please try again."
+  },
+  "contactPage": {
+    "metadata": {
+      "title": "Contact Us | Fishon.my",
+      "description": "Get in touch with the Fishon.my team. We're here to help with bookings, partnerships, and general enquiries."
+    },
+    "hero": {
+      "title": "Contact",
+      "subtitle": "Questions about bookings, listing your charter, or partnerships? We'd love to hear from you."
+    },
+    "cards": {
+      "customerSupport": {
+        "title": "Customer Support",
+        "description": "For booking help, refunds, or account issues."
+      },
+      "captainOnboarding": {
+        "title": "Captain Onboarding",
+        "description": "List your charter and grow with us.",
+        "cta": "Apply to List"
+      }
+    },
+    "form": {
+      "title": "Send us a message",
+      "description": "Fill out the form and we'll get back to you. Required fields are marked with *.",
+      "fields": {
+        "name": {
+          "label": "Full Name *",
+          "placeholder": "e.g., Aiman Roslan",
+          "error": "Please enter your full name."
+        },
+        "email": {
+          "label": "Email *",
+          "placeholder": "you@example.com",
+          "error": "Please enter a valid email."
+        },
+        "phone": {
+          "label": "Phone",
+          "placeholder": "+60 12-345 6789"
+        },
+        "topic": {
+          "label": "Topic",
+          "options": {
+            "general": "General",
+            "bookingSupport": "Booking Support",
+            "captainOnboarding": "Captain Onboarding",
+            "partnerships": "Partnerships",
+            "pressMedia": "Press / Media"
+          }
+        },
+        "charterUrl": {
+          "label": "Charter URL",
+          "placeholder": "https://www.fishon.my/charters/your-listing"
+        },
+        "message": {
+          "label": "Message *",
+          "placeholder": "Tell us how we can help…",
+          "error": "Please write a brief message."
+        }
+      },
+      "disclaimer": "By submitting, you agree to be contacted regarding your enquiry.",
+      "submit": "Send Message"
+    },
+    "faq": {
+      "whatHappens": {
+        "title": "What happens after I send a message?",
+        "description": "We'll review your enquiry and respond via email. For urgent booking issues, include your booking reference or charter URL for faster handling."
+      },
+      "preferEmail": {
+        "title": "Prefer email?",
+        "description": "You can email us directly at"
+      }
+    }
+  },
+  "helpCenter": {
+    "metadata": {
+      "title": "Help Center",
+      "description": "Find answers to common questions about booking fishing charters on Fishon.my"
+    },
+    "hero": {
+      "title": "Help",
+      "titleHighlight": "Center",
+      "description": "Find quick answers, how-tos and policies. Still stuck? Our team is one click away.",
+      "lastUpdated": "Last updated: {date}"
+    },
+    "categories": {
+      "gettingStarted": {
+        "title": "Getting Started",
+        "items": {
+          "createAccount": "Create account",
+          "findCharter": "Find a charter",
+          "makeBooking": "Make a booking"
+        }
+      },
+      "account": {
+        "title": "Account",
+        "items": {
+          "profile": "Profile",
+          "password": "Password",
+          "notifications": "Notifications"
+        }
+      },
+      "payments": {
+        "title": "Payments",
+        "items": {
+          "methods": "Methods",
+          "deposits": "Deposits",
+          "refunds": "Refunds"
+        }
+      },
+      "safety": {
+        "title": "Safety",
+        "items": {
+          "verification": "Captain verification",
+          "checklist": "Trip checklist",
+          "report": "Report issue"
+        }
+      },
+      "explore": "Explore →"
+    },
+    "toc": {
+      "title": "On this page",
+      "gettingStarted": "Getting started",
+      "account": "Managing your account",
+      "payments": "Payments & refunds",
+      "safety": "Safety & verification",
+      "faq": "Top FAQs",
+      "contactSupport": "Contact Support"
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "Getting started",
+        "createAccount": {
+          "title": "Create an account",
+          "content": "Sign up with your email, verify it, and you’re ready to book trips."
+        },
+        "findCharter": {
+          "title": "Find a charter",
+          "content": "Filter by location, species, boat type, price, and available dates."
+        },
+        "makeBooking": {
+          "title": "Make a booking",
+          "content": "Select a package, add gear/bait/meals, then confirm with secure checkout."
+        }
+      },
+      "account": {
+        "title": "Managing your account",
+        "profile": {
+          "title": "Profile",
+          "content": "Keep name/phone up to date for smooth captain communication."
+        },
+        "password": {
+          "title": "Password",
+          "content": "Use a strong, unique passphrase. Reset anytime from “Forgot password”."
+        },
+        "notifications": {
+          "title": "Notifications",
+          "content": "We send essential trip updates; marketing emails are opt-in."
+        }
+      },
+      "payments": {
+        "title": "Payments & refunds",
+        "methods": {
+          "title": "Accepted methods",
+          "content": "Major cards and FPX/online banking (MY). Options appear at checkout."
+        },
+        "deposits": {
+          "title": "Deposits & cancellations",
+          "content": "Policies vary by listing and conditions; see policy on each charter page."
+        },
+        "refunds": {
+          "title": "Refund timeline",
+          "content": "Approved refunds return to your original method in ~3–10 business days."
+        }
+      },
+      "safety": {
+        "title": "Safety & verification",
+        "verification": {
+          "title": "Captain verification",
+          "content": "Captains upload licences/registration/insurance before listings go live."
+        },
+        "checklist": {
+          "title": "Trip checklist",
+          "items": {
+            "confirm": "Confirm jetty/time and weather updates.",
+            "bring": "Bring sun protection, water, and motion-sickness meds if needed.",
+            "follow": "Follow safety briefing and crew instructions at all times."
+          }
+        },
+        "report": {
+          "title": "Report an issue",
+          "content": "Share your booking reference at <email>support@fishon.my</email> or <contact>Contact</contact>."
+        }
+      }
+    },
+    "faq": {
+      "title": "Top FAQs",
+      "items": {
+        "changeDate": {
+          "q": "Can I change my date after booking?",
+          "a": "Date changes depend on captain availability and the listing's policy. Use your booking page or contact support."
+        },
+        "badWeather": {
+          "q": "Do trips go out in bad weather?",
+          "a": "Safety first. Captains may reschedule or cancel according to sea conditions and local advisories."
+        },
+        "deposits": {
+          "q": "How do deposits work?",
+          "a": "Some listings require a deposit to secure your date. The policy is shown on the charter page and at checkout."
+        },
+        "noConfirmation": {
+          "q": "What if my card is charged but I have no confirmation?",
+          "a": "Check spam/junk. If still missing after 10 minutes, contact us with the last four digits of the card and time of payment."
+        },
+        "modifyBooking": {
+          "q": "How do I modify my booking?",
+          "a": "To modify your booking, please contact the captain directly or reach out to our support team. Modification policies vary by charter."
+        },
+        "cancellationPolicy": {
+          "q": "What is the cancellation policy?",
+          "a": "Cancellation policies vary by charter. You can cancel PENDING or APPROVED bookings from your bookings page. Check the charter details for specific policies."
+        },
+        "approvalTime": {
+          "q": "How long does captain approval take?",
+          "a": "Captains typically respond within 6-24 hours. Your booking hold expires after 12 hours if not approved. You'll receive an email notification once the captain responds."
+        },
+        "whenCharged": {
+          "q": "When will I be charged?",
+          "a": "You're only charged after the captain approves your booking. Once approved, you'll receive a payment link to complete your booking confirmation."
+        }
+      }
+    },
+    "moreQuestions": {
+      "title": "More Questions"
+    },
+    "contact": {
+      "email": {
+        "title": "Email Support",
+        "description": "Send us an email and we'll respond within 24 hours."
+      },
+      "whatsapp": {
+        "title": "WhatsApp",
+        "description": "Chat with our support team on WhatsApp.",
+        "cta": "Chat on WhatsApp"
+      },
+      "liveChat": {
+        "title": "Live Chat",
+        "description": "Chat with our support team in real-time.",
+        "cta": "Coming Soon"
+      }
+    }
   }
 }

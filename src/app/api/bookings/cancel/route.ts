@@ -398,7 +398,7 @@ export async function POST(req: Request) {
         type: "BOOKING_CANCELLED",
         title: "Booking Cancelled",
         message: `Your booking for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been cancelled.${updated.cancellationReason ? ` Reason: ${updated.cancellationReason}` : ""}${refundMessage}`,
-        actionUrl: `/my/search`,
+        actionUrl: `/ms/search`,
         actionLabel: "Find Another Charter",
         bookingId: updated.id,
         charterId: updated.charterId,
@@ -486,7 +486,7 @@ export async function POST(req: Request) {
 
   // Revalidate angler pages for all locales
   try {
-    const locales = ["my", "en"];
+    const locales = ["ms", "en"];
     for (const locale of locales) {
       revalidatePath(`/${locale}/book/confirm`, "page");
       revalidatePath(`/${locale}/account/bookings`, "page");

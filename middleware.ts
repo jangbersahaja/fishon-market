@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
 
   // Handle i18n routing for user-facing routes
   const intlResponse = intlMiddleware(request);
-  const pathnameWithoutLocale = pathname.replace(/^\/(my|en)/, "") || "/";
+  const pathnameWithoutLocale = pathname.replace(/^\/(ms|en)/, "") || "/";
 
   // 2. Protect /account routes (NextAuth-based)
   if (pathnameWithoutLocale.startsWith("/account")) {

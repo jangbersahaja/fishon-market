@@ -312,7 +312,7 @@ export async function POST(req: Request) {
             type: "BOOKING_REJECTED",
             title: "Booking Update",
             message: notificationMessage,
-            actionUrl: `/my/search`,
+            actionUrl: `/ms/search`,
             actionLabel: "Find Other Charters",
             bookingId: updated.id,
             charterId: updated.charterId,
@@ -340,7 +340,7 @@ export async function POST(req: Request) {
         if (trip) {
           const base =
             process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-          const searchUrl = `${base}/my/search`;
+          const searchUrl = `${base}/ms/search`;
 
           await sendBookingRejectedEmail({
             to: email,
@@ -364,7 +364,7 @@ export async function POST(req: Request) {
 
     // Revalidate angler pages for all locales
     try {
-      const locales = ["my", "en"];
+      const locales = ["ms", "en"];
       for (const locale of locales) {
         revalidatePath(`/${locale}/book/confirm`, "page");
         revalidatePath(`/${locale}/account/bookings`, "page");

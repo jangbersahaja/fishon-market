@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/database/prisma";
 import type {
-    CampaignPlacement,
-    PromotionalCampaign,
-    UserRole,
+  CampaignPlacement,
+  PromotionalCampaign,
+  UserRole,
 } from "@prisma/client";
 
 export interface CampaignContext {
@@ -143,7 +143,7 @@ export class CampaignService {
     locale: string
   ): CampaignContent {
     const content =
-      locale === "my"
+      locale === "ms"
         ? (campaign.contentMy as unknown as CampaignContent)
         : (campaign.contentEn as unknown as CampaignContent);
     return content;

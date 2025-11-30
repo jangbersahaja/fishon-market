@@ -46,7 +46,7 @@ export function LocalizedLink({
   const hasLocalePrefix = /^\/(my|en)(\/|$)/.test(hrefString);
 
   // If already has locale prefix or is default locale (my), use as-is
-  if (hasLocalePrefix || locale === "my") {
+  if (hasLocalePrefix || locale === "ms") {
     return <Link href={href} {...props} />;
   }
 

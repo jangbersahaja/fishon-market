@@ -195,7 +195,7 @@ async function notifyAngler(
       type: "BOOKING_PAID",
       title: "Payment Confirmed! ✅",
       message: `Your payment for ${trip.charter.name} on ${booking.date.toISOString().slice(0, 10)} has been confirmed. See you on the water!`,
-      actionUrl: `/my/book/confirm?id=${booking.id}`,
+      actionUrl: `/ms/book/confirm?id=${booking.id}`,
       actionLabel: "View Confirmation",
       bookingId: booking.id,
       charterId: booking.charterId,
