@@ -21,7 +21,8 @@
     "seed:blog": "tsx prisma/seed-blog.ts",
     "db:backup": "./scripts/backup-db.sh",
     "db:restore": "./scripts/restore-db.sh",
-    "db:migrate:safe": "./scripts/safe-migrate.sh"
+    "db:migrate:safe": "./scripts/safe-migrate.sh",
+    "db:clean": "npx tsx scripts/clean-database.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.6",
