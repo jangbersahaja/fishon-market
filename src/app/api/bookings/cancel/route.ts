@@ -247,7 +247,11 @@ export async function POST(req: Request) {
   }
 
   if (refundAmount !== null) {
-    updateData.refundStatus = refundAmount > 0 ? "PENDING" : "NOT_APPLICABLE";
+    // Only set refundStatus if there's a refund to process
+    // When refundAmount is 0 (non-refundable), leave refundStatus as null
+    if (refundAmount > 0) {
+      updateData.refundStatus = "PENDING";
+    }
     updateData.refundAmount = refundAmount;
     if (refundTransactionId) {
       updateData.refundTransactionId = refundTransactionId;
