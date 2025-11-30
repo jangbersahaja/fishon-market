@@ -121,24 +121,25 @@
       "noTripsNearby": "Tiada trip dalam radius 50 km dari lokasi semasa anda."
     },
     "browseByType": {
-      "title": "Semak Mengikut Jenis",
-      "seeAll": "Lihat semua jenis memancing",
+      "title": "Semak Mengikut Kategori",
+      "seeAll": "Lihat semua kategori",
       "exploreTrips": "Terokai trip {type}",
-      "altText": "Memancing {type}"
+      "altText": "Memancing {type}",
+      "explore": "Terokai"
     },
     "topTechniques": {
-      "title": "Teknik Memancing",
-      "subtitle": "Cari kapten yang pakar dalam gaya memancing kegemaran anda",
-      "seeAll": "Lihat semua teknik memancing",
-      "chartersUsing": "Charter menggunakan {technique}",
+      "title": "Teknik Pancingan",
+      "subtitle": "Cari tekong yang sesuai dengan gaya memancing anda",
+      "seeAll": "Lihat semua teknik pancingan",
+      "chartersUsing": "Tekong menggunakan {technique}",
       "altText": "Teknik {technique}"
     },
     "popularDestinations": {
-      "title": "Destinasi Popular",
-      "subtitle": "Terokai lokasi memancing terbaik di seluruh Malaysia",
-      "seeAll": "Lihat semua destinasi",
-      "findChartersIn": "Cari charter di {destination}",
-      "altText": "Destinasi memancing {destination}",
+      "title": "Spot Popular",
+      "subtitle": "Teroka spot memancing terbaik di seluruh Malaysia",
+      "seeAll": "Lihat semua spot",
+      "findChartersIn": "Cari tekong di {destination}",
+      "altText": "Spot memancing {destination}",
       "chartersAvailable": "{count, plural, =1 {# Charter Tersedia} other {# Charter Tersedia}}"
     }
   },
@@ -367,6 +368,7 @@
       "inshore": "Pantai",
       "lake": "Tasik",
       "stream": "Sungai",
+      "jungle": "Hutan",
       "tripsAvailable": "Ketersediaan Trip",
       "trips": "{count} Trip",
       "targetSpecies": "Spesis Sasaran",
@@ -489,9 +491,9 @@
         "paymentInfoManual": "Tiada bayaran dikenakan. Sebaik sahaja tempahan anda disahkan, kapten akan menghantar ke pautan pembayaran.",
         "paymentInfoAuto": "Untuk pembayaran kad: Kad anda perlu di sahkan (tidak dicaj). Jika kapten telah mengesahkan tempahan, kad anda akan dicaj secara automatik. Jika ditolak, pengesahan akan dibatalkan.",
         "cancellationNotes": "Nota pembatalan",
-        "cancellationPolicy1": "Pembatalan oleh pelanggan tidak layak untuk bayaran balik",
-        "cancellationPolicy2": "Bayaran balik sehingga 50% mungkin dikeluarkan atas budi bicara syarikat, ditolak yuran pemprosesan",
-        "cancellationPolicy3": "Kurang daripada 7 hari sebelum trip: Tidak layak untuk bayaran balik sama sekali",
+        "cancellationPolicy1": "Lebih daripada 30 hari sebelum trip: 80% bayaran balik",
+        "cancellationPolicy2": "15-30 hari sebelum trip: 50% bayaran balik",
+        "cancellationPolicy3": "Kurang daripada 15 hari sebelum trip: Tiada bayaran balik",
         "cancellationRefund": "Jika kapten menolak tempahan anda, anda akan menerima bayaran balik penuh",
         "refundTiming": "Bayaran balik biasanya mengambil masa 5-7 hari bekerja"
       },
@@ -699,7 +701,7 @@
         }
       },
       "bookingReference": "Rujukan tempahan:",
-      "browseMoreCharters": "Layari Lebih Banyak Charter",
+      "browseMoreCharters": "Cari Lebih Banyak Charter",
       "viewAllBookings": "Lihat Semua Tempahan",
       "needHelp": "Perlukan Bantuan?",
       "returnHome": "Kembali ke Laman Utama",
@@ -1017,7 +1019,8 @@
       "downloadConfirmation": "Muat Turun Pengesahan",
       "downloading": "Memuat turun...",
       "cancellationRefund": {
-        "title": "Polisi Pembatalan & Bayaran Balik",
+        "title": "Bayaran Balik Pembatalan",
+        "estimatedRefund": "Anggaran jumlah bayaran balik:",
         "noRefundTitle": "Tiada bayaran balik tersedia",
         "noRefundMessage": "Pembatalan oleh pelanggan tidak layak untuk bayaran balik mengikut polisi.",
         "policyTitle": "Polisi Pembatalan:",
@@ -1085,7 +1088,7 @@
     "upcomingBookings": "Tempahan Akan Datang",
     "pastBookings": "Tempahan Lepas",
     "noBookingsYet": "Belum ada tempahan lagi",
-    "noBookingsDescription": "Anda belum membuat sebarang tempahan lagi. Mula terokai charter dan tempah trip memancing pertama anda!",
+    "noBookingsDescription": "Anda belum membuat sebarang tempahan. Mula cari charter dan tempah trip memancing pertama anda!",
     "browseCharters": "Layari Charter",
     "bookingStatus": "Status Tempahan",
     "bookingDate": "Tarikh Tempahan",
@@ -1168,29 +1171,29 @@
   },
   "categories": {
     "types": {
-      "title": "Semua Jenis Pancingan",
-      "description": "Layari setiap jenis pancingan yang tersedia di Fishon. Tekan untuk melihat semua charter.",
-      "noTypesFound": "Tiada jenis memancing ditemui lagi.",
-      "backToBrowse": "Kembali ke Browse",
-      "seeAllTechniques": "Lihat semua teknik memancing",
-      "breadcrumb": "Jenis Pancingan"
+      "title": "Semua Kategori Pancingan",
+      "description": "Cari kategori pancingan yang tersedia di Fishon. Klik untuk lihat.",
+      "noTypesFound": "Tiada kategori pancingan ditemui.",
+      "backToBrowse": "Kembali ke Menu",
+      "seeAllTechniques": "Lihat semua kategori",
+      "breadcrumb": "Kategori Pancingan"
     },
     "techniques": {
       "title": "Semua Teknik Memancing",
-      "description": "Layari setiap teknik yang tersedia di Fishon. Tekan teknik untuk melihat semua charter yang menggunakannya.",
-      "noTechniquesFound": "Tiada teknik ditemui lagi.",
-      "backToBrowse": "Kembali ke Layari",
-      "seeAllTypes": "Lihat semua jenis memancing",
+      "description": "Cari setiap teknik memancing di Fishon. Klik teknik untuk lihat.",
+      "noTechniquesFound": "Tiada teknik ditemui.",
+      "backToBrowse": "Kembali ke Menu",
+      "seeAllTypes": "Lihat semua teknik memancing",
       "breadcrumb": "Teknik Memancing"
     },
     "destinations": {
-      "title": "Destinasi Popular",
-      "description": "Terokai charter memancing di lokasi terbaik Malaysia. Tekan destinasi untuk melihat semua charter.",
-      "noDestinationsFound": "Tiada destinasi ditemui lagi.",
-      "backToBrowse": "Kembali ke Layari",
-      "seeAllTypes": "Lihat semua jenis memancing",
+      "title": "Spot Popular",
+      "description": "Terokai spot memancing terbaik Malaysia. Klik destinasi untuk lihat.",
+      "noDestinationsFound": "Tiada spot ditemui.",
+      "backToBrowse": "Kembali ke Menu",
+      "seeAllTypes": "Lihat semua kategori memancing",
       "seeAllTechniques": "Lihat semua teknik memancing",
-      "breadcrumb": "Destinasi Popular"
+      "breadcrumb": "Spot Popular"
     }
   },
   "auth": {

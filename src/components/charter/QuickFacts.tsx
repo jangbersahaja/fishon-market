@@ -53,7 +53,9 @@ export function QuickFacts({ charter, maxCapacity }: QuickFactsProps) {
           ? t("lake")
           : fishingType === "stream"
             ? t("stream")
-            : fishingType;
+            : fishingType === "jungle"
+              ? t("jungle")
+              : fishingType;
 
   // Format pickup display
   const pickupDisplay = hasPickup
