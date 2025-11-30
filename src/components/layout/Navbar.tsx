@@ -124,24 +124,6 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               </button>
             </>
           )}
-
-          {!isAuthed && (
-            <Link
-              href="https://fishon-captain.vercel.app/ms/list-your-business"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-current={
-                isActive("/list-your-business") ? "page" : undefined
-              }
-              className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
-                isActive("/list-your-business")
-                  ? "bg-white/90 text-[#ec2227]"
-                  : "bg-white text-[#ec2227] hover:translate-y-px"
-              }`}
-            >
-              {t("nav.registerAsCaptain")}
-            </Link>
-          )}
         </nav>
 
         <div className="flex items-center gap-3 md:hidden">
