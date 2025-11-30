@@ -3,21 +3,21 @@
  * Source: fishon-captain/src/utils/captainFormData.ts
  */
 export const CHARTER_TYPES = [
-  { value: "lake", label: "Lake / Dam", labelMy: "Tasik" },
+  { value: "lake", label: "Lake", labelMy: "Tasik" },
   { value: "stream", label: "Stream", labelMy: "Sungai" },
   {
     value: "inshore",
-    label: "Inshore / Island",
+    label: "Inshore",
     labelMy: "Persisir",
   },
   {
     value: "offshore",
-    label: "Offshore / Deepsea",
+    label: "Offshore",
     labelMy: "Laut Dalam",
   },
   {
     value: "jungle",
-    label: "Jungle / Waterfall",
+    label: "Jungle",
     labelMy: "Hutan",
   },
 ];

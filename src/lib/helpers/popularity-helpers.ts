@@ -188,11 +188,11 @@ export function getFishingTypesWithCounts(
   charters: Charter[]
 ): FishingTypeWithCount[] {
   const types = [
-    { key: "lake", label: "Lake / Dam", labelMy: "Tasik" },
+    { key: "lake", label: "Lake", labelMy: "Tasik" },
     { key: "stream", label: "Stream", labelMy: "Sungai" },
-    { key: "inshore", label: "Inshore / Island", labelMy: "Persisir" },
-    { key: "offshore", label: "Offshore / Deepsea", labelMy: "Laut Dalam" },
-    { key: "jungle", label: "Jungle / Waterfall", labelMy: "Hutan" },
+    { key: "inshore", label: "Inshore", labelMy: "Persisir" },
+    { key: "offshore", label: "Offshore", labelMy: "Laut Dalam" },
+    { key: "jungle", label: "Jungle", labelMy: "Hutan" },
   ];
 
   return types.map((type) => ({
