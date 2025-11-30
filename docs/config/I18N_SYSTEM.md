@@ -1,6 +1,6 @@
 # Internationalization (i18n) System Configuration
 
-**Last Updated**: 25 November 2025  
+**Last Updated**: 30 November 2025  
 **Status**: Production Ready ✅  
 **Library**: next-intl  
 **Applies To**: fishon-market
@@ -11,14 +11,14 @@
 
 Fishon.my supports full internationalization using `next-intl` with two languages:
 
-| Language | Code | Status |
-|----------|------|--------|
-| Malay    | `my` | Default |
+| Language | Code | Status    |
+| -------- | ---- | --------- |
+| Malay    | `ms` | Default   |
 | English  | `en` | Secondary |
 
 ### Key Features
 
-- ✅ Locale-prefixed URLs (`/my/home`, `/en/home`)
+- ✅ Locale-prefixed URLs (`/ms/home`, `/en/home`)
 - ✅ Automatic locale detection
 - ✅ Language switcher in navbar
 - ✅ Locale-aware navigation & redirects
@@ -45,17 +45,17 @@ src/
 │       └── LanguageSwitcher.tsx
 └── messages/
     ├── en.json                # English translations
-    └── my.json                # Malay translations
+    └── ms.json                # Malay translations
 ```
 
 ### URL Structure
 
-| Default Locale (Malay) | English |
-|------------------------|---------|
-| `/` → `/my`            | `/en`   |
-| `/my/home`             | `/en/home` |
-| `/my/charters`         | `/en/charters` |
-| `/my/account/bookings` | `/en/account/bookings` |
+| Default Locale (Malay) | English                |
+| ---------------------- | ---------------------- |
+| `/` → `/ms`            | `/en`                  |
+| `/ms/home`             | `/en/home`             |
+| `/ms/charters`         | `/en/charters`         |
+| `/ms/account/bookings` | `/en/account/bookings` |
 
 ---
 
@@ -64,8 +64,8 @@ src/
 ### i18n Config (`src/i18n/config.ts`)
 
 ```typescript
-export const locales = ['my', 'en'] as const;
-export const defaultLocale = 'my';
+export const locales = ["ms", "en"] as const;
+export const defaultLocale = "ms";
 export type Locale = (typeof locales)[number];
 ```
 
@@ -73,7 +73,7 @@ export type Locale = (typeof locales)[number];
 
 - `localePrefix: 'always'` - All URLs include locale prefix
 - `localeDetection: true` - Auto-detect user preference
-- Default locale: `my` (Malay)
+- Default locale: `ms` (Malay)
 
 ---
 
@@ -87,13 +87,11 @@ import { getTranslations, getLocale } from "next-intl/server";
 export default async function Page() {
   const t = await getTranslations("home");
   const locale = await getLocale();
-  
+
   return (
     <div>
       <h1>{t("title")}</h1>
-      <Link href={`/${locale}/charters`}>
-        {t("viewCharters")}
-      </Link>
+      <Link href={`/${locale}/charters`}>{t("viewCharters")}</Link>
     </div>
   );
 }
@@ -110,7 +108,7 @@ import Link from "next/link";
 export default function Nav() {
   const t = useTranslations("nav");
   const locale = useLocale();
-  
+
   return (
     <nav>
       <Link href={`/${locale}/home`}>{t("home")}</Link>
@@ -135,9 +133,7 @@ export async function createPost() {
 
 // API routes - use default locale
 // (no locale context available)
-return NextResponse.redirect(
-  new URL("/my/book/confirm", request.url)
-);
+return NextResponse.redirect(new URL("/ms/book/confirm", request.url));
 ```
 
 ---
@@ -186,20 +182,20 @@ t("booking.checkBookings", { count: 3 });
 
 ### URL Construction
 
-| Context | Method | Example |
-|---------|--------|---------|
-| Notifications/Emails | Default `/my/` | `actionUrl: "/my/account/bookings"` |
-| API Routes | Default `/my/` | `NextResponse.redirect("/my/...")` |
-| Server Components | `getLocale()` | `redirect(\`/${locale}/...\`)` |
-| Client Components | `useLocale()` | `href={\`/${locale}/...\`}` |
-| Revalidation (shared) | All locales | `for (const locale of locales)` |
+| Context               | Method         | Example                             |
+| --------------------- | -------------- | ----------------------------------- |
+| Notifications/Emails  | Default `/ms/` | `actionUrl: "/ms/account/bookings"` |
+| API Routes            | Default `/ms/` | `NextResponse.redirect("/ms/...")`  |
+| Server Components     | `getLocale()`  | `redirect(\`/${locale}/...\`)`      |
+| Client Components     | `useLocale()`  | `href={\`/${locale}/...\`}`         |
+| Revalidation (shared) | All locales    | `for (const locale of locales)`     |
 
 ### Common Patterns
 
 ```typescript
 // ✅ CORRECT - Notifications use default locale
 await createNotification({
-  actionUrl: `/my/account/bookings/${bookingId}`,
+  actionUrl: `/ms/book/confirm?id=${bookingId}`,
 });
 
 // ✅ CORRECT - Server component with dynamic locale
@@ -212,7 +208,7 @@ for (const locale of locales) {
 }
 
 // ❌ WRONG - Missing locale prefix (will 404)
-actionUrl: `/account/bookings/${bookingId}`,
+actionUrl: `/book/confirm?id=${bookingId}`,
 ```
 
 ---
@@ -224,7 +220,7 @@ actionUrl: `/account/bookings/${bookingId}`,
 ```tsx
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 
-<LanguageSwitcher />
+<LanguageSwitcher />;
 ```
 
 Already integrated in Navbar.
@@ -273,7 +269,7 @@ Already integrated in Navbar.
 
 ```tsx
 const locale = useLocale(); // or getLocale() in server
-<Link href={`/${locale}/path`}>...</Link>
+<Link href={`/${locale}/path`}>...</Link>;
 ```
 
 ### Server redirect missing locale
@@ -290,7 +286,7 @@ redirect(`/${locale}/account/bookings`);
 **Solution**: Use default locale (no context available).
 
 ```tsx
-return NextResponse.redirect(new URL("/my/book/confirm", request.url));
+return NextResponse.redirect(new URL("/ms/book/confirm", request.url));
 ```
 
 ### revalidatePath not working
@@ -306,14 +302,14 @@ revalidatePath(`/${locale}/blog`);
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/i18n/config.ts` | Locale configuration |
-| `src/i18n/request.ts` | Request configuration |
-| `middleware.ts` | Locale routing |
-| `messages/en.json` | English translations |
-| `messages/my.json` | Malay translations |
-| `src/components/shared/LanguageSwitcher.tsx` | Language toggle |
+| File                                         | Purpose               |
+| -------------------------------------------- | --------------------- |
+| `src/i18n/config.ts`                         | Locale configuration  |
+| `src/i18n/request.ts`                        | Request configuration |
+| `middleware.ts`                              | Locale routing        |
+| `messages/en.json`                           | English translations  |
+| `messages/ms.json`                           | Malay translations    |
+| `src/components/shared/LanguageSwitcher.tsx` | Language toggle       |
 
 ---
 
@@ -324,6 +320,6 @@ revalidatePath(`/${locale}/blog`);
 
 ---
 
-**Document Version**: 1.0  
-**Last Review**: 25 November 2025  
+**Document Version**: 1.1  
+**Last Review**: 30 November 2025  
 **Owner**: Engineering Team
