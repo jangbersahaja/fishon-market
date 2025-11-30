@@ -15,6 +15,7 @@ interface PromoCode {
   type: "PERCENTAGE" | "FIXED";
   percentage?: number;
   fixedAmount?: number;
+  maxDiscount?: number | null;
   validFrom: string;
   validUntil: string;
   usedAt: string | null;
@@ -154,15 +155,22 @@ export function PromoCodesCard() {
                 </div>
 
                 {/* Discount Amount */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-white/50 rounded-md">
-                  <Gift className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">
-                    {promo.type === "PERCENTAGE" && promo.percentage
-                      ? t("percentageOff", { percentage: promo.percentage })
-                      : promo.type === "FIXED" && promo.fixedAmount
-                        ? t("fixedOff", { amount: promo.fixedAmount })
-                        : t("discount")}
-                  </span>
+                <div className="flex flex-col gap-1 px-3 py-2 bg-white/50 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {promo.type === "PERCENTAGE" && promo.percentage
+                        ? t("percentageOff", { percentage: promo.percentage })
+                        : promo.type === "FIXED" && promo.fixedAmount
+                          ? t("fixedOff", { amount: promo.fixedAmount })
+                          : t("discount")}
+                    </span>
+                  </div>
+                  {promo.type === "PERCENTAGE" && promo.maxDiscount && (
+                    <span className="text-xs text-muted-foreground ml-6">
+                      {t("maxDiscountCap", { amount: promo.maxDiscount })}
+                    </span>
+                  )}
                 </div>
 
                 {/* Validity Period */}

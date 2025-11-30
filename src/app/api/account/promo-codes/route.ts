@@ -28,6 +28,9 @@ export async function GET() {
         type: assignment.promoCode.type,
         percentage: assignment.promoCode.percentage,
         fixedAmount: assignment.promoCode.fixedAmount,
+        maxDiscount: assignment.promoCode.maxDiscount
+          ? Number(assignment.promoCode.maxDiscount)
+          : null,
         validFrom: assignment.promoCode.startDate,
         validUntil: assignment.promoCode.endDate,
         assignedAt: assignment.assignedAt,

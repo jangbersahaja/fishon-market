@@ -16,6 +16,7 @@ export interface PromoCodeValidation {
     amount: number; // Calculated discount amount
   };
   promoCodeId?: string;
+  maxDiscount?: number | null; // Maximum discount cap for percentage-based codes
 }
 
 export interface ValidatePromoCodeInput {
@@ -170,6 +171,7 @@ export async function validatePromoCode(
       amount: discountAmount,
     },
     promoCodeId: promoCode.id,
+    maxDiscount: promoCode.maxDiscount ? Number(promoCode.maxDiscount) : null,
   };
 }
 
