@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       valid: true,
       discount: validation.discount,
       promoCodeId: validation.promoCodeId,
+      maxDiscount: validation.maxDiscount,
     });
   } catch (error) {
     console.error("[PromoValidateAPI] Error:", error);

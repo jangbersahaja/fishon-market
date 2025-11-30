@@ -504,6 +504,7 @@
         "apply": "Guna",
         "applying": "Memohon...",
         "success": "Diskaun RM {amount} digunakan!",
+        "maxDiscountCap": "Diskaun maksimum: RM {amount}",
         "hint": "Masukkan kod promo anda untuk menerima diskaun untuk tempahan ini.",
         "errors": {
           "codeRequired": "Sila masukkan kod promo",
@@ -1112,6 +1113,7 @@
       "discount": "Diskaun",
       "percentageOff": "{percentage}% diskaun untuk tempahan anda",
       "fixedOff": "RM {amount} diskaun untuk tempahan anda",
+      "maxDiscountCap": "Diskaun maksimum: RM {amount}",
       "validUntil": "Sah sehingga {date}",
       "usedOn": "Digunakan pada {date}",
       "empty": "Tiada kod promo tersedia",

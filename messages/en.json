@@ -504,6 +504,7 @@
         "apply": "Apply",
         "applying": "Applying...",
         "success": "Discount of RM {amount} applied!",
+        "maxDiscountCap": "Maximum discount: RM {amount}",
         "hint": "Enter your promo code to receive a discount on this booking.",
         "errors": {
           "codeRequired": "Please enter a promo code",
@@ -1111,6 +1112,7 @@
       "discount": "Discount",
       "percentageOff": "{percentage}% off your booking",
       "fixedOff": "RM {amount} off your booking",
+      "maxDiscountCap": "Maximum discount: RM {amount}",
       "validUntil": "Valid until {date}",
       "usedOn": "Used on {date}",
       "empty": "No promo codes available",

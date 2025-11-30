@@ -29,6 +29,7 @@ interface ValidationResponse {
     amount: number;
   };
   promoCodeId?: string;
+  maxDiscount?: number | null;
   error?: string;
 }
 
@@ -48,6 +49,7 @@ export function PromoCodeInput({
     code: string;
     discount: number;
     promoCodeId: string;
+    maxDiscount?: number | null;
   } | null>(null);
 
   const validatePromoCode = useCallback(async () => {
@@ -88,6 +90,7 @@ export function PromoCodeInput({
           code: code.trim().toUpperCase(),
           discount: data.discount.amount,
           promoCodeId: data.promoCodeId,
+          maxDiscount: data.maxDiscount,
         };
         setAppliedPromo(promoData);
         onPromoApplied(promoData);
@@ -131,6 +134,11 @@ export function PromoCodeInput({
             <p className="text-xs text-green-700">
               {t("success", { amount: appliedPromo.discount.toFixed(2) })}
             </p>
+            {appliedPromo.maxDiscount && (
+              <p className="text-xs text-green-600">
+                {t("maxDiscountCap", { amount: appliedPromo.maxDiscount })}
+              </p>
+            )}
           </div>
           <Button
             type="button"
