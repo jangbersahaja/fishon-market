@@ -166,7 +166,7 @@ export function BoatCard({ boat, locale = "en" }: BoatCardProps) {
             <div className="flex flex-wrap gap-2">
               {featureObjects.map((feature) => {
                 const displayLabel =
-                  locale === "my" ? feature.labelMy : feature.label;
+                  locale === "ms" ? feature.labelMy : feature.label;
                 return (
                   <div
                     key={feature.key}

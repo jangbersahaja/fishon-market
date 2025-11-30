@@ -10,6 +10,7 @@ import {
 } from "@/lib/services/blog-service";
 import { Calendar, Clock, User } from "lucide-react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -21,16 +22,17 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
+  const t = await getTranslations("blogPost");
 
   if (!post) {
     return {
-      title: "Post Not Found | Fishon.my",
+      title: t("notFound"),
     };
   }
 
   const title = post.metaTitle || post.title;
   const description =
-    post.metaDescription || post.excerpt || "Read this article on Fishon.my";
+    post.metaDescription || post.excerpt || t("defaultDescription");
   const images = post.coverImage
     ? [{ url: post.coverImage, width: 1200, height: 630 }]
     : [{ url: "/og-image.jpg", width: 1200, height: 630 }];
@@ -76,6 +78,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug, locale } = await params;
   const post = await getBlogPostBySlug(slug);
+  const t = await getTranslations("blogPost");
 
   if (!post || !post.published) {
     notFound();
@@ -169,13 +172,13 @@ export default async function BlogPostPage({ params }: Props) {
           <ol className="flex items-center gap-2 text-sm text-gray-600">
             <li>
               <Link href={`/${locale}/home`} className="hover:text-[#ec2227]">
-                Home
+                {t("breadcrumbs.home")}
               </Link>
             </li>
             <li>/</li>
             <li>
               <Link href={`/${locale}/blog`} className="hover:text-[#ec2227]">
-                Blog
+                {t("breadcrumbs.blog")}
               </Link>
             </li>
             <li>/</li>
@@ -228,25 +231,33 @@ export default async function BlogPostPage({ params }: Props) {
                     <User size={16} />
                   )}
                   <span>
-                    By {post.author.name || post.author.email.split("@")[0]}
+                    {t("meta.by", {
+                      author:
+                        post.author.name || post.author.email.split("@")[0],
+                    })}
                   </span>
                 </div>
                 {post.publishedAt && (
                   <div className="flex items-center gap-2">
                     <Calendar size={16} />
                     <time dateTime={post.publishedAt.toISOString()}>
-                      {new Date(post.publishedAt).toLocaleDateString("en-MY", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {new Date(post.publishedAt).toLocaleDateString(
+                        locale === "ms" ? "ms-MY" : "en-MY",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </time>
                   </div>
                 )}
                 {post.readingTime && (
                   <div className="flex items-center gap-2">
                     <Clock size={16} />
-                    <span>{post.readingTime} min read</span>
+                    <span>
+                      {post.readingTime} {t("meta.minRead")}
+                    </span>
                   </div>
                 )}
               </div>
@@ -289,7 +300,7 @@ export default async function BlogPostPage({ params }: Props) {
 
             {/* Share Section */}
             <div className="pt-8 mt-12 border-t border-gray-200">
-              <h3 className="text-lg font-semibold">Share this article</h3>
+              <h3 className="text-lg font-semibold">{t("share.title")}</h3>
               <div className="flex gap-3 mt-4">
                 <a
                   href={`https://www.facebook.com/sharer/sharer.php?u=https://www.fishon.my/blog/${slug}`}
@@ -325,7 +336,9 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Author Bio */}
             {post.author.bio && (
               <div className="pt-8 mt-12 border-t border-gray-200">
-                <h3 className="mb-4 text-lg font-semibold">About the Author</h3>
+                <h3 className="mb-4 text-lg font-semibold">
+                  {t("author.about")}
+                </h3>
                 <div className="flex gap-4">
                   {post.author.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -372,7 +385,7 @@ export default async function BlogPostPage({ params }: Props) {
       {relatedPosts.length > 0 && (
         <section className="border-t border-gray-200 bg-gray-50">
           <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <h2 className="mb-6 text-2xl font-bold">Related Articles</h2>
+            <h2 className="mb-6 text-2xl font-bold">{t("related.title")}</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {relatedPosts.map((relatedPost) => (
                 <BlogPostCard key={relatedPost.id} post={relatedPost} />

@@ -115,7 +115,7 @@ export default function BrandSection() {
               <Link
                 target="_blank"
                 rel="noopener noreferrer"
-                href="https://fishon-captain.vercel.app/my/list-your-business"
+                href="https://fishon-captain.vercel.app/ms/list-your-business"
                 className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#ec2227] px-6 py-4 text-base font-bold text-white transition-all hover:bg-red-700 hover:shadow-lg hover:shadow-red-900/20 sm:w-auto"
               >
                 {t("listWithUs")}

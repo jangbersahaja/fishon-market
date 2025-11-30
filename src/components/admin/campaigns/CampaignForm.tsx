@@ -112,7 +112,7 @@ export function CampaignForm({
     }
   };
 
-  const addBenefit = (locale: "en" | "my") => {
+  const addBenefit = (locale: "en" | "ms") => {
     const key = locale === "en" ? "contentEn" : "contentMy";
     setFormData({
       ...formData,
@@ -123,7 +123,7 @@ export function CampaignForm({
     });
   };
 
-  const updateBenefit = (locale: "en" | "my", index: number, value: string) => {
+  const updateBenefit = (locale: "en" | "ms", index: number, value: string) => {
     const key = locale === "en" ? "contentEn" : "contentMy";
     const benefits = [...(formData[key].benefits || [])];
     benefits[index] = value;
@@ -136,7 +136,7 @@ export function CampaignForm({
     });
   };
 
-  const removeBenefit = (locale: "en" | "my", index: number) => {
+  const removeBenefit = (locale: "en" | "ms", index: number) => {
     const key = locale === "en" ? "contentEn" : "contentMy";
     const benefits =
       formData[key].benefits?.filter((_, i) => i !== index) || [];
@@ -632,14 +632,14 @@ export function CampaignForm({
               <div key={index} className="flex gap-2 mb-2">
                 <Input
                   value={benefit}
-                  onChange={(e) => updateBenefit("my", index, e.target.value)}
+                  onChange={(e) => updateBenefit("ms", index, e.target.value)}
                   placeholder="Poin manfaat"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
-                  onClick={() => removeBenefit("my", index)}
+                  onClick={() => removeBenefit("ms", index)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -649,7 +649,7 @@ export function CampaignForm({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => addBenefit("my")}
+              onClick={() => addBenefit("ms")}
             >
               <Plus className="w-4 h-4 mr-2" />
               Tambah Manfaat

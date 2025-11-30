@@ -52,8 +52,8 @@ export function addLocaleToPathname(pathname: string, locale: Locale): string {
   // Remove existing locale if present
   const cleanPath = removeLocaleFromPathname(pathname);
 
-  // Default locale (my) doesn't need prefix
-  if (locale === "my") {
+  // Default locale (ms) doesn't need prefix
+  if (locale === "ms") {
     return cleanPath;
   }
 
@@ -99,7 +99,7 @@ export function formatDate(
       ? new Date(date)
       : date;
 
-  const localeCode = locale === "my" ? "ms-MY" : "en-GB";
+  const localeCode = locale === "ms" ? "ms-MY" : "en-GB";
 
   return new Intl.DateTimeFormat(localeCode, options).format(dateObj);
 }
@@ -116,7 +116,7 @@ export function formatNumber(
   locale: Locale,
   options?: Intl.NumberFormatOptions
 ): string {
-  const localeCode = locale === "my" ? "ms-MY" : "en-GB";
+  const localeCode = locale === "ms" ? "ms-MY" : "en-GB";
 
   return new Intl.NumberFormat(localeCode, options).format(value);
 }

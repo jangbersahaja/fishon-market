@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface Comment {
@@ -22,6 +23,8 @@ export default function BlogCommentSection({
   postId,
   comments,
 }: BlogCommentSectionProps) {
+  const t = useTranslations("blogComments");
+  const locale = useLocale();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [content, setContent] = useState("");
@@ -54,7 +57,7 @@ export default function BlogCommentSection({
       if (response.ok) {
         setMessage({
           type: "success",
-          text: "Comment submitted! It will appear after approval.",
+          text: t("success"),
         });
         setName("");
         setEmail("");
@@ -63,13 +66,13 @@ export default function BlogCommentSection({
         const error = await response.json();
         setMessage({
           type: "error",
-          text: error.message || "Failed to submit comment. Please try again.",
+          text: error.message || t("error"),
         });
       }
     } catch {
       setMessage({
         type: "error",
-        text: "Network error. Please check your connection and try again.",
+        text: t("networkError"),
       });
     } finally {
       setIsSubmitting(false);
@@ -79,15 +82,13 @@ export default function BlogCommentSection({
   return (
     <div className="mt-12 border-t border-gray-200 pt-8">
       <h3 className="mb-6 text-lg font-semibold">
-        Comments ({approvedComments.length})
+        {t("title", { count: approvedComments.length })}
       </h3>
 
       {/* Comment List */}
       <div className="mb-8 space-y-6">
         {approvedComments.length === 0 ? (
-          <p className="text-gray-600">
-            No comments yet. Be the first to comment!
-          </p>
+          <p className="text-gray-600">{t("noComments")}</p>
         ) : (
           approvedComments.map((comment) => (
             <div key={comment.id} className="rounded-lg bg-gray-50 p-4">
@@ -97,11 +98,14 @@ export default function BlogCommentSection({
                 </span>
                 <span className="text-sm text-gray-500">•</span>
                 <span className="text-sm text-gray-500">
-                  {new Date(comment.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {new Date(comment.createdAt).toLocaleDateString(
+                    locale === "ms" ? "ms-MY" : "en-MY",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }
+                  )}
                 </span>
               </div>
               <p className="text-gray-700 whitespace-pre-wrap">
@@ -114,7 +118,7 @@ export default function BlogCommentSection({
 
       {/* Comment Form */}
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h4 className="mb-4 text-lg font-semibold">Leave a Comment</h4>
+        <h4 className="mb-4 text-lg font-semibold">{t("leaveComment")}</h4>
 
         {message && (
           <div
@@ -135,7 +139,7 @@ export default function BlogCommentSection({
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700"
               >
-                Name *
+                {t("name")}
               </label>
               <input
                 type="text"
@@ -144,7 +148,7 @@ export default function BlogCommentSection({
                 onChange={(e) => setName(e.target.value)}
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-[#EC2227] focus:outline-none focus:ring-1 focus:ring-[#EC2227]"
-                placeholder="Your name"
+                placeholder={t("namePlaceholder")}
               />
             </div>
             <div>
@@ -152,7 +156,7 @@ export default function BlogCommentSection({
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email *
+                {t("email")}
               </label>
               <input
                 type="email"
@@ -161,7 +165,7 @@ export default function BlogCommentSection({
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-[#EC2227] focus:outline-none focus:ring-1 focus:ring-[#EC2227]"
-                placeholder="your@email.com"
+                placeholder={t("emailPlaceholder")}
               />
             </div>
           </div>
@@ -171,7 +175,7 @@ export default function BlogCommentSection({
               htmlFor="content"
               className="block text-sm font-medium text-gray-700"
             >
-              Comment *
+              {t("comment")}
             </label>
             <textarea
               id="content"
@@ -180,7 +184,7 @@ export default function BlogCommentSection({
               required
               rows={4}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-[#EC2227] focus:outline-none focus:ring-1 focus:ring-[#EC2227]"
-              placeholder="Share your thoughts..."
+              placeholder={t("commentPlaceholder")}
             />
           </div>
 
@@ -189,12 +193,10 @@ export default function BlogCommentSection({
             disabled={isSubmitting}
             className="rounded-md bg-[#EC2227] px-6 py-2 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Submitting..." : "Post Comment"}
+            {isSubmitting ? t("submitting") : t("submit")}
           </button>
 
-          <p className="text-xs text-gray-500">
-            Your comment will be reviewed before appearing on the site.
-          </p>
+          <p className="text-xs text-gray-500">{t("reviewNotice")}</p>
         </form>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import type { BlogPostWithDetails } from "@/lib/services/blog-service";
 import { Calendar, Star } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -12,6 +13,9 @@ export default function FeaturedPostCard({
   post,
   variant = "large",
 }: FeaturedPostCardProps) {
+  const locale = useLocale();
+  const t = useTranslations("common");
+
   if (variant === "small") {
     return (
       <article className="group relative overflow-hidden rounded-lg">
@@ -59,11 +63,14 @@ export default function FeaturedPostCard({
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Calendar size={12} />
                 <time dateTime={post.publishedAt.toISOString()}>
-                  {new Date(post.publishedAt).toLocaleDateString("en-MY", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {new Date(post.publishedAt).toLocaleDateString(
+                    locale === "ms" ? "ms-MY" : "en-MY",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }
+                  )}
                 </time>
               </div>
             )}
@@ -98,7 +105,7 @@ export default function FeaturedPostCard({
           <div className="absolute top-4 right-4">
             <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
               <Star size={14} fill="currentColor" />
-              Featured
+              {t("featured")}
             </span>
           </div>
 
@@ -139,17 +146,20 @@ export default function FeaturedPostCard({
                 <div className="flex items-center gap-1.5">
                   <Calendar size={16} />
                   <time dateTime={post.publishedAt.toISOString()}>
-                    {new Date(post.publishedAt).toLocaleDateString("en-MY", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {new Date(post.publishedAt).toLocaleDateString(
+                      locale === "ms" ? "ms-MY" : "en-MY",
+                      {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )}
                   </time>
                 </div>
               )}
               {post.readingTime && (
                 <span className="text-white/80">
-                  {post.readingTime} min read
+                  {post.readingTime} {t("minRead")}
                 </span>
               )}
             </div>

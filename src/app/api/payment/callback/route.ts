@@ -228,7 +228,7 @@ async function handleCallback(req: NextRequest) {
             type: "PAYMENT_CAPTURED",
             title: "Payment Received! 💳",
             message: `Your payment for ${trip.charter.name} has been received. The captain will review your booking within 12 hours.`,
-            actionUrl: `/my/book/confirm?id=${booking.id}`,
+            actionUrl: `/ms/book/confirm?id=${booking.id}`,
             actionLabel: "View Booking",
             bookingId: booking.id,
             charterId: trip.charter.id,
@@ -254,7 +254,7 @@ async function handleCallback(req: NextRequest) {
 
         const base =
           process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/my/book/confirm?id=${encodeURIComponent(booking.id)}`;
+        const confirmationUrl = `${base}/ms/book/confirm?id=${encodeURIComponent(booking.id)}`;
 
         await sendBookingCreatedEmail({
           to: email,
@@ -357,8 +357,8 @@ async function handleCallback(req: NextRequest) {
 function redirectToSuccess(bookingId: string) {
   const base =
     process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-  // Use default locale (my) for payment redirects
-  const url = `${base}/my/book/confirm?id=${encodeURIComponent(bookingId)}&payment=success`;
+  // Use default locale (ms) for payment redirects
+  const url = `${base}/ms/book/confirm?id=${encodeURIComponent(bookingId)}&payment=success`;
   return NextResponse.redirect(url, { status: 302 });
 }
 
@@ -368,7 +368,7 @@ function redirectToSuccess(bookingId: string) {
 function redirectToError(message: string) {
   const base =
     process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-  // Use default locale (my) for payment redirects
-  const url = `${base}/my/book/payment-error?error=${encodeURIComponent(message)}`;
+  // Use default locale (ms) for payment redirects
+  const url = `${base}/ms/book/payment-error?error=${encodeURIComponent(message)}`;
   return NextResponse.redirect(url, { status: 302 });
 }

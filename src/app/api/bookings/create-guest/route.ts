@@ -877,7 +877,7 @@ export async function POST(req: Request) {
       try {
         const base =
           process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-        const confirmationUrl = `${base}/my/book/confirm?id=${encodeURIComponent(
+        const confirmationUrl = `${base}/ms/book/confirm?id=${encodeURIComponent(
           booking.id
         )}`;
 
@@ -1005,7 +1005,7 @@ export async function POST(req: Request) {
       });
 
       // Revalidate confirmation page for all locales (guest doesn't have /account/bookings)
-      const locales = ["my", "en"];
+      const locales = ["ms", "en"];
       for (const locale of locales) {
         revalidatePath(`/${locale}/book/confirm`);
       }

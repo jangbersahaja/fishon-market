@@ -22,7 +22,7 @@ export async function POST() {
       title: "🎣 Test Notification",
       message:
         "Your notification system is working! This is a test notification sent via Pusher.",
-      actionUrl: "/my/account/notifications",
+      actionUrl: "/ms/account/notifications",
       actionLabel: "View All Notifications",
       metadata: {
         test: true,

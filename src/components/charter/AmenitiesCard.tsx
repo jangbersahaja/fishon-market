@@ -25,7 +25,7 @@ export interface AmenitiesCardProps {
    */
   className?: string;
   /**
-   * Optional: locale for label display ("en" or "my").
+   * Optional: locale for label display ("en" or "ms").
    */
   locale?: string;
 }
@@ -87,7 +87,7 @@ export const AmenitiesCard = React.memo(function AmenitiesCard({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {included.map((amenity) => {
             const displayLabel =
-              locale === "my" ? amenity.labelMy : amenity.label;
+              locale === "ms" ? amenity.labelMy : amenity.label;
             return (
               <div
                 key={`inc-${amenity.key}`}

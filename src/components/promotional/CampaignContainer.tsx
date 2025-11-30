@@ -43,8 +43,8 @@ function detectDevice(userAgent: string): "DESKTOP" | "MOBILE" | "TABLET" {
  * Extract page name from pathname
  */
 function extractPageName(pathname: string): string {
-  // Remove locale prefix (e.g., /en/, /my/)
-  const withoutLocale = pathname.replace(/^\/(en|my)\//, "/");
+  // Remove locale prefix (e.g., /en/, /ms/)
+  const withoutLocale = pathname.replace(/^\/(en|ms)\//, "/");
 
   // Map paths to page names
   if (withoutLocale === "/" || withoutLocale.startsWith("/home")) return "home";

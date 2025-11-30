@@ -89,7 +89,7 @@ export default function AboutSection({
 
   // Use Malay description if available and locale is ms, otherwise fallback to English
   const displayDescription =
-    locale === "my" && descriptionMy ? descriptionMy : description;
+    locale === "ms" && descriptionMy ? descriptionMy : description;
 
   // Count actual sections/paragraphs for more accurate collapse detection
   const sectionCount = (displayDescription || "").split(/\n{2,}/).length;

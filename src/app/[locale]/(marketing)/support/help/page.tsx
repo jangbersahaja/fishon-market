@@ -4,65 +4,30 @@ import {
   serializeSchema,
 } from "@/lib/seo";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 /** SEO */
-export const metadata: Metadata = createMetadata({
-  title: "Help Center",
-  description:
-    "Find answers to common questions about booking fishing charters on Fishon.my",
-  keywords: ["help center", "faq", "booking help", "fishing charter questions"],
-  canonicalUrl: "https://www.fishon.my/support/help",
-  // TODO: Add OG image for help center page
-});
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "helpCenter.metadata" });
 
-const lastUpdated = "27 October 2025";
-
-// FAQ Schema data extracted from page content
-const faqItems = [
-  {
-    question: "Can I change my date after booking?",
-    answer:
-      "Date changes depend on captain availability and the listing's policy. Use your booking page or contact support.",
-  },
-  {
-    question: "Do trips go out in bad weather?",
-    answer:
-      "Safety first. Captains may reschedule or cancel according to sea conditions and local advisories.",
-  },
-  {
-    question: "How do deposits work?",
-    answer:
-      "Some listings require a deposit to secure your date. The policy is shown on the charter page and at checkout.",
-  },
-  {
-    question: "What if my card is charged but I have no confirmation?",
-    answer:
-      "Check spam/junk. If still missing after 10 minutes, contact us with the last four digits of the card and time of payment.",
-  },
-  {
-    question: "How do I modify my booking?",
-    answer:
-      "To modify your booking, please contact the captain directly or reach out to our support team. Modification policies vary by charter.",
-  },
-  {
-    question: "What is the cancellation policy?",
-    answer:
-      "Cancellation policies vary by charter. You can cancel PENDING or APPROVED bookings from your bookings page. Check the charter details for specific policies.",
-  },
-  {
-    question: "How long does captain approval take?",
-    answer:
-      "Captains typically respond within 6-24 hours. Your booking hold expires after 12 hours if not approved. You'll receive an email notification once the captain responds.",
-  },
-  {
-    question: "When will I be charged?",
-    answer:
-      "You're only charged after the captain approves your booking. Once approved, you'll receive a payment link to complete your booking confirmation.",
-  },
-];
-
-const faqSchema = createFAQPageSchema(faqItems);
+  return createMetadata({
+    title: t("title"),
+    description: t("description"),
+    keywords: [
+      "help center",
+      "faq",
+      "booking help",
+      "fishing charter questions",
+    ],
+    canonicalUrl: "https://www.fishon.my/support/help",
+  });
+}
 
 export default async function HelpCenterPage({
   params,
@@ -70,6 +35,29 @@ export default async function HelpCenterPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "helpCenter" });
+
+  const lastUpdated = t("hero.lastUpdated", { date: "27 October 2025" });
+
+  // FAQ Schema data extracted from page content
+  const faqKeys = [
+    "changeDate",
+    "badWeather",
+    "deposits",
+    "noConfirmation",
+    "modifyBooking",
+    "cancellationPolicy",
+    "approvalTime",
+    "whenCharged",
+  ];
+
+  const faqItems = faqKeys.map((key) => ({
+    question: t(`faq.items.${key}.q`),
+    answer: t(`faq.items.${key}.a`),
+  }));
+
+  const faqSchema = createFAQPageSchema(faqItems);
+
   return (
     <main className="flex flex-col min-h-screen bg-white">
       {/* JSON-LD Schema for FAQPage */}
@@ -87,44 +75,62 @@ export default async function HelpCenterPage({
               Home
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-neutral-700">Help Center</span>
+            <span className="text-neutral-700">{t("hero.title")}</span>
           </nav>
           <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-            Help <span className="text-[#EC2227]">Center</span>
+            {t("hero.title")}{" "}
+            <span className="text-[#EC2227]">{t("hero.titleHighlight")}</span>
           </h1>
           <p className="max-w-3xl mt-3 text-neutral-700">
-            Find quick answers, how-tos and policies. Still stuck? Our team is
-            one click away.
+            {t("hero.description")}
           </p>
-          <p className="mt-1 text-sm text-neutral-500">
-            Last updated: {lastUpdated}
-          </p>
+          <p className="mt-1 text-sm text-neutral-500">{lastUpdated}</p>
 
           {/* Quick categories */}
           <div className="grid gap-4 mt-8 sm:grid-cols-2 lg:grid-cols-4">
             <CategoryCard
-              title="Getting Started"
+              title={t("categories.gettingStarted.title")}
               icon="🎣"
               href="#getting-started"
-              items={["Create account", "Find a charter", "Make a booking"]}
+              items={[
+                t("categories.gettingStarted.items.createAccount"),
+                t("categories.gettingStarted.items.findCharter"),
+                t("categories.gettingStarted.items.makeBooking"),
+              ]}
+              exploreText={t("categories.explore")}
             />
             <CategoryCard
-              title="Account"
+              title={t("categories.account.title")}
               icon="👤"
               href="#account"
-              items={["Profile", "Password", "Notifications"]}
+              items={[
+                t("categories.account.items.profile"),
+                t("categories.account.items.password"),
+                t("categories.account.items.notifications"),
+              ]}
+              exploreText={t("categories.explore")}
             />
             <CategoryCard
-              title="Payments"
+              title={t("categories.payments.title")}
               icon="💳"
               href="#payments"
-              items={["Methods", "Deposits", "Refunds"]}
+              items={[
+                t("categories.payments.items.methods"),
+                t("categories.payments.items.deposits"),
+                t("categories.payments.items.refunds"),
+              ]}
+              exploreText={t("categories.explore")}
             />
             <CategoryCard
-              title="Safety"
+              title={t("categories.safety.title")}
               icon="🛟"
               href="#safety"
-              items={["Captain verification", "Trip checklist", "Report issue"]}
+              items={[
+                t("categories.safety.items.verification"),
+                t("categories.safety.items.checklist"),
+                t("categories.safety.items.report"),
+              ]}
+              exploreText={t("categories.explore")}
             />
           </div>
         </div>
@@ -136,130 +142,107 @@ export default async function HelpCenterPage({
           {/* TOC (sticky) */}
           <aside className="lg:block">
             <div className="sticky p-4 border top-20 rounded-xl border-neutral-200">
-              <p className="text-sm font-semibold">On this page</p>
+              <p className="text-sm font-semibold">{t("toc.title")}</p>
               <ul className="mt-3 space-y-2 text-sm">
-                <TocItem href="#getting-started" label="Getting started" />
-                <TocItem href="#account" label="Managing your account" />
-                <TocItem href="#payments" label="Payments & refunds" />
-                <TocItem href="#safety" label="Safety & verification" />
-                <TocItem href="#faq" label="Top FAQs" />
+                <TocItem
+                  href="#getting-started"
+                  label={t("toc.gettingStarted")}
+                />
+                <TocItem href="#account" label={t("toc.account")} />
+                <TocItem href="#payments" label={t("toc.payments")} />
+                <TocItem href="#safety" label={t("toc.safety")} />
+                <TocItem href="#faq" label={t("toc.faq")} />
               </ul>
               <a
                 className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-[#EC2227] px-4 py-2 text-sm font-medium text-white shadow hover:opacity-95"
                 href={`/${locale}/contact`}
               >
-                Contact Support
+                {t("toc.contactSupport")}
               </a>
             </div>
           </aside>
 
           {/* Main */}
           <article className="prose max-w-none prose-neutral">
-            <Section id="getting-started" title="Getting started">
+            <Section
+              id="getting-started"
+              title={t("sections.gettingStarted.title")}
+            >
               <h3 id="create-account" className="!mt-0">
-                Create an account
+                {t("sections.gettingStarted.createAccount.title")}
               </h3>
-              <p>
-                Sign up with your email, verify it, and you’re ready to book
-                trips.
-              </p>
-              <h3 id="search-charters">Find a charter</h3>
-              <p>
-                Filter by location, species, boat type, price, and available
-                dates.
-              </p>
-              <h3 id="make-booking">Make a booking</h3>
-              <p>
-                Select a package, add gear/bait/meals, then confirm with secure
-                checkout.
-              </p>
+              <p>{t("sections.gettingStarted.createAccount.content")}</p>
+              <h3 id="search-charters">
+                {t("sections.gettingStarted.findCharter.title")}
+              </h3>
+              <p>{t("sections.gettingStarted.findCharter.content")}</p>
+              <h3 id="make-booking">
+                {t("sections.gettingStarted.makeBooking.title")}
+              </h3>
+              <p>{t("sections.gettingStarted.makeBooking.content")}</p>
             </Section>
 
-            <Section id="account" title="Managing your account">
+            <Section id="account" title={t("sections.account.title")}>
               <h3 id="update-profile" className="!mt-0">
-                Profile
+                {t("sections.account.profile.title")}
               </h3>
-              <p>
-                Keep name/phone up to date for smooth captain communication.
-              </p>
-              <h3 id="change-password">Password</h3>
-              <p>
-                Use a strong, unique passphrase. Reset anytime from “Forgot
-                password”.
-              </p>
-              <h3 id="notifications">Notifications</h3>
-              <p>
-                We send essential trip updates; marketing emails are opt-in.
-              </p>
+              <p>{t("sections.account.profile.content")}</p>
+              <h3 id="change-password">
+                {t("sections.account.password.title")}
+              </h3>
+              <p>{t("sections.account.password.content")}</p>
+              <h3 id="notifications">
+                {t("sections.account.notifications.title")}
+              </h3>
+              <p>{t("sections.account.notifications.content")}</p>
             </Section>
 
-            <Section id="payments" title="Payments & refunds">
+            <Section id="payments" title={t("sections.payments.title")}>
               <h3 id="payment-methods" className="!mt-0">
-                Accepted methods
+                {t("sections.payments.methods.title")}
               </h3>
-              <p>
-                Major cards and FPX/online banking (MY). Options appear at
-                checkout.
-              </p>
-              <h3 id="cancellations">Deposits & cancellations</h3>
-              <p>
-                Policies vary by listing and conditions; see policy on each
-                charter page.
-              </p>
-              <h3 id="refunds">Refund timeline</h3>
-              <p>
-                Approved refunds return to your original method in ~3–10
-                business days.
-              </p>
+              <p>{t("sections.payments.methods.content")}</p>
+              <h3 id="cancellations">
+                {t("sections.payments.deposits.title")}
+              </h3>
+              <p>{t("sections.payments.deposits.content")}</p>
+              <h3 id="refunds">{t("sections.payments.refunds.title")}</h3>
+              <p>{t("sections.payments.refunds.content")}</p>
             </Section>
 
-            <Section id="safety" title="Safety & verification">
+            <Section id="safety" title={t("sections.safety.title")}>
               <h3 id="captain-verification" className="!mt-0">
-                Captain verification
+                {t("sections.safety.verification.title")}
               </h3>
-              <p>
-                Captains upload licences/registration/insurance before listings
-                go live.
-              </p>
-              <h3 id="safety-checklist">Trip checklist</h3>
+              <p>{t("sections.safety.verification.content")}</p>
+              <h3 id="safety-checklist">
+                {t("sections.safety.checklist.title")}
+              </h3>
               <ul>
-                <li>Confirm jetty/time and weather updates.</li>
-                <li>
-                  Bring sun protection, water, and motion-sickness meds if
-                  needed.
-                </li>
-                <li>
-                  Follow safety briefing and crew instructions at all times.
-                </li>
+                <li>{t("sections.safety.checklist.items.confirm")}</li>
+                <li>{t("sections.safety.checklist.items.bring")}</li>
+                <li>{t("sections.safety.checklist.items.follow")}</li>
               </ul>
-              <h3 id="report-issue">Report an issue</h3>
+              <h3 id="report-issue">{t("sections.safety.report.title")}</h3>
               <p>
-                Share your booking reference at{" "}
-                <a href="mailto:support@fishon.my">support@fishon.my</a> or{" "}
-                <a href={`/${locale}/contact`}>Contact</a>.
+                {t.rich("sections.safety.report.content", {
+                  email: (chunks) => (
+                    <a href="mailto:support@fishon.my">{chunks}</a>
+                  ),
+                  contact: (chunks) => (
+                    <a href={`/${locale}/contact`}>{chunks}</a>
+                  ),
+                })}
               </p>
             </Section>
 
             {/* Top FAQs accordion */}
             <div id="faq" className="mt-12 not-prose">
-              <h2 className="text-2xl font-semibold">Top FAQs</h2>
+              <h2 className="text-2xl font-semibold">{t("faq.title")}</h2>
               <div className="mt-4 border divide-y rounded-xl border-neutral-200">
-                <Faq
-                  q="Can I change my date after booking?"
-                  a="Date changes depend on captain availability and the listing’s policy. Use your booking page or contact support."
-                />
-                <Faq
-                  q="Do trips go out in bad weather?"
-                  a="Safety first. Captains may reschedule or cancel according to sea conditions and local advisories."
-                />
-                <Faq
-                  q="How do deposits work?"
-                  a="Some listings require a deposit to secure your date. The policy is shown on the charter page and at checkout."
-                />
-                <Faq
-                  q="What if my card is charged but I have no confirmation?"
-                  a="Check spam/junk. If still missing after 10 minutes, contact us with the last four digits of the card and time of payment."
-                />
+                {faqItems.slice(0, 4).map((item, i) => (
+                  <Faq key={i} q={item.question} a={item.answer} />
+                ))}
               </div>
             </div>
 
@@ -283,10 +266,10 @@ export default async function HelpCenterPage({
                   </svg>
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                  Email Support
+                  {t("contact.email.title")}
                 </h3>
                 <p className="mb-4 text-sm text-neutral-600">
-                  Send us an email and we&apos;ll respond within 24 hours.
+                  {t("contact.email.description")}
                 </p>
                 <a
                   href="mailto:support@fishon.my"
@@ -313,10 +296,10 @@ export default async function HelpCenterPage({
                   </svg>
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                  WhatsApp
+                  {t("contact.whatsapp.title")}
                 </h3>
                 <p className="mb-4 text-sm text-neutral-600">
-                  Chat with our support team on WhatsApp.
+                  {t("contact.whatsapp.description")}
                 </p>
                 <a
                   href="https://wa.me/60165304304"
@@ -324,7 +307,7 @@ export default async function HelpCenterPage({
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700"
                 >
-                  Chat on WhatsApp
+                  {t("contact.whatsapp.cta")}
                 </a>
               </div>
 
@@ -345,40 +328,29 @@ export default async function HelpCenterPage({
                   </svg>
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                  Live Chat
+                  {t("contact.liveChat.title")}
                 </h3>
                 <p className="mb-4 text-sm text-neutral-600">
-                  Chat with our support team in real-time.
+                  {t("contact.liveChat.description")}
                 </p>
                 <button
                   disabled
                   className="w-full px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border rounded-md cursor-not-allowed border-neutral-200"
                 >
-                  Coming Soon
+                  {t("contact.liveChat.cta")}
                 </button>
               </div>
             </div>
 
             {/* Additional Common Questions from Account Support */}
             <div className="mt-10 not-prose">
-              <h2 className="text-2xl font-semibold">More Questions</h2>
+              <h2 className="text-2xl font-semibold">
+                {t("moreQuestions.title")}
+              </h2>
               <div className="mt-4 border divide-y rounded-xl border-neutral-200">
-                <Faq
-                  q="How do I modify my booking?"
-                  a="To modify your booking, please contact the captain directly or reach out to our support team. Modification policies vary by charter."
-                />
-                <Faq
-                  q="What is the cancellation policy?"
-                  a="Cancellation policies vary by charter. You can cancel PENDING or APPROVED bookings from your bookings page. Check the charter details for specific policies."
-                />
-                <Faq
-                  q="How long does captain approval take?"
-                  a="Captains typically respond within 6-24 hours. Your booking hold expires after 12 hours if not approved. You'll receive an email notification once the captain responds."
-                />
-                <Faq
-                  q="When will I be charged?"
-                  a="You're only charged after the captain approves your booking. Once approved, you'll receive a payment link to complete your booking confirmation."
-                />
+                {faqItems.slice(4).map((item, i) => (
+                  <Faq key={i} q={item.question} a={item.answer} />
+                ))}
               </div>
             </div>
           </article>
@@ -394,11 +366,13 @@ function CategoryCard({
   icon,
   href,
   items,
+  exploreText,
 }: {
   title: string;
   icon: string;
   href: string;
   items: string[];
+  exploreText: string;
 }) {
   return (
     <a
@@ -419,7 +393,7 @@ function CategoryCard({
         ))}
       </ul>
       <span className="mt-3 inline-block text-sm font-medium text-[#EC2227]">
-        Explore →
+        {exploreText}
       </span>
     </a>
   );

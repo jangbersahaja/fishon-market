@@ -71,14 +71,14 @@ export default function BookingSummaryCard({
   const getAmenityLabel = (key: string) => {
     const amenity = AMENITIES_OPTIONS.find((a) => a.key === key);
     if (!amenity) return key;
-    return locale === "my" ? amenity.labelMy : amenity.label;
+    return locale === "ms" ? amenity.labelMy : amenity.label;
   };
 
   // Helper function to get localized label for boat feature
   const getFeatureLabel = (key: string) => {
     const feature = BOAT_FEATURE_OPTIONS.find((f) => f.key === key);
     if (!feature) return key;
-    return locale === "my" ? feature.labelMy : feature.label;
+    return locale === "ms" ? feature.labelMy : feature.label;
   };
 
   const mapEmbedSrc = charter?.coordinates

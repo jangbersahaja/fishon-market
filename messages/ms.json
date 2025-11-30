@@ -23,6 +23,9 @@
     "total": "Jumlah",
     "perDay": "/Hari",
     "perTrip": "/Trip",
+    "min": "min",
+    "featured": "Pilihan",
+    "minRead": "min bacaan",
     "relationships": {
       "selectRelationship": "Pilih hubungan",
       "spouse": "Pasangan",
@@ -176,7 +179,7 @@
     "details": "Butiran",
     "trips": "Trip",
     "moreTrips": "+ {count} lagi",
-    "yearsExp": "{years} Pengalaman",
+    "yearsExp": "{years} Tahun Pengalaman",
     "capacity": "{count} Orang",
     "unavailableOnDate": "Penuh pada tarikh ini",
     "defaultDescription": "Perkhidmatan pancing yang hebat beroperasi di Malaysia. Perjalanan tersedia untuk tasik, sungai, pesisir dan laut dalam.",
@@ -1225,5 +1228,498 @@
     "serverError": "Ralat pelayan",
     "networkError": "Ralat rangkaian",
     "tryAgain": "Sila cuba lagi kemudian"
+  },
+  "aboutPage": {
+    "metadata": {
+      "title": "Tentang Kami | Fishon.my",
+      "description": "Fishon.my adalah platform tempahan charter memancing #1 di Malaysia — dibina oleh pemancing, untuk pemancing. Ketahui misi kami, standard keselamatan, pengesahan kapten, anugerah, dan hala tuju kami."
+    },
+    "hero": {
+      "title": "Tentang",
+      "subtitle": "Platform dalam talian #1 Malaysia untuk tempahan charter memancing. Kami menghubungkan pemancing dengan kapten yang disahkan di seluruh negara — memudahkan penemuan, penjadualan, dan pembayaran supaya anda boleh fokus pada tangkapan.",
+      "stats": {
+        "founded": {
+          "label": "Ditubuhkan",
+          "value": "2025"
+        },
+        "focus": {
+          "label": "Fokus",
+          "value": "Malaysia & Serantau"
+        },
+        "mission": {
+          "label": "Misi",
+          "value": "Rancang, Tempah & Pergi Memancing"
+        }
+      }
+    },
+    "mission": {
+      "label": "Misi Kami",
+      "title": "Membina ekosistem memancing yang lebih selamat dan telus",
+      "description": "Secara sejarah, tempahan charter bergantung pada mulut ke mulut dan mesej yang perlahan. Fishon.my membawa segala-galanya bersama di satu tempat yang boleh dipercayai.",
+      "problem": {
+        "title": "Masalah",
+        "list": {
+          "visibility": "Keterlihatan terhad tempat dan kapten hebat.",
+          "communication": "Komunikasi perlahan atau tidak konsisten.",
+          "calendar": "Tiada kalendar berpusat — risiko tempahan bertindih.",
+          "payment": "Ketidakpastian pembayaran dan kekeliruan bayaran balik."
+        }
+      },
+      "solution": {
+        "title": "Penyelesaian",
+        "list": {
+          "search": "Carian bersatu merentasi lokasi dan teknik.",
+          "profiles": "Profil charter lengkap dengan dokumen yang disahkan.",
+          "calendar": "Ketersediaan masa nyata & kalendar tempahan.",
+          "payment": "Pembayaran selamat dan lancar."
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "Bagaimana Fishon Berfungsi",
+      "subtitle": "Pengembaraan memancing anda yang seterusnya hanya tiga langkah jauhnya.",
+      "steps": {
+        "discover": {
+          "title": "1. Terokai",
+          "description": "Layari charter mengikut lokasi, spesies sasaran, jenis bot, dan bajet. Simpan kegemaran anda untuk akses pantas kemudian."
+        },
+        "book": {
+          "title": "2. Tempah",
+          "description": "Semak ketersediaan masa nyata dan pilih trip anda. Bayar dengan selamat melalui FPX, E-Wallet, atau Kad untuk mengesahkan tempat anda."
+        },
+        "goFishing": {
+          "title": "3. Pergi Memancing",
+          "description": "Chat dengan kapten anda, dapatkan arah ke jeti, dan nikmati trip. Tinggalkan ulasan untuk membantu komuniti."
+        }
+      }
+    },
+    "safety": {
+      "title": "Keselamatan Diutamakan",
+      "description": "Keselamatan pemancing adalah keutamaan kami. Kapten dan pengendali di Fishon.my melalui proses pengesahan sebelum penyenaraian disiarkan.",
+      "verification": {
+        "title": "Keperluan Pengesahan",
+        "list": {
+          "id": "Kad Pengenalan / Pendaftaran Syarikat (SSM)",
+          "license": "ID Pelaut / Lesen Maritim (jika berkenaan)",
+          "boat": "Sijil Pendaftaran Bot",
+          "insurance": "Insurans Kapal & Liabiliti Awam",
+          "firstAid": "Pensijilan Pertolongan Cemas & Taklimat Keselamatan"
+        }
+      },
+      "conduct": {
+        "title": "Tingkah Laku Semasa Trip",
+        "list": {
+          "briefing": "Taklimat keselamatan dan pematuhan peraturan tempatan",
+          "weather": "Pemeriksaan cuaca & keadaan laut sebelum berlepas",
+          "maintenance": "Kapal yang diselenggara dengan baik dan peralatan keselamatan di atas kapal",
+          "crew": "Tingkah laku krew profesional dan memancing yang bertanggungjawab"
+        }
+      }
+    },
+    "captains": {
+      "title": "Untuk Kapten & Pengendali",
+      "description": "Fishon.my membantu anda mengisi kalendar dan mengurangkan kerja admin — supaya anda boleh fokus memberikan trip yang hebat.",
+      "benefits": {
+        "exposure": {
+          "title": "Pendedahan Lebih Luas",
+          "description": "Jangkau pemancing di seluruh negara dan pelancong melalui web dan sosial."
+        },
+        "bookings": {
+          "title": "Tempahan Sistematik",
+          "description": "Kalendar berpusat mengurangkan pertindihan dan melindungi masa anda."
+        },
+        "marketing": {
+          "title": "Sokongan Pemasaran",
+          "description": "Kami menguatkan penyenaraian anda dengan kandungan, iklan dan penempatan kempen."
+        },
+        "payments": {
+          "title": "Pembayaran Lebih Selamat",
+          "description": "Aliran jelas dan selamat yang meningkatkan kepercayaan dan profesionalisme."
+        },
+        "reputation": {
+          "title": "Reputasi & Ulasan",
+          "description": "Bina rekod awam yang menukar lebih banyak tempahan."
+        },
+        "opportunities": {
+          "title": "Peluang Jangka Panjang",
+          "description": "Bekerjasama dengan acara, jenama dan rakan kongsi pelancongan."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Pilihan Perkongsian Fleksibel",
+      "subtitle": "Mula secara percuma. Kami hanya buat duit apabila anda buat duit.",
+      "basic": {
+        "title": "Pelan Asas",
+        "description": "Untuk kapten yang sudah mapan yang memerlukan tempahan tambahan.",
+        "commission": "komisen",
+        "features": {
+          "listing": "Penyenaraian & sokongan 24/7",
+          "calendar": "Kalendar masa nyata & ulasan",
+          "chat": "Chat terus dengan pelanggan",
+          "tools": "Alat prestasi & iklan asas"
+        }
+      },
+      "premium": {
+        "title": "Tahap Premium Akan Datang",
+        "description": "Kami sedang mengusahakan pelan lanjutan dengan komisen lebih rendah, kempen pemasaran khusus, dan perkhidmatan produksi video. Nantikan!"
+      }
+    },
+    "team": {
+      "title": "Kenali Pasukan",
+      "subtitle": "Krew pelbagai disiplin yang terdiri daripada pemancing, ahli teknologi dan pencipta.",
+      "roles": {
+        "managingDirector": "Pengarah Urusan",
+        "operationManager": "Pengurus Operasi",
+        "marketingDirector": "Pengarah Pemasaran",
+        "brandingOperation": "Operasi Penjenamaan",
+        "platformManager": "Pengurus Platform",
+        "publicRelation": "Perhubungan Awam",
+        "headOfFinance": "Ketua Kewangan",
+        "customerSupport": "Sokongan Pelanggan"
+      }
+    },
+    "cta": {
+      "title": "Bersedia untuk memulakan pengembaraan anda?",
+      "description": "Sama ada anda seorang pemancing yang merancang trip seterusnya atau kapten yang bersedia untuk berkembang, kami ingin membantu.",
+      "browse": "Layari Charter",
+      "list": "Senaraikan Charter Anda",
+      "footer": "Fishon.my dimiliki dan dikendalikan oleh"
+    }
+  },
+  "blogPage": {
+    "metadata": {
+      "title": "Blog & Panduan Memancing | Fishon.my",
+      "description": "Temui tips memancing pakar, panduan charter, ulasan destinasi, dan teknik untuk perairan Malaysia. Belajar daripada pemancing tempatan dan kapten."
+    },
+    "hero": {
+      "title": "Blog & Panduan Memancing",
+      "description": "Tips pakar, panduan destinasi, dan teknik memancing untuk perairan Malaysia. Belajar daripada pemancing berpengalaman dan kapten charter."
+    },
+    "featured": {
+      "title": "Artikel Pilihan"
+    },
+    "categories": {
+      "ariaLabel": "Kategori blog"
+    },
+    "recent": {
+      "title": "Artikel Terkini",
+      "noPosts": "Tiada artikel blog lagi. Semak semula nanti untuk tips dan panduan memancing!"
+    },
+    "pagination": {
+      "previous": "Sebelumnya",
+      "next": "Seterusnya",
+      "ariaLabel": "Halaman"
+    },
+    "newsletter": {
+      "title": "Kekal Dikemaskini",
+      "description": "Dapatkan tips memancing terkini dan panduan destinasi dihantar ke inbox anda.",
+      "emailPlaceholder": "Masukkan emel anda",
+      "subscribe": "Langgan"
+    },
+    "layout": {
+      "title": "Blog & Panduan Memancing | Fishon.my",
+      "description": "Temui tips memancing pakar, panduan charter, ulasan destinasi, dan teknik untuk perairan Malaysia. Sumber lengkap anda untuk pengembaraan memancing.",
+      "ogTitle": "Blog & Panduan Memancing | Fishon.my",
+      "ogDescription": "Tips memancing pakar, panduan charter, dan ulasan destinasi untuk pemancing Malaysia."
+    },
+    "searchBar": {
+      "placeholder": "Cari artikel blog...",
+      "button": "Cari"
+    }
+  },
+  "blogPost": {
+    "notFound": "Artikel Tidak Dijumpai | Fishon.my",
+    "defaultDescription": "Baca artikel ini di Fishon.my",
+    "breadcrumbs": {
+      "home": "Laman Utama",
+      "blog": "Blog"
+    },
+    "meta": {
+      "by": "Oleh {author}",
+      "minRead": "min bacaan"
+    },
+    "share": {
+      "title": "Kongsi artikel ini"
+    },
+    "author": {
+      "about": "Tentang Penulis"
+    },
+    "related": {
+      "title": "Artikel Berkaitan"
+    }
+  },
+  "blogComments": {
+    "title": "Komen ({count})",
+    "noComments": "Tiada komen lagi. Jadilah yang pertama memberi komen!",
+    "leaveComment": "Tinggalkan Komen",
+    "name": "Nama *",
+    "namePlaceholder": "Nama anda",
+    "email": "Emel *",
+    "emailPlaceholder": "anda@emel.com",
+    "comment": "Komen *",
+    "commentPlaceholder": "Kongsi pendapat anda...",
+    "submit": "Hantar Komen",
+    "submitting": "Sedang menghantar...",
+    "reviewNotice": "Komen anda akan disemak sebelum dipaparkan di laman web.",
+    "success": "Komen dihantar! Ia akan muncul selepas kelulusan.",
+    "error": "Gagal menghantar komen. Sila cuba lagi.",
+    "networkError": "Ralat rangkaian. Sila semak sambungan anda dan cuba lagi."
+  },
+  "blogNewsletter": {
+    "title": "Kekal Dikemaskini",
+    "description": "Dapatkan tips memancing terkini dan panduan destinasi dihantar ke inbox anda.",
+    "emailPlaceholder": "Masukkan emel anda",
+    "subscribe": "Langgan"
+  },
+  "contactPage": {
+    "metadata": {
+      "title": "Hubungi Kami | Fishon.my",
+      "description": "Hubungi pasukan Fishon.my. Kami sedia membantu dengan tempahan, perkongsian, dan pertanyaan umum."
+    },
+    "hero": {
+      "title": "Hubungi",
+      "subtitle": "Ada soalan mengenai tempahan, menyenaraikan charter anda, atau perkongsian? Kami ingin mendengar daripada anda."
+    },
+    "cards": {
+      "customerSupport": {
+        "title": "Sokongan Pelanggan",
+        "description": "Untuk bantuan tempahan, bayaran balik, atau isu akaun."
+      },
+      "captainOnboarding": {
+        "title": "Pendaftaran Kapten",
+        "description": "Senaraikan charter anda dan berkembang bersama kami.",
+        "cta": "Mohon untuk Senarai"
+      }
+    },
+    "form": {
+      "title": "Hantar mesej kepada kami",
+      "description": "Isi borang dan kami akan menghubungi anda semula. Ruangan bertanda * adalah wajib.",
+      "fields": {
+        "name": {
+          "label": "Nama Penuh *",
+          "placeholder": "cth., Aiman Roslan",
+          "error": "Sila masukkan nama penuh anda."
+        },
+        "email": {
+          "label": "Emel *",
+          "placeholder": "anda@contoh.com",
+          "error": "Sila masukkan emel yang sah."
+        },
+        "phone": {
+          "label": "Telefon",
+          "placeholder": "+60 12-345 6789"
+        },
+        "topic": {
+          "label": "Topik",
+          "options": {
+            "general": "Umum",
+            "bookingSupport": "Sokongan Tempahan",
+            "captainOnboarding": "Pendaftaran Kapten",
+            "partnerships": "Perkongsian",
+            "pressMedia": "Media / Akhbar"
+          }
+        },
+        "charterUrl": {
+          "label": "URL Charter",
+          "placeholder": "https://www.fishon.my/charters/penyenaraian-anda"
+        },
+        "message": {
+          "label": "Mesej *",
+          "placeholder": "Beritahu kami bagaimana kami boleh membantu…",
+          "error": "Sila tulis mesej ringkas."
+        }
+      },
+      "disclaimer": "Dengan menghantar, anda bersetuju untuk dihubungi mengenai pertanyaan anda.",
+      "submit": "Hantar Mesej"
+    },
+    "faq": {
+      "whatHappens": {
+        "title": "Apa berlaku selepas saya hantar mesej?",
+        "description": "Kami akan menyemak pertanyaan anda dan membalas melalui emel. Untuk isu tempahan segera, sertakan rujukan tempahan atau URL charter anda untuk pengendalian yang lebih pantas."
+      },
+      "preferEmail": {
+        "title": "Lebih suka emel?",
+        "description": "Anda boleh emel kami terus di"
+      }
+    }
+  },
+  "helpCenter": {
+    "metadata": {
+      "title": "Pusat Bantuan",
+      "description": "Cari jawapan kepada soalan lazim mengenai tempahan charter memancing di Fishon.my"
+    },
+    "hero": {
+      "title": "Pusat",
+      "titleHighlight": "Bantuan",
+      "description": "Cari jawapan pantas, panduan dan polisi. Masih buntu? Pasukan kami sedia membantu.",
+      "lastUpdated": "Dikemaskini: {date}"
+    },
+    "categories": {
+      "gettingStarted": {
+        "title": "Mula Di Sini",
+        "items": {
+          "createAccount": "Cipta akaun",
+          "findCharter": "Cari charter",
+          "makeBooking": "Buat tempahan"
+        }
+      },
+      "account": {
+        "title": "Akaun",
+        "items": {
+          "profile": "Profil",
+          "password": "Kata Laluan",
+          "notifications": "Pemberitahuan"
+        }
+      },
+      "payments": {
+        "title": "Pembayaran",
+        "items": {
+          "methods": "Kaedah",
+          "deposits": "Deposit",
+          "refunds": "Bayaran Balik"
+        }
+      },
+      "safety": {
+        "title": "Keselamatan",
+        "items": {
+          "verification": "Pengesahan Kapten",
+          "checklist": "Senarai Semak Trip",
+          "report": "Lapor Isu"
+        }
+      },
+      "explore": "Terokai →"
+    },
+    "toc": {
+      "title": "Di halaman ini",
+      "gettingStarted": "Mula Di Sini",
+      "account": "Mengurus akaun anda",
+      "payments": "Pembayaran & bayaran balik",
+      "safety": "Keselamatan & pengesahan",
+      "faq": "Soalan Lazim Utama",
+      "contactSupport": "Hubungi Sokongan"
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "Mula Di Sini",
+        "createAccount": {
+          "title": "Cipta akaun",
+          "content": "Daftar dengan emel anda, sahkan, dan anda bersedia untuk menempah trip."
+        },
+        "findCharter": {
+          "title": "Cari charter",
+          "content": "Tapis mengikut lokasi, spesies, jenis bot, harga, dan tarikh yang tersedia."
+        },
+        "makeBooking": {
+          "title": "Buat tempahan",
+          "content": "Pilih pakej, tambah peralatan/umpan/makanan, kemudian sahkan dengan pembayaran selamat."
+        }
+      },
+      "account": {
+        "title": "Mengurus akaun anda",
+        "profile": {
+          "title": "Profil",
+          "content": "Pastikan nama/telefon dikemaskini untuk komunikasi lancar dengan kapten."
+        },
+        "password": {
+          "title": "Kata Laluan",
+          "content": "Gunakan frasa laluan yang kuat dan unik. Tetapkan semula bila-bila masa dari “Lupa kata laluan”."
+        },
+        "notifications": {
+          "title": "Pemberitahuan",
+          "content": "Kami menghantar kemas kini trip penting; emel pemasaran adalah pilihan."
+        }
+      },
+      "payments": {
+        "title": "Pembayaran & bayaran balik",
+        "methods": {
+          "title": "Kaedah diterima",
+          "content": "Kad utama dan FPX/perbankan dalam talian (MY). Pilihan muncul semasa checkout."
+        },
+        "deposits": {
+          "title": "Deposit & pembatalan",
+          "content": "Polisi berbeza mengikut penyenaraian dan keadaan; lihat polisi pada setiap halaman charter."
+        },
+        "refunds": {
+          "title": "Garis masa bayaran balik",
+          "content": "Bayaran balik yang diluluskan dikembalikan ke kaedah asal anda dalam ~3–10 hari bekerja."
+        }
+      },
+      "safety": {
+        "title": "Keselamatan & pengesahan",
+        "verification": {
+          "title": "Pengesahan Kapten",
+          "content": "Kapten memuat naik lesen/pendaftaran/insurans sebelum penyenaraian disiarkan."
+        },
+        "checklist": {
+          "title": "Senarai Semak Trip",
+          "items": {
+            "confirm": "Sahkan jeti/masa dan kemas kini cuaca.",
+            "bring": "Bawa perlindungan matahari, air, dan ubat mabuk laut jika perlu.",
+            "follow": "Ikuti taklimat keselamatan dan arahan krew pada setiap masa."
+          }
+        },
+        "report": {
+          "title": "Lapor Isu",
+          "content": "Kongsikan rujukan tempahan anda di <email>support@fishon.my</email> atau <contact>Hubungi Kami</contact>."
+        }
+      }
+    },
+    "faq": {
+      "title": "Soalan Lazim Utama",
+      "items": {
+        "changeDate": {
+          "q": "Bolehkah saya tukar tarikh selepas menempah?",
+          "a": "Pertukaran tarikh bergantung pada ketersediaan kapten dan polisi penyenaraian. Gunakan halaman tempahan anda atau hubungi sokongan."
+        },
+        "badWeather": {
+          "q": "Adakah trip diteruskan dalam cuaca buruk?",
+          "a": "Keselamatan diutamakan. Kapten mungkin menjadualkan semula atau membatalkan mengikut keadaan laut dan nasihat tempatan."
+        },
+        "deposits": {
+          "q": "Bagaimana deposit berfungsi?",
+          "a": "Sesetengah penyenaraian memerlukan deposit untuk mengamankan tarikh anda. Polisi ditunjukkan pada halaman charter dan semasa checkout."
+        },
+        "noConfirmation": {
+          "q": "Bagaimana jika kad saya dicaj tetapi tiada pengesahan?",
+          "a": "Semak spam/junk. Jika masih tiada selepas 10 minit, hubungi kami dengan empat digit terakhir kad dan masa pembayaran."
+        },
+        "modifyBooking": {
+          "q": "Bagaimana saya mengubah tempahan saya?",
+          "a": "Untuk mengubah tempahan anda, sila hubungi kapten secara terus atau hubungi pasukan sokongan kami. Polisi pengubahsuaian berbeza mengikut charter."
+        },
+        "cancellationPolicy": {
+          "q": "Apakah polisi pembatalan?",
+          "a": "Polisi pembatalan berbeza mengikut charter. Anda boleh membatalkan tempahan PENDING atau APPROVED dari halaman tempahan anda. Semak butiran charter untuk polisi khusus."
+        },
+        "approvalTime": {
+          "q": "Berapa lama kelulusan kapten diambil?",
+          "a": "Kapten biasanya membalas dalam masa 6-24 jam. Pegangan tempahan anda tamat selepas 12 jam jika tidak diluluskan. Anda akan menerima pemberitahuan emel sebaik sahaja kapten membalas."
+        },
+        "whenCharged": {
+          "q": "Bilakah saya akan dicaj?",
+          "a": "Anda hanya dicaj selepas kapten meluluskan tempahan anda. Sebaik sahaja diluluskan, anda akan menerima pautan pembayaran untuk melengkapkan pengesahan tempahan anda."
+        }
+      }
+    },
+    "moreQuestions": {
+      "title": "Lagi Soalan"
+    },
+    "contact": {
+      "email": {
+        "title": "Sokongan Emel",
+        "description": "Hantar emel kepada kami dan kami akan membalas dalam masa 24 jam."
+      },
+      "whatsapp": {
+        "title": "WhatsApp",
+        "description": "Chat dengan pasukan sokongan kami di WhatsApp.",
+        "cta": "Chat di WhatsApp"
+      },
+      "liveChat": {
+        "title": "Live Chat",
+        "description": "Chat dengan pasukan sokongan kami dalam masa nyata.",
+        "cta": "Akan Datang"
+      }
+    }
   }
 }
