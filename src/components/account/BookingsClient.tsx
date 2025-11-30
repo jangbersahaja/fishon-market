@@ -25,7 +25,7 @@ export function BookingsClient({
   const t = useTranslations("account");
   const tCommon = useTranslations("common");
   const [activeTab, setActiveTab] = useState<BookingTab>("in-progress");
-  
+
   const tabs: { label: string; value: BookingTab; description: string }[] = [
     {
       label: t("upcomingBookings"),
@@ -115,19 +115,19 @@ export function BookingsClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t("bookings")}</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-gray-500">
             Manage your charter bookings and trips
           </p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <div className="p-4 bg-white border border-gray-200 rounded-lg">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
           <input
             type="text"
             placeholder={`${tCommon("search")} by charter name, location, or trip...`}
@@ -140,7 +140,7 @@ export function BookingsClient({
 
       {/* Tabs - Hidden when searching */}
       {!searchTerm && (
-        <div className="bg-white border border-gray-200 rounded-lg p-1">
+        <div className="p-1 bg-white border border-gray-200 rounded-lg">
           <div className="flex gap-1">
             {tabs.map((tab) => {
               const count = categorizedBookings[tab.value].length;
@@ -188,7 +188,7 @@ export function BookingsClient({
                 return (
                   <div key={tabValue} className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                      <h3 className="text-sm font-semibold tracking-wide text-gray-900 uppercase">
                         {tab?.label}
                       </h3>
                       <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
@@ -246,7 +246,7 @@ export function BookingsClient({
             activeTab === "in-progress"
               ? {
                   label: "Browse Charters",
-                  href: "/charters",
+                  href: "/search",
                 }
               : undefined
           }

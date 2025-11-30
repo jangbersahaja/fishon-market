@@ -775,6 +775,14 @@ export async function POST(req: Request) {
     // Create conversation for this booking (non-blocking best-effort)
     (async () => {
       try {
+        // Only create conversation if charter owner exists
+        if (!trip.charter.ownerId) {
+          console.warn(
+            "⚠️ Skipping conversation creation - charter owner not found"
+          );
+          return;
+        }
+
         const { createConversation, unlockConversation } = await import(
           "@/lib/services/message-service"
         );
@@ -784,7 +792,7 @@ export async function POST(req: Request) {
           booking.id,
           verifiedUserId,
           String(trip.charter.id),
-          String(trip.charter.captain?.id)
+          String(trip.charter.ownerId) // ownerId (User.id of charter owner)
         );
 
         console.log("✅ Conversation created for guest booking:", {

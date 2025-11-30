@@ -84,6 +84,7 @@ const baseTrip: TripData = {
       latitude: 2.706,
       longitude: 103.389,
     },
+    ownerId: "owner_1",
     captain: {
       id: "captain_1",
       displayName: "Captain Harris",

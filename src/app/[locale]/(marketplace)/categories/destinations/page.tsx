@@ -1,8 +1,8 @@
-import DestinationGrid, {
+import {
   DestinationGridSkeleton,
+  GroupedDestinationsGrid,
 } from "@/components/marketing/DestinationGrid";
-import { getDestinationImage } from "@/lib/helpers/location-image-helpers";
-import { getPopularDestinations } from "@/lib/helpers/popularity-helpers";
+import { getDestinationsGroupedByState } from "@/lib/helpers/popularity-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -28,17 +28,11 @@ async function DestinationsContent() {
     namespace: "categories.destinations",
   });
   const charters = await getCharters();
-  // Get more destinations to filter
-  const allDestinations = getPopularDestinations(charters, 100);
 
-  // Filter destinations that have either landmark image or charter image
-  const destinationsWithImages = allDestinations.filter(
-    (dest) =>
-      getDestinationImage(dest.name, dest.state, dest.charterImage) !==
-      undefined
-  );
+  // Get destinations grouped by state
+  const stateGroups = getDestinationsGroupedByState(charters);
 
-  if (destinationsWithImages.length === 0) {
+  if (stateGroups.length === 0) {
     return (
       <div className="py-12 text-center">
         <p className="text-gray-500">{t("noDestinationsFound")}</p>
@@ -47,10 +41,30 @@ async function DestinationsContent() {
   }
 
   return (
-    <DestinationGrid
-      destinations={destinationsWithImages}
-      gridClassName="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-    />
+    <>
+      {/* Quick jump navigation */}
+      <div className="flex flex-wrap gap-2 mb-8">
+        {stateGroups
+          .filter((s) => s.state.toLowerCase() !== "other")
+          .map((stateGroup) => (
+            <a
+              key={stateGroup.stateSlug}
+              href={`#${stateGroup.stateSlug}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-[#ec2227] hover:text-white transition-colors"
+            >
+              {stateGroup.state}
+              <span className="text-xs opacity-70">
+                ({stateGroup.totalCharters})
+              </span>
+            </a>
+          ))}
+      </div>
+
+      <GroupedDestinationsGrid
+        stateGroups={stateGroups}
+        gridClassName="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+      />
+    </>
   );
 }
 

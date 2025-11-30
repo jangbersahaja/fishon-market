@@ -961,9 +961,11 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Auto-create conversation for booking (Phase 2.1) (non-blocking best-effort)
     (async () => {
       try {
-        // Only create conversation if captain exists
-        if (!trip.charter.captain) {
-          console.warn("⚠️ Skipping conversation creation - captain not found");
+        // Only create conversation if charter owner exists
+        if (!trip.charter.ownerId) {
+          console.warn(
+            "⚠️ Skipping conversation creation - charter owner not found"
+          );
           return;
         }
 
@@ -972,7 +974,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           booking.id,
           dbUserId, // anglerId
           trip.charter.id, // charterId
-          trip.charter.captain.id // ownerId
+          trip.charter.ownerId // ownerId (User.id of charter owner)
         );
 
         // Unlock conversation only for TOKENIZED flow (card pre-authorized)

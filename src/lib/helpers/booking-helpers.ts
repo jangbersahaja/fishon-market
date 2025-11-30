@@ -198,13 +198,13 @@ export function getBookingActionButton(
     case "REJECTED":
       return {
         label: "Find Similar",
-        href: "/charters",
+        href: "/search",
         variant: "secondary",
       };
     case "EXPIRED":
       return {
         label: "Book Again",
-        href: "/charters",
+        href: "/search",
         variant: "secondary",
       };
     default:

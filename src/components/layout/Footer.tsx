@@ -22,7 +22,17 @@ const socials = [
   },
 ];
 
-const Footer = () => {
+export interface FooterDestination {
+  name: string;
+  slug: string;
+  charterCount: number;
+}
+
+interface FooterProps {
+  destinations?: FooterDestination[];
+}
+
+const Footer = ({ destinations = [] }: FooterProps) => {
   const t = useTranslations("footer");
   const locale = useLocale();
 
@@ -52,7 +62,7 @@ const Footer = () => {
     },
     {
       key: "fishSpecies",
-      link: "",
+      link: `/${locale}/categories/species`,
     },
   ];
 
@@ -186,16 +196,26 @@ const Footer = () => {
           <h3 className="font-semibold text-white">{t("destinations")}</h3>
           <ul className="flex flex-col gap-3 text-sm text-white/80">
             <li>
-              <span className="cursor-not-allowed opacity-70">
+              <Link
+                href={`/${locale}/categories/destinations`}
+                className="transition-colors hover:text-white"
+              >
                 {t("allDestination")}
-              </span>
+              </Link>
             </li>
-            <li>
-              <span className="cursor-not-allowed opacity-70">Selangor</span>
-            </li>
-            <li>
-              <span className="cursor-not-allowed opacity-70">Perak</span>
-            </li>
+            {destinations.length > 0
+              ? destinations.map((state) => (
+                  <li key={state.slug}>
+                    <Link
+                      href={`/${locale}/categories/destinations#${state.slug}`}
+                      className="transition-colors hover:text-white"
+                    >
+                      {state.name}
+                    </Link>
+                  </li>
+                ))
+              : // Fallback when no destinations data
+                null}
           </ul>
         </div>
 

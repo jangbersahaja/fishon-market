@@ -236,15 +236,25 @@ export default async function SearchResults({
       if (fishingTypeParam && c.fishingType !== fishingTypeParam) return false;
 
       // Species filter (charter must have at least one selected species)
+      // Checks both charter-level and trip-level species
       if (speciesParam.length > 0) {
-        const hasMatch = speciesParam.some((s) => c.species?.includes(s));
-        if (!hasMatch) return false;
+        const charterMatch = speciesParam.some((s) => c.species?.includes(s));
+        const tripMatch = c.trip?.some((trip) =>
+          speciesParam.some((s) => trip.species?.includes(s))
+        );
+        if (!charterMatch && !tripMatch) return false;
       }
 
       // Techniques filter (charter must have at least one selected technique)
+      // Checks both charter-level and trip-level techniques
       if (techniquesParam.length > 0) {
-        const hasMatch = techniquesParam.some((t) => c.techniques?.includes(t));
-        if (!hasMatch) return false;
+        const charterMatch = techniquesParam.some((t) =>
+          c.techniques?.includes(t)
+        );
+        const tripMatch = c.trip?.some((trip) =>
+          techniquesParam.some((t) => trip.techniques?.includes(t))
+        );
+        if (!charterMatch && !tripMatch) return false;
       }
 
       // Amenities filter (charter must have all selected amenities)

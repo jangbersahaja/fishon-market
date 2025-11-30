@@ -433,7 +433,7 @@ async function sendNotificationEmail(userId: string, notification: any) {
             userName: user.name || "Angler",
             charterName: notification.metadata.charterName,
             reason: notification.metadata.reason,
-            searchUrl: `${baseUrl}${localePrefix}/charters`,
+            searchUrl: `${baseUrl}${localePrefix}/search`,
             userId,
             bookingId: notification.bookingId,
           });

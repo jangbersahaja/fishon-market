@@ -139,9 +139,7 @@ export function ConversationsClient({
         <p className="max-w-sm text-center text-gray-500">
           Start booking charters to begin chatting with captains
         </p>
-        <Button onClick={() => router.push("/charters")}>
-          Browse Charters
-        </Button>
+        <Button onClick={() => router.push("/search")}>Browse Charters</Button>
       </div>
     );
   }

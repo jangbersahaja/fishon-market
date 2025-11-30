@@ -222,7 +222,7 @@ export function getStatusActions(
     case "EXPIRED":
       actions.push({
         label: "Book Again",
-        href: "/charters",
+        href: "/search",
         variant: "secondary",
         show: true,
       });
