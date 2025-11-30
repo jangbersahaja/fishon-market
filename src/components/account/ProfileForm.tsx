@@ -3,6 +3,8 @@
 import { PhoneInput } from "@/components/shared/PhoneInput";
 import { RelationshipSelect } from "@/components/shared/RelationshipSelect";
 import { Button } from "@/components/ui/button";
+import { Camera, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -11,6 +13,7 @@ interface ProfileFormProps {
     name: string | null;
     email: string;
     phone: string | null;
+    image: string | null;
     streetAddress: string | null;
     city: string | null;
     state: string | null;
@@ -25,6 +28,8 @@ interface ProfileFormProps {
 export function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.image);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -42,6 +47,56 @@ export function ProfileForm({ user }: ProfileFormProps) {
     emergencyPhone: user.emergencyPhone || "",
     emergencyRelation: user.emergencyRelation || "",
   });
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please upload an image file" });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image must be smaller than 5MB" });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/account/profile/upload-avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      const { url } = await response.json();
+      setAvatarUrl(url);
+      setMessage({ type: "success", text: "Profile photo updated!" });
+      router.refresh();
+    } catch (error) {
+      console.error("Avatar upload error:", error);
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to upload photo",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset the input so the same file can be selected again
+      e.target.value = "";
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -89,11 +144,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
     }
   };
 
-  // Calculate profile completion
-  const totalFields = 10;
-  const completedFields = Object.values(formData).filter(
+  // Calculate profile completion (avatar counts as bonus field)
+  const totalFields = 11; // 10 form fields + avatar
+  const completedFormFields = Object.values(formData).filter(
     (value) => value && value.trim() !== ""
   ).length;
+  const avatarCompleted = avatarUrl ? 1 : 0;
+  const completedFields = completedFormFields + avatarCompleted;
   const completionPercentage = Math.round(
     (completedFields / totalFields) * 100
   );
@@ -134,6 +191,63 @@ export function ProfileForm({ user }: ProfileFormProps) {
           {message.text}
         </div>
       )}
+
+      {/* Profile Photo */}
+      <div className="p-6 bg-white border border-gray-200 rounded-lg">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          Profile Photo
+        </h2>
+        <div className="flex items-center gap-6">
+          {/* Avatar Preview */}
+          <div className="relative">
+            <div className="w-24 h-24 overflow-hidden border-2 border-gray-200 rounded-full bg-gray-100">
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt="Profile photo"
+                  width={96}
+                  height={96}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-2xl font-semibold text-gray-400">
+                  {formData.name?.[0]?.toUpperCase() ||
+                    user.email[0].toUpperCase()}
+                </div>
+              )}
+            </div>
+            {isUploadingAvatar && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+
+          {/* Upload Button */}
+          <div className="flex-1">
+            <label
+              htmlFor="avatar-upload"
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors ${
+                isUploadingAvatar ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <Camera className="w-4 h-4" />
+              {avatarUrl ? "Change Photo" : "Upload Photo"}
+            </label>
+            <input
+              type="file"
+              id="avatar-upload"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              disabled={isUploadingAvatar}
+              className="hidden"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              JPG, PNG, or HEIC. Max 5MB. Recommended size: 200x200 pixels.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Personal Information */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
