@@ -1014,18 +1014,17 @@
       "downloadConfirmation": "Download Confirmation",
       "downloading": "Downloading...",
       "cancellationRefund": {
-        "title": "Cancellation Refund",
-        "estimatedRefund": "Estimated refund amount:",
+        "title": "Cancellation & Refund Policy",
         "noRefundTitle": "No refund available",
-        "noRefundMessage": "Your trip is less than 15 days away. According to our cancellation policy, no refund is available for cancellations within this period.",
+        "noRefundMessage": "Customer cancellations are non-refundable by policy.",
         "policyTitle": "Cancellation Policy:",
-        "policy30Days": "More than 30 days before trip: 80% refund",
-        "policy15Days": "15-30 days before trip: 50% refund",
-        "policyUnder15": "Less than 15 days before trip: No refund",
-        "processingTime": "Refunds are typically processed within 5-7 business days.",
+        "policyNonRefundable": "Customer cancellations are non-refundable",
+        "policyDiscretionary": "Up to 50% refund may be issued at company's discretion, minus processing fees",
+        "policyUnder7Days": "Less than 7 days before trip: Strictly non-refundable",
+        "processingTime": "If a discretionary refund is approved, it typically takes 5-14 business days.",
         "continueCancel": "Continue to Cancel",
         "nevermind": "Nevermind",
-        "stillCancelMessage": "You can still cancel your booking, but no refund will be issued."
+        "stillCancelMessage": "You can still cancel your booking, but no refund will be issued. Contact support if you believe you have exceptional circumstances."
       },
       "emailVerification": {
         "title": "Verify Your Email",

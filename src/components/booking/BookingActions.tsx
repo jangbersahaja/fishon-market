@@ -96,26 +96,21 @@ export function BookingActions({
   ];
 
   // Calculate estimated refund based on cancellation policy
+  // NEW POLICY: Customer cancellations are non-refundable by default
+  // <7 days: Strictly non-refundable
+  // 7+ days: Non-refundable (contact support for discretionary review - up to 50% at company's discretion)
   const calculateRefund = () => {
-    if (!tripDate || !finalPrice) return 0;
+    // Customer cancellations are non-refundable by policy
+    // Refunds may only be issued at company's discretion (handled via manual process)
+    return 0;
+  };
 
+  // Calculate days until trip for policy display
+  const getDaysUntilTrip = () => {
+    if (!tripDate) return 0;
     const now = new Date();
     const trip = new Date(tripDate);
-    const daysUntilTrip = Math.ceil(
-      (trip.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    // Cancellation policy:
-    // >30 days: 80% refund
-    // 15-30 days: 50% refund
-    // <15 days: 0% refund
-    if (daysUntilTrip > 30) {
-      return finalPrice * 0.8;
-    } else if (daysUntilTrip >= 15) {
-      return finalPrice * 0.5;
-    } else {
-      return 0;
-    }
+    return Math.ceil((trip.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
 
   const getFinalReason = () => {
@@ -466,59 +461,30 @@ export function BookingActions({
                 {t("cancellationRefund.title")}
               </h3>
 
-              {estimatedRefund > 0 ? (
-                <>
-                  <div className="p-4 mb-4 rounded-lg bg-green-50">
-                    <p className="text-sm text-gray-700">
-                      {t("cancellationRefund.estimatedRefund")}
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      RM {estimatedRefund.toFixed(2)}
-                    </p>
-                  </div>
+              {/* Customer cancellations are non-refundable by policy */}
+              <div className="p-4 mb-4 rounded-lg bg-amber-50">
+                <p className="text-sm font-semibold text-amber-800">
+                  {t("cancellationRefund.noRefundTitle")}
+                </p>
+                <p className="mt-1 text-xs text-amber-700">
+                  {t("cancellationRefund.noRefundMessage")}
+                </p>
+              </div>
 
-                  <div className="p-4 mb-4 border border-gray-200 rounded-lg">
-                    <p className="mb-2 text-sm font-semibold text-gray-900">
-                      {t("cancellationRefund.policyTitle")}
-                    </p>
-                    <ul className="space-y-1 text-xs text-gray-600">
-                      <li>• {t("cancellationRefund.policy30Days")}</li>
-                      <li>• {t("cancellationRefund.policy15Days")}</li>
-                      <li>• {t("cancellationRefund.policyUnder15")}</li>
-                    </ul>
-                  </div>
+              <div className="p-4 mb-4 border border-gray-200 rounded-lg">
+                <p className="mb-2 text-sm font-semibold text-gray-900">
+                  {t("cancellationRefund.policyTitle")}
+                </p>
+                <ul className="space-y-1 text-xs text-gray-600">
+                  <li>• {t("cancellationRefund.policyNonRefundable")}</li>
+                  <li>• {t("cancellationRefund.policyDiscretionary")}</li>
+                  <li>• {t("cancellationRefund.policyUnder7Days")}</li>
+                </ul>
+              </div>
 
-                  <p className="mb-5 text-sm text-gray-700">
-                    {t("cancellationRefund.processingTime")}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 mb-4 rounded-lg bg-amber-50">
-                    <p className="text-sm font-semibold text-amber-800">
-                      {t("cancellationRefund.noRefundTitle")}
-                    </p>
-                    <p className="mt-1 text-xs text-amber-700">
-                      {t("cancellationRefund.noRefundMessage")}
-                    </p>
-                  </div>
-
-                  <div className="p-4 mb-4 border border-gray-200 rounded-lg">
-                    <p className="mb-2 text-sm font-semibold text-gray-900">
-                      {t("cancellationRefund.policyTitle")}
-                    </p>
-                    <ul className="space-y-1 text-xs text-gray-600">
-                      <li>• {t("cancellationRefund.policy30Days")}</li>
-                      <li>• {t("cancellationRefund.policy15Days")}</li>
-                      <li>• {t("cancellationRefund.policyUnder15")}</li>
-                    </ul>
-                  </div>
-
-                  <p className="mb-5 text-sm text-gray-700">
-                    {t("cancellationRefund.stillCancelMessage")}
-                  </p>
-                </>
-              )}
+              <p className="mb-5 text-sm text-gray-700">
+                {t("cancellationRefund.stillCancelMessage")}
+              </p>
 
               <div className="flex flex-row-reverse gap-2 mt-2">
                 <button
