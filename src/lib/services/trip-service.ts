@@ -28,6 +28,7 @@ export interface TripData {
     includes: Array<{ name: string; isIncluded: boolean }>;
     features: string[]; // Charter features (for boat features display)
     coordinates: { latitude: number; longitude: number } | null;
+    ownerId: string | null; // User.id of charter owner (for conversation creation)
     captain: {
       id: string;
       displayName: string;
@@ -64,6 +65,7 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
         startingPoint: string;
         latitude: any | null; // Prisma Decimal
         longitude: any | null; // Prisma Decimal
+        charterOwnerId: string | null; // User.id of charter owner
         boatName: string | null;
         boatType: string | null;
         boatCapacity: number | null;
@@ -91,6 +93,7 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
         c."startingPoint",
         c.latitude,
         c.longitude,
+        c."ownerId" as "charterOwnerId",
         b.name as "boatName",
         b.type as "boatType",
         b.capacity as "boatCapacity",
@@ -189,6 +192,7 @@ export async function getTripById(tripId: string): Promise<TripData | null> {
                 longitude: Number(trip.longitude),
               }
             : null,
+        ownerId: trip.charterOwnerId, // User.id of charter owner
         captain:
           trip.captainId && trip.captainDisplayName && trip.captainEmail
             ? {

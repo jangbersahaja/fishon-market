@@ -1193,7 +1193,23 @@
       "backToBrowse": "Kembali ke Menu",
       "seeAllTypes": "Lihat semua kategori memancing",
       "seeAllTechniques": "Lihat semua teknik memancing",
-      "breadcrumb": "Spot Popular"
+      "breadcrumb": "Spot Popular",
+      "chartersLabel": "charter"
+    },
+    "species": {
+      "title": "Jenis Ikan",
+      "metaTitle": "Jenis Ikan | Fishon.my",
+      "metaDescription": "Lihat semua jenis ikan di Fishon. Cari ikan air masin, air tawar, dan sotong dengan charter tersedia.",
+      "description": "Temui jenis ikan yang tersedia di Fishon. Cari mengikut kategori dan jumpa charter yang menyasarkan tangkapan kegemaran anda.",
+      "noSpeciesFound": "Tiada jenis ikan dengan charter tersedia ditemui.",
+      "backToBrowse": "Kembali ke Menu",
+      "seeAllTypes": "Lihat semua kategori memancing",
+      "seeAllTechniques": "Lihat semua teknik memancing",
+      "seeAllDestinations": "Lihat semua destinasi",
+      "breadcrumb": "Jenis Ikan",
+      "totalSpecies": "{count, plural, =1 {# jenis tersedia} other {# jenis tersedia}}",
+      "charterCount": "{count, plural, =1 {# charter} other {# charter}}",
+      "speciesAvailable": "jenis"
     }
   },
   "auth": {

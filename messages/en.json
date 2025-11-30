@@ -1192,7 +1192,23 @@
       "backToBrowse": "Back to Browse",
       "seeAllTypes": "See all fishing types",
       "seeAllTechniques": "See all fishing techniques",
-      "breadcrumb": "Popular Destinations"
+      "breadcrumb": "Popular Destinations",
+      "chartersLabel": "charters"
+    },
+    "species": {
+      "title": "Fish Species",
+      "metaTitle": "Fish Species | Fishon.my",
+      "metaDescription": "Browse all fish species available on Fishon charters. Find saltwater, freshwater, and squid species with available charters.",
+      "description": "Discover fish species available on Fishon charters. Browse by category and find charters targeting your favorite catch.",
+      "noSpeciesFound": "No species with available charters found yet.",
+      "backToBrowse": "Back to Browse",
+      "seeAllTypes": "See all fishing types",
+      "seeAllTechniques": "See all fishing techniques",
+      "seeAllDestinations": "See all destinations",
+      "breadcrumb": "Fish Species",
+      "totalSpecies": "{count, plural, =1 {# species available} other {# species available}}",
+      "charterCount": "{count, plural, =1 {# charter} other {# charters}}",
+      "speciesAvailable": "species"
     }
   },
   "auth": {

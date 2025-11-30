@@ -1,17 +1,20 @@
 import AuthModal from "@/components/auth/AuthModal";
 import { AuthModalProvider } from "@/components/auth/AuthModalContext";
 import Chrome from "@/components/layout/Chrome";
+import type { FooterDestination } from "@/components/layout/Footer";
 import { NotificationProvider } from "@/components/notifications/NotificationProvider";
 import { CampaignContainer } from "@/components/promotional";
 import SessionProvider from "@/components/shared/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { locales } from "@/i18n/config";
 import { auth } from "@/lib/auth/auth";
+import { getAvailableStates } from "@/lib/helpers/popularity-helpers";
 import {
   createOrganizationSchema,
   createWebSiteSchema,
   serializeSchema,
 } from "@/lib/seo";
+import { getCharters } from "@/lib/services/charter-service";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -75,6 +78,20 @@ export default async function LocaleLayout({
 
   const session = await auth();
 
+  // Fetch footer destination data (gracefully fail if error)
+  let footerDestinations: FooterDestination[] = [];
+  try {
+    const charters = await getCharters();
+    const states = getAvailableStates(charters);
+    footerDestinations = states.map((s) => ({
+      name: s.name,
+      slug: s.slug,
+      charterCount: s.charterCount,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch footer destinations:", error);
+  }
+
   return (
     <html lang={locale}>
       <head>
@@ -100,7 +117,9 @@ export default async function LocaleLayout({
           <SessionProvider session={session}>
             <NotificationProvider>
               <AuthModalProvider>
-                <Chrome>{children}</Chrome>
+                <Chrome footerDestinations={footerDestinations}>
+                  {children}
+                </Chrome>
                 <AuthModal />
                 <Toaster />
                 {/* Global bottom bar campaign placement */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { getDestinationImage } from "@/lib/helpers/location-image-helpers";
+import type { StateWithDestinations } from "@/lib/helpers/popularity-helpers";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -100,6 +101,78 @@ export function DestinationGridSkeleton({ count = 12 }: { count?: number }) {
             <div className="h-4 w-1/2 rounded bg-gray-300" />
           </div>
         </div>
+      ))}
+    </div>
+  );
+}
+
+interface StateGroupProps {
+  stateGroup: StateWithDestinations;
+  gridClassName?: string;
+}
+
+/**
+ * Single state section with heading and destination grid
+ */
+export function StateDestinationGroup({
+  stateGroup,
+  gridClassName = "grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
+}: StateGroupProps) {
+  const locale = useLocale();
+  const t = useTranslations("categories.destinations");
+
+  // Filter destinations with images
+  const destinationsWithImages = stateGroup.destinations.filter(
+    (dest) =>
+      getDestinationImage(dest.name, dest.state, dest.charterImage) !==
+      undefined
+  );
+
+  if (destinationsWithImages.length === 0) return null;
+
+  return (
+    <section id={stateGroup.stateSlug} className="scroll-mt-20">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-gray-900">
+            {stateGroup.state}
+          </h2>
+          <span className="text-sm text-gray-500">
+            ({stateGroup.totalCharters} {t("chartersLabel")})
+          </span>
+        </div>
+      </div>
+      <div className={gridClassName}>
+        {destinationsWithImages.map((dest) => (
+          <DestinationCard key={dest.name} destination={dest} locale={locale} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+interface GroupedDestinationsGridProps {
+  stateGroups: StateWithDestinations[];
+  gridClassName?: string;
+}
+
+/**
+ * Full grouped destinations grid organized by state
+ */
+export function GroupedDestinationsGrid({
+  stateGroups,
+  gridClassName,
+}: GroupedDestinationsGridProps) {
+  if (stateGroups.length === 0) return null;
+
+  return (
+    <div className="space-y-10">
+      {stateGroups.map((stateGroup) => (
+        <StateDestinationGroup
+          key={stateGroup.stateSlug}
+          stateGroup={stateGroup}
+          gridClassName={gridClassName}
+        />
       ))}
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
 import {
   Bell,
@@ -7,6 +8,7 @@ import {
   Heart,
   HelpCircle,
   LayoutDashboard,
+  MessageSquare,
   Star,
   User,
 } from "lucide-react";
@@ -24,6 +26,12 @@ const getNavigation = (locale: string) => [
     name: "Bookings",
     href: `/${locale}/account/bookings`,
     icon: Calendar,
+  },
+  {
+    name: "Messages",
+    href: `/${locale}/account/messages`,
+    icon: MessageSquare,
+    showBadge: true, // Special flag for unread badge
   },
   {
     name: "Notifications",
@@ -65,6 +73,7 @@ export function AccountNav({
   const locale = useLocale();
   const pathname = usePathname();
   const navigation = getNavigation(locale);
+  const { unreadCount } = useUnreadMessages();
 
   // Choose background based on transparent mode
   const bgClass = transparentOnTop
@@ -82,6 +91,9 @@ export function AccountNav({
   const borderColorInactive = transparentOnTop
     ? "border-transparent hover:border-white/30"
     : "border-transparent hover:border-gray-300";
+  const badgeBgColor = transparentOnTop
+    ? "bg-white text-[#ec2227]"
+    : "bg-[#ec2227] text-white";
 
   return (
     <div className={bgClass}>
@@ -94,20 +106,34 @@ export function AccountNav({
           {navigation.map((item) => {
             const isActive =
               pathname === item.href || pathname?.startsWith(`${item.href}/`);
+            const showBadge = item.showBadge && unreadCount > 0;
 
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "inline-flex items-center gap-2 px-1 pt-3 pb-2 text-sm font-medium border-b-2 transition-colors",
+                  "inline-flex items-center gap-2 px-1 pt-3 pb-2 text-sm font-medium border-b-2 transition-colors relative",
                   isActive
                     ? `${borderColorActive} ${textColorActive}`
                     : `${borderColorInactive} ${textColorInactive}`
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                <item.icon className="w-4 h-4" />
+                <span className="relative">
+                  <item.icon className="w-4 h-4" />
+                  {showBadge && (
+                    <span
+                      className={cn(
+                        "absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold",
+                        badgeBgColor
+                      )}
+                      aria-label={`${unreadCount} unread messages`}
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </span>
                 {item.name}
               </Link>
             );
@@ -123,20 +149,34 @@ export function AccountNav({
             {navigation.map((item) => {
               const isActive =
                 pathname === item.href || pathname?.startsWith(`${item.href}/`);
+              const showBadge = item.showBadge && unreadCount > 0;
 
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "inline-flex items-center gap-2 px-3 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                    "inline-flex items-center gap-2 px-3 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap relative",
                     isActive
                       ? `${borderColorActive} ${textColorActive}`
                       : `${borderColorInactive} ${textColorInactive}`
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <span className="relative">
+                    <item.icon className="w-4 h-4" />
+                    {showBadge && (
+                      <span
+                        className={cn(
+                          "absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold",
+                          badgeBgColor
+                        )}
+                        aria-label={`${unreadCount} unread messages`}
+                      >
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </span>
                   {item.name}
                 </Link>
               );

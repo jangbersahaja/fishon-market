@@ -306,41 +306,53 @@ async function createManualBooking(session: any, body: any) {
     // Note: Conversation is locked until payment for Manual flow
     let conversationId: string | null = null;
     try {
-      const conversation = await createConversation(
-        booking.id,
-        dbUserId,
-        String(charter.id),
-        String(trip.charter.captain?.id || charter.ownerId)
-      );
-      conversationId = conversation.id;
+      // Use charter.ownerId (User.id of charter owner) for conversation
+      const ownerId = charter.ownerId;
+      if (!ownerId) {
+        console.warn(
+          "⚠️ Skipping conversation creation - charter owner not found"
+        );
+      } else {
+        const conversation = await createConversation(
+          booking.id,
+          dbUserId,
+          String(charter.id),
+          String(ownerId) // ownerId (User.id of charter owner)
+        );
+        conversationId = conversation.id;
 
-      // Send initial system message
-      if (conversationId) {
-        const messageContent = `New booking request for ${charter.name} - ${trip.name}. Date: ${d.toISOString().split("T")[0]}, ${ds} day(s), ${ad + ch} guests. Total: RM${pricing.finalPrice.toFixed(2)}`;
-        await sendMessage(conversationId, "system", messageContent, "system");
+        // Send initial system message
+        if (conversationId) {
+          const messageContent = `New booking request for ${charter.name} - ${trip.name}. Date: ${d.toISOString().split("T")[0]}, ${ds} day(s), ${ad + ch} guests. Total: RM${pricing.finalPrice.toFixed(2)}`;
+          await sendMessage(conversationId, "system", messageContent, "system");
+        }
       }
     } catch (convErr) {
       console.error("Failed to create conversation:", convErr);
     }
 
-    // Send notification to captain
+    // Send notification to captain (using charter.ownerId which is the User.id)
     try {
-      await createNotification({
-        userId: String(trip.charter.captain?.id || charter.ownerId),
-        type: "BOOKING_CREATED",
-        title: "New Booking Request",
-        message: `${session.user.name || session.user.email} has requested a booking for ${charter.name}`,
-        actionUrl: `/captain/bookings/${booking.id}`,
-        actionLabel: "Review Booking",
-        bookingId: booking.id,
-        charterId: String(charter.id),
-        metadata: {
-          anglerName: session.user.name,
-          anglerEmail: session.user.email,
-          tripDate: d.toISOString().split("T")[0],
-          approvalDeadline: approvalDeadline.toISOString(),
-        },
-      });
+      if (!charter.ownerId) {
+        console.warn("⚠️ Skipping notification - charter owner not found");
+      } else {
+        await createNotification({
+          userId: String(charter.ownerId),
+          type: "BOOKING_CREATED",
+          title: "New Booking Request",
+          message: `${session.user.name || session.user.email} has requested a booking for ${charter.name}`,
+          actionUrl: `/captain/bookings/${booking.id}`,
+          actionLabel: "Review Booking",
+          bookingId: booking.id,
+          charterId: String(charter.id),
+          metadata: {
+            anglerName: session.user.name,
+            anglerEmail: session.user.email,
+            tripDate: d.toISOString().split("T")[0],
+            approvalDeadline: approvalDeadline.toISOString(),
+          },
+        });
+      }
     } catch (notifErr) {
       console.error("Failed to create notification:", notifErr);
     }

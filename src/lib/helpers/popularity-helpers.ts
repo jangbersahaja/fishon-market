@@ -200,3 +200,78 @@ export function getFishingTypesWithCounts(
     count: countChartersByType(charters, type.key),
   }));
 }
+
+/**
+ * State with destinations grouped
+ */
+export interface StateWithDestinations {
+  state: string;
+  stateSlug: string;
+  totalCharters: number;
+  destinations: PopularDestination[];
+}
+
+/**
+ * Get destinations grouped by state
+ * Returns states sorted by total charter count
+ */
+export function getDestinationsGroupedByState(
+  charters: Charter[]
+): StateWithDestinations[] {
+  const destinations = getPopularDestinations(charters);
+
+  // Group by state
+  const stateMap = new Map<string, PopularDestination[]>();
+
+  destinations.forEach((dest) => {
+    const state = dest.state || "other";
+    const existing = stateMap.get(state) || [];
+    existing.push(dest);
+    stateMap.set(state, existing);
+  });
+
+  // Convert to array and calculate totals
+  const statesWithDestinations: StateWithDestinations[] = Array.from(
+    stateMap.entries()
+  )
+    .map(([state, dests]) => ({
+      state: toTitleCase(state),
+      stateSlug: state.toLowerCase().replace(/\s+/g, "-"),
+      totalCharters: dests.reduce((sum, d) => sum + d.count, 0),
+      destinations: dests.sort((a, b) => b.count - a.count),
+    }))
+    .sort((a, b) => b.totalCharters - a.totalCharters);
+
+  return statesWithDestinations;
+}
+
+/**
+ * Get list of available states with charter counts
+ */
+export interface AvailableState {
+  name: string;
+  slug: string;
+  charterCount: number;
+}
+
+export function getAvailableStates(charters: Charter[]): AvailableState[] {
+  const stateGroups = getDestinationsGroupedByState(charters);
+
+  return stateGroups
+    .filter((s) => s.state.toLowerCase() !== "other")
+    .map((s) => ({
+      name: s.state,
+      slug: s.stateSlug,
+      charterCount: s.totalCharters,
+    }));
+}
+
+/**
+ * Helper to convert string to title case
+ */
+function toTitleCase(str: string): string {
+  return str
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}

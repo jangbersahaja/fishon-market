@@ -5,13 +5,14 @@ import { CheckYourBookings } from "@/components/booking";
 import { UserNav } from "@/components/layout/UserNav";
 import { NotificationBell } from "@/components/notifications";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import {
-  Bell,
   Calendar,
   Heart,
   HelpCircle,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Star,
   User,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
   const isAuthed = !!session?.user;
   const { openModal } = useAuthModal();
   const t = useTranslations();
+  const { unreadCount } = useUnreadMessages();
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -86,13 +88,18 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 aria-current={
                   isActive(`/${locale}/account/messages`) ? "page" : undefined
                 }
-                className={`text-sm font-medium underline-offset-4 decoration-white/40 ${
+                className={`relative text-sm font-medium underline-offset-4 decoration-white/40 ${
                   isActive(`/${locale}/account/messages`)
                     ? "underline"
                     : "hover:underline hover:decoration-white"
                 }`}
               >
                 {t("nav.messages")}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-[#ec2227]">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
 
               {/* User Dropdown */}
@@ -214,7 +221,14 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-white/10"
                 onClick={() => setOpen(false)}
               >
-                <Bell className="w-4 h-4" />
+                <span className="relative">
+                  <MessageSquare className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-[#ec2227]">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </span>
                 {t("nav.messages")}
               </Link>
               <Link

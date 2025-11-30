@@ -640,7 +640,7 @@ export default async function ConfirmationPage({
           </Link>
           <span className="text-gray-300">•</span>
           <Link
-            href={`/${locale}/help`}
+            href={`/${locale}/support/help`}
             className="text-sm font-medium text-gray-600 hover:underline"
           >
             {t("needHelp")}

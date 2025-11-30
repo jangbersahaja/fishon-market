@@ -1,11 +1,19 @@
 "use client";
 
-import Footer from "@/components/layout/Footer";
+import Footer, { type FooterDestination } from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
-export default function Chrome({ children }: { children: ReactNode }) {
+interface ChromeProps {
+  children: ReactNode;
+  footerDestinations?: FooterDestination[];
+}
+
+export default function Chrome({
+  children,
+  footerDestinations = [],
+}: ChromeProps) {
   const pathname = usePathname() || "/";
 
   // 1) Hide Navbar & Footer on main page
@@ -23,7 +31,7 @@ export default function Chrome({ children }: { children: ReactNode }) {
       <Navbar transparentOnTop={transparentOnTop} />
 
       {children}
-      {<Footer />}
+      {<Footer destinations={footerDestinations} />}
     </>
   );
 }

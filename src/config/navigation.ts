@@ -7,7 +7,7 @@
 
 export const mainNavigation = [
   { href: "/home", labelKey: "nav.home" },
-  { href: "/charters", labelKey: "nav.charters" },
+  { href: "/search", labelKey: "nav.charters" },
   { href: "/blog", labelKey: "nav.blog" },
 ] as const;
 

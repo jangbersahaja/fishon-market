@@ -13,8 +13,9 @@ export const metadata = {
 export default async function FavoritesPage() {
   const session = await auth();
 
+  const locale = await getLocale();
+
   if (!session?.user?.id) {
-    const locale = await getLocale();
     redirect(`/${locale}/login?next=/${locale}/account/favorites`);
   }
 
@@ -36,7 +37,7 @@ export default async function FavoritesPage() {
           description="Save charters you're interested in to easily find them later"
           action={{
             label: "Browse Charters",
-            href: "/charters",
+            href: `/${locale}/search`,
           }}
         />
       </div>
