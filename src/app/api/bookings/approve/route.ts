@@ -237,7 +237,6 @@ export async function POST(req: Request) {
           const base =
             process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
           const confirmationUrl = `${base}/ms/book/confirm?id=${encodeURIComponent(updated.id)}`;
-          const bookingUrl = `${base}/ms/account/bookings/${encodeURIComponent(updated.id)}`;
           const paymentUrl = `${base}/ms/book/payment/${encodeURIComponent(updated.id)}`;
 
           // Manual flow: Send approval email with payment link

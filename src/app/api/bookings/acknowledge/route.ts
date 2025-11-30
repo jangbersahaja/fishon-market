@@ -160,7 +160,7 @@ export async function POST(req: Request) {
             type: "BOOKING_CONFIRMED",
             title: "Booking Confirmed! 🎉",
             message: `Your booking for ${trip.charter.name} on ${updated.date.toISOString().slice(0, 10)} has been confirmed by the captain!`,
-            actionUrl: `/ms/account/bookings/${updated.id}`,
+            actionUrl: `/ms/book/confirm?id=${updated.id}`,
             actionLabel: "View Booking",
             bookingId: updated.id,
             charterId: trip.charter.id,
@@ -201,7 +201,7 @@ export async function POST(req: Request) {
             captainName: trip.charter.captain?.displayName || "Captain",
             captainEmail: trip.charter.captain?.email || "",
             captainPhone: trip.charter.captain?.phone || "",
-            bookingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/ms/account/bookings/${updated.id}`,
+            bookingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/ms/book/confirm?id=${updated.id}`,
           });
 
           // Also send email to captain with pricing breakdown
@@ -242,7 +242,7 @@ export async function POST(req: Request) {
     revalidatePath(`/captain/bookings/${updated.id}`);
     for (const locale of locales) {
       revalidatePath(`/${locale}/account/bookings`);
-      revalidatePath(`/${locale}/account/bookings/${updated.id}`);
+      revalidatePath(`/${locale}/book/confirm?id=${updated.id}`);
     }
 
     // Revalidate message page if conversation exists

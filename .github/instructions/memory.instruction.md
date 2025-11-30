@@ -20,7 +20,7 @@ applyTo: "**"
 - 9 account components (BookingCard, BookingStatusBadge, BookingSummary, BookingTimeline, BookingsClient, DashboardHeader, DashboardNav, EmptyState, QuickStats)
 - Booking service and helpers
 - Bookings list page (`/account/bookings`)
-- Booking detail page (`/account/bookings/[id]`)
+- Booking detail page (`/book/confirm?id=[id]`)
 - API routes for bookings
 - Database migration for User profile fields (name, phone, address, emergency contact)
 - Layout fixes (Chrome component hides navbar/footer on dashboard pages, Navbar simplified)
@@ -98,7 +98,7 @@ applyTo: "**"
 
 - `/account/overview` - Dashboard overview with QuickStats
 - `/account/bookings` - Bookings list
-- `/account/bookings/[id]` - Booking detail with timeline
+- `/book/confirm?id=[id]` - Booking detail with timeline
 - `/account/favorites` - Favorites list (Phase 2)
 - `/account/profile` - Profile editor (Phase 2)
 - `/account/support` - Support page (placeholder)
