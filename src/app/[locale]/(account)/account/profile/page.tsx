@@ -24,6 +24,7 @@ export default async function ProfilePage() {
       name: true,
       email: true,
       phone: true,
+      image: true,
       streetAddress: true,
       city: true,
       state: true,
