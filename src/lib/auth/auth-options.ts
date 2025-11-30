@@ -27,6 +27,20 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
+  // Events are triggered after NextAuth completes certain actions
+  events: {
+    // Called when Prisma Adapter creates a NEW user via OAuth
+    async createUser({ user }) {
+      if (user.email) {
+        console.log(`🆕 New OAuth user created: ${user.email}`);
+        await assignWelcomePromoCode(
+          user.id,
+          user.email,
+          user.name || undefined
+        );
+      }
+    },
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
