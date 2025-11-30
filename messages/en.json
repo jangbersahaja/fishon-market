@@ -124,7 +124,8 @@
       "title": "Browse By Type",
       "seeAll": "See all fishing types",
       "exploreTrips": "Explore {type} trips",
-      "altText": "{type} fishing"
+      "altText": "{type} fishing",
+      "explore": "Explore"
     },
     "topTechniques": {
       "title": "Top Fishing Techniques",
@@ -367,6 +368,7 @@
       "inshore": "Inshore",
       "lake": "Lake",
       "stream": "Stream",
+      "jungle": "Jungle",
       "tripsAvailable": "Trips Available",
       "trips": "{count} trips",
       "targetSpecies": "Target Species",

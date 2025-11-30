@@ -124,7 +124,8 @@
       "title": "Semak Mengikut Kategori",
       "seeAll": "Lihat semua kategori",
       "exploreTrips": "Terokai trip {type}",
-      "altText": "Memancing {type}"
+      "altText": "Memancing {type}",
+      "explore": "Terokai"
     },
     "topTechniques": {
       "title": "Teknik Pancingan",
@@ -367,6 +368,7 @@
       "inshore": "Pantai",
       "lake": "Tasik",
       "stream": "Sungai",
+      "jungle": "Hutan",
       "tripsAvailable": "Ketersediaan Trip",
       "trips": "{count} Trip",
       "targetSpecies": "Spesis Sasaran",

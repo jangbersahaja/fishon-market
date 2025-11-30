@@ -180,6 +180,7 @@ export function getPopularTechniques(
 export interface FishingTypeWithCount {
   key: string;
   label: string;
+  labelMy: string;
   count: number;
 }
 
@@ -187,10 +188,11 @@ export function getFishingTypesWithCounts(
   charters: Charter[]
 ): FishingTypeWithCount[] {
   const types = [
-    { key: "lake", label: "Lake" },
-    { key: "stream", label: "Stream" },
-    { key: "inshore", label: "Inshore" },
-    { key: "offshore", label: "Offshore" },
+    { key: "lake", label: "Lake / Dam", labelMy: "Tasik" },
+    { key: "stream", label: "Stream", labelMy: "Sungai" },
+    { key: "inshore", label: "Inshore / Island", labelMy: "Persisir" },
+    { key: "offshore", label: "Offshore / Deepsea", labelMy: "Laut Dalam" },
+    { key: "jungle", label: "Jungle / Waterfall", labelMy: "Hutan" },
   ];
 
   return types.map((type) => ({
