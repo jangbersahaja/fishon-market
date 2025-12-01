@@ -23,6 +23,7 @@ import StarRating from "@/components/ratings/StarRating";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
 import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
+import { calculateDisplayPrice } from "@/lib/helpers/pricing-helpers";
 import { getCharterById } from "@/lib/services/charter-service";
 import { isFavorited } from "@/lib/services/favorite-service";
 import {
@@ -546,7 +547,9 @@ export default async function CharterViewPage({
 
       {/* Mobile Sticky Bar - shows price and Book Now CTA */}
       <MobileStickyBar
-        minPrice={Math.min(...trips.map((t) => t.priceOverride ?? t.price))}
+        minPrice={calculateDisplayPrice(
+          Math.min(...trips.map((t) => t.priceOverride ?? t.price))
+        )}
       />
     </main>
   );
