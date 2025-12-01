@@ -15,6 +15,7 @@ import {
   serializeSchema,
 } from "@/lib/seo";
 import { getCharters } from "@/lib/services/charter-service";
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -131,6 +132,7 @@ export default async function LocaleLayout({
             </NotificationProvider>
           </SessionProvider>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );
