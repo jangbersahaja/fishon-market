@@ -58,12 +58,23 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.toLowerCase();
         const user = await prisma.user.findUnique({
           where: { email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            passwordHash: true,
+            emailVerified: true,
+            role: true,
+          },
         });
         if (!user) return null;
 
         // TAC-first: if a valid TAC code is provided, accept regardless of stored password
-        if (await validateTac(email, credentials.password)) {
-          // Successfully authenticated by TAC code
+        const isTacValid = await validateTac(email, credentials.password);
+
+        if (isTacValid) {
+          // Successfully authenticated by TAC code - TAC login bypasses email verification
+          // This is intentional: TAC proves email ownership
         } else if (user.passwordHash) {
           // Check password hash if it exists
           const ok = await bcrypt.compare(
@@ -71,6 +82,11 @@ export const authOptions: NextAuthOptions = {
             user.passwordHash
           );
           if (!ok) return null;
+
+          // For password login, check if email is verified
+          if (!user.emailVerified) {
+            throw new Error("EMAIL_NOT_VERIFIED");
+          }
         } else {
           // OAuth user trying to login with credentials (no password set)
           return null;

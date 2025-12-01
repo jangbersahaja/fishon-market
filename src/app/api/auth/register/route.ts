@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/database/prisma";
-import { sendWelcomeEmail } from "@/lib/services/email-service";
+import { sendVerificationCode } from "@/lib/services/email-service";
 import { upgradeGuestToAngler } from "@/lib/services/guest-user-service";
-import {
-  assignPromoCodeToUser,
-  getPromoCodeByCode,
-} from "@/lib/services/promo-service";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+
+/**
+ * Generate 6-digit verification code
+ */
+function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +36,7 @@ export async function POST(request: Request) {
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      // If GUEST user, upgrade to ANGLER
+      // If GUEST user, upgrade to ANGLER (still requires verification)
       if (existing.role === "GUEST") {
         const passwordHash = await bcrypt.hash(password, 10);
         const upgraded = await upgradeGuestToAngler({
@@ -43,24 +46,41 @@ export async function POST(request: Request) {
           phone: phone || existing.phone || undefined,
         });
 
-        // Return user data with upgraded flag
-        const user = await prisma.user.findUnique({
-          where: { id: upgraded.id },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            phone: true,
-            role: true,
+        // Generate and send verification code for upgraded user
+        const code = generateVerificationCode();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await prisma.verificationCode.create({
+          data: {
+            email,
+            code,
+            type: "REGISTRATION",
+            expiresAt,
           },
         });
 
+        // Send verification email
+        try {
+          await sendVerificationCode({
+            to: email,
+            userName: name || email.split("@")[0],
+            code,
+            purpose: "registration",
+            expiryMinutes: 10,
+            userId: upgraded.id,
+          });
+        } catch (emailError) {
+          console.error("Failed to send verification email:", emailError);
+          // Continue - user can request resend
+        }
+
         return NextResponse.json(
           {
-            user,
+            requiresVerification: true,
+            email,
             upgraded: true,
             message:
-              "Account upgraded successfully! Your previous bookings are now linked to your account.",
+              "Account upgraded! Please check your email for the verification code.",
           },
           { status: 200 }
         );
@@ -73,7 +93,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create new user
+    // Create new user with unverified email
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
@@ -81,6 +101,7 @@ export async function POST(request: Request) {
         passwordHash,
         name: name,
         phone,
+        emailVerified: null, // Explicitly unverified
         // role defaults to ANGLER via Prisma schema
       },
       select: {
@@ -92,35 +113,42 @@ export async function POST(request: Request) {
       },
     });
 
-    // Assign FISHONTRIP1 welcome promo code to new user
-    // Non-blocking: don't fail registration if promo assignment fails
-    let assignedPromoCode: string | undefined;
-    try {
-      const welcomePromo = await getPromoCodeByCode("FISHONTRIP1");
-      if (welcomePromo) {
-        await assignPromoCodeToUser(user.id, welcomePromo.id);
-        assignedPromoCode = welcomePromo.code;
-      }
-    } catch (promoError) {
-      console.error("Failed to assign welcome promo code:", promoError);
-      // Continue with registration - promo assignment is not critical
-    }
+    // Generate and store verification code
+    const code = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Send welcome email with promo code (non-blocking)
+    await prisma.verificationCode.create({
+      data: {
+        email,
+        code,
+        type: "REGISTRATION",
+        expiresAt,
+      },
+    });
+
+    // Send verification email
     try {
-      const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://fishon.my"}/login`;
-      await sendWelcomeEmail({
+      await sendVerificationCode({
         to: user.email,
         userName: user.name || user.email.split("@")[0],
-        loginUrl,
-        promoCode: assignedPromoCode,
+        code,
+        purpose: "registration",
+        expiryMinutes: 10,
+        userId: user.id,
       });
     } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError);
-      // Continue with registration - email sending is not critical
+      console.error("Failed to send verification email:", emailError);
+      // Continue - user can request resend from verification page
     }
 
-    return NextResponse.json({ user }, { status: 201 });
+    return NextResponse.json(
+      {
+        requiresVerification: true,
+        email: user.email,
+        message: "Please check your email for the verification code.",
+      },
+      { status: 201 }
+    );
   } catch (e) {
     console.error("Register error", e);
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });

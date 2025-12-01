@@ -1229,7 +1229,25 @@
     "continueAsGuest": "Continue as Guest",
     "loadingSignIn": "Loading sign in...",
     "loadingRegistration": "Loading registration...",
-    "adminAccessOnly": "Admin access only. Please sign in with an admin account."
+    "adminAccessOnly": "Admin access only. Please sign in with an admin account.",
+    "verification": {
+      "title": "Verify Your Email",
+      "subtitle": "We sent a verification code to",
+      "codeLabel": "Verification Code",
+      "codePlaceholder": "Enter 6-digit code",
+      "checkInbox": "Check your inbox and spam folder",
+      "verifyButton": "Verify Email",
+      "verifying": "Verifying...",
+      "resendCode": "Resend verification code",
+      "resendIn": "Resend code in {seconds}s",
+      "backToRegistration": "← Back to registration",
+      "emailNotVerified": "Please verify your email before signing in. Check your inbox for the verification code.",
+      "verificationSuccess": "Email verified! You can now sign in.",
+      "codeSent": "Verification code sent!",
+      "invalidCode": "Invalid or expired verification code",
+      "codeExpired": "Verification code has expired. Please request a new one.",
+      "tooManyRequests": "Too many code requests. Please wait a few minutes."
+    }
   },
   "validation": {
     "required": "This field is required",

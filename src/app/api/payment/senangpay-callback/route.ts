@@ -271,6 +271,38 @@ export async function POST(request: NextRequest) {
         }
       );
 
+      // Create conversation for the booking (DIRECT flow)
+      if (trip.charter.ownerId) {
+        try {
+          const { createConversation } = await import(
+            "@/lib/services/message-service"
+          );
+          const conversation = await createConversation(
+            booking.id,
+            paymentSession.userId!, // anglerId
+            bookingData.charterId, // charterId
+            trip.charter.ownerId // ownerId (User.id of charter owner)
+          );
+          console.log(
+            "✅ [SENANGPAY CALLBACK] Conversation created for DIRECT flow booking",
+            {
+              bookingId: booking.id,
+              conversationId: conversation.id,
+            }
+          );
+        } catch (convError) {
+          console.error(
+            "❌ [SENANGPAY CALLBACK] Failed to create conversation:",
+            convError
+          );
+          // Non-critical - booking is still valid
+        }
+      } else {
+        console.warn(
+          "⚠️ [SENANGPAY CALLBACK] Skipping conversation creation - charter owner not found"
+        );
+      }
+
       // Trigger all side effects
       await triggerPaymentSideEffects({
         bookingId: booking.id,
