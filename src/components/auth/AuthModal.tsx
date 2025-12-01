@@ -375,6 +375,13 @@ function SignInForm({
     setLoading(false);
 
     if (res?.error) {
+      // Check for email not verified error
+      if (res.error.includes("EMAIL_NOT_VERIFIED")) {
+        setError(
+          "Please verify your email before signing in. Check your inbox for the verification code."
+        );
+        return;
+      }
       setError("Incorrect password. Please try again.");
       return;
     }
@@ -663,6 +670,7 @@ function SignUpForm({
   next: string | undefined;
   oauthProviders: OAuthProviderInfo[];
 }) {
+  const [step, setStep] = useState<"form" | "verify">("form");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -670,14 +678,38 @@ function SignUpForm({
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [resendSentTime, setResendSentTime] = useState<number | null>(null);
 
   // Real-time password validation
   const passwordValidation = useMemo(() => {
     if (!password) return null;
     return validatePassword(password);
   }, [password]);
+
+  // Resend timer countdown
+  useEffect(() => {
+    if (!resendSentTime) {
+      setResendTimer(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - resendSentTime) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setResendTimer(remaining);
+
+      if (remaining === 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [resendSentTime]);
 
   const handleOAuthClick = (provider: OAuthProviderInfo) => {
     if (!provider.configured) return;
@@ -717,13 +749,20 @@ function SignUpForm({
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "Registration failed");
       }
 
-      // Auto sign in after successful registration
-      // Use current page if no explicit next URL provided
+      // Check if verification is required
+      if (data.requiresVerification) {
+        setStep("verify");
+        setResendSentTime(Date.now());
+        return;
+      }
+
+      // Legacy: if no verification required, try auto sign-in
       const callbackUrl =
         next || window.location.pathname + window.location.search;
 
@@ -747,6 +786,181 @@ function SignUpForm({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/verify-registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: verificationCode }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Verification failed");
+      }
+
+      // Verification successful - auto sign in
+      const callbackUrl =
+        next || window.location.pathname + window.location.search;
+
+      const signInRes = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+        callbackUrl,
+      });
+
+      if (signInRes?.error) {
+        // Show success but ask user to sign in manually
+        setSuccess("Email verified! Please sign in to continue.");
+        return;
+      }
+
+      window.location.href = signInRes?.url || callbackUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResendCode() {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/resend-registration-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to resend code");
+      }
+
+      setResendSentTime(Date.now());
+      setSuccess("Verification code sent!");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resend code");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Verification step UI
+  if (step === "verify") {
+    return (
+      <div className="space-y-5">
+        <div className="text-center space-y-2">
+          <div className="mx-auto w-12 h-12 rounded-full bg-[#ec2227]/10 flex items-center justify-center">
+            <svg
+              className="w-6 h-6 text-[#ec2227]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Verify Your Email
+          </h3>
+          <p className="text-sm text-slate-600">
+            We sent a verification code to
+          </p>
+          <p className="text-sm font-medium text-[#ec2227]">{email}</p>
+        </div>
+
+        <form onSubmit={handleVerifyCode} className="space-y-4">
+          {error && (
+            <div
+              className={`rounded-md px-3 py-2 text-xs ${feedbackTokens.error.subtle}`}
+            >
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-md px-3 py-2 text-xs bg-green-50 text-green-700 border border-green-200">
+              {success}
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-600">
+              Verification Code
+            </label>
+            <input
+              type="text"
+              value={verificationCode}
+              onChange={(e) =>
+                setVerificationCode(
+                  e.target.value.replace(/\D/g, "").slice(0, 6)
+                )
+              }
+              placeholder="Enter 6-digit code"
+              className="w-full rounded-lg border border-slate-200 px-3 py-3 text-lg text-center tracking-[0.5em] font-mono shadow-inner focus:border-[#ec2227] focus:outline-none"
+              maxLength={6}
+              autoFocus
+              required
+            />
+            <p className="text-[10px] text-slate-500 mt-1 text-center">
+              Check your inbox and spam folder
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || verificationCode.length !== 6}
+            className="w-full rounded-xl bg-[#ec2227] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#c81e23] disabled:opacity-60"
+          >
+            {loading ? "Verifying…" : "Verify Email"}
+          </button>
+
+          <div className="text-center space-y-2">
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={loading || resendTimer > 0}
+              className="text-xs text-slate-500 hover:text-[#ec2227] transition-colors underline disabled:opacity-50 disabled:no-underline"
+            >
+              {resendTimer > 0
+                ? `Resend code in ${resendTimer}s`
+                : "Resend verification code"}
+            </button>
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("form");
+                  setVerificationCode("");
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="text-xs text-slate-500 hover:text-[#ec2227] transition-colors underline"
+              >
+                ← Back to registration
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
   }
 
   return (

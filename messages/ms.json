@@ -1230,7 +1230,25 @@
     "continueAsGuest": "Teruskan sebagai Tetamu",
     "loadingSignIn": "Memuatkan log masuk...",
     "loadingRegistration": "Memuatkan pendaftaran...",
-    "adminAccessOnly": "Akses admin sahaja. Sila log masuk dengan akaun admin."
+    "adminAccessOnly": "Akses admin sahaja. Sila log masuk dengan akaun admin.",
+    "verification": {
+      "title": "Sahkan Emel Anda",
+      "subtitle": "Kami telah menghantar kod pengesahan ke",
+      "codeLabel": "Kod Pengesahan",
+      "codePlaceholder": "Masukkan kod 6 digit",
+      "checkInbox": "Semak peti masuk dan folder spam anda",
+      "verifyButton": "Sahkan Emel",
+      "verifying": "Mengesahkan...",
+      "resendCode": "Hantar semula kod pengesahan",
+      "resendIn": "Hantar semula dalam {seconds}s",
+      "backToRegistration": "← Kembali ke pendaftaran",
+      "emailNotVerified": "Sila sahkan emel anda sebelum log masuk. Semak peti masuk untuk kod pengesahan.",
+      "verificationSuccess": "Emel disahkan! Anda boleh log masuk sekarang.",
+      "codeSent": "Kod pengesahan dihantar!",
+      "invalidCode": "Kod pengesahan tidak sah atau telah tamat tempoh",
+      "codeExpired": "Kod pengesahan telah tamat tempoh. Sila minta yang baru.",
+      "tooManyRequests": "Terlalu banyak permintaan kod. Sila tunggu beberapa minit."
+    }
   },
   "validation": {
     "required": "Ruangan ini diperlukan",
