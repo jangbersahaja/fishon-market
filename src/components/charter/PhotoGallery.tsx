@@ -265,6 +265,13 @@ function Lightbox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current]);
 
+  const prev = useCallback(() => {
+    setCurrent((c) => (c - 1 + media.length) % media.length);
+  }, [media.length]);
+  const next = useCallback(() => {
+    setCurrent((c) => (c + 1) % media.length);
+  }, [media.length]);
+
   // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -274,15 +281,7 @@ function Lightbox({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, media.length]);
-
-  const prev = useCallback(() => {
-    setCurrent((c) => (c - 1 + media.length) % media.length);
-  }, [media.length]);
-  const next = useCallback(() => {
-    setCurrent((c) => (c + 1) % media.length);
-  }, [media.length]);
+  }, [onClose, next, prev]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];

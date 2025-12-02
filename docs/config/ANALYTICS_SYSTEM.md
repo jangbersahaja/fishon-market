@@ -32,16 +32,25 @@ Captain Dashboard ← fishon-captain ← Analytics API
 
 ```typescript
 enum AnalyticsEventType {
+  // Discovery & Engagement
   PROFILE_VIEW       // Captain profile viewed
   CHARTER_VIEW       // Charter detail page viewed
   CHARTER_SEARCH     // Charter appeared in search
   PHOTO_VIEW         // Charter photo viewed
   VIDEO_VIEW         // Charter video played
   CONTACT_CLICK      // Contact button clicked
-  BOOKING_STARTED    // Booking form opened
-  BOOKING_SUBMITTED  // Booking form submitted
   REVIEW_VIEW        // Reviews section viewed
   SHARE_CLICKED      // Share button clicked
+
+  // Booking Flow
+  BOOKING_STARTED    // Booking form opened (widget click)
+  BOOKING_SUBMITTED  // Booking request submitted (form completed)
+
+  // Payment Flow (AUTO flow only)
+  PAYMENT_AUTHORIZED // Payment pre-authorized (card token created or FPX/E-wallet paid)
+  PAYMENT_CAPTURED   // Payment captured (final charge on TOKENIZED flow)
+  PAYMENT_RELEASED   // Payment token released without charge (booking expired/rejected)
+  PAYMENT_REFUNDED   // Payment refunded (DIRECT flow refund)
 }
 ```
 

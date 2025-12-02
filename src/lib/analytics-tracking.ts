@@ -64,11 +64,11 @@ function getOrCreateSessionId(): string {
  */
 export async function trackEvent(params: TrackEventParams): Promise<void> {
   try {
-    // Don't track in development (optional - comment out to test)
-    // if (process.env.NODE_ENV === 'development') {
-    //   console.log('[Analytics] Would track:', params);
-    //   return;
-    // }
+    // Don't track in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Analytics] Skipped (dev):", params.eventType);
+      return;
+    }
 
     const sessionId = getOrCreateSessionId();
     const referrer = typeof window !== "undefined" ? document.referrer : "";
