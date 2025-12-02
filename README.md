@@ -21,18 +21,18 @@ It's built with **Next.js 15**, **React 19**, **Prisma ORM**, and **PostgreSQL**
 
 ## 🧱 Tech Stack
 
-| Layer               | Technology                                              |
-| ------------------- | ------------------------------------------------------- |
-| **Framework**       | Next.js 15 (App Router)                                 |
-| **Language**        | TypeScript / React 19                                   |
-| **Database**        | PostgreSQL (via Prisma ORM)                             |
-| **UI & Styling**    | Tailwind CSS, Geist Font                                |
-| **Payments**        | SenangPay (Card, FPX, E-Wallet)                         |
-| **Real-time**       | Pusher (WebSocket)                                      |
-| **Email**           | Zoho SMTP + @fishon/email (React Email templates)       |
-| **SMS**             | Exabytes Bulk SMS                                       |
-| **Deployment**      | Vercel + Neon Postgres                                  |
-| **CI/CD**           | GitHub Actions                                          |
+| Layer            | Technology                                        |
+| ---------------- | ------------------------------------------------- |
+| **Framework**    | Next.js 15 (App Router)                           |
+| **Language**     | TypeScript / React 19                             |
+| **Database**     | PostgreSQL (via Prisma ORM)                       |
+| **UI & Styling** | Tailwind CSS, Geist Font                          |
+| **Payments**     | SenangPay (Card, FPX, E-Wallet)                   |
+| **Real-time**    | Pusher (WebSocket)                                |
+| **Email**        | Zoho SMTP + @fishon/email (React Email templates) |
+| **SMS**          | Exabytes Bulk SMS                                 |
+| **Deployment**   | Vercel + Neon Postgres                            |
+| **CI/CD**        | GitHub Actions                                    |
 
 ---
 
@@ -65,13 +65,13 @@ fishon-market/
 
 ### Related Services
 
-| Service             | Repo                 | Responsibility                              |
-| ------------------- | -------------------- | ------------------------------------------- |
-| `fishon-captain`    | Backend API          | Captain registration, management, analytics |
-| `fishon-market`     | Frontend marketplace | Angler experience, bookings, payments       |
-| `fishon-schemas`    | Shared package       | Zod schemas for event validation            |
-| `fishon-email`      | Shared package       | React Email templates                       |
-| `fishon-ui`         | Shared package       | Shared UI components and types              |
+| Service          | Repo                 | Responsibility                              |
+| ---------------- | -------------------- | ------------------------------------------- |
+| `fishon-captain` | Backend API          | Captain registration, management, analytics |
+| `fishon-market`  | Frontend marketplace | Angler experience, bookings, payments       |
+| `fishon-schemas` | Shared package       | Zod schemas for event validation            |
+| `fishon-email`   | Shared package       | React Email templates                       |
+| `fishon-ui`      | Shared package       | Shared UI components and types              |
 
 ---
 
@@ -79,17 +79,17 @@ fishon-market/
 
 All feature configuration is documented in [`docs/config/`](docs/config/):
 
-| Document | Feature | Description |
-|----------|---------|-------------|
-| [BOOKING_FLOW.md](docs/config/BOOKING_FLOW.md) | Booking System | Dual flow (MANUAL/AUTO), guest checkout, payment integration |
-| [PAYMENT_SYSTEM.md](docs/config/PAYMENT_SYSTEM.md) | Payment | SenangPay integration, TOKENIZED/DIRECT flows, refunds |
-| [CHAT_SYSTEM_CONFIGURATION.md](docs/config/CHAT_SYSTEM_CONFIGURATION.md) | Chat/Messaging | Angler-captain communication, Pusher real-time |
-| [EMAIL_NOTIFICATION_SYSTEM.md](docs/config/EMAIL_NOTIFICATION_SYSTEM.md) | Email & Notifications | Zoho SMTP, Pusher notifications, webhooks |
-| [SMS_SYSTEM.md](docs/config/SMS_SYSTEM.md) | SMS Notifications | Exabytes SMS integration |
-| [I18N_SYSTEM.md](docs/config/I18N_SYSTEM.md) | Internationalization | next-intl, Malay/English support |
-| [ANALYTICS_SYSTEM.md](docs/config/ANALYTICS_SYSTEM.md) | Analytics | Event tracking, captain dashboard |
-| [TIME_BASED_SCHEDULING.md](docs/config/TIME_BASED_SCHEDULING.md) | Scheduling | Partial availability, advance notice |
-| [PROMOTIONAL_BANNER_SYSTEM.md](docs/config/PROMOTIONAL_BANNER_SYSTEM.md) | Promotions | Campaign banners, tracking |
+| Document                                                                 | Feature               | Description                                                  |
+| ------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------ |
+| [BOOKING_FLOW.md](docs/config/BOOKING_FLOW.md)                           | Booking System        | Dual flow (MANUAL/AUTO), guest checkout, payment integration |
+| [PAYMENT_SYSTEM.md](docs/config/PAYMENT_SYSTEM.md)                       | Payment               | SenangPay integration, TOKENIZED/DIRECT flows, refunds       |
+| [CHAT_SYSTEM_CONFIGURATION.md](docs/config/CHAT_SYSTEM_CONFIGURATION.md) | Chat/Messaging        | Angler-captain communication, Pusher real-time               |
+| [EMAIL_NOTIFICATION_SYSTEM.md](docs/config/EMAIL_NOTIFICATION_SYSTEM.md) | Email & Notifications | Zoho SMTP, Pusher notifications, webhooks                    |
+| [SMS_SYSTEM.md](docs/config/SMS_SYSTEM.md)                               | SMS Notifications     | Exabytes SMS integration                                     |
+| [I18N_SYSTEM.md](docs/config/I18N_SYSTEM.md)                             | Internationalization  | next-intl, Malay/English support                             |
+| [ANALYTICS_SYSTEM.md](docs/config/ANALYTICS_SYSTEM.md)                   | Analytics             | Event tracking, captain dashboard                            |
+| [TIME_BASED_SCHEDULING.md](docs/config/TIME_BASED_SCHEDULING.md)         | Scheduling            | Partial availability, advance notice                         |
+| [PROMOTIONAL_BANNER_SYSTEM.md](docs/config/PROMOTIONAL_BANNER_SYSTEM.md) | Promotions            | Campaign banners, tracking                                   |
 
 ---
 
@@ -103,43 +103,43 @@ cp .env.example .env.local
 
 ### Required Variables
 
-| Key                               | Description                                |
-| --------------------------------- | ------------------------------------------ |
-| `DATABASE_URL`                    | PostgreSQL connection string (fishon-market) |
-| `CAPTAIN_DATABASE_URL`            | PostgreSQL connection (fishon-captain read-only) |
-| `USE_CAPTAIN_DB`                  | Enable direct DB connection (`1` = enabled) |
-| `NEXT_PUBLIC_SITE_URL`            | Base site URL                              |
-| `NEXTAUTH_SECRET`                 | NextAuth session secret                    |
+| Key                    | Description                                      |
+| ---------------------- | ------------------------------------------------ |
+| `DATABASE_URL`         | PostgreSQL connection string (fishon-market)     |
+| `CAPTAIN_DATABASE_URL` | PostgreSQL connection (fishon-captain read-only) |
+| `USE_CAPTAIN_DB`       | Enable direct DB connection (`1` = enabled)      |
+| `NEXT_PUBLIC_SITE_URL` | Base site URL                                    |
+| `NEXTAUTH_SECRET`      | NextAuth session secret                          |
 
 ### Payment (SenangPay)
 
-| Key                    | Description                     |
-| ---------------------- | ------------------------------- |
-| `SENANGPAY_MERCHANT_ID`| SenangPay merchant ID           |
-| `SENANGPAY_SECRET_KEY` | SenangPay secret key            |
-| `SENANGPAY_MODE`       | `sandbox` or `production`       |
-| `NEXT_PUBLIC_BASE_URL` | Base URL for payment callbacks  |
+| Key                     | Description                    |
+| ----------------------- | ------------------------------ |
+| `SENANGPAY_MERCHANT_ID` | SenangPay merchant ID          |
+| `SENANGPAY_SECRET_KEY`  | SenangPay secret key           |
+| `SENANGPAY_MODE`        | `sandbox` or `production`      |
+| `NEXT_PUBLIC_BASE_URL`  | Base URL for payment callbacks |
 
 ### Communication
 
-| Key                    | Description                     |
-| ---------------------- | ------------------------------- |
-| `SMTP_HOST`            | Zoho SMTP host                  |
-| `SMTP_USER`            | Zoho SMTP username              |
-| `SMTP_PASSWORD`        | Zoho SMTP password              |
-| `PUSHER_APP_ID`        | Pusher app ID                   |
-| `PUSHER_KEY`           | Pusher key                      |
-| `PUSHER_SECRET`        | Pusher secret                   |
-| `EXABYTES_SMS_USERNAME`| Exabytes SMS username           |
-| `EXABYTES_SMS_PASSWORD`| Exabytes SMS password           |
+| Key                     | Description           |
+| ----------------------- | --------------------- |
+| `SMTP_HOST`             | Zoho SMTP host        |
+| `SMTP_USER`             | Zoho SMTP username    |
+| `SMTP_PASSWORD`         | Zoho SMTP password    |
+| `PUSHER_APP_ID`         | Pusher app ID         |
+| `PUSHER_KEY`            | Pusher key            |
+| `PUSHER_SECRET`         | Pusher secret         |
+| `EXABYTES_SMS_USERNAME` | Exabytes SMS username |
+| `EXABYTES_SMS_PASSWORD` | Exabytes SMS password |
 
 ### Optional
 
-| Key                               | Description                     |
-| --------------------------------- | ------------------------------- |
+| Key                               | Description                       |
+| --------------------------------- | --------------------------------- |
 | `FISHON_CAPTAIN_API_URL`          | Fallback API URL for captain data |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps integration         |
-| `SENTRY_DSN`                      | Error tracking via Sentry       |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps integration           |
+| `SENTRY_DSN`                      | Error tracking via Sentry         |
 
 ---
 
@@ -281,8 +281,8 @@ Unauthorized copying or redistribution is prohibited without permission.
 
 ## 🧩 Contact
 
-| Role                | Contact                             |
-| ------------------- | ----------------------------------- |
-| **Support**         | <support@fishon.my>                 |
-| **Website**         | <https://www.fishon.my>             |
-| **Captains Portal** | <https://fishon-captain.vercel.app> |
+| Role                | Contact                     |
+| ------------------- | --------------------------- |
+| **Support**         | <support@fishon.my>         |
+| **Website**         | <https://www.fishon.my>     |
+| **Captains Portal** | <https://captain.fishon.my> |

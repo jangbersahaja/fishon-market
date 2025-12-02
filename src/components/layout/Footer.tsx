@@ -69,11 +69,11 @@ const Footer = ({ destinations = [] }: FooterProps) => {
   const captain = [
     {
       key: "listYourCharter",
-      link: "https://fishon-captain.vercel.app/list-your-business",
+      link: "https://captain.fishon.my/list-your-business",
     },
     {
       key: "manageYourCharter",
-      link: "https://fishon-captain.vercel.app",
+      link: "https://captain.fishon.my",
     },
   ];
 

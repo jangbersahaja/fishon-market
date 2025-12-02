@@ -127,7 +127,7 @@ export default function ContactPage() {
                 {t("cards.captainOnboarding.description")}
               </p>
               <a
-                href="https://fishon-captain.vercel.app/ms/list-your-business"
+                href="https://captain.fishon.my/ms/list-your-business"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white transition-colors bg-[#EC2227] rounded-lg hover:bg-[#d11f24] shadow-sm"

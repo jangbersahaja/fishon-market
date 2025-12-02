@@ -483,7 +483,7 @@ export default async function AboutPage() {
                 {t("cta.browse")}
               </Link>
               <Link
-                href="https://fishon-captain.vercel.app/ms/list-your-business"
+                href="https://captain.fishon.my/ms/list-your-business"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-semibold leading-6 text-white"

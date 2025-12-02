@@ -10,7 +10,7 @@
 | Flow       | Trigger                           | Captain Action                                                    | Payment Moment                                            | Guest Eligibility                 |
 | ---------- | --------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
 | **MANUAL** | Angler (or guest) submits request | Captain approves/rejects within `approvalTimeHours` (default 24h) | After approval (CARD capture or FPX/E-Wallet redirect)    | ✅ Yes, handled by `create-guest` |
-| **AUTO**   | Angler/guest confir(my) booking     | Captain receives notification + conversation unlocked immediately | Immediately (CARD tokenized + held, FPX/E-Wallet charged) | ✅ Yes, same guest checkout       |
+| **AUTO**   | Angler/guest confir(my) booking   | Captain receives notification + conversation unlocked immediately | Immediately (CARD tokenized + held, FPX/E-Wallet charged) | ✅ Yes, same guest checkout       |
 
 - Flow configuration lives on the captain side (Prisma `Charter.bookingFlowType`).
 - Market reads the flow via `getCharterFlowType(charterId)`, which prioritizes the public DB view (`v_public_charters`) and falls back to the public v1 API.
@@ -93,13 +93,13 @@ Client components:
 # Captain data sources
 CAPTAIN_DATABASE_URL="postgresql://.../fishon_captain"
 USE_CAPTAIN_DB="1"          # Prefer DB view when true
-FISHON_CAPTAIN_API_URL="https://fishon-captain.vercel.app"
+FISHON_CAPTAIN_API_URL="https://captain.fishon.my"
 FISHON_CAPTAIN_API_KEY="<optional>"
 
 # Booking + guest security
 BOOKINGS_EXPIRE_SECRET="expire-cron-secret"
 CRON_SECRET="queue-cron-secret"
-CAPTAIN_WEBHOOK_URL="https://fishon-captain.vercel.app/api/webhooks/booking"
+CAPTAIN_WEBHOOK_URL="https://captain.fishon.my/api/webhooks/booking"
 CAPTAIN_API_SECRET="shared-service-secret"
 TAC_SECRET="guest-verification-secret"  # fallback to NEXTAUTH_SECRET if omitted
 
@@ -111,7 +111,7 @@ SENANGPAY_FORCE_MOCK="false" # set true for local-only mock
 NEXT_PUBLIC_BASE_URL="http://localhost:3000" # used for SenangPay return/callback URLs
 
 # Optional guest UX helpers
-NEXT_PUBLIC_CAPTAIN_URL="https://fishon-captain.vercel.app"
+NEXT_PUBLIC_CAPTAIN_URL="https://captain.fishon.my"
 EMAIL_TEST_SECRET="local-email-check"
 ```
 
