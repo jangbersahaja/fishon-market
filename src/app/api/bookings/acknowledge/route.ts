@@ -87,12 +87,15 @@ export async function POST(req: Request) {
 
     // --- AUTO FLOW: PAYMENT_AUTHORIZED → PAID ---
     // Captain acknowledges payment and confirms booking
+    // paymentCapturedAt marks when the token was actually charged (TOKENIZED)
+    // or confirms the direct payment (DIRECT)
     const updated = await prisma.booking.update({
       where: { id },
       data: {
         status: "PAID",
         captainDecisionAt: new Date(),
-        // Keep payment fields as-is (already set during creation)
+        paymentCapturedAt: new Date(), // Mark payment as captured
+        paidAt: new Date(), // Also set paidAt for consistency
       },
       include: {
         user: {
