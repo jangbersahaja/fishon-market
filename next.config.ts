@@ -1,3 +1,4 @@
+import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
@@ -8,13 +9,10 @@ const blobHost = process.env.NEXT_PUBLIC_BLOB_HOST?.replace(
   ""
 )?.replace(/\/$/, "");
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   images: {
-    // Image quality (1-100). Lower = smaller files. 75 is default, 70 saves ~15% more.
-    quality: 70,
     // Prefer AVIF (smallest), fallback to WebP. Both are much smaller than JPEG/PNG.
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/avif", "image/webp"] as const,
     // Device breakpoints for srcset generation. Removed 4K sizes to reduce cache variants.
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     // Sizes for fixed-width images (icons, avatars, thumbnails)
