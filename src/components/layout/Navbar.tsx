@@ -20,7 +20,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoClose } from "react-icons/io5";
@@ -33,12 +33,18 @@ type NavbarProps = {
 export default function Navbar({ transparentOnTop = false }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname() || "/";
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const { data: session } = useSession();
   const isAuthed = !!session?.user;
   const { openModal } = useAuthModal();
   const t = useTranslations();
   const { unreadCount } = useUnreadMessages();
+
+  // Build full URL with search params for auth callback
+  const fullUrl = searchParams?.toString()
+    ? `${pathname}?${searchParams.toString()}`
+    : pathname;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -111,13 +117,13 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               <CheckYourBookings />
 
               <button
-                onClick={() => openModal("signin", pathname)}
+                onClick={() => openModal("signin", fullUrl)}
                 className="pl-6 text-sm font-medium border-l underline-offset-4 decoration-white/40 hover:underline hover:decoration-white border-white/40"
               >
                 {t("nav.signIn")}
               </button>
               <button
-                onClick={() => openModal("register", pathname)}
+                onClick={() => openModal("register", fullUrl)}
                 className="text-sm font-medium underline-offset-4 decoration-white/40 hover:underline hover:decoration-white"
               >
                 {t("nav.register")}
@@ -270,7 +276,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               <button
                 onClick={() => {
                   setOpen(false);
-                  openModal("signin", pathname);
+                  openModal("signin", fullUrl);
                 }}
                 className="px-3 py-2 text-sm font-medium text-left rounded-md hover:bg-white/10"
               >
@@ -279,7 +285,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
               <button
                 onClick={() => {
                   setOpen(false);
-                  openModal("register", pathname);
+                  openModal("register", fullUrl);
                 }}
                 className="px-3 py-2 text-sm font-medium text-left rounded-md hover:bg-white/10"
               >

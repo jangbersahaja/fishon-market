@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics-service";
 import { addDaysUTC, hasConflicts, TimeSlot } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
 import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
@@ -302,6 +303,37 @@ export async function POST(request: NextRequest) {
           "⚠️ [SENANGPAY CALLBACK] Skipping conversation creation - charter owner not found"
         );
       }
+
+      // Track PAYMENT_AUTHORIZED for DIRECT flow (non-blocking)
+      (async () => {
+        try {
+          const guests = bookingData.guests as {
+            adults: number;
+            children: number;
+          };
+          await trackEvent({
+            eventType: "PAYMENT_AUTHORIZED",
+            charterId: bookingData.charterId,
+            ownerId: trip.charter.ownerId,
+            userId: paymentSession.userId ?? undefined,
+            metadata: {
+              bookingId: booking.id,
+              paymentMethod: paymentSession.paymentMethod,
+              paymentFlow: "DIRECT",
+              transactionId: transaction_id,
+              tripId: trip.id,
+              tripName: trip.name,
+              date: bookingData.date,
+              days: bookingData.days,
+              adults: guests?.adults,
+              children: guests?.children,
+              amount: pricingBreakdown.finalPrice,
+            },
+          });
+        } catch (err) {
+          console.error("Failed to track PAYMENT_AUTHORIZED:", err);
+        }
+      })();
 
       // Trigger all side effects
       await triggerPaymentSideEffects({

@@ -15,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -367,14 +367,23 @@ export default function CheckoutForm({
   }, []); // Run once on mount - sp/router/currentPath are stable
 
   // Prefill after in-page login if fields are still blank
+  // Only run when session changes, not when form fields change
+  const sessionEmail = session?.user?.email;
+  const sessionName = session?.user?.name;
   useEffect(() => {
-    if (!session?.user) return;
-    if (!email && session.user.email) setValue("email", session.user.email);
-    if (!firstName && session.user.name) {
-      const [fn, ...rest] = (session.user.name || "").split(" ");
+    if (!sessionEmail && !sessionName) return;
+
+    // Only set if currently empty (check current form values directly)
+    const currentEmail = watch("email");
+    const currentFirstName = watch("firstName");
+    const currentLastName = watch("lastName");
+
+    if (!currentEmail && sessionEmail) setValue("email", sessionEmail);
+    if (!currentFirstName && sessionName) {
+      const [fn, ...rest] = (sessionName || "").split(" ");
       setValue("firstName", fn || "");
       const ln = rest.join(" ").trim();
-      if (!lastName && ln) setValue("lastName", ln);
+      if (!currentLastName && ln) setValue("lastName", ln);
     }
     // Pre-fill emergency contact from defaultUser (fetched from User model)
     if (defaultUser?.emergencyName)
@@ -383,7 +392,8 @@ export default function CheckoutForm({
       setValue("emergencyPhone", defaultUser.emergencyPhone);
     if (defaultUser?.emergencyRelation)
       setValue("emergencyRelation", defaultUser.emergencyRelation);
-  }, [session?.user, email, firstName, lastName, defaultUser, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionEmail, sessionName, defaultUser]);
 
   const effectiveStartTimes = useMemo(() => {
     const t = trips?.[tripIndex];
@@ -394,7 +404,7 @@ export default function CheckoutForm({
         : startTimes;
 
     return result;
-  }, [trips, tripIndex, startTimes, charterFlowType]);
+  }, [trips, tripIndex, startTimes]);
 
   // Calculate disabled start times based on partial availability for selected date
   // For multi-day bookings, check ALL dates in the range
@@ -824,31 +834,55 @@ export default function CheckoutForm({
   }, [chosenTrip?.maxAnglers, charter?.boat?.capacity]);
 
   // Clamp adults/children when maxGuests changes
+  // Use refs to track previous values and prevent loops
+  const prevClampedRef = useRef<{ adults: number; children: number } | null>(
+    null
+  );
+
   useEffect(() => {
     if (!maxGuests) return;
     const total = adults + children;
-    if (total > maxGuests) {
-      // Prefer reducing children first
-      const excess = total - maxGuests;
-      const newChildren = Math.max(0, children - excess);
-      const rem = excess - (children - newChildren);
-      const newAdults = Math.max(1, adults - rem);
-      updateSearchParam("children", String(newChildren));
-      updateSearchParam("adults", String(newAdults));
+    if (total <= maxGuests) {
+      prevClampedRef.current = null;
+      return;
     }
-  }, [maxGuests, adults, children, updateSearchParam]);
+
+    // Calculate clamped values
+    const excess = total - maxGuests;
+    const newChildren = Math.max(0, children - excess);
+    const rem = excess - (children - newChildren);
+    const newAdults = Math.max(1, adults - rem);
+
+    // Only update if different from previous clamped values (prevent loop)
+    if (
+      prevClampedRef.current?.adults === newAdults &&
+      prevClampedRef.current?.children === newChildren
+    ) {
+      return;
+    }
+
+    prevClampedRef.current = { adults: newAdults, children: newChildren };
+
+    // Batch updates to minimize re-renders
+    const params = new URLSearchParams(sp as any);
+    params.set("children", String(newChildren));
+    params.set("adults", String(newAdults));
+    router.replace(`${currentPath}?${params.toString()}`, { scroll: false });
+  }, [maxGuests, adults, children, sp, router, currentPath]);
   // Calculate complete pricing breakdown
+  const tripPrice =
+    (chosenTrip as any)?.priceOverride ?? chosenTrip?.price ?? 0;
+  const promoDiscount = appliedPromo?.discount ?? 0;
+
   const pricingBreakdown = useMemo(() => {
     // Use priceOverride if available, otherwise fall back to price
-    const tripPrice =
-      (chosenTrip as any)?.priceOverride ?? chosenTrip?.price ?? 0;
     if (tripPrice === 0) return null;
 
     // Import and use the same pricing calculation as backend
     const subtotal = tripPrice * Math.max(1, days);
     const commission = Math.min(subtotal * 0.1, 100); // 10% cap at RM100
     const platformFee = Math.round(commission * 100) / 100;
-    const discount = appliedPromo?.discount ?? 0;
+    const discount = promoDiscount;
     const displayPrice = subtotal + platformFee; // Trip price shown to angler (includes commission)
     const amountBeforeGateway = displayPrice - discount;
     const serviceFee = Math.round(amountBeforeGateway * 0.02 * 100) / 100; // Updated to 2%
@@ -869,12 +903,7 @@ export default function CheckoutForm({
       finalPrice,
       captainEarnings,
     };
-  }, [
-    chosenTrip?.price,
-    (chosenTrip as any)?.priceOverride,
-    days,
-    appliedPromo?.discount,
-  ]);
+  }, [tripPrice, days, promoDiscount]);
 
   // Get query params for payment status messages
   const paymentStatus = sp.get("payment");

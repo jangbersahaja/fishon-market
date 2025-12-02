@@ -998,6 +998,29 @@ export async function POST(req: Request) {
             isGuest: true,
           },
         });
+
+        // Track PAYMENT_AUTHORIZED for AUTO flow with TOKENIZED payment
+        if (
+          booking.status === "PAYMENT_AUTHORIZED" &&
+          booking.paymentFlow === "TOKENIZED"
+        ) {
+          await trackEvent({
+            eventType: "PAYMENT_AUTHORIZED",
+            charterId: trip.charter.id,
+            ownerId: charter?.ownerId,
+            metadata: {
+              bookingId: booking.id,
+              paymentMethod: booking.paymentMethod,
+              paymentFlow: "TOKENIZED",
+              tripId: trip.id,
+              tripName: trip.name,
+              date: booking.date.toISOString().slice(0, 10),
+              days: booking.days,
+              amount: Number(booking.finalPrice),
+              isGuest: true,
+            },
+          });
+        }
       } catch (err) {
         // Silent fail - analytics shouldn't block booking
         console.error("Failed to track guest booking submitted:", err);

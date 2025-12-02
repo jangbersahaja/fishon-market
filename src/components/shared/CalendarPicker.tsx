@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IoCalendarClear } from "react-icons/io5";
 
 // Local date helpers (no UTC conversion)
@@ -127,16 +127,16 @@ export default function CalendarPicker({
     selected?.getMonth() ?? today.getMonth()
   );
 
-  // Sync range state with external value changes
+  // Clear range state when switching TO single mode
+  // Use a ref to track mode changes and avoid circular deps
+  const prevModeRef = useRef(currentMode);
   useEffect(() => {
-    if (currentMode === "single") {
-      // In single mode, clear range state
-      if (rangeStart || rangeEnd) {
-        setRangeStart(null);
-        setRangeEnd(null);
-      }
+    if (prevModeRef.current !== currentMode && currentMode === "single") {
+      setRangeStart(null);
+      setRangeEnd(null);
     }
-  }, [value, currentMode, rangeStart, rangeEnd]);
+    prevModeRef.current = currentMode;
+  }, [currentMode]);
 
   useEffect(() => {
     // keep view anchored to externally changed value
