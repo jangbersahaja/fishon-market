@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
           await trackEvent({
             eventType: "PAYMENT_AUTHORIZED",
             charterId: bookingData.charterId,
-            ownerId: trip.charter.ownerId,
+            ownerId: trip.charter.ownerId ?? undefined,
             userId: paymentSession.userId ?? undefined,
             metadata: {
               bookingId: booking.id,
@@ -414,7 +414,7 @@ export async function POST(request: NextRequest) {
       const captainEarnings = finalPrice - platformFee;
 
       // Update booking status with financial data
-      const updated = await prisma.booking.update({
+      await prisma.booking.update({
         where: { id: order_id },
         data: {
           status: "PAID",
