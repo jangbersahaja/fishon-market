@@ -2,6 +2,7 @@
 
 import { Anchor, Award, Clock, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 // Generic, UI-only charter type to avoid coupling to app-specific models
 export type CharterLike = {
@@ -50,10 +51,11 @@ export default function CaptainSection({
           {/* Avatar with experience badge */}
           <div className="relative shrink-0">
             <div className="overflow-hidden shadow-md w-28 h-28 rounded-2xl ring-2 ring-gray-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={c.avatarUrl || "/images/captain.svg"}
                 alt={c.name}
+                width={112}
+                height={112}
                 className="object-cover w-full h-full"
               />
             </div>

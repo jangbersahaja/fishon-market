@@ -90,6 +90,7 @@ function MediaStrip({ media }: { media?: BookingReview["media"] }) {
                 fill
                 sizes="128px"
                 className="object-cover"
+                loading="lazy"
               />
             </div>
           );

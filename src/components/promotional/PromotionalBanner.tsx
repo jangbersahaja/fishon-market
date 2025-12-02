@@ -338,8 +338,8 @@ function ModalVariant({
                 src={content.imageUrl}
                 alt={content.title}
                 fill
+                sizes="(max-width: 640px) 90vw, 400px"
                 className="object-cover"
-                unoptimized
               />
             </div>
           ) : (

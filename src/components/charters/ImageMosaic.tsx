@@ -46,6 +46,7 @@ export default function ImageMosaic({
           src={images[0]}
           alt={alt}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-transform duration-300 cursor-pointer hover:scale-105"
         />
       </div>
@@ -68,6 +69,7 @@ export default function ImageMosaic({
               src={img}
               alt={`${alt} - Image ${idx + 1}`}
               fill
+              sizes="(max-width: 640px) 50vw, 25vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
@@ -99,6 +101,7 @@ export default function ImageMosaic({
               src={images[0]}
               alt={`${alt} - Main`}
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 22vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
@@ -113,6 +116,7 @@ export default function ImageMosaic({
                 src={images[1]}
                 alt={`${alt} - Image 2`}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 17vw, 11vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>
@@ -124,6 +128,7 @@ export default function ImageMosaic({
                 src={images[2]}
                 alt={`${alt} - Image 3`}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 17vw, 11vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
 
@@ -157,6 +162,7 @@ export default function ImageMosaic({
             src={images[currentIndex]}
             alt={`${alt} - Image ${currentIndex + 1}`}
             fill
+            sizes="100vw"
             className="object-cover"
           />
         </div>

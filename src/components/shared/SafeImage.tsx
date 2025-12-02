@@ -13,6 +13,9 @@ type Props = Omit<ImageProps, "src" | "alt"> & {
 /**
  * SafeImage – client-only wrapper around next/image that swaps to a placeholder
  * if the image fails to load. Works with `fill` or width/height props.
+ *
+ * ⚡ Performance: Uses Next.js image optimization by default.
+ * Images are automatically converted to WebP/AVIF and resized.
  */
 export default function SafeImage({
   src,
@@ -24,12 +27,6 @@ export default function SafeImage({
   const finalSrc = !src || failed ? placeholderSrc : src;
 
   return (
-    <Image
-      {...rest}
-      src={finalSrc}
-      alt={alt}
-      unoptimized
-      onError={() => setFailed(true)}
-    />
+    <Image {...rest} src={finalSrc} alt={alt} onError={() => setFailed(true)} />
   );
 }

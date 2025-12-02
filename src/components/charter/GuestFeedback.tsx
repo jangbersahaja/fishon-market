@@ -3,6 +3,7 @@
 import { summariseBadges } from "@/utils/reviewBadges";
 import type { GuestFeedbackProps } from "@fishon/ui";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 function formatDate(iso: string | undefined, locale: string) {
   if (!iso) return "—";
@@ -68,11 +69,12 @@ export function GuestFeedback({
                       tabIndex={0}
                       className="flex flex-col items-center gap-1 text-sm text-amber-900"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={badge.iconUrl}
                         alt={badge.label}
-                        className="object-contain w-20 h-20"
+                        width={80}
+                        height={80}
+                        className="object-contain"
                       />
                       <span className="text-xs font-semibold tracking-wide uppercase">
                         {badge.label}
