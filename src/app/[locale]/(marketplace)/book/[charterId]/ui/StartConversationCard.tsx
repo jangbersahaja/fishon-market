@@ -2,6 +2,7 @@
 
 import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import type { BookingFormData } from "./types";
 
@@ -42,10 +43,11 @@ export default function NoteToCaptainCard({
       {/* Captain Profile - Compact */}
       <div className="flex items-center gap-3 p-3 mb-4 border rounded-lg bg-slate-50 border-black/10">
         <div className="relative flex-shrink-0 w-10 h-10 overflow-hidden rounded-full shadow-sm ring-2 ring-white">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={captain?.avatarUrl || "/images/captain.svg"}
             alt={displayName}
+            width={40}
+            height={40}
             className="object-cover w-full h-full"
           />
         </div>

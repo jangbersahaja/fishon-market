@@ -11,6 +11,14 @@ const blobHost = process.env.NEXT_PUBLIC_BLOB_HOST?.replace(
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Image quality (1-100). Lower = smaller files. 75 is default, 70 saves ~15% more.
+    quality: 70,
+    // Prefer AVIF (smallest), fallback to WebP. Both are much smaller than JPEG/PNG.
+    formats: ["image/avif", "image/webp"],
+    // Device breakpoints for srcset generation. Removed 4K sizes to reduce cache variants.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // Sizes for fixed-width images (icons, avatars, thumbnails)
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
     remotePatterns: [
       ...(blobHost
         ? [

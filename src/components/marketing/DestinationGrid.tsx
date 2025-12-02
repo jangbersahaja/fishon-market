@@ -43,7 +43,7 @@ function DestinationCard({ destination, locale }: DestinationCardProps) {
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-            priority={false}
+            loading="lazy"
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />

@@ -163,6 +163,7 @@ export default function BaseCharterCard({
             src={img}
             alt={formatCharterName(c.name)}
             fill
+            sizes="176px"
             className={imageObjectFit}
           />
         </Link>
@@ -219,6 +220,7 @@ export default function BaseCharterCard({
             src={img}
             alt={formatCharterName(c.name)}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className={imageObjectFit}
           />
           {showFavoriteButton && (
@@ -303,6 +305,7 @@ export default function BaseCharterCard({
               src={img}
               alt={formatCharterName(c.name)}
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className={imageObjectFit}
             />
           </div>
@@ -391,6 +394,7 @@ export default function BaseCharterCard({
                   src={img}
                   alt={formatCharterName(c.name)}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className={`${imageObjectFit} transition-all duration-500 ease-in-out group-hover:scale-110 group-hover:rotate-1 ${isUnavailable ? "grayscale-[30%]" : ""}`}
                 />
                 {/* Gradient overlay on hover */}
@@ -490,6 +494,7 @@ export default function BaseCharterCard({
                     src={captainAvatar}
                     alt={`${captainName} avatar`}
                     fill
+                    sizes="32px"
                     className="object-cover"
                   />
                 </span>

@@ -43,8 +43,8 @@ export function UserNav() {
                 src={user.image}
                 alt={user.name || "User"}
                 fill
+                sizes="32px"
                 className="object-cover"
-                unoptimized
               />
             </div>
           ) : (

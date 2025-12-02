@@ -172,7 +172,7 @@ function VideoThumb({ src }: VideoThumbProps) {
       className="object-cover"
       onError={() => setErrored(true)}
       sizes="(max-width: 640px) 176px, 128px"
-      priority
+      loading="lazy"
     />
   );
 }

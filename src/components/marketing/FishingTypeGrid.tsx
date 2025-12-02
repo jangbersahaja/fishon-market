@@ -45,6 +45,7 @@ export default function FishingTypeGrid({ types }: FishingTypeGridProps) {
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-100" />

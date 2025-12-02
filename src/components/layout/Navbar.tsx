@@ -163,8 +163,8 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                       src={session.user.image}
                       alt={session?.user?.name || "User"}
                       fill
+                      sizes="40px"
                       className="object-cover"
-                      unoptimized
                     />
                   </div>
                 ) : (
