@@ -13,12 +13,12 @@ The Fishon payment system handles all monetary transactions between anglers and 
 
 ### Payment Methods Supported
 
-| Method      | Flow       | Behavior                                          |
-| ----------- | ---------- | ------------------------------------------------- |
-| **CARD**    | TOKENIZED  | Authorization hold, charged only after approval   |
-| **FPX**     | DIRECT     | Immediate bank transfer, refund if rejected       |
-| **EWALLET** | DIRECT     | Immediate capture, refund if rejected             |
-| **MOCK**    | TOKENIZED  | Development only, simulates card flow             |
+| Method      | Flow      | Behavior                                        |
+| ----------- | --------- | ----------------------------------------------- |
+| **CARD**    | TOKENIZED | Authorization hold, charged only after approval |
+| **FPX**     | DIRECT    | Immediate bank transfer, refund if rejected     |
+| **EWALLET** | DIRECT    | Immediate capture, refund if rejected           |
+| **MOCK**    | TOKENIZED | Development only, simulates card flow           |
 
 ### Key Features
 
@@ -91,20 +91,20 @@ model Booking {
   paymentMethod        PaymentMethod?  // CARD, FPX, EWALLET, MOCK
   paymentFlow          PaymentFlow?    // TOKENIZED, DIRECT
   paymentIntentId      String?         // SenangPay transaction ID
-  
+
   // Payment timestamps
   paymentAuthorizedAt  DateTime?       // Token created (TOKENIZED)
   paymentCapturedAt    DateTime?       // Payment charged
   paymentReleasedAt    DateTime?       // Token released (no charge)
-  
+
   // Refund tracking
   refundStatus         RefundStatus?   // PENDING, PROCESSING, COMPLETED, FAILED
-  refundAmount         Decimal?        
+  refundAmount         Decimal?
   refundTransactionId  String?
   refundReason         String?
   refundedBy           String?
   refundedAt           DateTime?
-  
+
   // Cancellation policy snapshot
   cancellationPolicy   Json?
 }
@@ -172,15 +172,18 @@ Handles SenangPay callbacks after DIRECT flow payment:
 
 ### Captain Actions
 
-**POST** `/api/bookings/approve`  
+**POST** `/api/bookings/approve`
+
 - TOKENIZED: Captures card payment
 - DIRECT: Confirms booking (already paid)
 
-**POST** `/api/bookings/reject`  
+**POST** `/api/bookings/reject`
+
 - TOKENIZED: Releases token (no charge)
 - DIRECT: Initiates full refund
 
-**POST** `/api/bookings/acknowledge`  
+**POST** `/api/bookings/acknowledge`
+
 - AUTO flow only
 - Transitions PAYMENT_AUTHORIZED → PAID
 
@@ -190,11 +193,11 @@ Handles SenangPay callbacks after DIRECT flow payment:
 
 ### Cancellation Refunds (After PAID)
 
-| Timing           | Refund Amount |
-| ---------------- | ------------- |
-| > 30 days        | 80%           |
-| 15-30 days       | 50%           |
-| < 15 days        | 0%            |
+| Timing     | Refund Amount |
+| ---------- | ------------- |
+| > 30 days  | 80%           |
+| 15-30 days | 50%           |
+| < 15 days  | 0%            |
 
 ### Rejection/Expiry Refunds
 
@@ -206,11 +209,11 @@ Handles SenangPay callbacks after DIRECT flow payment:
 ```typescript
 // src/lib/services/refund-service.ts
 
-calculateRefundAmount(booking, tripDate)  // Applies policy
-initiateRefund(options)                    // Starts refund
-processRefund(refundId)                    // Gateway call
-completeRefund(refundId)                   // Mark complete
-failRefund(refundId, error)                // Handle failure
+calculateRefundAmount(booking, tripDate); // Applies policy
+initiateRefund(options); // Starts refund
+processRefund(refundId); // Gateway call
+completeRefund(refundId); // Mark complete
+failRefund(refundId, error); // Handle failure
 ```
 
 ---
@@ -232,7 +235,7 @@ NEXT_PUBLIC_BASE_URL="https://fishon.my"
 CRON_SECRET="your-secure-random-secret"
 
 # Captain webhook
-CAPTAIN_WEBHOOK_URL="https://fishon-captain.vercel.app/api/webhooks/booking"
+CAPTAIN_WEBHOOK_URL="https://captain.fishon.my/api/webhooks/booking"
 CAPTAIN_API_SECRET="shared-webhook-secret"
 ```
 
@@ -254,6 +257,7 @@ SENANGPAY_FORCE_MOCK="true"  # Blocked in production
 **Auth**: `CRON_SECRET` header
 
 Handles expired bookings:
+
 1. Finds PAYMENT_AUTHORIZED bookings past deadline (12h)
 2. TOKENIZED: Releases token
 3. DIRECT: Initiates full refund
@@ -278,14 +282,14 @@ Handles expired bookings:
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/payment/payment-gateway.ts` | SenangPay integration |
-| `src/lib/services/refund-service.ts` | Refund calculation & processing |
-| `src/lib/payment/payment-side-effects.ts` | Notifications & webhooks |
-| `src/app/api/payment/senangpay-callback/route.ts` | Payment callback handler |
-| `src/app/api/bookings/create/route.ts` | Booking creation with payment |
-| `src/app/api/cron/expire-bookings/route.ts` | Expiration cron job |
+| File                                              | Purpose                         |
+| ------------------------------------------------- | ------------------------------- |
+| `src/lib/payment/payment-gateway.ts`              | SenangPay integration           |
+| `src/lib/services/refund-service.ts`              | Refund calculation & processing |
+| `src/lib/payment/payment-side-effects.ts`         | Notifications & webhooks        |
+| `src/app/api/payment/senangpay-callback/route.ts` | Payment callback handler        |
+| `src/app/api/bookings/create/route.ts`            | Booking creation with payment   |
+| `src/app/api/cron/expire-bookings/route.ts`       | Expiration cron job             |
 
 ---
 
@@ -294,6 +298,7 @@ Handles expired bookings:
 ### Development Mode
 
 Set `SENANGPAY_FORCE_MOCK="true"` to use mock payments:
+
 - Cards: Simulated tokenization
 - No real charges or refunds
 - Useful for local development
@@ -305,6 +310,7 @@ SENANGPAY_MODE="sandbox"
 ```
 
 Use SenangPay test cards:
+
 - Success: `4111111111111111`
 - Decline: `4000000000000002`
 
@@ -322,6 +328,7 @@ Use SenangPay test cards:
 ### Payment Creation Failed
 
 **Check**:
+
 1. `SENANGPAY_MERCHANT_ID` and `SENANGPAY_SECRET_KEY` configured
 2. `NEXT_PUBLIC_BASE_URL` set for callbacks
 3. Payment method validation in request
@@ -329,6 +336,7 @@ Use SenangPay test cards:
 ### Callback Not Received
 
 **Check**:
+
 1. SenangPay dashboard for webhook logs
 2. `NEXT_PUBLIC_BASE_URL` is publicly accessible
 3. Callback route returns 200 OK
@@ -336,6 +344,7 @@ Use SenangPay test cards:
 ### Refund Failed
 
 **Check**:
+
 1. SenangPay balance sufficient
 2. Transaction ID valid
 3. Refund not already processed

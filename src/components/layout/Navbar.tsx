@@ -295,7 +295,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
 
           {!isAuthed && (
             <Link
-              href="https://fishon-captain.vercel.app/ms/list-your-business"
+              href="https://captain.fishon.my/ms/list-your-business"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#ec2227] text-center hover:translate-y-px transition"

@@ -46,40 +46,44 @@ The Fishon platform uses a dual-channel communication system combining email and
 
 ### Booking Lifecycle
 
-| Template | Recipient | Flow | Purpose |
-|----------|-----------|------|---------|
-| `booking-created` | Angler | Both | Booking confirmation |
-| `booking-approved` | Angler | MANUAL | Approval + payment link |
-| `booking-rejected` | Angler | Both | Rejection + refund info |
-| `booking-confirmed-angler` | Angler | Both | Payment confirmed |
-| `booking-confirmed-captain` | Captain | Both | Booking confirmed |
-| `booking-received-captain` | Captain | Both | New booking alert |
-| `booking-cancelled` | Captain | Both | Cancellation notice |
-| `booking-payment-reminder` | Angler | MANUAL | Payment deadline |
+| Template                    | Recipient | Flow   | Purpose                 |
+| --------------------------- | --------- | ------ | ----------------------- |
+| `booking-created`           | Angler    | Both   | Booking confirmation    |
+| `booking-approved`          | Angler    | MANUAL | Approval + payment link |
+| `booking-rejected`          | Angler    | Both   | Rejection + refund info |
+| `booking-confirmed-angler`  | Angler    | Both   | Payment confirmed       |
+| `booking-confirmed-captain` | Captain   | Both   | Booking confirmed       |
+| `booking-received-captain`  | Captain   | Both   | New booking alert       |
+| `booking-cancelled`         | Captain   | Both   | Cancellation notice     |
+| `booking-payment-reminder`  | Angler    | MANUAL | Payment deadline        |
 
 ### Flow-Aware Content
 
 **TOKENIZED (Card)**:
+
 ```
 💳 Your card has been authorized (not charged yet).
 We'll only charge your card if the captain approves.
 ```
 
 **DIRECT (FPX/E-wallet)**:
+
 ```
-✅ Payment received! Your payment has been received 
+✅ Payment received! Your payment has been received
 and is being held securely.
 ```
 
 **Rejection - TOKENIZED**:
+
 ```
 💳 Good news: Your card was only authorized, not charged.
 The authorization has been released.
 ```
 
 **Rejection - DIRECT**:
+
 ```
-💰 Refund initiated: We've started processing your 
+💰 Refund initiated: We've started processing your
 refund. Funds will appear in 3-5 business days.
 ```
 
@@ -102,12 +106,12 @@ enum NotificationType {
   BOOKING_PAID
   BOOKING_CANCELLED
   PAYMENT_REFUNDED
-  
+
   // Reviews
   REVIEW_SUBMITTED
   REVIEW_APPROVED
   REVIEW_REJECTED
-  
+
   // Account
   ACCOUNT_VERIFIED
   PAYMENT_FAILED
@@ -155,7 +159,7 @@ PUSHER_SECRET="your-secret"
 PUSHER_CLUSTER="ap1"
 
 # Webhooks
-CAPTAIN_WEBHOOK_URL="https://fishon-captain.vercel.app/api/webhooks/booking"
+CAPTAIN_WEBHOOK_URL="https://captain.fishon.my/api/webhooks/booking"
 CAPTAIN_API_SECRET="shared-secret"
 
 # App URLs
@@ -192,7 +196,7 @@ MARKET_DATABASE_URL="postgresql://.../fishon-market"
   emailBookingPaid: boolean;
   emailBookingCancelled: boolean;
   // ... more types
-  
+
   // Push per event type
   pushBookingCreated: boolean;
   pushBookingApproved: boolean;
@@ -223,25 +227,25 @@ MARKET_DATABASE_URL="postgresql://.../fishon-market"
 
 **Events**:
 
-| Event | Source Status | Captain Action |
-|-------|---------------|----------------|
-| `booking.created` | PENDING / PAYMENT_AUTHORIZED | Notification |
-| `booking.approved` | AWAITING_PAYMENT | None |
-| `booking.acknowledged` | PAID | Notification |
-| `booking.paid` | PAID | Notification |
-| `booking.rejected` | REJECTED | None |
-| `booking.cancelled` | CANCELLED | Notification |
+| Event                  | Source Status                | Captain Action |
+| ---------------------- | ---------------------------- | -------------- |
+| `booking.created`      | PENDING / PAYMENT_AUTHORIZED | Notification   |
+| `booking.approved`     | AWAITING_PAYMENT             | None           |
+| `booking.acknowledged` | PAID                         | Notification   |
+| `booking.paid`         | PAID                         | Notification   |
+| `booking.rejected`     | REJECTED                     | None           |
+| `booking.cancelled`    | CANCELLED                    | Notification   |
 
 ---
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/services/email-service.ts` | Email sending wrapper |
-| `src/lib/services/notification-service.ts` | Notification creation |
-| `src/lib/webhooks/webhook.ts` | Webhook sender |
-| `src/app/api/webhooks/booking/route.ts` | Webhook receiver (captain) |
+| File                                       | Purpose                    |
+| ------------------------------------------ | -------------------------- |
+| `src/lib/services/email-service.ts`        | Email sending wrapper      |
+| `src/lib/services/notification-service.ts` | Notification creation      |
+| `src/lib/webhooks/webhook.ts`              | Webhook sender             |
+| `src/app/api/webhooks/booking/route.ts`    | Webhook receiver (captain) |
 
 ### Email Functions
 
@@ -280,10 +284,10 @@ await createNotification({
 
 ### Pusher Events
 
-| Event | Channel | Payload |
-|-------|---------|---------|
-| `notification:new` | `private-user-{userId}` | Notification object |
-| `notification:count` | `private-user-{userId}` | Unread count |
+| Event                | Channel                 | Payload             |
+| -------------------- | ----------------------- | ------------------- |
+| `notification:new`   | `private-user-{userId}` | Notification object |
+| `notification:count` | `private-user-{userId}` | Unread count        |
 
 ### Client Hook
 

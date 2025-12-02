@@ -40,12 +40,12 @@ export const footerNavigation = {
   ],
   captain: [
     {
-      href: "https://fishon-captain.vercel.app/list-your-business",
+      href: "https://captain.fishon.my/list-your-business",
       labelKey: "footer.becomeCaptain",
       external: true,
     },
     {
-      href: "https://fishon-captain.vercel.app/list-your-business",
+      href: "https://captain.fishon.my/list-your-business",
       labelKey: "footer.listYourBoat",
       external: true,
     },

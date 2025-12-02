@@ -53,14 +53,14 @@ enum AnalyticsEventType {
 model AnalyticsEvent {
   id            String              @id @default(cuid())
   eventType     AnalyticsEventType
-  charterId     String?             
-  captainId     String?             
+  charterId     String?
+  captainId     String?
   userId        String?             // If logged in
   sessionId     String?             // Anonymous tracking
-  metadata      Json?               
-  referrer      String?             
+  metadata      Json?
+  referrer      String?
   source        String?             // Traffic category
-  userAgent     String?             
+  userAgent     String?
   ipAddress     String?             // SHA-256 hashed
   createdAt     DateTime            @default(now())
 
@@ -223,7 +223,7 @@ import { TrackEvent } from "@/lib/analytics-tracking";
 CAPTAIN_API_KEY="your-api-key"
 
 # CORS (optional)
-FISHON_CAPTAIN_URL="https://fishon-captain.vercel.app"
+FISHON_CAPTAIN_URL="https://captain.fishon.my"
 ```
 
 ### fishon-captain
@@ -266,12 +266,12 @@ WHERE "createdAt" < NOW() - INTERVAL '2 years';
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/analytics-tracking.ts` | Client-side tracking |
-| `src/lib/services/analytics-service.ts` | Server-side service |
-| `src/app/api/analytics/track/route.ts` | Track endpoint |
-| `src/app/api/captain/analytics/route.ts` | Captain analytics |
+| File                                     | Purpose              |
+| ---------------------------------------- | -------------------- |
+| `src/lib/analytics-tracking.ts`          | Client-side tracking |
+| `src/lib/services/analytics-service.ts`  | Server-side service  |
+| `src/app/api/analytics/track/route.ts`   | Track endpoint       |
+| `src/app/api/captain/analytics/route.ts` | Captain analytics    |
 
 ---
 
