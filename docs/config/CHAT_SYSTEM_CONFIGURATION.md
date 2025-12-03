@@ -225,7 +225,9 @@ System messages are automatically sent when booking events occur. They use `cont
 | ------------------------------ | ---------------------- | ----------------------------------- | ------------------------- |
 | `bookingCreatedMessage()`      | `booking_created`      | Booking created (both flows)        | ✅ Implemented            |
 | `bookingApprovedMessage()`     | `booking_approved`     | Captain approves (MANUAL flow only) | ✅ Implemented            |
+| `bookingAcknowledgedMessage()` | `booking_acknowledged` | Captain acknowledges (AUTO flow)    | ✅ Implemented            |
 | `bookingRejectedMessage()`     | `booking_rejected`     | Captain rejects                     | ✅ Implemented            |
+| `paymentReceivedMessage()`     | `payment_received`     | Payment captured (AUTO flow)        | ✅ Implemented            |
 | `paymentConfirmedMessage()`    | `payment_confirmed`    | Payment received (MANUAL flow)      | ✅ Implemented            |
 | `bookingCancelledMessage()`    | `booking_cancelled`    | Booking cancelled                   | ✅ Implemented            |
 | `bookingExpiredMessage()`      | `booking_expired`      | Booking expires without action      | ✅ Implemented            |
@@ -252,21 +254,35 @@ await sendSystemMessage(
 );
 ```
 
-### AUTO Flow Gap
+### AUTO Flow System Messages
 
-**ISSUE**: `bookingApprovedMessage()` is only called in `/api/bookings/approve` (MANUAL flow). AUTO flow bookings skip the approval step entirely:
+AUTO flow bookings now have proper system messages throughout their lifecycle:
 
 ```
-MANUAL: PENDING → AWAITING_PAYMENT → PAID
-                    ↑
-            bookingApprovedMessage()
+AUTO/TOKENIZED: Create booking
+                    ↓
+    bookingCreatedMessage() + paymentReceivedMessage()
+                    ↓
+            PAYMENT_AUTHORIZED
+                    ↓
+        Captain acknowledges
+                    ↓
+    bookingAcknowledgedMessage()
+                    ↓
+                PAID
 
-AUTO: PAYMENT_AUTHORIZED → PAID
-              ↑
-        NO system message!
+AUTO/DIRECT: Pay via FPX/E-Wallet (callback)
+                    ↓
+    bookingCreatedMessage() + paymentReceivedMessage()
+                    ↓
+            PAYMENT_AUTHORIZED
+                    ↓
+        Captain acknowledges
+                    ↓
+    bookingAcknowledgedMessage()
+                    ↓
+                PAID
 ```
-
-**Expected**: A system message should be sent when AUTO flow bookings are created or acknowledged, informing both parties that payment was received and captain acknowledgment is pending.
 
 ---
 

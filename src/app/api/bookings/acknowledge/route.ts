@@ -4,7 +4,11 @@ import {
   sendBookingConfirmedAnglerEmail,
   sendBookingConfirmedCaptainEmail,
 } from "@/lib/services/email-service";
-import { unlockConversation } from "@/lib/services/message-service";
+import {
+  sendMessage,
+  unlockConversation,
+} from "@/lib/services/message-service";
+import { bookingAcknowledgedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
@@ -114,12 +118,32 @@ export async function POST(req: Request) {
       const conversation = await prisma.conversation.findUnique({
         where: { bookingId: updated.id },
       });
-      if (conversation && conversation.status === "LOCKED") {
-        await unlockConversation(conversation.id);
-        console.log("✅ Conversation unlocked:", conversation.id);
+      if (conversation) {
+        // Unlock if still locked
+        if (conversation.status === "LOCKED") {
+          await unlockConversation(conversation.id);
+          console.log("✅ Conversation unlocked:", conversation.id);
+        }
+
+        // Send acknowledgment system message
+        const templateMessage = bookingAcknowledgedMessage();
+        await sendMessage(
+          conversation.id,
+          "system",
+          templateMessage.content,
+          "system",
+          {
+            contentType: "system",
+            systemType: templateMessage.systemType,
+          }
+        );
+        console.log(
+          "✅ Booking acknowledged system message sent:",
+          conversation.id
+        );
       }
     } catch (err) {
-      console.error("Failed to unlock conversation:", err);
+      console.error("Failed to unlock conversation or send message:", err);
     }
 
     // Notify captain app (best-effort)

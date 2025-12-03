@@ -783,8 +783,10 @@ export async function POST(req: Request) {
           return;
         }
 
-        const { createConversation, unlockConversation } = await import(
-          "@/lib/services/message-service"
+        const { createConversation, unlockConversation, sendMessage } =
+          await import("@/lib/services/message-service");
+        const { bookingCreatedMessage, paymentReceivedMessage } = await import(
+          "@/lib/services/message-templates"
         );
 
         // Create conversation with correct parameters
@@ -811,6 +813,20 @@ export async function POST(req: Request) {
             conversationId: conversation.id,
             bookingId: booking.id,
           });
+
+          // Send payment received system message for AUTO/TOKENIZED flow
+          const paymentTemplate = paymentReceivedMessage();
+          await sendMessage(
+            conversation.id,
+            "system",
+            paymentTemplate.content,
+            "system",
+            {
+              contentType: "system",
+              systemType: paymentTemplate.systemType,
+            }
+          );
+          console.log("✅ Payment received system message sent");
         } else if (paymentFlow === "DIRECT") {
           console.log(
             "🔒 Conversation stays locked for DIRECT payment until callback confirms:",
@@ -820,6 +836,39 @@ export async function POST(req: Request) {
             }
           );
         }
+
+        // Send initial booking card message
+        const bookingCardData = {
+          bookingId: booking.id,
+          charterName: trip.charter.name,
+          tripName: trip.name,
+          tripDate: booking.date.toISOString().slice(0, 10),
+          tripDays: booking.days,
+          adults: ad,
+          children: ch,
+          startTime: booking.startTime ?? undefined,
+          totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
+          meetingPoint: trip.charter.startingPoint ?? undefined,
+        };
+
+        const templateMessage = bookingCreatedMessage(bookingCardData, "AUTO");
+
+        await sendMessage(
+          conversation.id,
+          "system",
+          templateMessage.content,
+          "system",
+          {
+            contentType: "booking_card",
+            systemType: templateMessage.systemType,
+            bookingSnapshot: bookingCardData,
+          }
+        );
+
+        console.log(
+          "✅ Conversation and initial message created:",
+          conversation.id
+        );
       } catch (err) {
         console.error(
           "❌ Failed to create conversation for guest booking:",
