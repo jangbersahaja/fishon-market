@@ -128,6 +128,7 @@ export function BookingActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: verifiedEmail,
+          locale, // Pass current locale for translations
         }),
       });
 
