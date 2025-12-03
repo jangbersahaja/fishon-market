@@ -16,6 +16,7 @@ import {
   createConversation,
   sendMessage,
 } from "@/lib/services/message-service";
+import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
 import { getTripById } from "@/lib/services/trip-service";
@@ -321,10 +322,38 @@ async function createManualBooking(session: any, body: any) {
         );
         conversationId = conversation.id;
 
-        // Send initial system message
+        // Send initial booking card message using template
         if (conversationId) {
-          const messageContent = `New booking request for ${charter.name} - ${trip.name}. Date: ${d.toISOString().split("T")[0]}, ${ds} day(s), ${ad + ch} guests. Total: RM${pricing.finalPrice.toFixed(2)}`;
-          await sendMessage(conversationId, "system", messageContent, "system");
+          const bookingCardData = {
+            bookingId: booking.id,
+            charterName: charter.name,
+            tripName: trip.name,
+            tripDate: d.toISOString().slice(0, 10),
+            tripDays: ds,
+            adults: ad,
+            children: ch,
+            startTime: booking.startTime ?? undefined,
+            totalPrice: `RM ${pricing.finalPrice.toFixed(2)}`,
+            meetingPoint: trip.charter.startingPoint ?? undefined,
+          };
+
+          const templateMessage = bookingCreatedMessage(bookingCardData);
+
+          await sendMessage(
+            conversationId,
+            "system",
+            templateMessage.content,
+            "system",
+            {
+              contentType: "booking_card",
+              systemType: templateMessage.systemType,
+              bookingSnapshot: bookingCardData,
+            }
+          );
+          console.log(
+            "✅ Conversation and initial message created:",
+            conversationId
+          );
         }
       }
     } catch (convErr) {

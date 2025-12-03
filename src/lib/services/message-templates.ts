@@ -28,9 +28,10 @@ export interface BookingCardData {
  * Includes booking details card
  */
 export const bookingCreatedMessage = (
-  booking: BookingCardData
+  booking: BookingCardData,
+  flow: "MANUAL" | "AUTO" = "MANUAL"
 ): MessageTemplate & { bookingSnapshot?: BookingCardData } => ({
-  content: `📦 Booking Request\n\n${booking.charterName}\n📅 ${booking.tripDate} (${booking.tripDays} day${booking.tripDays > 1 ? "s" : ""})\n👥 ${booking.adults} adult${booking.adults > 1 ? "s" : ""}${booking.children > 0 ? `, ${booking.children} child${booking.children > 1 ? "ren" : ""}` : ""}\n💰 ${booking.totalPrice}\n\nWaiting for captain's approval...`,
+  content: `📦 Booking Request\n\n${booking.charterName}\n📅 ${booking.tripDate} (${booking.tripDays} day${booking.tripDays > 1 ? "s" : ""})\n👥 ${booking.adults} adult${booking.adults > 1 ? "s" : ""}${booking.children > 0 ? `, ${booking.children} child${booking.children > 1 ? "ren" : ""}` : ""}\n💰 ${booking.totalPrice}\n\n${flow === "AUTO" ? "Payment received! Awaiting captain confirmation..." : "Waiting for captain's approval..."}`,
   systemType: "booking_created",
   bookingSnapshot: booking,
 });
@@ -90,6 +91,15 @@ export const bookingExpiredMessage = (): MessageTemplate => ({
 export const paymentReceivedMessage = (): MessageTemplate => ({
   content: `💳 Payment Received!\nYour booking is confirmed. Payment has been received and the captain will acknowledge your booking shortly. You can now chat with the captain to discuss trip details.`,
   systemType: "payment_received_auto",
+});
+
+/**
+ * Message sent when captain acknowledges booking (AUTO flow)
+ * Transitions PAYMENT_AUTHORIZED → PAID
+ */
+export const bookingAcknowledgedMessage = (): MessageTemplate => ({
+  content: `✅ Booking Confirmed!\nThe captain has acknowledged your booking. Your trip is now fully confirmed!\n\nYou can chat with the captain for any questions about your upcoming trip.`,
+  systemType: "booking_acknowledged",
 });
 
 /**

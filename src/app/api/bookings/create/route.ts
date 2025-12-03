@@ -1026,7 +1026,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           meetingPoint: trip.charter.startingPoint ?? undefined,
         };
 
-        const templateMessage = bookingCreatedMessage(bookingCardData);
+        const templateMessage = bookingCreatedMessage(bookingCardData, "AUTO");
 
         await sendMessage(
           conversation.id,

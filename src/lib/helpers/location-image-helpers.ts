@@ -200,6 +200,7 @@ const LOCATION_IMAGES: Record<string, string> = {
   "selangor/sungai besar": "Sungai-Besar.png",
   "selangor/tanjong karang": "Tanjong-Karang.jpg",
   "selangor/telok panglima garang": "Telok-Panglima-Garang.jpg",
+  "selangor/jenjarom": "jenjarom.jpg",
 
   // Terengganu
   "terengganu/besut": "besut pualu perhentian.jpg",

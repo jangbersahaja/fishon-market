@@ -275,9 +275,12 @@ export async function POST(request: NextRequest) {
       // Create conversation for the booking (DIRECT flow)
       if (trip.charter.ownerId) {
         try {
-          const { createConversation } = await import(
+          const { createConversation, sendMessage } = await import(
             "@/lib/services/message-service"
           );
+          const { bookingCreatedMessage, paymentReceivedMessage } =
+            await import("@/lib/services/message-templates");
+
           const conversation = await createConversation(
             booking.id,
             paymentSession.userId!, // anglerId
@@ -290,6 +293,54 @@ export async function POST(request: NextRequest) {
               bookingId: booking.id,
               conversationId: conversation.id,
             }
+          );
+
+          // Send payment received system message
+          const paymentTemplate = paymentReceivedMessage();
+          await sendMessage(
+            conversation.id,
+            "system",
+            paymentTemplate.content,
+            "system",
+            {
+              contentType: "system",
+              systemType: paymentTemplate.systemType,
+            }
+          );
+
+          // Send initial booking card message
+          const bookingCardData = {
+            bookingId: booking.id,
+            charterName: trip.charter.name,
+            tripName: trip.name,
+            tripDate: booking.date.toISOString().slice(0, 10),
+            tripDays: booking.days,
+            adults: bookingData.adults || 0,
+            children: bookingData.children || 0,
+            startTime: booking.startTime ?? undefined,
+            totalPrice: `RM ${Number(booking.finalPrice).toFixed(2)}`,
+            meetingPoint: trip.charter.startingPoint ?? undefined,
+          };
+
+          const templateMessage = bookingCreatedMessage(
+            bookingCardData,
+            "AUTO"
+          );
+
+          await sendMessage(
+            conversation.id,
+            "system",
+            templateMessage.content,
+            "system",
+            {
+              contentType: "booking_card",
+              systemType: templateMessage.systemType,
+              bookingSnapshot: bookingCardData,
+            }
+          );
+
+          console.log(
+            "✅ [SENANGPAY CALLBACK] System messages sent for DIRECT flow booking"
           );
         } catch (convError) {
           console.error(
