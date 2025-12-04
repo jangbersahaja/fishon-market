@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { code, charterId, subtotal } = body;
+    const { code, charterId, tripId, subtotal } = body;
 
     if (!code || !charterId || !subtotal) {
       return NextResponse.json(
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
       code: code.trim().toUpperCase(),
       userId: session.user.id,
       charterId,
+      tripId, // Optional - for trip-specific promo codes
       subtotal: Number(subtotal),
     });
 

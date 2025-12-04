@@ -1105,6 +1105,7 @@ export default function CheckoutForm({
               <PromoCodeInput
                 key={`promo-mobile-${tripIndex}`}
                 charterId={charterId || ""}
+                tripId={chosenTrip?.id}
                 subtotal={pricingBreakdown.subtotal}
                 onPromoApplied={(promo) =>
                   setAppliedPromo({
@@ -1314,6 +1315,7 @@ export default function CheckoutForm({
               <PromoCodeInput
                 key={`promo-desktop-${tripIndex}`}
                 charterId={charterId || ""}
+                tripId={chosenTrip?.id}
                 subtotal={pricingBreakdown.subtotal}
                 onPromoApplied={(promo) =>
                   setAppliedPromo({

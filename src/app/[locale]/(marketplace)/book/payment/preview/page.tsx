@@ -71,9 +71,7 @@ function decodeBookingData(encoded: string): BookingPreviewData | null {
  * Hydrate BookingPreviewData from a PaymentSession
  * Used when user retries payment after cancellation
  */
-async function getBookingDataFromSession(
-  sessionId: string
-): Promise<{
+async function getBookingDataFromSession(sessionId: string): Promise<{
   data: BookingPreviewData;
   isRetry: boolean;
   message?: string;
@@ -256,6 +254,7 @@ export default async function PaymentPreviewPage({
       code: bookingData.promoCode,
       userId: session.user.id,
       charterId: bookingData.charterId,
+      tripId: bookingData.tripId, // Pass tripId for trip-specific promo codes
       subtotal: (trip.priceOverride ?? trip.price) * bookingData.days,
     });
 
