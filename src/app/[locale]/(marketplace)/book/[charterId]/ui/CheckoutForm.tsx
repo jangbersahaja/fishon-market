@@ -531,6 +531,8 @@ export default function CheckoutForm({
     router.replace(`${currentPath}?${params.toString()}`, { scroll: false });
     // reset start time when switching trips
     setValue("startTime", "");
+    // reset promo code when switching trips (discount is calculated based on trip price)
+    setAppliedPromo(null);
   }
 
   const updateSearchParam = useCallback(
@@ -1101,6 +1103,7 @@ export default function CheckoutForm({
           {isLoggedIn && pricingBreakdown && (
             <div className="flex flex-col p-3 space-y-3 bg-white border rounded-lg lg:hidden border-black/10 sm:p-5">
               <PromoCodeInput
+                key={`promo-mobile-${tripIndex}`}
                 charterId={charterId || ""}
                 subtotal={pricingBreakdown.subtotal}
                 onPromoApplied={(promo) =>
@@ -1309,6 +1312,7 @@ export default function CheckoutForm({
           {isLoggedIn && pricingBreakdown && (
             <div className="p-3 mt-5 space-y-3 bg-white border rounded-lg border-black/10 sm:p-5">
               <PromoCodeInput
+                key={`promo-desktop-${tripIndex}`}
                 charterId={charterId || ""}
                 subtotal={pricingBreakdown.subtotal}
                 onPromoApplied={(promo) =>

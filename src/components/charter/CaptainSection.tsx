@@ -1,6 +1,6 @@
 "use client";
 
-import { Anchor, Award, Clock, Users } from "lucide-react";
+import { Anchor, Award, Clock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 
@@ -85,12 +85,13 @@ export default function CaptainSection({
                 </div>
                 <span>{t("experience", { years: c.yearsExperience })}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-sm text-gray-600">
+              {/* TODO: Configure Crew */}
+              {/* <div className="flex items-center gap-1.5 text-sm text-gray-600">
                 <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full">
                   <Users className="w-3.5 h-3.5 text-gray-500" />
                 </div>
                 <span>{t("crew", { count: c.crewCount })}</span>
-              </div>
+              </div> */}
             </div>
 
             {/* Bio */}
