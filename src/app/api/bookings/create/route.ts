@@ -279,6 +279,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
           code: promoCode.trim(),
           userId: dbUserId,
           charterId: trip.charter.id,
+          tripId: tripId, // Pass tripId for trip-specific promo codes
           subtotal: tripPrice * ds, // Calculate subtotal for validation
         });
 

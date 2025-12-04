@@ -9,6 +9,7 @@ import { useCallback, useState } from "react";
 
 interface PromoCodeInputProps {
   charterId: string;
+  tripId?: string;
   subtotal: number;
   onPromoApplied: (data: {
     code: string;
@@ -35,6 +36,7 @@ interface ValidationResponse {
 
 export function PromoCodeInput({
   charterId,
+  tripId,
   subtotal,
   onPromoApplied,
   onPromoRemoved,
@@ -68,6 +70,7 @@ export function PromoCodeInput({
         body: JSON.stringify({
           code: code.trim().toUpperCase(),
           charterId,
+          tripId,
           subtotal,
         }),
       });
@@ -104,7 +107,7 @@ export function PromoCodeInput({
     } finally {
       setIsValidating(false);
     }
-  }, [code, charterId, subtotal, onPromoApplied, t]);
+  }, [code, charterId, tripId, subtotal, onPromoApplied, t]);
 
   const removePromo = useCallback(() => {
     setAppliedPromo(null);

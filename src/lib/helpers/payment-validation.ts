@@ -98,6 +98,7 @@ export async function validateSessionAndAvailability(
         code: data.promoCode,
         userId,
         charterId: data.charterId,
+        tripId: data.tripId, // Pass tripId for trip-specific promo codes
         subtotal: tripPrice * data.days,
       });
 

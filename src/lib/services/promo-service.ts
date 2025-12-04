@@ -23,6 +23,7 @@ export interface ValidatePromoCodeInput {
   code: string;
   userId: string; // Required - only registered users can use promo codes
   charterId: string;
+  tripId?: string; // Optional - for trip-specific promo codes
   subtotal: number; // Trip price * days
 }
 
@@ -33,7 +34,7 @@ export interface ValidatePromoCodeInput {
 export async function validatePromoCode(
   input: ValidatePromoCodeInput
 ): Promise<PromoCodeValidation> {
-  const { code, userId, charterId, subtotal } = input;
+  const { code, userId, charterId, tripId, subtotal } = input;
 
   // Fetch promo code
   const promoCode = await prisma.promoCode.findUnique({
@@ -87,6 +88,17 @@ export async function validatePromoCode(
     return {
       valid: false,
       error: "This promo code is not valid for this charter",
+    };
+  }
+
+  // Check trip-specific codes
+  if (
+    promoCode.specificTrips.length > 0 &&
+    (!tripId || !promoCode.specificTrips.includes(tripId))
+  ) {
+    return {
+      valid: false,
+      error: "This promo code is not valid for this trip",
     };
   }
 
