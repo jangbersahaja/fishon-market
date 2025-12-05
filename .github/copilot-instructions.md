@@ -71,21 +71,78 @@ Fishon.my is the **customer-facing marketplace** where anglers discover, browse,
 
 ## Architecture & Patterns
 
-Built with Next.js 15 App Router using **route groups** for logical organization. Follow our established structure when implementing new features.
+Built with Next.js 16 App Router using **route groups** for logical organization. Follow our established structure when implementing new features.
 
 ### Core Stack
 
-- **Framework**: Next.js 15 (App Router with Route Groups)
+- **Framework**: Next.js 16.0.7 (App Router with Route Groups)
+- **React**: React 19.2.1 with React DOM
 - **Database**: PostgreSQL (Neon-hosted, shared with fishon-captain)
 - **ORM**: Prisma
 - **Authentication**: NextAuth v4 with Google OAuth
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Type Safety**: TypeScript with strict mode
+- **Internationalization**: next-intl 4.5.5 with setRequestLocale pattern
 - **Email**: Resend via `@fishon/email` package
+- **Build System**: Turbopack (default in Next.js 16)
 - **Shared Packages**:
   - `@fishon/ui` - Shared UI components and types (git package)
   - `@fishon/schemas` - Shared validation schemas (git package)
   - `@fishon/email` - Email templates with React Email (git package)
+
+### Next.js 16 Migration Notes
+
+**Completed Changes:**
+
+- Upgraded from Next.js 15.5.3 → 16.0.7
+- Upgraded React 19.1.0 → 19.2.1
+- Renamed `middleware.ts` → `proxy.ts` (Next.js 16 convention)
+- Removed `dynamic = "force-dynamic"` and `runtime = "nodejs"` from route configs
+- Added `setRequestLocale(locale)` for next-intl static rendering compatibility
+- Wrapped `useSearchParams()` components in Suspense boundaries
+- Added `unstable_noStore` to dynamic server components using headers()/cookies()
+- Updated async params pattern: `params: Promise<{ id: string }>` with `await params`
+
+**Pending Improvements:**
+
+- Cache Components (PPR) disabled - requires auth pattern refactoring
+- React Compiler - optional enhancement for auto-memoization
+
+**Key Patterns for Next.js 16:**
+
+```typescript
+// ✅ Async params pattern (required for dynamic routes)
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  // ...
+}
+
+// ✅ Suspense wrapper for useSearchParams
+import { Suspense } from "react";
+<Suspense fallback={<Loading />}>
+  <ComponentUsingSearchParams />
+</Suspense>
+
+// ✅ Dynamic server component opt-out
+import { unstable_noStore as noStore } from "next/cache";
+export async function DynamicComponent() {
+  noStore(); // Opt out of static rendering
+  const session = await auth();
+  // ...
+}
+
+// ✅ next-intl static rendering
+import { setRequestLocale } from "next-intl/server";
+export default async function Page({ params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  // ...
+}
+```
 
 ### Folder Architecture
 
@@ -379,6 +436,8 @@ npm run dev  # Uses --turbopack for faster builds
 - `prisma/schema.prisma` - Database schema and relationships
 - `src/app/layout.tsx` - Global layout with SEO metadata
 - `src/utils/destinationAliases.ts` - Location search normalization
+- `proxy.ts` - Next.js 16 proxy configuration (renamed from middleware.ts)
+- `.npmrc` - npm configuration with legacy-peer-deps for deployment
 
 ### Common Tasks
 
