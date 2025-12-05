@@ -12,8 +12,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, route segment configs are not needed
 
 // Load translations for PDF generation
 async function loadReceiptTranslations(

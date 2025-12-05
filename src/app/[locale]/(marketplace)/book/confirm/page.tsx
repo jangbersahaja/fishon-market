@@ -26,8 +26,7 @@ import Link from "next/link";
 import { BookingConfirmActions } from "./BookingConfirmActions";
 import { BookingStatusRefresh } from "./BookingStatusRefresh";
 
-// Force dynamic rendering to ensure revalidation works
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, dynamic rendering is automatic when using auth()
 
 export default async function ConfirmationPage({
   params,

@@ -7,7 +7,6 @@ import { CampaignContainer } from "@/components/promotional";
 import SessionProvider from "@/components/shared/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { locales } from "@/i18n/config";
-import { auth } from "@/lib/auth/auth";
 import { getAvailableStates } from "@/lib/helpers/popularity-helpers";
 import {
   createOrganizationSchema,
@@ -18,9 +17,10 @@ import { getCharters } from "@/lib/services/charter-service";
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { Inter, Oswald } from "next/font/google";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -59,6 +59,25 @@ export function generateStaticParams() {
 const organizationSchema = createOrganizationSchema();
 const websiteSchema = createWebSiteSchema();
 
+/**
+ * Fetch footer destinations.
+ * TODO: Re-enable 'use cache' when cacheComponents is enabled.
+ */
+async function getFooterDestinations(): Promise<FooterDestination[]> {
+  try {
+    const charters = await getCharters();
+    const states = getAvailableStates(charters);
+    return states.map((s) => ({
+      name: s.name,
+      slug: s.slug,
+      charterCount: s.charterCount,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch footer destinations:", error);
+    return [];
+  }
+}
+
 export default async function LocaleLayout({
   children,
   params,
@@ -74,24 +93,14 @@ export default async function LocaleLayout({
     notFound();
   }
 
+  // Enable static rendering for this locale
+  setRequestLocale(locale);
+
   // Providing all messages to the client side is the easiest way to get started
   const messages = await getMessages({ locale });
 
-  const session = await auth();
-
-  // Fetch footer destination data (gracefully fail if error)
-  let footerDestinations: FooterDestination[] = [];
-  try {
-    const charters = await getCharters();
-    const states = getAvailableStates(charters);
-    footerDestinations = states.map((s) => ({
-      name: s.name,
-      slug: s.slug,
-      charterCount: s.charterCount,
-    }));
-  } catch (error) {
-    console.error("Failed to fetch footer destinations:", error);
-  }
+  // Fetch cached footer destination data
+  const footerDestinations = await getFooterDestinations();
 
   return (
     <html lang={locale}>
@@ -115,7 +124,7 @@ export default async function LocaleLayout({
         className={`flex flex-col font-sans ${inter.variable} ${oswald.variable}`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <SessionProvider session={session}>
+          <SessionProvider>
             <NotificationProvider>
               <AuthModalProvider>
                 <Chrome footerDestinations={footerDestinations}>
@@ -123,11 +132,13 @@ export default async function LocaleLayout({
                 </Chrome>
                 <AuthModal />
                 <Toaster />
-                {/* Global bottom bar campaign placement */}
-                <CampaignContainer
-                  placementKey="global-bottom-bar"
-                  variant="bar"
-                />
+                {/* Global bottom bar campaign placement - wrapped in Suspense for PPR */}
+                <Suspense fallback={null}>
+                  <CampaignContainer
+                    placementKey="global-bottom-bar"
+                    variant="bar"
+                  />
+                </Suspense>
               </AuthModalProvider>
             </NotificationProvider>
           </SessionProvider>

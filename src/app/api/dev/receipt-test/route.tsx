@@ -5,8 +5,7 @@ import { renderToStream } from "@react-pdf/renderer";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, route segment configs are not needed
 
 // Only allow in development
 const isDev = process.env.NODE_ENV === "development";

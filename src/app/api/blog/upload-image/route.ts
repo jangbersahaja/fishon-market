@@ -4,7 +4,6 @@ import { put } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
 export const maxDuration = 30;
 
 // Maximum file size: 5MB for blog images

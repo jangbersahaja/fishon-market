@@ -3,6 +3,7 @@ import type { CampaignContext } from "@/lib/services/campaign-service";
 import { campaignService } from "@/lib/services/campaign-service";
 import type { UserRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { unstable_noStore as noStore } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { PromotionalBanner } from "./PromotionalBanner";
 
@@ -82,6 +83,9 @@ export async function CampaignContainer({
   variant: variantOverride,
   maxCampaigns,
 }: CampaignContainerProps) {
+  // Opt out of static rendering - this component uses dynamic APIs (headers, cookies, session)
+  noStore();
+
   try {
     const session = await getServerSession(authOptions);
     const cookieStore = await cookies();

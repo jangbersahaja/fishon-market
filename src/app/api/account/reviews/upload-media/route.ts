@@ -4,7 +4,6 @@ import { processImageFile } from "@/lib/heicConverter";
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10MB

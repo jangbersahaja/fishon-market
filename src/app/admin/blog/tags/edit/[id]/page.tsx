@@ -12,9 +12,9 @@ async function getTag(id: string) {
 export default async function EditTagPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
   const tag = await getTag(id);
 
   if (!tag) {

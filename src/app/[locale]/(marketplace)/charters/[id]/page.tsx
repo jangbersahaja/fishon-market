@@ -6,8 +6,6 @@ import {
   BookingWidget,
   CaptainSection,
   CharterViewTracker,
-  EnhancedReviewsList,
-  GuestFeedback,
   LocationMap,
   MediaGallery,
   MobileStickyBar,
@@ -26,17 +24,16 @@ import { calculateBlockedDates } from "@/lib/helpers/availability-helpers";
 import { calculateDisplayPrice } from "@/lib/helpers/pricing-helpers";
 import { getCharterById } from "@/lib/services/charter-service";
 import { isFavorited } from "@/lib/services/favorite-service";
-import {
-  getCharterRatingStats,
-  getCharterReviews,
-} from "@/lib/services/review-service";
+import { getCharterRatingStats } from "@/lib/services/review-service";
 import type { Charter, Trip } from "@fishon/ui";
 import { MapPin } from "lucide-react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
+import { Suspense } from "react";
+import { ReviewsSection, ReviewsSectionSkeleton } from "./_components";
 
-export const revalidate = 300; // ISR: refresh detail every 5 minutes
+// Note: With cacheComponents, use 'use cache' + cacheLife() for caching instead of revalidate
 
 type RouteParams = Promise<{ id: string; locale: string }>;
 type RouteSearchParams = Promise<{
@@ -93,6 +90,10 @@ export default async function CharterViewPage({
 }) {
   const { id, locale } = await params;
   const resolvedSearchParams = await searchParams;
+
+  // Enable static rendering for this locale
+  setRequestLocale(locale);
+
   const session = await auth();
 
   const charter = await getCharterById(id);
@@ -102,8 +103,7 @@ export default async function CharterViewPage({
     ? await isFavorited(session.user.id, id)
     : false;
 
-  // Fetch real reviews and stats (id from route is already a string/cuid)
-  const reviews = charter ? await getCharterReviews(id) : [];
+  // Fetch rating stats for header display (reviews streamed via Suspense)
   const stats = charter
     ? await getCharterRatingStats(id)
     : {
@@ -479,14 +479,16 @@ export default async function CharterViewPage({
                 unavailability={charter?.unavailability}
                 defaultPersons={persons}
               />
-              {/* Promotional Campaign Sidebar (Desktop Only) */}
+              {/* Promotional Campaign Sidebar (Desktop Only) - Suspense for PPR */}
               <div className="hidden md:block">
-                <CampaignContainer
-                  placementKey="charter-detail-sidebar"
-                  currentPage="charter-detail"
-                  device="DESKTOP"
-                  locale={locale}
-                />
+                <Suspense fallback={null}>
+                  <CampaignContainer
+                    placementKey="charter-detail-sidebar"
+                    currentPage="charter-detail"
+                    device="DESKTOP"
+                    locale={locale}
+                  />
+                </Suspense>
               </div>
             </div>
           </div>
@@ -524,24 +526,21 @@ export default async function CharterViewPage({
         {/* Map - moved down as reference material */}
         <LocationMap title={title} mapEmbedSrc={mapEmbedSrc} />
 
-        {/* Feedback summary */}
-        <GuestFeedback
-          reviews={reviews as any}
-          ratingAvg={ratingAvg}
-          ratingCount={ratingCount}
-          locale={locale}
-        />
-        {/* Reviews (Real database reviews) */}
-        <EnhancedReviewsList reviews={reviews as any} />
+        {/* Reviews Section - Streamed with Suspense for PPR */}
+        <Suspense fallback={<ReviewsSectionSkeleton />}>
+          <ReviewsSection charterId={id} locale={locale} />
+        </Suspense>
 
-        {/* Mobile Bottom Bar Campaign (Mobile Only) */}
+        {/* Mobile Bottom Bar Campaign (Mobile Only) - Suspense for PPR */}
         <div className="md:hidden">
-          <CampaignContainer
-            placementKey="charter-detail-bottom-bar"
-            currentPage="charter-detail"
-            device="MOBILE"
-            locale={locale}
-          />
+          <Suspense fallback={null}>
+            <CampaignContainer
+              placementKey="charter-detail-bottom-bar"
+              currentPage="charter-detail"
+              device="MOBILE"
+              locale={locale}
+            />
+          </Suspense>
         </div>
       </section>
 

@@ -12,6 +12,7 @@ import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
 import { getLocale } from "next-intl/server";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import SearchResultsClient from "./SearchResultsClient";
 
 // Helpers
@@ -505,32 +506,44 @@ export default async function SearchResults({
         </div>
       </div>
 
-      <SearchResultsClient
-        locale={locale}
-        destination={destination}
-        date={date}
-        adults={adults}
-        childrenCount={children}
-        priceRange={priceRange}
-        priceBucketLabel={priceBucketLabel}
-        orderby={orderby}
-        tripType={tripType}
-        pickupParam={pickupParam}
-        childFriendlyParam={childFriendlyParam}
-        tripNames={tripNames}
-        availableSpecies={availableSpecies}
-        availableTechniques={availableTechniques}
-        availableAmenities={availableAmenities}
-        availableBoatTypes={availableBoatTypes}
-        fishingTypes={fishingTypes}
-        filtered={filtered}
-        mapItems={mapItems}
-        fallbackCenter={fallbackCenter}
-        ratingsMap={new Map(Object.entries(ratingsMapObj))}
-        availabilityMap={Object.fromEntries(availabilityMap)}
-        sidebarCampaign={sidebarCampaign}
-        mobileBottomCampaign={mobileBottomCampaign}
-      />
+      {/* SearchResultsClient wrapped in Suspense because it uses useSearchParams */}
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-white text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white border-r-transparent" />
+              <p className="mt-4 text-sm">Loading results...</p>
+            </div>
+          </div>
+        }
+      >
+        <SearchResultsClient
+          locale={locale}
+          destination={destination}
+          date={date}
+          adults={adults}
+          childrenCount={children}
+          priceRange={priceRange}
+          priceBucketLabel={priceBucketLabel}
+          orderby={orderby}
+          tripType={tripType}
+          pickupParam={pickupParam}
+          childFriendlyParam={childFriendlyParam}
+          tripNames={tripNames}
+          availableSpecies={availableSpecies}
+          availableTechniques={availableTechniques}
+          availableAmenities={availableAmenities}
+          availableBoatTypes={availableBoatTypes}
+          fishingTypes={fishingTypes}
+          filtered={filtered}
+          mapItems={mapItems}
+          fallbackCenter={fallbackCenter}
+          ratingsMap={new Map(Object.entries(ratingsMapObj))}
+          availabilityMap={Object.fromEntries(availabilityMap)}
+          sidebarCampaign={sidebarCampaign}
+          mobileBottomCampaign={mobileBottomCampaign}
+        />
+      </Suspense>
     </main>
   );
 }

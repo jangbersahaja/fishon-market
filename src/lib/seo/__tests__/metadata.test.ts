@@ -132,7 +132,10 @@ describe("SEO Metadata Utilities", () => {
         title: "Test",
       });
 
-      expect(metadata.metadataBase?.href).toBe(SITE_CONFIG.url + "/");
+      const metadataBase = metadata.metadataBase;
+      const href =
+        metadataBase instanceof URL ? metadataBase.href : metadataBase;
+      expect(href).toBe(SITE_CONFIG.url + "/");
     });
 
     it("should handle complete configuration", () => {

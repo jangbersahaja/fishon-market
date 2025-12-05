@@ -12,9 +12,9 @@ async function getCategory(id: string) {
 export default async function EditCategoryPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
   const category = await getCategory(id);
 
   if (!category) {
