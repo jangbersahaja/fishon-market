@@ -4,10 +4,15 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import TechniqueResultsClient from "./TechniqueResultsClient";
 
-type Params = { technique: string };
+type Params = Promise<{ technique: string }>;
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
-  const tech = decodeURIComponent(params.technique || "");
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { technique } = await params;
+  const tech = decodeURIComponent(technique || "");
   const pretty =
     tech
       .split("-")
@@ -24,9 +29,10 @@ export default async function TechniqueResultsPage({
 }: {
   params: Params;
 }) {
+  const { technique } = await params;
   const locale = await getLocale();
   // pass through the raw segment to the client component
-  const raw = decodeURIComponent(params.technique || "");
+  const raw = decodeURIComponent(technique || "");
   const charters = await getChartersByTechnique(raw);
 
   // Fetch ratings for all charters in batch (server-side)

@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import TypeResultsClient from "./TypeResultsClient";
 
-type Params = { type?: string };
+type Params = Promise<{ type?: string }>;
 
 function prettyCase(s: string) {
   return String(s || "")
@@ -18,8 +18,13 @@ function prettyCase(s: string) {
     .join(" ");
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
-  const t = decodeURIComponent(params.type || "");
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { type } = await params;
+  const t = decodeURIComponent(type || "");
   const pretty = prettyCase(t);
   return {
     title: `${pretty} Fishing Charters | Fishon`,
@@ -28,8 +33,9 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
 }
 
 export default async function Page({ params }: { params: Params }) {
+  const { type } = await params;
   const locale = await getLocale();
-  const rawType = decodeURIComponent(params.type || "");
+  const rawType = decodeURIComponent(type || "");
   const key = rawType.toLowerCase().trim();
 
   // Fetch charters by type

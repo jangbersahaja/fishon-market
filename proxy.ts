@@ -31,7 +31,7 @@ function ensureSessionIdCookie(
   return response;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Bypass i18n for /admin and /dev routes

@@ -4,8 +4,7 @@ import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { ConversationsClient } from "./conversations-client";
 
-// Force dynamic rendering for real-time updates
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, dynamic rendering is automatic when using auth()
 
 /**
  * Messages Page (Server Component)

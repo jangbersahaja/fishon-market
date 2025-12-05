@@ -2,7 +2,7 @@ import { fetchCharters } from "@/lib/api/captain-api";
 import { isCaptainDbConfigured, viewExists } from "@/lib/api/captain-db";
 import { prisma } from "@/lib/database/prisma";
 
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, dynamic rendering is automatic for db queries
 
 async function checkMarketDb() {
   try {

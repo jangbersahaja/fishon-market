@@ -7,6 +7,7 @@ import {
 } from "@/lib/services/charter-service";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import CheckoutForm from "./ui/CheckoutForm";
 
 type RouteParams = Promise<{
@@ -143,15 +144,29 @@ export default async function CheckoutPage({
           {t("pageSubtitle")}
         </p>
 
-        <CheckoutForm
-          startTimes={startTimes}
-          defaultStartTime={defaultStartTime}
-          trips={trips as any}
-          selectedTripIndex={tripIndex}
-          charter={charterData as any}
-          defaultUser={defaultUser}
-          charterFlowType={charterFlowType}
-        />
+        {/* CheckoutForm wrapped in Suspense because it uses useSearchParams */}
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center min-h-[40vh]">
+              <div className="text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-red-500 border-r-transparent" />
+                <p className="mt-4 text-sm text-gray-600">
+                  Loading checkout...
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <CheckoutForm
+            startTimes={startTimes}
+            defaultStartTime={defaultStartTime}
+            trips={trips as any}
+            selectedTripIndex={tripIndex}
+            charter={charterData as any}
+            defaultUser={defaultUser}
+            charterFlowType={charterFlowType}
+          />
+        </Suspense>
       </div>
 
       {/* Pre-checkout modal campaign placement */}

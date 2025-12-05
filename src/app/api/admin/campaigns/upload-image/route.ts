@@ -3,7 +3,6 @@ import { processImageFile } from "@/lib/heicConverter";
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
 export const maxDuration = 30;
 
 // Maximum file size: 5MB for campaign images

@@ -6,8 +6,7 @@ import { canReviewBooking } from "@/lib/services/review-service";
 import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
-// Force dynamic rendering to ensure revalidation works
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, dynamic rendering is automatic when using auth()
 
 export default async function BookingsPage() {
   const session = await auth();

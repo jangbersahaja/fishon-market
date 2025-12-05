@@ -3,11 +3,18 @@
 import Footer, { type FooterDestination } from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 interface ChromeProps {
   children: ReactNode;
   footerDestinations?: FooterDestination[];
+}
+
+// Fallback for Navbar during SSR/hydration (shows minimal header)
+function NavbarFallback() {
+  return (
+    <header className="z-40 w-full h-16 bg-gradient-to-tr from-[#ec2227] via-[#d11f24] to-[#b01a1f] shadow-md border-b border-white/20" />
+  );
 }
 
 export default function Chrome({
@@ -28,7 +35,10 @@ export default function Chrome({
   return (
     <>
       {transparentOnTop && <div aria-hidden className="fixed top-0 -mt-16" />}
-      <Navbar transparentOnTop={transparentOnTop} />
+      {/* Navbar wrapped in Suspense because it uses useSearchParams */}
+      <Suspense fallback={<NavbarFallback />}>
+        <Navbar transparentOnTop={transparentOnTop} />
+      </Suspense>
 
       {children}
       {<Footer destinations={footerDestinations} />}

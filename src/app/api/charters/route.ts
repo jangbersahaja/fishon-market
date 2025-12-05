@@ -1,9 +1,6 @@
 import { getCharters } from "@/lib/services/charter-service";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 300; // Cache for 5 minutes
-
 /**
  * GET /api/charters
  * Returns all active charters for client-side use (e.g., search suggestions)

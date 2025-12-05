@@ -4,8 +4,7 @@ import { getLocale } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { ChatDetail } from "./chat-detail";
 
-// Force dynamic rendering for real-time updates
-export const dynamic = "force-dynamic";
+// Note: With cacheComponents, dynamic rendering is automatic when using auth()
 
 type PageProps = { params: Promise<{ conversationId: string }> };
 
