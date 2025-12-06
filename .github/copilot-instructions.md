@@ -371,6 +371,26 @@ import type { Charter, Captain, Trip, Policies } from "@fishon/ui";
 - Integration with `MapScriptLoader` component
 - API key in `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
 
+**Logging:**
+
+- **Always use structured logger** from `@/lib/logger`, never `console.log`
+- Available methods: `logger.debug()`, `logger.info()`, `logger.warn()`, `logger.error()`
+- Pattern: `logger.level('message', { metadata })` where metadata is a typed object
+- Production: emits single-line JSON for log aggregation tools
+- Development: colorized output with timestamps for debugging
+- Example:
+
+  ```typescript
+  import { logger } from "@/lib/logger";
+
+  logger.info("User logged in", { userId: user.id, email: user.email });
+  logger.debug("Charter search", { filters, resultCount: results.length });
+  logger.error("Payment failed", { bookingId, error: error.message });
+  ```
+
+- **Exception**: `env.ts` uses `console` to avoid circular dependencies (documented with comments)
+- ESLint will warn if `console` is used in application code
+
 #### Component Patterns
 
 - React Hook Form + Zod validation

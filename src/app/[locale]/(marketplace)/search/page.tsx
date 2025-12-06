@@ -3,6 +3,7 @@ import SearchBox from "@/components/charters/SearchBox";
 import { CampaignContainer } from "@/components/promotional";
 import { isCharterAvailableOnDate } from "@/lib/helpers/availability-helpers";
 import { batchCheckBookingsForDate } from "@/lib/helpers/availability-helpers.server";
+import { logger } from "@/lib/logger";
 import { getCharters } from "@/lib/services/charter-service";
 import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 import { buildMapItems } from "@/utils/mapItems";
@@ -310,16 +311,15 @@ export default async function SearchResults({
   const availabilityMap = new Map<string, boolean>();
   if (date) {
     // Debug: Log schedule data for all charters
-    console.log("📅 [SEARCH] Checking availability for date:", date);
-    console.log(
-      "📅 [SEARCH] Charter schedule data:",
-      filtered.map((c) => ({
+    logger.debug("Checking availability for date", {
+      date,
+      charterSchedules: filtered.map((c) => ({
         backendId: (c as any).backendId ?? String(c.id),
         name: c.name,
         schedule: c.schedule ?? "NO SCHEDULE SET",
         unavailability: c.unavailability?.length ?? 0,
-      }))
-    );
+      })),
+    });
 
     // First, check schedule + unavailability + advance booking (client-side logic)
     const scheduleAvailability = new Map<string, boolean>();
@@ -335,7 +335,7 @@ export default async function SearchResults({
 
       // Debug logging for availability check
       if (!isAvailable) {
-        console.log("🚫 [SEARCH] Charter unavailable:", {
+        logger.debug("Charter unavailable", {
           charterId: backendId,
           charterName: c.name,
           date,

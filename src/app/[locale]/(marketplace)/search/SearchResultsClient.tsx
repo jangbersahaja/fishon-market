@@ -271,7 +271,7 @@ export default function SearchResultsClient({
         {/* Desktop: 2-column layout with sidebar | Mobile: single column with bottom bar */}
         <div className="flex flex-col gap-10 lg:flex-row ">
           {/* Desktop Sidebar - Hidden on mobile */}
-          <aside className="hidden lg:block lg:w-[300px] lg:flex-shrink-0">
+          <aside className="hidden lg:block lg:w-[300px] lg:shrink-0">
             <div className="sticky space-y-10 top-30">
               {/* View on Map Button (Desktop) */}
               <button

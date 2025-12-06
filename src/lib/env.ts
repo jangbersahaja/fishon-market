@@ -103,6 +103,7 @@ export function loadEnv(): ServerEnvShape {
     (process.env.NEXT_PHASE === "phase-production-server" && !w.DATABASE_URL);
 
   if (isBuildTime) {
+    // Keep console.log here to avoid circular dependency (logger depends on env)
     console.log("[env] Build-time detected, skipping environment validation");
     // Return a partial shape with empty values for build-time only
     return {
@@ -185,12 +186,14 @@ export function loadEnv(): ServerEnvShape {
 
   // Warn if Google Maps API key missing
   if (!w.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+    // Keep console.warn here to avoid circular dependency (logger depends on env)
     console.warn(
       "[env] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY missing; Maps features will not work."
     );
   }
 
   // Warn if Fishon Captain integration variables are missing
+  // Keep console.warn here to avoid circular dependency (logger depends on env)
   if (!w.FISHON_CAPTAIN_API_URL) {
     console.warn(
       "[env] FISHON_CAPTAIN_API_URL missing; server-side API calls to captain will use fallback or fail."
@@ -218,6 +221,7 @@ export function loadEnv(): ServerEnvShape {
   }
 
   // Validate shared secret entropy if present
+  // Keep console.warn here to avoid circular dependency (logger depends on env)
   if (w.CAPTAIN_API_SECRET && !entropyCheck(w.CAPTAIN_API_SECRET)) {
     console.warn(
       "[env] CAPTAIN_API_SECRET appears weak (length < 32 or low entropy); recommend generating with: openssl rand -base64 48"
