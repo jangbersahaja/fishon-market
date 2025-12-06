@@ -10,7 +10,7 @@ import { buildMapItems } from "@/utils/mapItems";
 import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import SearchResultsClient from "./SearchResultsClient";
@@ -86,9 +86,13 @@ function uniqSorted<T>(arr: T[]): T[] {
   return Array.from(new Set(arr.filter(Boolean) as T[]));
 }
 
+type RouteParams = Promise<{ locale: string }>;
+
 export default async function SearchResults({
+  params,
   searchParams,
 }: {
+  params: RouteParams;
   searchParams: Promise<{
     q?: string;
     destination?: string;
@@ -118,6 +122,9 @@ export default async function SearchResults({
   }>;
 }) {
   // Get locale from next-intl server context
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
 
   // Await searchParams (Next.js 15 requirement)

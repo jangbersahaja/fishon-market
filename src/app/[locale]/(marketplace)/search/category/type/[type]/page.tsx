@@ -3,10 +3,10 @@ import { getChartersByType } from "@/lib/services/charter-service";
 import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 import { buildMapItems } from "@/utils/mapItems";
 import type { Metadata } from "next";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import TypeResultsClient from "./TypeResultsClient";
 
-type Params = Promise<{ type?: string }>;
+type Params = Promise<{ type?: string; locale: string }>;
 
 function prettyCase(s: string) {
   return String(s || "")
@@ -33,7 +33,9 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params }: { params: Params }) {
-  const { type } = await params;
+  const { type, locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const rawType = decodeURIComponent(type || "");
   const key = rawType.toLowerCase().trim();

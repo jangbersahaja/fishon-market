@@ -21,7 +21,7 @@ import {
 } from "@/lib/helpers/booking-status-helpers";
 import { enrichBookingWithTripData } from "@/lib/services/booking-display-service";
 import type { BookingStatus } from "@/lib/services/booking-service";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { BookingConfirmActions } from "./BookingConfirmActions";
 import { BookingStatusRefresh } from "./BookingStatusRefresh";
@@ -41,6 +41,8 @@ export default async function ConfirmationPage({
   }>;
 }) {
   const { locale } = await params;
+  setRequestLocale(locale);
+  
   const t = await getTranslations({ locale, namespace: "booking.confirm" });
   const sp = await searchParams;
   // Handle case where id might be an array (multiple query params)

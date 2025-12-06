@@ -6,7 +6,7 @@ import { campaignService } from "@/lib/services/campaign-service";
 import { getCharters } from "@/lib/services/charter-service";
 import type { UserRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import BrandSection from "./BrandSection";
@@ -15,7 +15,16 @@ import HeroSection from "./HeroSection";
 import TopTechniques from "./TopTechniques";
 import TripsNearby from "./TripsNearby";
 
-export default async function Home() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function Home({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const charters = await getCharters();
 

@@ -1,10 +1,10 @@
 import { getChartersByTechnique } from "@/lib/services/charter-service";
 import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 import type { Metadata } from "next";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import TechniqueResultsClient from "./TechniqueResultsClient";
 
-type Params = Promise<{ technique: string }>;
+type Params = Promise<{ technique: string; locale: string }>;
 
 export async function generateMetadata({
   params,
@@ -29,7 +29,9 @@ export default async function TechniqueResultsPage({
 }: {
   params: Params;
 }) {
-  const { technique } = await params;
+  const { technique, locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   // pass through the raw segment to the client component
   const raw = decodeURIComponent(technique || "");

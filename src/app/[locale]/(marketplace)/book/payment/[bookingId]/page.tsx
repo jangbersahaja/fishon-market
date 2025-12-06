@@ -22,7 +22,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export default async function PaymentPage({
@@ -33,6 +33,8 @@ export default async function PaymentPage({
   searchParams: Promise<{ payment?: string; message?: string }>;
 }) {
   const { locale, bookingId } = await params;
+  setRequestLocale(locale);
+  
   const sp = await searchParams;
   const session = await auth();
   const t = await getTranslations({ locale, namespace: "booking.payment" });
