@@ -3,12 +3,21 @@ import { BookingStatusGuide } from "@/components/account/BookingStatusGuide";
 import { auth } from "@/lib/auth/auth";
 import { getUserBookings } from "@/lib/services/booking-service";
 import { canReviewBooking } from "@/lib/services/review-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 // Note: With cacheComponents, dynamic rendering is automatic when using auth()
 
-export default async function BookingsPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function BookingsPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const session = await auth();
 
   if (!session?.user?.id) {
