@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/database/prisma";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -11,12 +12,15 @@ export const metadata: Metadata = {
   },
 };
 
+type RouteParams = Promise<{ locale: string }>;
+
 export default async function BlogCategoriesPage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: RouteParams;
 }) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const categories = await prisma.blogCategory.findMany({
     include: {
       _count: {

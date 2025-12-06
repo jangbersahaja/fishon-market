@@ -1,6 +1,7 @@
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import SearchBar from "@/components/blog/SearchBar";
 import { prisma } from "@/lib/database/prisma";
+import { setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 
 async function searchPosts(query: string, category?: string, tag?: string) {
@@ -42,14 +43,18 @@ async function searchPosts(query: string, category?: string, tag?: string) {
   });
 }
 
+type RouteParams = Promise<{ locale: string }>;
+
 export default async function BlogSearchPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ locale: string }>;
+  params: RouteParams;
   searchParams: Promise<{ q?: string; category?: string; tag?: string }>;
 }) {
   const { locale } = await params;
+  setRequestLocale(locale);
+  
   const searchParamsResolved = await searchParams;
   const query = searchParamsResolved.q || "";
   const category = searchParamsResolved.category;

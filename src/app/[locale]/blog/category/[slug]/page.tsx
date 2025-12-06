@@ -4,6 +4,7 @@ import {
   getBlogPostsByCategory,
 } from "@/lib/services/blog-service";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -13,7 +14,9 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, locale } = await params;
+  setRequestLocale(locale);
+  
   const category = await getBlogCategory(slug);
 
   if (!category) {
@@ -47,6 +50,8 @@ export default async function BlogCategoryPage({
   searchParams,
 }: Props) {
   const { slug, locale } = await params;
+  setRequestLocale(locale);
+  
   const { page: pageParam } = await searchParams;
   const page = Number(pageParam) || 1;
   const perPage = 12;

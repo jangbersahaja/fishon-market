@@ -1,6 +1,7 @@
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import { getBlogPostsByTag, getBlogTag } from "@/lib/services/blog-service";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -10,7 +11,9 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, locale } = await params;
+  setRequestLocale(locale);
+  
   const tag = await getBlogTag(slug);
 
   if (!tag) {
@@ -30,6 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogTagPage({ params, searchParams }: Props) {
   const { locale, slug } = await params;
+  setRequestLocale(locale);
+  
   const { page: pageParam } = await searchParams;
   const page = Number(pageParam) || 1;
   const perPage = 12;
