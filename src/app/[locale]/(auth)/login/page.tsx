@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 import LoginClient from "./LoginClient";
 
@@ -26,7 +27,15 @@ function LoginFallback() {
   );
 }
 
-export default function LoginPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function LoginPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <Suspense fallback={<LoginFallback />}>
       <LoginClient />

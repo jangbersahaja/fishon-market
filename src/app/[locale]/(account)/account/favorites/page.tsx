@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/account";
 import BaseCharterCard from "@/components/charters/BaseCharterCard";
 import { auth } from "@/lib/auth/auth";
 import { getUserFavorites } from "@/lib/services/favorite-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -10,7 +10,16 @@ export const metadata = {
   description: "View your saved fishing charters",
 };
 
-export default async function FavoritesPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function FavoritesPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const session = await auth();
 
   const locale = await getLocale();

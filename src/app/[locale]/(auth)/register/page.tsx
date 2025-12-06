@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import RegisterClient from "./RegisterClient";
 
 export const metadata: Metadata = {
@@ -7,6 +8,15 @@ export const metadata: Metadata = {
     "Create your Fishon account to start booking amazing fishing charters in Malaysia.",
 };
 
-export default function RegisterPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function RegisterPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  
   return <RegisterClient />;
 }

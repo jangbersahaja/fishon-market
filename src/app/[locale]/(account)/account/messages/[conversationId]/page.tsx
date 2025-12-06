@@ -1,12 +1,14 @@
 import { auth } from "@/lib/auth/auth";
 import { getConversationEnriched } from "@/lib/services/message-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { ChatDetail } from "./chat-detail";
 
 // Note: With cacheComponents, dynamic rendering is automatic when using auth()
 
-type PageProps = { params: Promise<{ conversationId: string }> };
+type PageProps = {
+  params: Promise<{ conversationId: string; locale: string }>;
+};
 
 /**
  * Conversation Detail Page (Server Component)
@@ -17,6 +19,9 @@ type PageProps = { params: Promise<{ conversationId: string }> };
  * Note: This page breaks out of the account layout to provide fullscreen chat experience
  */
 export default async function ConversationDetailPage({ params }: PageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  
   const session = await auth();
 
   if (!session?.user?.id) {

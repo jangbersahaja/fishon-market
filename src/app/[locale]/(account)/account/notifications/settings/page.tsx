@@ -10,13 +10,22 @@
 
 import NotificationSettings from "@/components/account/NotificationSettings";
 import { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Notification Settings — Fishon",
   description: "Manage your notification preferences",
 };
 
-export default function NotificationSettingsPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function NotificationSettingsPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <div className="container max-w-7xl">
       <div className="mb-6">
