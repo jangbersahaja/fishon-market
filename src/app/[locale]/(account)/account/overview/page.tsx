@@ -10,11 +10,20 @@ import {
   getBookingStats,
   getUserBookings,
 } from "@/lib/services/booking-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function OverviewPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function OverviewPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const session = await auth();
 

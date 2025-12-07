@@ -12,6 +12,7 @@ import {
   calculateTripEndTime,
   getMalaysianTime,
 } from "@/lib/helpers/booking-status-helpers";
+import { logger } from "@/lib/logger";
 import { notifyReferralTripCompleted } from "@/lib/webhooks/captain-webhook";
 import { BookingStatus } from "@prisma/client";
 
@@ -81,9 +82,12 @@ export async function updateExpiredBookings(): Promise<{
       ...expiredAuthorizedBookings,
     ];
 
-    console.log(
-      `🔄 Found ${expiredBookings.length} expired bookings (PENDING: ${expiredPendingBookings.length}, AWAITING_PAYMENT: ${expiredPaymentBookings.length}, PAYMENT_AUTHORIZED: ${expiredAuthorizedBookings.length})`
-    );
+    logger.info("Found expired bookings", {
+      total: expiredBookings.length,
+      pending: expiredPendingBookings.length,
+      awaitingPayment: expiredPaymentBookings.length,
+      paymentAuthorized: expiredAuthorizedBookings.length,
+    });
 
     // Update each booking to EXPIRED status
     for (const booking of expiredBookings) {
@@ -96,16 +100,21 @@ export async function updateExpiredBookings(): Promise<{
           },
         });
         updated++;
-        console.log(`✅ Updated booking ${booking.id} to EXPIRED`);
+        logger.info("Updated booking to EXPIRED", { bookingId: booking.id });
       } catch (error) {
         errors++;
-        console.error(`❌ Failed to update booking ${booking.id}:`, error);
+        logger.error("Failed to update booking to EXPIRED", {
+          bookingId: booking.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
     return { updated, errors };
   } catch (error) {
-    console.error("❌ Error in updateExpiredBookings:", error);
+    logger.error("Error in updateExpiredBookings", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { updated: 0, errors: 1 };
   }
 }
@@ -140,9 +149,9 @@ export async function updateCompletedBookings(): Promise<{
       },
     });
 
-    console.log(
-      `🔄 Checking ${paidBookings.length} PAID bookings for completion`
-    );
+    logger.info("Checking PAID bookings for completion", {
+      count: paidBookings.length,
+    });
 
     // Check each booking to see if trip has ended
     for (const booking of paidBookings) {
@@ -159,24 +168,28 @@ export async function updateCompletedBookings(): Promise<{
             },
           });
           updated++;
-          console.log(
-            `✅ Updated booking ${
-              booking.id
-            } to COMPLETED (ended at ${tripEndTime.toISOString()})`
-          );
+          logger.info("Updated booking to COMPLETED", {
+            bookingId: booking.id,
+            tripEndTime: tripEndTime.toISOString(),
+          });
 
           // Check if the captain was referred and trigger commission
           await checkAndTriggerReferralCommission(booking);
         }
       } catch (error) {
         errors++;
-        console.error(`❌ Failed to update booking ${booking.id}:`, error);
+        logger.error("Failed to update booking to COMPLETED", {
+          bookingId: booking.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
     return { updated, errors };
   } catch (error) {
-    console.error("❌ Error in updateCompletedBookings:", error);
+    logger.error("Error in updateCompletedBookings", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { updated: 0, errors: 1 };
   }
 }
@@ -205,9 +218,9 @@ async function checkAndTriggerReferralCommission(booking: {
     `;
 
     if (!charter.length) {
-      console.log(
-        `⚠️ [referral] Charter ${booking.charterId} not found in captain DB`
-      );
+      logger.warn("Charter not found in captain DB for referral check", {
+        charterId: booking.charterId,
+      });
       return;
     }
 
@@ -228,9 +241,9 @@ async function checkAndTriggerReferralCommission(booking: {
 
     // Check if referral is already completed (commission already triggered)
     if (referral[0].status === "COMPLETED") {
-      console.log(
-        `ℹ️ [referral] Captain ${captainUserId} referral already completed`
-      );
+      logger.debug("Captain referral already completed", {
+        captainUserId,
+      });
       return;
     }
 
@@ -244,9 +257,10 @@ async function checkAndTriggerReferralCommission(booking: {
 
     // Only trigger on first completed booking (count will be 1 after the update above)
     if (completedBookings > 1) {
-      console.log(
-        `ℹ️ [referral] Captain ${captainUserId} already has ${completedBookings} completed bookings`
-      );
+      logger.debug("Captain already has multiple completed bookings", {
+        captainUserId,
+        completedBookings,
+      });
       return;
     }
 
@@ -255,9 +269,11 @@ async function checkAndTriggerReferralCommission(booking: {
     // For simplicity, use finalPrice as the earnings base
     const captainEarnings = Number(booking.finalPrice) || 0;
 
-    console.log(
-      `🎉 [referral] First trip completed for referred captain ${captainUserId}, earnings: RM${captainEarnings}`
-    );
+    logger.info("First trip completed for referred captain", {
+      captainUserId,
+      captainEarnings,
+      bookingId: booking.id,
+    });
 
     // Send webhook to fishon-captain
     await notifyReferralTripCompleted({
@@ -268,10 +284,10 @@ async function checkAndTriggerReferralCommission(booking: {
     });
   } catch (error) {
     // Don't fail the main job for referral errors
-    console.error(
-      `❌ [referral] Error checking referral for booking ${booking.id}:`,
-      error
-    );
+    logger.error("Error checking referral for booking", {
+      bookingId: booking.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -282,14 +298,15 @@ export async function updateAllBookingStatuses(): Promise<{
   expired: { updated: number; errors: number };
   completed: { updated: number; errors: number };
 }> {
-  console.log("🚀 Starting booking status update job...");
+  logger.info("Starting booking status update job");
   const startTime = Date.now();
 
   const expired = await updateExpiredBookings();
   const completed = await updateCompletedBookings();
 
   const duration = Date.now() - startTime;
-  console.log(`✅ Booking status update completed in ${duration}ms`, {
+  logger.info("Booking status update completed", {
+    duration,
     expired,
     completed,
   });

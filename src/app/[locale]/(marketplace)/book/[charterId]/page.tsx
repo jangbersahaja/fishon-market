@@ -5,7 +5,7 @@ import {
   getCharterById,
   getCharterFlowType,
 } from "@/lib/services/charter-service";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import CheckoutForm from "./ui/CheckoutForm";
@@ -33,10 +33,11 @@ export default async function CheckoutPage({
   params: RouteParams;
   searchParams: RouteSearchParams;
 }) {
-  const { locale } = await params;
+  const { locale, charterId } = await params;
+  setRequestLocale(locale);
+  
   const t = await getTranslations({ locale, namespace: "booking.checkout" });
   const session = await auth();
-  const { charterId } = await params;
   const sp = await searchParams;
 
   // Date params are available in sp.date, sp.days, sp.startDate, sp.endDate

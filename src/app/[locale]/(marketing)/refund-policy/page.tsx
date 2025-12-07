@@ -1,5 +1,6 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import RefundPolicyInteractive from "./RefundPolicyInteractive";
 
 export const metadata: Metadata = createMetadata({
@@ -11,7 +12,15 @@ export const metadata: Metadata = createMetadata({
   // TODO: Add branded OG image (1200x630px) for social sharing
 });
 
-export default function RefundPolicyPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function RefundPolicyPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <div className="relative isolate">
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">

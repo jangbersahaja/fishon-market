@@ -2,7 +2,7 @@
 import FishingTechniqueGrid from "@/components/marketing/FishingTechniqueGrid";
 import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
 import { getCharters } from "@/lib/services/charter-service";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 
 function normalizeLabel(s: string) {
@@ -13,7 +13,16 @@ function normalizeLabel(s: string) {
     .join(" ");
 }
 
-export default async function TechniquesCategoriesPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function TechniquesCategoriesPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const t = await getTranslations({
     locale,

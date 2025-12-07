@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/database/prisma";
 import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
+import { setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 interface PageProps {
@@ -19,6 +20,8 @@ export default async function PaymentReturnPage({
   searchParams,
 }: PageProps) {
   const { locale } = await params;
+  setRequestLocale(locale);
+  
   const searchParamsData = await searchParams;
   const { status_id, order_id, transaction_id, msg, hash } = searchParamsData;
 

@@ -23,7 +23,7 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 // Session timeout: 30 minutes
@@ -154,6 +154,8 @@ export default async function PaymentPreviewPage({
   searchParams: Promise<{ data?: string; session?: string; message?: string }>;
 }) {
   const { locale } = await params;
+  setRequestLocale(locale);
+  
   const sp = await searchParams;
   const session = await auth();
   const t = await getTranslations({

@@ -10,7 +10,7 @@ import {
 } from "@/lib/services/blog-service";
 import { Calendar, Clock, User } from "lucide-react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -20,7 +20,9 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, locale } = await params;
+  setRequestLocale(locale);
+  
   const post = await getBlogPostBySlug(slug);
   const t = await getTranslations("blogPost");
 
@@ -77,6 +79,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug, locale } = await params;
+  setRequestLocale(locale);
+  
   const post = await getBlogPostBySlug(slug);
   const t = await getTranslations("blogPost");
 

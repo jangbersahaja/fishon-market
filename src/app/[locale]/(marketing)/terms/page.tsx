@@ -1,5 +1,6 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import TermsInteractive from "./TermsInteractive";
 
 export const metadata: Metadata = createMetadata({
@@ -11,7 +12,15 @@ export const metadata: Metadata = createMetadata({
   // TODO: Add branded OG image (1200x630px) for social sharing
 });
 
-export default function TermsOfServicePage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function TermsOfServicePage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <div className="relative isolate">
       {/* Hero / Header */}

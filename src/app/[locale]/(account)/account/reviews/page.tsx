@@ -3,11 +3,20 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/auth";
 import { getUserReviews } from "@/lib/services/review-service";
 import { ArrowLeft } from "lucide-react";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function UserReviewsPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function UserReviewsPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const session = await auth();
 

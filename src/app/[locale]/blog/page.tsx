@@ -4,10 +4,16 @@ import SearchBar from "@/components/blog/SearchBar";
 import { prisma } from "@/lib/database/prisma";
 import { getBlogPosts, getFeaturedPosts } from "@/lib/services/blog-service";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 
-export async function generateMetadata(): Promise<Metadata> {
+type RouteParams = Promise<{ locale: string }>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: RouteParams;
+}): Promise<Metadata> {
   const t = await getTranslations("blogPage.metadata");
   return {
     title: t("title"),
@@ -39,8 +45,10 @@ const blogSchema = {
 };
 
 export default async function BlogPage({
+  params,
   searchParams,
 }: {
+  params: RouteParams;
   searchParams: Promise<{
     page?: string;
     q?: string;
@@ -50,20 +58,23 @@ export default async function BlogPage({
     to?: string;
   }>;
 }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  
   const t = await getTranslations("blogPage");
-  const params = await searchParams;
-  const page = Number(params.page) || 1;
+  const sp = await searchParams;
+  const page = Number(sp.page) || 1;
   const perPage = 12;
 
   // Parse search filters
   const filters = {
     page,
     perPage,
-    query: params.q,
-    categorySlug: params.category,
-    tagSlug: params.tag,
-    dateFrom: params.from ? new Date(params.from) : undefined,
-    dateTo: params.to ? new Date(params.to) : undefined,
+    query: sp.q,
+    categorySlug: sp.category,
+    tagSlug: sp.tag,
+    dateFrom: sp.from ? new Date(sp.from) : undefined,
+    dateTo: sp.to ? new Date(sp.to) : undefined,
   };
 
   const { posts, total } = await getBlogPosts(filters);

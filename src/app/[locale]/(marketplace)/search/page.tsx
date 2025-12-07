@@ -3,6 +3,7 @@ import SearchBox from "@/components/charters/SearchBox";
 import { CampaignContainer } from "@/components/promotional";
 import { isCharterAvailableOnDate } from "@/lib/helpers/availability-helpers";
 import { batchCheckBookingsForDate } from "@/lib/helpers/availability-helpers.server";
+import { logger } from "@/lib/logger";
 import { getCharters } from "@/lib/services/charter-service";
 import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 import { buildMapItems } from "@/utils/mapItems";
@@ -10,7 +11,7 @@ import { buildMapItems } from "@/utils/mapItems";
 import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import SearchResultsClient from "./SearchResultsClient";
@@ -86,51 +87,59 @@ function uniqSorted<T>(arr: T[]): T[] {
   return Array.from(new Set(arr.filter(Boolean) as T[]));
 }
 
+type RouteParams = Promise<{ locale: string }>;
+type SearchParams = {
+  q?: string;
+  destination?: string;
+  date?: string; // YYYY-MM-DD
+  adults?: string;
+  children?: string;
+  guests?: string; // alternate single number
+  orderby?: string;
+  price_range?: string; // one of PRICE_BUCKETS keys
+  trip_type?: string; // e.g., Half-Day, Full-Day, Night (from trip.name)
+  pickup?: string; // 1/true
+  child_friendly?: string; // 1/true
+  // New advanced filters
+  departure?: string;
+  duration?: string;
+  fishing_type?: string;
+  species?: string; // comma-separated IDs
+  techniques?: string; // comma-separated
+  amenities?: string; // comma-separated
+  boat_type?: string;
+  min_rating?: string;
+  max_rating?: string;
+  license_provided?: string;
+  catch_and_keep?: string;
+  catch_and_release?: string;
+  charter_style?: string;
+};
+
 export default async function SearchResults({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{
-    q?: string;
-    destination?: string;
-    date?: string; // YYYY-MM-DD
-    adults?: string;
-    children?: string;
-    guests?: string; // alternate single number
-    orderby?: string;
-    price_range?: string; // one of PRICE_BUCKETS keys
-    trip_type?: string; // e.g., Half-Day, Full-Day, Night (from trip.name)
-    pickup?: string; // 1/true
-    child_friendly?: string; // 1/true
-    // New advanced filters
-    departure?: string;
-    duration?: string;
-    fishing_type?: string;
-    species?: string; // comma-separated IDs
-    techniques?: string; // comma-separated
-    amenities?: string; // comma-separated
-    boat_type?: string;
-    min_rating?: string;
-    max_rating?: string;
-    license_provided?: string;
-    catch_and_keep?: string;
-    catch_and_release?: string;
-    charter_style?: string;
-  }>;
+  params: RouteParams;
+  searchParams: Promise<SearchParams>;
 }) {
   // Get locale from next-intl server context
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+
   const locale = await getLocale();
 
   // Await searchParams (Next.js 15 requirement)
-  const params = await searchParams;
+  const search = await searchParams;
 
-  const destination = params.destination || params.q || "";
+  const destination = search.destination || search.q || "";
   const destinationTerms = expandDestinationSearchTerms(destination);
-  const date = params.date; // (availability integration later)
+  const date = search.date; // (availability integration later)
 
   // Parse guests; prefer explicit adults/children, but support legacy `guests`
-  const adultsParam = toInt(params.adults, 0);
-  const childrenParam = toInt(params.children, 0);
-  const guestsParam = toInt(params.guests, 0);
+  const adultsParam = toInt(search.adults, 0);
+  const childrenParam = toInt(search.children, 0);
+  const guestsParam = toInt(search.guests, 0);
 
   // If only `guests` is provided, treat them all as adults by default
   const adults = adultsParam || (guestsParam ? guestsParam : 0);
@@ -138,30 +147,30 @@ export default async function SearchResults({
   const totalGuests = (adults || 0) + (children || 0);
 
   // Parse filters - Basic
-  const orderby = (params.orderby || "recommended").toLowerCase();
-  const priceRange = params.price_range;
-  const tripType = (params.trip_type || "").trim();
-  const pickupParam = params.pickup;
-  const childFriendlyParam = params.child_friendly;
+  const orderby = (search.orderby || "recommended").toLowerCase();
+  const priceRange = search.price_range;
+  const tripType = (search.trip_type || "").trim();
+  const pickupParam = search.pickup;
+  const childFriendlyParam = search.child_friendly;
 
   // Parse filters - Advanced
-  const departureParam = params.departure;
-  const durationParam = params.duration;
-  const fishingTypeParam = params.fishing_type;
-  const speciesParam = params.species?.split(",").filter(Boolean) || [];
-  const techniquesParam = params.techniques?.split(",").filter(Boolean) || [];
-  const amenitiesParam = params.amenities?.split(",").filter(Boolean) || [];
-  const boatTypeParam = params.boat_type;
-  const minRatingParam = params.min_rating
-    ? parseFloat(params.min_rating)
+  const departureParam = search.departure;
+  const durationParam = search.duration;
+  const fishingTypeParam = search.fishing_type;
+  const speciesParam = search.species?.split(",").filter(Boolean) || [];
+  const techniquesParam = search.techniques?.split(",").filter(Boolean) || [];
+  const amenitiesParam = search.amenities?.split(",").filter(Boolean) || [];
+  const boatTypeParam = search.boat_type;
+  const minRatingParam = search.min_rating
+    ? parseFloat(search.min_rating)
     : undefined;
-  const maxRatingParam = params.max_rating
-    ? parseFloat(params.max_rating)
+  const maxRatingParam = search.max_rating
+    ? parseFloat(search.max_rating)
     : undefined;
-  const licenseProvidedParam = params.license_provided;
-  const catchAndKeepParam = params.catch_and_keep;
-  const catchAndReleaseParam = params.catch_and_release;
-  const charterStyleParam = params.charter_style;
+  const licenseProvidedParam = search.license_provided;
+  const catchAndKeepParam = search.catch_and_keep;
+  const catchAndReleaseParam = search.catch_and_release;
+  const charterStyleParam = search.charter_style;
 
   // Fetch charters from backend or dummy data
   const charters = await getCharters();
@@ -239,9 +248,11 @@ export default async function SearchResults({
       // Species filter (charter must have at least one selected species)
       // Checks both charter-level and trip-level species
       if (speciesParam.length > 0) {
-        const charterMatch = speciesParam.some((s) => c.species?.includes(s));
+        const charterMatch = speciesParam.some((s: string) =>
+          c.species?.includes(s)
+        );
         const tripMatch = c.trip?.some((trip) =>
-          speciesParam.some((s) => trip.species?.includes(s))
+          speciesParam.some((s: string) => trip.species?.includes(s))
         );
         if (!charterMatch && !tripMatch) return false;
       }
@@ -249,18 +260,20 @@ export default async function SearchResults({
       // Techniques filter (charter must have at least one selected technique)
       // Checks both charter-level and trip-level techniques
       if (techniquesParam.length > 0) {
-        const charterMatch = techniquesParam.some((t) =>
+        const charterMatch = techniquesParam.some((t: string) =>
           c.techniques?.includes(t)
         );
         const tripMatch = c.trip?.some((trip) =>
-          techniquesParam.some((t) => trip.techniques?.includes(t))
+          techniquesParam.some((t: string) => trip.techniques?.includes(t))
         );
         if (!charterMatch && !tripMatch) return false;
       }
 
       // Amenities filter (charter must have all selected amenities)
       if (amenitiesParam.length > 0) {
-        const hasAll = amenitiesParam.every((a) => c.includes?.includes(a));
+        const hasAll = amenitiesParam.every((a: string) =>
+          c.includes?.includes(a)
+        );
         if (!hasAll) return false;
       }
 
@@ -298,16 +311,15 @@ export default async function SearchResults({
   const availabilityMap = new Map<string, boolean>();
   if (date) {
     // Debug: Log schedule data for all charters
-    console.log("📅 [SEARCH] Checking availability for date:", date);
-    console.log(
-      "📅 [SEARCH] Charter schedule data:",
-      filtered.map((c) => ({
+    logger.debug("Checking availability for date", {
+      date,
+      charterSchedules: filtered.map((c) => ({
         backendId: (c as any).backendId ?? String(c.id),
         name: c.name,
         schedule: c.schedule ?? "NO SCHEDULE SET",
         unavailability: c.unavailability?.length ?? 0,
-      }))
-    );
+      })),
+    });
 
     // First, check schedule + unavailability + advance booking (client-side logic)
     const scheduleAvailability = new Map<string, boolean>();
@@ -323,7 +335,7 @@ export default async function SearchResults({
 
       // Debug logging for availability check
       if (!isAvailable) {
-        console.log("🚫 [SEARCH] Charter unavailable:", {
+        logger.debug("Charter unavailable", {
           charterId: backendId,
           charterName: c.name,
           date,
@@ -498,7 +510,7 @@ export default async function SearchResults({
   );
 
   return (
-    <main className="min-h-dvh bg-gradient-to-br from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
+    <main className="min-h-dvh bg-linear-to-br from-[#ec2227] via-[#d11f24] to-[#b01a1f]">
       {/* Responsive SearchBox: non-sticky on mobile, sticky on desktop under fixed navbar */}
       <div className="sticky top-0 z-40 w-full" style={{ willChange: "top" }}>
         <div className="w-full px-5 py-5 mx-auto max-w-7xl">
@@ -510,8 +522,8 @@ export default async function SearchResults({
       <Suspense
         fallback={
           <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-white text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white border-r-transparent" />
+            <div className="text-center text-white">
+              <div className="inline-block w-8 h-8 border-4 border-white border-solid rounded-full animate-spin border-r-transparent" />
               <p className="mt-4 text-sm">Loading results...</p>
             </div>
           </div>

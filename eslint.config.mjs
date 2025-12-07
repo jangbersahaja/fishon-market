@@ -1,6 +1,6 @@
+import { FlatCompat } from "@eslint/eslintrc";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,6 +25,15 @@ const eslintConfig = [
       // Keep momentum by not blocking builds on "any" usage.
       // We can tighten this later as types solidify.
       "@typescript-eslint/no-explicit-any": "off",
+
+      // Enforce logger usage instead of console
+      // Exception: env.ts and logger.ts are allowed to use console
+      "no-console": [
+        "warn",
+        {
+          allow: [],
+        },
+      ],
     },
   },
 ];

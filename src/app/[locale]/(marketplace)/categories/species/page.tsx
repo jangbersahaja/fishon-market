@@ -2,11 +2,17 @@ import SpeciesGrid from "@/components/categories/SpeciesGrid";
 import { getAvailableSpeciesByCategory } from "@/lib/helpers/species-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import type { Metadata } from "next";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+type RouteParams = Promise<{ locale: string }>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: RouteParams;
+}): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "categories.species" });
 
   return {
@@ -15,7 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function SpeciesCategoriesPage() {
+export default async function SpeciesCategoriesPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: "categories.species" });
   const tNav = await getTranslations({ locale, namespace: "nav" });

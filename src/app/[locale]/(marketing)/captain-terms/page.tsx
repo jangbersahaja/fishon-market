@@ -1,5 +1,6 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import CaptainTermsInteractive from "./CaptainTermsInteractive";
 
 export const metadata: Metadata = createMetadata({
@@ -16,7 +17,15 @@ export const metadata: Metadata = createMetadata({
   // TODO: Add OG image for captain terms page
 });
 
-export default function CaptainTermsPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function CaptainTermsPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <div className="relative isolate">
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">

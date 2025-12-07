@@ -4,12 +4,18 @@ import {
 } from "@/components/marketing/DestinationGrid";
 import { getDestinationsGroupedByState } from "@/lib/helpers/popularity-helpers";
 import { getCharters } from "@/lib/services/charter-service";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { Suspense } from "react";
 
-export async function generateMetadata() {
-  const locale = await getLocale();
+type RouteParams = Promise<{ locale: string }>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale } = await params;
   const t = await getTranslations({
     locale,
     namespace: "categories.destinations",
@@ -68,7 +74,14 @@ async function DestinationsContent() {
   );
 }
 
-export default async function PopularDestinationsPage() {
+export default async function PopularDestinationsPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const locale = await getLocale();
   const t = await getTranslations({
     locale,

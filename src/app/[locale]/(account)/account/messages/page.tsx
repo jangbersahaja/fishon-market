@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { getAnglerConversationsEnriched } from "@/lib/services/message-service";
-import { getLocale } from "next-intl/server";
+import { getLocale, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { ConversationsClient } from "./conversations-client";
 
@@ -12,7 +12,16 @@ import { ConversationsClient } from "./conversations-client";
  * Lists all conversations for the current user with enriched data
  * Fetches captain names, charter names, and trip details
  */
-export default async function MessagesPage() {
+type RouteParams = Promise<{ locale: string }>;
+
+export default async function MessagesPage({
+  params,
+}: {
+  params: RouteParams;
+}) {
+  const { locale: paramLocale } = await params;
+  setRequestLocale(paramLocale);
+  
   const session = await auth();
 
   if (!session?.user?.id) {
