@@ -1,8 +1,7 @@
 import { fetchCharters } from "@/lib/api/captain-api";
 import { isCaptainDbConfigured, viewExists } from "@/lib/api/captain-db";
 import { prisma } from "@/lib/database/prisma";
-
-// Note: With cacheComponents, dynamic rendering is automatic for db queries
+import { Suspense } from "react";
 
 async function checkMarketDb() {
   try {
@@ -65,7 +64,7 @@ async function checkCaptainApiV1() {
   }
 }
 
-export default async function DbHealthPage() {
+async function DbHealthContent() {
   const [marketDb, captainDb, captainApi, captainApiV1] = await Promise.all([
     checkMarketDb(),
     checkCaptainDb(),
@@ -74,8 +73,7 @@ export default async function DbHealthPage() {
   ]);
 
   return (
-    <main className="p-6 mx-auto max-w-7xl">
-      <h1 className="text-xl font-semibold">Dev DB Health</h1>
+    <>
       <div className="mt-4 space-y-4">
         <div>
           <h2 className="font-medium">Market DB</h2>
@@ -112,6 +110,30 @@ export default async function DbHealthPage() {
           />
         </div>
       </div>
+    </>
+  );
+}
+
+function DbHealthSkeleton() {
+  return (
+    <div className="mt-4 space-y-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i}>
+          <div className="w-48 h-5 bg-gray-200 rounded animate-pulse" />
+          <div className="w-16 h-4 mt-2 bg-gray-200 rounded animate-pulse" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function DbHealthPage() {
+  return (
+    <main className="p-6 mx-auto max-w-7xl">
+      <h1 className="text-xl font-semibold">Dev DB Health</h1>
+      <Suspense fallback={<DbHealthSkeleton />}>
+        <DbHealthContent />
+      </Suspense>
     </main>
   );
 }

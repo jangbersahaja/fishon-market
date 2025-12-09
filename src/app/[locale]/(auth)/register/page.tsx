@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
+import { Suspense } from "react";
 import RegisterClient from "./RegisterClient";
 
 export const metadata: Metadata = {
@@ -10,13 +12,23 @@ export const metadata: Metadata = {
 
 type RouteParams = Promise<{ locale: string }>;
 
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
 export default async function RegisterPage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
+
   const { locale } = await params;
   setRequestLocale(locale);
-  
-  return <RegisterClient />;
+
+  return (
+    <Suspense fallback={<div className="w-full h-screen bg-[#ec2227]" />}>
+      <RegisterClient locale={locale} />
+    </Suspense>
+  );
 }

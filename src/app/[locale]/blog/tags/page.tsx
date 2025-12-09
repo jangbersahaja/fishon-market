@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/database/prisma";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -14,11 +15,16 @@ export const metadata: Metadata = {
 
 type RouteParams = Promise<{ locale: string }>;
 
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
 export default async function BlogTagsPage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale } = await params;
   setRequestLocale(locale);
   const tags = await prisma.blogTag.findMany({
@@ -36,7 +42,7 @@ export default async function BlogTagsPage({
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
+      <section className="bg-linear-to-r from-[#ec2227] to-[#c41d22] text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <nav className="mb-4 text-sm text-white/80" aria-label="Breadcrumb">
             <Link href={`/${locale}/blog`} className="hover:text-white">

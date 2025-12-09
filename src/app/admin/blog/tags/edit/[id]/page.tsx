@@ -1,5 +1,6 @@
 import TagForm from "@/components/admin/TagForm";
 import { prisma } from "@/lib/database/prisma";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { updateTag } from "../../actions";
 
@@ -14,6 +15,8 @@ export default async function EditTagPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  noStore();
+
   const { id } = await params;
   const tag = await getTag(id);
 

@@ -3,6 +3,7 @@
 import { createContactPointSchema, serializeSchema } from "@/lib/seo";
 import { Anchor, HelpCircle, LifeBuoy, Mail, Phone, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { unstable_noStore as noStore } from "next/cache";
 import { useMemo, useState } from "react";
 
 // NOTE: If you later add a server action or API route, you can swap the mailto fallback with a real submit.
@@ -22,6 +23,7 @@ type Topic =
   | "Press / Media";
 
 export default function ContactPage() {
+  noStore();
   const t = useTranslations("contactPage");
   const [form, setForm] = useState({
     name: "",

@@ -1,6 +1,7 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import CaptainTermsInteractive from "./CaptainTermsInteractive";
 
 export const metadata: Metadata = createMetadata({
@@ -19,11 +20,16 @@ export const metadata: Metadata = createMetadata({
 
 type RouteParams = Promise<{ locale: string }>;
 
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
 export default async function CaptainTermsPage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale } = await params;
   setRequestLocale(locale);
   return (

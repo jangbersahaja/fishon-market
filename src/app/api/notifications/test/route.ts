@@ -5,10 +5,11 @@
 
 import { auth } from "@/lib/auth/auth";
 import { createNotification } from "@/lib/services/notification-service";
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 
 export async function POST() {
   try {
+    await connection();
     const session = await auth();
 
     if (!session?.user?.id) {

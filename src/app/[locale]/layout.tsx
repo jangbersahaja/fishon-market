@@ -1,19 +1,11 @@
-import AuthModal from "@/components/auth/AuthModal";
-import { AuthModalProvider } from "@/components/auth/AuthModalContext";
-import Chrome from "@/components/layout/Chrome";
-import type { FooterDestination } from "@/components/layout/Footer";
-import { NotificationProvider } from "@/components/notifications/NotificationProvider";
-import { CampaignContainer } from "@/components/promotional";
-import SessionProvider from "@/components/shared/SessionProvider";
-import { Toaster } from "@/components/ui/sonner";
+import { FooterDestinationsWrapper } from "@/components/layout/FooterDestinationsWrapper";
+import { LayoutProviders } from "@/components/layout/LayoutProviders";
 import { locales } from "@/i18n/config";
-import { getAvailableStates } from "@/lib/helpers/popularity-helpers";
 import {
   createOrganizationSchema,
   createWebSiteSchema,
   serializeSchema,
 } from "@/lib/seo";
-import { getCharters } from "@/lib/services/charter-service";
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
@@ -59,25 +51,6 @@ export function generateStaticParams() {
 const organizationSchema = createOrganizationSchema();
 const websiteSchema = createWebSiteSchema();
 
-/**
- * Fetch footer destinations.
- * TODO: Re-enable 'use cache' when cacheComponents is enabled.
- */
-async function getFooterDestinations(): Promise<FooterDestination[]> {
-  try {
-    const charters = await getCharters();
-    const states = getAvailableStates(charters);
-    return states.map((s) => ({
-      name: s.name,
-      slug: s.slug,
-      charterCount: s.charterCount,
-    }));
-  } catch (error) {
-    console.error("Failed to fetch footer destinations:", error);
-    return [];
-  }
-}
-
 export default async function LocaleLayout({
   children,
   params,
@@ -98,9 +71,6 @@ export default async function LocaleLayout({
 
   // Providing all messages to the client side is the easiest way to get started
   const messages = await getMessages({ locale });
-
-  // Fetch cached footer destination data
-  const footerDestinations = await getFooterDestinations();
 
   return (
     <html lang={locale}>
@@ -124,24 +94,15 @@ export default async function LocaleLayout({
         className={`flex flex-col font-sans ${inter.variable} ${oswald.variable}`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <SessionProvider>
-            <NotificationProvider>
-              <AuthModalProvider>
-                <Chrome footerDestinations={footerDestinations}>
+          <Suspense fallback={null}>
+            <FooterDestinationsWrapper>
+              {(destinations) => (
+                <LayoutProviders footerDestinations={destinations}>
                   {children}
-                </Chrome>
-                <AuthModal />
-                <Toaster />
-                {/* Global bottom bar campaign placement - wrapped in Suspense for PPR */}
-                <Suspense fallback={null}>
-                  <CampaignContainer
-                    placementKey="global-bottom-bar"
-                    variant="bar"
-                  />
-                </Suspense>
-              </AuthModalProvider>
-            </NotificationProvider>
-          </SessionProvider>
+                </LayoutProviders>
+              )}
+            </FooterDestinationsWrapper>
+          </Suspense>
         </NextIntlClientProvider>
         <Analytics />
       </body>

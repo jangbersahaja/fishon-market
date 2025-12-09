@@ -53,6 +53,12 @@ export function calculateTripStartTime(booking: {
 
 /**
  * Calculate trip end time based on booking date, startTime, and days
+ *
+ * FALLBACK ONLY - Use for bookings without timeSlots data
+ * Assumes 8-hour fishing trips per day (standard charter duration)
+ *
+ * NOTE: For accurate end times, use timeSlots[last].endDateTime instead
+ * This function exists for backwards compatibility
  */
 export function calculateTripEndTime(booking: {
   date: Date;
@@ -65,6 +71,7 @@ export function calculateTripEndTime(booking: {
 
   // Add the duration in days
   // Assuming 8-hour fishing trips (standard charter duration)
+  // WARNING: This is a fallback assumption and may be inaccurate
   const tripDurationHours = days * 8;
   const tripEnd = new Date(tripStart);
   tripEnd.setHours(tripEnd.getHours() + tripDurationHours);
@@ -89,8 +96,15 @@ export function isTripInProgress(booking: BookingForStatus): boolean {
 
 /**
  * Check if a booking's trip has been completed (trip end time has passed)
+ *
+ * Uses same priority as cron job:
+ * 1. Check database status first
+ * 2. Use timeSlots[last].endDateTime if available
+ * 3. Fallback to calculated end time (8h/day assumption)
  */
-export function isTripCompleted(booking: BookingForStatus): boolean {
+export function isTripCompleted(
+  booking: BookingForStatus & { timeSlots?: unknown }
+): boolean {
   // Check database status first
   if (booking.status === BookingStatus.COMPLETED) {
     return true;
@@ -101,20 +115,44 @@ export function isTripCompleted(booking: BookingForStatus): boolean {
     return false;
   }
 
-  const tripEndTime = calculateTripEndTime(booking);
+  let tripEndTime: Date;
+
+  // Priority 1: Use timeSlots if available
+  if (
+    booking.timeSlots &&
+    Array.isArray(booking.timeSlots) &&
+    booking.timeSlots.length > 0
+  ) {
+    const timeSlots = booking.timeSlots as Array<{
+      day?: number;
+      date?: string;
+      startDateTime: string;
+      endDateTime: string;
+    }>;
+    const lastSlot = timeSlots[timeSlots.length - 1];
+    tripEndTime = new Date(lastSlot.endDateTime);
+  } else {
+    // Priority 2: Fallback to calculated end time
+    tripEndTime = calculateTripEndTime(booking);
+  }
+
   const now = getMalaysianTime();
+  const isCompleted = now >= tripEndTime;
 
-  console.log("🕐 Trip completion check:", {
-    now: now.toISOString(),
-    nowMYT: now.toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
-    tripEndTime: tripEndTime.toISOString(),
-    tripEndTimeMYT: tripEndTime.toLocaleString("en-MY", {
-      timeZone: "Asia/Kuala_Lumpur",
-    }),
-    isCompleted: now >= tripEndTime,
-  });
+  if (process.env.NODE_ENV === "development") {
+    console.log("🕐 Trip completion check:", {
+      bookingId: (booking as any).id,
+      now: now.toISOString(),
+      nowMYT: now.toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }),
+      tripEndTime: tripEndTime.toISOString(),
+      tripEndTimeMYT: tripEndTime.toLocaleString("en-MY", {
+        timeZone: "Asia/Kuala_Lumpur",
+      }),
+      isCompleted,
+    });
+  }
 
-  return now >= tripEndTime;
+  return isCompleted;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { getUserConversations } from "@/lib/services/message-service";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/conversations
@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
  * - cursor: string (for pagination)
  */
 export async function GET(request: NextRequest) {
+  await connection();
   try {
     const session = await auth();
 

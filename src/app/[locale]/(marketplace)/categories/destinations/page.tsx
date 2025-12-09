@@ -5,30 +5,25 @@ import {
 import { getDestinationsGroupedByState } from "@/lib/helpers/popularity-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 
 type RouteParams = Promise<{ locale: string }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: RouteParams;
-}) {
-  const { locale } = await params;
-  const t = await getTranslations({
-    locale,
-    namespace: "categories.destinations",
-  });
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
 
+export async function generateMetadata({ params }: { params: RouteParams }) {
+  // Use simple static metadata during build to avoid getTranslations() calls
   return {
-    title: `${t("title")} | Fishon.my`,
-    description: t("description"),
+    title: "Destinations | Fishon.my",
+    description: "Discover fishing destinations in Malaysia",
   };
 }
 
-async function DestinationsContent() {
-  const locale = await getLocale();
+async function DestinationsContent({ locale }: { locale: string }) {
   const t = await getTranslations({
     locale,
     namespace: "categories.destinations",
@@ -79,9 +74,11 @@ export default async function PopularDestinationsPage({
 }: {
   params: RouteParams;
 }) {
+  noStore();
+
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
   const t = await getTranslations({
     locale,
@@ -105,7 +102,7 @@ export default async function PopularDestinationsPage({
       </header>
 
       <Suspense fallback={<DestinationGridSkeleton count={15} />}>
-        <DestinationsContent />
+        <DestinationsContent locale={paramLocale} />
       </Suspense>
 
       {/* Back / Secondary nav */}

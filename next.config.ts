@@ -10,8 +10,8 @@ const blobHost = process.env.NEXT_PUBLIC_BLOB_HOST?.replace(
 )?.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
-  // Cache Components (PPR) disabled for now - requires refactoring auth patterns
-  // TODO: Re-enable after wrapping auth-dependent content in Suspense boundaries
+  // Cache Components (PPR) - disabled for now due to incompatibilities with i18n and dynamic data access
+  // Can be re-enabled after wrapping all uncached data access in <Suspense> boundaries
   // cacheComponents: true,
   images: {
     // Prefer AVIF (smallest), fallback to WebP. Both are much smaller than JPEG/PNG.

@@ -1,6 +1,7 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import PrivacyInteractive from "./PrivacyInteractive";
 
 export const metadata: Metadata = createMetadata({
@@ -14,16 +15,22 @@ export const metadata: Metadata = createMetadata({
 
 type RouteParams = Promise<{ locale: string }>;
 
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
 export default async function PrivacyPolicyPage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
+
   const { locale } = await params;
   setRequestLocale(locale);
   return (
     <div className="relative isolate">
-      <section className="text-white bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <section className="text-white bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="px-4 py-20 mx-auto max-w-7xl sm:py-24">
           <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
             Privacy Policy

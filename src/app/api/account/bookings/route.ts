@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth/auth";
 import { getUserBookings } from "@/lib/services/booking-service";
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 
 export async function GET(req: Request) {
+  await connection();
   try {
     const session = await auth();
 

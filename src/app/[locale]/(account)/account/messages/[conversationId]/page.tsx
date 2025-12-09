@@ -21,7 +21,7 @@ type PageProps = {
 export default async function ConversationDetailPage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  
+
   const session = await auth();
 
   if (!session?.user?.id) {

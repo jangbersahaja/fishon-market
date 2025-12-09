@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/database/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/auth/account-type?email=...
  * Checks if an email is registered and whether it's OAuth-only
  */
 export async function GET(request: NextRequest) {
+  await connection();
   try {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");

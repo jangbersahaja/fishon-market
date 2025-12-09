@@ -5,7 +5,7 @@ import {
   getReviewByBookingId,
 } from "@/lib/services/review-service";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/account/reviews/check/[bookingId]
@@ -23,6 +23,7 @@ export async function GET(
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
+    await connection();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

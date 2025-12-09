@@ -12,9 +12,16 @@ import { expandDestinationSearchTerms } from "@/utils/destinationAliases";
 import type { Charter } from "@fishon/ui";
 import { ALL_SPECIES } from "@fishon/ui";
 import { getLocale, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import SearchResultsClient from "./SearchResultsClient";
+
+type RouteParams = Promise<{ locale: string }>;
+
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
 
 // Helpers
 function minPrice(c: Charter): number | undefined {
@@ -87,7 +94,6 @@ function uniqSorted<T>(arr: T[]): T[] {
   return Array.from(new Set(arr.filter(Boolean) as T[]));
 }
 
-type RouteParams = Promise<{ locale: string }>;
 type SearchParams = {
   q?: string;
   destination?: string;
@@ -123,6 +129,7 @@ export default async function SearchResults({
   params: RouteParams;
   searchParams: Promise<SearchParams>;
 }) {
+  noStore();
   // Get locale from next-intl server context
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);

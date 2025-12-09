@@ -2,7 +2,7 @@
 import { auth } from "@/lib/auth/auth";
 import { processImageFile } from "@/lib/heicConverter";
 import { put } from "@vercel/blob";
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
@@ -11,6 +11,7 @@ const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 
 export async function POST(req: Request) {
   try {
+    await connection();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

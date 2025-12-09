@@ -3,6 +3,7 @@ import FishingTechniqueGrid from "@/components/marketing/FishingTechniqueGrid";
 import { getFishingTechniqueImage } from "@/lib/helpers/image-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 function normalizeLabel(s: string) {
@@ -20,9 +21,10 @@ export default async function TechniquesCategoriesPage({
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
   const t = await getTranslations({
     locale,
