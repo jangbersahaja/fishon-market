@@ -7,7 +7,7 @@ import {
   getUserReviews,
 } from "@/lib/services/review-service";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/account/reviews
@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET() {
   try {
+    await connection();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -49,6 +50,7 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    await connection();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

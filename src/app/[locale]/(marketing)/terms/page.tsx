@@ -1,6 +1,7 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import TermsInteractive from "./TermsInteractive";
 
 export const metadata: Metadata = createMetadata({
@@ -14,17 +15,22 @@ export const metadata: Metadata = createMetadata({
 
 type RouteParams = Promise<{ locale: string }>;
 
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
 export default async function TermsOfServicePage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale } = await params;
   setRequestLocale(locale);
   return (
     <div className="relative isolate">
       {/* Hero / Header */}
-      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <section className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:py-24">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
             Terms of Service

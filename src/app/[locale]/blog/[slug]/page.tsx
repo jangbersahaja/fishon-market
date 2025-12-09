@@ -22,7 +22,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-  
+
   const post = await getBlogPostBySlug(slug);
   const t = await getTranslations("blogPost");
 
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-  
+
   const post = await getBlogPostBySlug(slug);
   const t = await getTranslations("blogPost");
 

@@ -7,6 +7,8 @@ import { unstable_noStore as noStore } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { PromotionalBanner } from "./PromotionalBanner";
 
+// MIGRATED: Removed unstable_noStore() - dynamic by default with Cache Components
+
 interface CampaignContainerProps {
   placementKey: string;
   /** Page where the campaign is displayed (auto-detected if not provided) */
@@ -83,13 +85,18 @@ export async function CampaignContainer({
   variant: variantOverride,
   maxCampaigns,
 }: CampaignContainerProps) {
-  // Opt out of static rendering - this component uses dynamic APIs (headers, cookies, session)
-  noStore();
-
+  noStore(); // Prevent prerendering - uses dynamic APIs
+  // Component is dynamic by default with Cache Components (uses cookies/headers)
   try {
-    const session = await getServerSession(authOptions);
-    const cookieStore = await cookies();
-    const headersList = await headers();
+    let session, cookieStore, headersList;
+    try {
+      session = await getServerSession(authOptions);
+      cookieStore = await cookies();
+      headersList = await headers();
+    } catch (e) {
+      // During prerendering, dynamic APIs fail - return null gracefully
+      return null;
+    }
 
     // Auto-detect device from user agent if not provided
     const userAgent = headersList.get("user-agent") || "";

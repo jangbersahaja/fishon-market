@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { getUnreadCount } from "@/lib/services/message-service";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/conversations/unread-count
@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
  * - role: "angler" | "captain" (default: "angler")
  */
 export async function GET(request: NextRequest) {
+  await connection();
   try {
     const session = await auth();
 

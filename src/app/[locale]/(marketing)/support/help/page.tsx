@@ -5,7 +5,14 @@ import {
 } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
+
+type RouteParams = Promise<{ locale: string }>;
+
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
 
 /** SEO */
 export async function generateMetadata({
@@ -32,8 +39,9 @@ export async function generateMetadata({
 export default async function HelpCenterPage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: RouteParams;
 }) {
+  noStore();
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "helpCenter" });
 
@@ -168,7 +176,7 @@ export default async function HelpCenterPage({
               id="getting-started"
               title={t("sections.gettingStarted.title")}
             >
-              <h3 id="create-account" className="!mt-0">
+              <h3 id="create-account" className="mt-0!">
                 {t("sections.gettingStarted.createAccount.title")}
               </h3>
               <p>{t("sections.gettingStarted.createAccount.content")}</p>
@@ -183,7 +191,7 @@ export default async function HelpCenterPage({
             </Section>
 
             <Section id="account" title={t("sections.account.title")}>
-              <h3 id="update-profile" className="!mt-0">
+              <h3 id="update-profile" className="mt-0!">
                 {t("sections.account.profile.title")}
               </h3>
               <p>{t("sections.account.profile.content")}</p>
@@ -198,7 +206,7 @@ export default async function HelpCenterPage({
             </Section>
 
             <Section id="payments" title={t("sections.payments.title")}>
-              <h3 id="payment-methods" className="!mt-0">
+              <h3 id="payment-methods" className="mt-0!">
                 {t("sections.payments.methods.title")}
               </h3>
               <p>{t("sections.payments.methods.content")}</p>
@@ -211,7 +219,7 @@ export default async function HelpCenterPage({
             </Section>
 
             <Section id="safety" title={t("sections.safety.title")}>
-              <h3 id="captain-verification" className="!mt-0">
+              <h3 id="captain-verification" className="mt-0!">
                 {t("sections.safety.verification.title")}
               </h3>
               <p>{t("sections.safety.verification.content")}</p>

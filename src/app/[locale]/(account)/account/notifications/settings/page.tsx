@@ -11,6 +11,7 @@
 import NotificationSettings from "@/components/account/NotificationSettings";
 import { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const metadata: Metadata = {
   title: "Notification Settings — Fishon",
@@ -19,11 +20,16 @@ export const metadata: Metadata = {
 
 type RouteParams = Promise<{ locale: string }>;
 
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
 export default async function NotificationSettingsPage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale } = await params;
   setRequestLocale(locale);
   return (

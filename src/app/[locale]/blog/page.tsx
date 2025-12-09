@@ -5,9 +5,14 @@ import { prisma } from "@/lib/database/prisma";
 import { getBlogPosts, getFeaturedPosts } from "@/lib/services/blog-service";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 type RouteParams = Promise<{ locale: string }>;
+
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
 
 export async function generateMetadata({
   params,
@@ -58,9 +63,10 @@ export default async function BlogPage({
     to?: string;
   }>;
 }) {
+  noStore();
   const { locale } = await params;
   setRequestLocale(locale);
-  
+
   const t = await getTranslations("blogPage");
   const sp = await searchParams;
   const page = Number(sp.page) || 1;
@@ -96,7 +102,7 @@ export default async function BlogPage({
       />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#ec2227] to-[#c41d22] text-white">
+      <section className="bg-linear-to-r from-[#ec2227] to-[#c41d22] text-white">
         <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             {t("hero.title")}
@@ -221,7 +227,7 @@ export default async function BlogPage({
         </section>
 
         {/* Newsletter Signup */}
-        <section className="mt-16 rounded-2xl bg-gradient-to-r from-[#ec2227]/10 to-[#ec2227]/5 p-8 text-center">
+        <section className="mt-16 rounded-2xl bg-linear-to-r from-[#ec2227]/10 to-[#ec2227]/5 p-8 text-center">
           <h2 className="text-2xl font-bold">{t("newsletter.title")}</h2>
           <p className="mt-2 text-gray-600">{t("newsletter.description")}</p>
           <form className="flex flex-col justify-center gap-3 mt-6 sm:flex-row">

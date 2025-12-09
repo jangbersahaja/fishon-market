@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       success: true,
       timestamp: new Date().toISOString(),
       results,
+      note: "Booking completion uses timeSlots when available, falls back to 8h/day calculation",
     });
   } catch (error) {
     console.error("❌ Error in booking status update cron:", error);

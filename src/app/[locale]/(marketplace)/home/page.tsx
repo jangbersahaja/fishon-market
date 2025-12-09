@@ -7,6 +7,7 @@ import { getCharters } from "@/lib/services/charter-service";
 import type { UserRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { getLocale, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import BrandSection from "./BrandSection";
@@ -17,14 +18,15 @@ import TripsNearby from "./TripsNearby";
 
 type RouteParams = Promise<{ locale: string }>;
 
-export default async function Home({
-  params,
-}: {
-  params: RouteParams;
-}) {
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
+
+export default async function Home({ params }: { params: RouteParams }) {
+  noStore();
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
   const charters = await getCharters();
 

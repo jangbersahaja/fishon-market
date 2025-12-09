@@ -123,17 +123,28 @@ export async function updateExpiredBookings(): Promise<{
  * Update completed paid bookings
  * Changes PAID → COMPLETED if trip end time has passed
  * Also triggers referral commission if captain was referred
+ *
+ * Priority for determining trip end time:
+ * 1. Use timeSlots[last].endDateTime if timeSlots is populated
+ * 2. Fallback to calculateTripEndTime() (8h/day assumption) if timeSlots is empty
  */
 export async function updateCompletedBookings(): Promise<{
   updated: number;
   errors: number;
+  details: Array<{ bookingId: string; method: string; tripEndTime: string }>;
 }> {
   const now = getMalaysianTime();
   let updated = 0;
   let errors = 0;
+  const details: Array<{
+    bookingId: string;
+    method: string;
+    tripEndTime: string;
+  }> = [];
 
   try {
     // Find all PAID bookings (potential candidates for completion)
+    // Include timeSlots for accurate end time calculation
     const paidBookings = await prisma.booking.findMany({
       where: {
         status: BookingStatus.PAID,
@@ -143,6 +154,7 @@ export async function updateCompletedBookings(): Promise<{
         date: true,
         startTime: true,
         days: true,
+        timeSlots: true, // Include timeSlots for accurate calculation
         charterId: true,
         tripId: true,
         finalPrice: true,
@@ -156,7 +168,30 @@ export async function updateCompletedBookings(): Promise<{
     // Check each booking to see if trip has ended
     for (const booking of paidBookings) {
       try {
-        const tripEndTime = calculateTripEndTime(booking);
+        // Determine trip end time using priority order
+        let tripEndTime: Date;
+        let calculationMethod: string;
+
+        if (
+          booking.timeSlots &&
+          Array.isArray(booking.timeSlots) &&
+          booking.timeSlots.length > 0
+        ) {
+          // Priority 1: Use last timeSlot's endDateTime (most accurate)
+          const timeSlots = booking.timeSlots as Array<{
+            day?: number;
+            date?: string;
+            startDateTime: string;
+            endDateTime: string;
+          }>;
+          const lastSlot = timeSlots[timeSlots.length - 1];
+          tripEndTime = new Date(lastSlot.endDateTime);
+          calculationMethod = "timeSlots";
+        } else {
+          // Priority 2: Fallback to calculated end time (8h/day assumption)
+          tripEndTime = calculateTripEndTime(booking);
+          calculationMethod = "calculated";
+        }
 
         // If trip has ended, mark as COMPLETED
         if (now >= tripEndTime) {
@@ -168,9 +203,16 @@ export async function updateCompletedBookings(): Promise<{
             },
           });
           updated++;
+          details.push({
+            bookingId: booking.id,
+            method: calculationMethod,
+            tripEndTime: tripEndTime.toISOString(),
+          });
           logger.info("Updated booking to COMPLETED", {
             bookingId: booking.id,
             tripEndTime: tripEndTime.toISOString(),
+            calculationMethod,
+            timeDiffMs: now.getTime() - tripEndTime.getTime(),
           });
 
           // Check if the captain was referred and trigger commission
@@ -185,12 +227,12 @@ export async function updateCompletedBookings(): Promise<{
       }
     }
 
-    return { updated, errors };
+    return { updated, errors, details };
   } catch (error) {
     logger.error("Error in updateCompletedBookings", {
       error: error instanceof Error ? error.message : String(error),
     });
-    return { updated: 0, errors: 1 };
+    return { updated: 0, errors: 1, details: [] };
   }
 }
 
@@ -296,7 +338,11 @@ async function checkAndTriggerReferralCommission(booking: {
  */
 export async function updateAllBookingStatuses(): Promise<{
   expired: { updated: number; errors: number };
-  completed: { updated: number; errors: number };
+  completed: {
+    updated: number;
+    errors: number;
+    details: Array<{ bookingId: string; method: string; tripEndTime: string }>;
+  };
 }> {
   logger.info("Starting booking status update job");
   const startTime = Date.now();
@@ -308,7 +354,17 @@ export async function updateAllBookingStatuses(): Promise<{
   logger.info("Booking status update completed", {
     duration,
     expired,
-    completed,
+    completedSummary: {
+      updated: completed.updated,
+      errors: completed.errors,
+      calculationMethods: completed.details.reduce(
+        (acc, detail) => {
+          acc[detail.method] = (acc[detail.method] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
+    },
   });
 
   return { expired, completed };

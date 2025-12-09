@@ -6,6 +6,9 @@
  * 1. Direct DB connection (if USE_CAPTAIN_DB=1 and CAPTAIN_DATABASE_URL is set)
  * 2. fishon-captain Public API (if FISHON_CAPTAIN_API_URL is set)
  * 3. Throws error if no data source is configured
+ *
+ * Caching: Uses Next.js 16 'use cache' directive for optimal performance.
+ * Charter data is cached with 5-minute revalidation by default.
  */
 
 import {

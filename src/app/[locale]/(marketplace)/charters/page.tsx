@@ -1,6 +1,7 @@
 // src/app/charters/view/page.tsx
 import { getCharters } from "@/lib/services/charter-service";
-import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 type RouteParams = Promise<{ locale: string }>;
@@ -10,10 +11,10 @@ export default async function ChartersPage({
 }: {
   params: RouteParams;
 }) {
-  const { locale: paramLocale } = await params;
-  setRequestLocale(paramLocale);
-  
-  const locale = await getLocale();
+  noStore();
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const t = await getTranslations({ locale, namespace: "charter" });
   const charters = await getCharters();
   const first = charters[0];

@@ -3,9 +3,14 @@ import { getAvailableSpeciesByCategory } from "@/lib/helpers/species-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import type { Metadata } from "next";
 import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 type RouteParams = Promise<{ locale: string }>;
+
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
 
 export async function generateMetadata({
   params,
@@ -26,9 +31,10 @@ export default async function SpeciesCategoriesPage({
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: "categories.species" });
   const tNav = await getTranslations({ locale, namespace: "nav" });

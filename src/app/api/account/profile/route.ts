@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/account/profile
@@ -21,6 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function POST(request: NextRequest) {
   try {
+    await connection();
     const session = await auth();
 
     if (!session?.user?.id) {

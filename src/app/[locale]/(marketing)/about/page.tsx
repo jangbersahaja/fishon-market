@@ -12,7 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import type { Metadata } from "next";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 // --- SEO metadata ---
@@ -67,9 +68,17 @@ const orgSchema = {
   ],
 };
 
-export default async function AboutPage() {
+export default async function AboutPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  noStore();
+
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const t = await getTranslations("aboutPage");
-  const locale = await getLocale();
 
   return (
     <main className="bg-white">
@@ -83,7 +92,7 @@ export default async function AboutPage() {
       <div className="relative py-24 overflow-hidden isolate bg-slate-900 sm:py-32">
         <div className="absolute inset-0 object-cover w-full h-full -z-10 opacity-20">
           {/* Placeholder for a real hero image - using a gradient for now */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
+          <div className="absolute inset-0 bg-linear-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
         </div>
 
         <div className="px-6 mx-auto text-center max-w-7xl lg:px-8">

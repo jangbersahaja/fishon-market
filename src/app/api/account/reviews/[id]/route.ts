@@ -6,7 +6,7 @@ import {
   updateReview,
 } from "@/lib/services/review-service";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/account/reviews/[id]
@@ -17,6 +17,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connection();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -63,6 +64,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connection();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -108,6 +110,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connection();
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

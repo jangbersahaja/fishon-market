@@ -3,6 +3,7 @@ import FishingTypeGrid from "@/components/marketing/FishingTypeGrid";
 import { getFishingTypesWithCounts } from "@/lib/helpers/popularity-helpers";
 import { getCharters } from "@/lib/services/charter-service";
 import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 type RouteParams = Promise<{ locale: string }>;
@@ -12,9 +13,10 @@ export default async function TypesCategoriesPage({
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: "categories.types" });
   const tNav = await getTranslations({ locale, namespace: "nav" });

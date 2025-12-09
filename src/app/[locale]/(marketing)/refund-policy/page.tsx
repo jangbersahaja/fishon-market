@@ -1,29 +1,35 @@
 import { createMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { unstable_noStore as noStore } from "next/cache";
 import RefundPolicyInteractive from "./RefundPolicyInteractive";
 
 export const metadata: Metadata = createMetadata({
-  title: "Refund & Cancellation Policy",
+  title: "Refund Policy",
   description:
-    "Understand our refund and cancellation policies for fishing charter bookings",
-  keywords: ["refund policy", "cancellation", "booking refund"],
+    "Understand Fishon.my refund policy for cancelled fishing charters and bookings",
+  keywords: ["refund policy", "cancellation", "fishing charter"],
   canonicalUrl: "https://www.fishon.my/refund-policy",
-  // TODO: Add branded OG image (1200x630px) for social sharing
 });
 
 type RouteParams = Promise<{ locale: string }>;
+
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ms" }];
+}
 
 export default async function RefundPolicyPage({
   params,
 }: {
   params: RouteParams;
 }) {
+  noStore();
   const { locale } = await params;
+  setRequestLocale(locale);
   setRequestLocale(locale);
   return (
     <div className="relative isolate">
-      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <section className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:py-24">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
             Refund & Cancellation Policy

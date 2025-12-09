@@ -7,9 +7,10 @@
 import { authOptions } from "@/lib/auth/auth-options";
 import { getUserPromoCodes } from "@/lib/services/promo-service";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 
 export async function GET() {
+  await connection();
   try {
     const session = await getServerSession(authOptions);
 

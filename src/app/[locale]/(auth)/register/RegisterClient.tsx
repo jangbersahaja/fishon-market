@@ -4,7 +4,11 @@ import { useAuthModal } from "@/components/auth/AuthModalContext";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
-export default function RegisterClient() {
+interface RegisterClientProps {
+  locale: string;
+}
+
+export default function RegisterClient({ locale }: RegisterClientProps) {
   const { openModal } = useAuthModal();
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
@@ -20,7 +24,7 @@ export default function RegisterClient() {
           className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
           role="status"
         >
-          <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+          <span className="absolute! -m-px! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!">
             {tCommon("loading")}
           </span>
         </div>

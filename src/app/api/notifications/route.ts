@@ -5,9 +5,10 @@
 
 import { auth } from "@/lib/auth/auth";
 import { getUserNotifications } from "@/lib/services/notification-service";
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  await connection();
   try {
     const session = await auth();
 
