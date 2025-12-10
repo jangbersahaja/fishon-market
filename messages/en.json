@@ -1306,11 +1306,16 @@
       "resendIn": "Resend code in {seconds}s",
       "backToRegistration": "← Back to registration",
       "emailNotVerified": "Please verify your email before signing in. Check your inbox for the verification code.",
+      "emailNotVerifiedAlt": "Your email hasn't been verified yet. We've sent you a code—check your inbox to sign in.",
+      "emailNotVerifiedBanner": "Email verification required",
+      "emailNotVerifiedBannerDesc": "Your email hasn't been verified yet. Enter the 6-digit code we sent to {email} to sign in.",
+      "emailNotVerifiedHint": "Signing in with a verification code instead since your email hasn't been verified.",
       "verificationSuccess": "Email verified! You can now sign in.",
       "codeSent": "Verification code sent!",
       "invalidCode": "Invalid or expired verification code",
       "codeExpired": "Verification code has expired. Please request a new one.",
-      "tooManyRequests": "Too many code requests. Please wait a few minutes."
+      "tooManyRequests": "Too many code requests. Please wait a few minutes.",
+      "checkInboxAndSpam": "Check your email and spam folder for the code"
     }
   },
   "validation": {
