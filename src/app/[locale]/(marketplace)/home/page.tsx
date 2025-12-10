@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/auth-options";
 import type { CampaignContext } from "@/lib/services/campaign-service";
 import { campaignService } from "@/lib/services/campaign-service";
 import { getCharters } from "@/lib/services/charter-service";
+import { getCharterRatingsBatch } from "@/lib/services/ratings-service";
 import type { UserRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { getLocale, setRequestLocale } from "next-intl/server";
@@ -29,6 +30,10 @@ export default async function Home({ params }: { params: RouteParams }) {
 
   const locale = await getLocale();
   const charters = await getCharters();
+
+  // Fetch ratings for all charters
+  const charterIds = charters.map((c) => (c as any).backendId ?? String(c.id));
+  const ratingsMap = await getCharterRatingsBatch(charterIds);
 
   // Fetch campaign data server-side
   const session = await getServerSession(authOptions);
@@ -88,7 +93,7 @@ export default async function Home({ params }: { params: RouteParams }) {
               </div>
             }
           >
-            <TripsNearby charters={charters} />
+            <TripsNearby charters={charters} ratingsMap={ratingsMap} />
           </Suspense>
         </div>
 
