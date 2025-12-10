@@ -3,11 +3,13 @@ import { prisma } from "@/lib/database/prisma";
 import { logger } from "@/lib/logger";
 import { connection, NextResponse } from "next/server";
 
+const UNKNOWN_BOOKING_ID = "unknown";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
-  let bookingId = "unknown"; // For error logging
+  let bookingId = UNKNOWN_BOOKING_ID; // For error logging
   try {
     await connection();
     const session = await auth();

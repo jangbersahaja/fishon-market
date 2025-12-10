@@ -68,7 +68,8 @@ export function BookingsClient({
         fetch(`/api/account/reviews/by-booking/${booking.id}`)
           .then((res) => {
             if (!res.ok) {
-              // Log errors (API now returns 200 with null for no review)
+              // Log non-200 responses (API returns 200 with null when review doesn't exist)
+              // 401: Unauthorized, 403: Forbidden, 500: Server error
               logger.warn("Failed to fetch review", {
                 bookingId: booking.id,
                 status: res.status,
