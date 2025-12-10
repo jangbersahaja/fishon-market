@@ -9,7 +9,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
-  let bookingId = UNKNOWN_BOOKING_ID; // For error logging
+  // Initialize bookingId for error logging (will be updated once params are resolved)
+  let bookingId = UNKNOWN_BOOKING_ID;
   try {
     await connection();
     const session = await auth();
