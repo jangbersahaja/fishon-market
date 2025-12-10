@@ -1307,11 +1307,16 @@
       "resendIn": "Hantar semula dalam {seconds}s",
       "backToRegistration": "← Kembali ke pendaftaran",
       "emailNotVerified": "Sila sahkan emel anda sebelum log masuk. Semak peti masuk untuk kod pengesahan.",
+      "emailNotVerifiedAlt": "Emel anda belum disahkan lagi. Kami telah menghantar kod kepada anda—semak peti masuk untuk log masuk.",
+      "emailNotVerifiedBanner": "Pengesahan emel diperlukan",
+      "emailNotVerifiedBannerDesc": "Emel anda belum disahkan lagi. Masukkan kod 6 digit yang kami hantar ke {email} untuk log masuk.",
+      "emailNotVerifiedHint": "Log masuk dengan kod pengesahan kerana emel anda belum disahkan.",
       "verificationSuccess": "Emel disahkan! Anda boleh log masuk sekarang.",
       "codeSent": "Kod pengesahan dihantar!",
       "invalidCode": "Kod pengesahan tidak sah atau telah tamat tempoh",
       "codeExpired": "Kod pengesahan telah tamat tempoh. Sila minta yang baru.",
-      "tooManyRequests": "Terlalu banyak permintaan kod. Sila tunggu beberapa minit."
+      "tooManyRequests": "Terlalu banyak permintaan kod. Sila tunggu beberapa minit.",
+      "checkInboxAndSpam": "Semak emel dan folder spam anda untuk kod"
     }
   },
   "validation": {

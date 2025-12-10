@@ -244,6 +244,7 @@ function SignInForm({
   const [oauthOnly, setOauthOnly] = useState(false);
   const [tacSentTime, setTacSentTime] = useState<number | null>(null);
   const [tacTimer, setTacTimer] = useState(0);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
   // TAC timer countdown
   useEffect(() => {
@@ -359,6 +360,7 @@ function SignInForm({
   async function handlePasswordSignIn(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setEmailNotVerified(false);
     setLoading(true);
 
     // Use current page if no explicit next URL provided
@@ -375,11 +377,21 @@ function SignInForm({
     setLoading(false);
 
     if (res?.error) {
-      // Check for email not verified error
-      if (res.error.includes("EMAIL_NOT_VERIFIED")) {
+      // Check for email not verified error (multiple ways it can be encoded)
+      const isEmailNotVerified =
+        res.error.includes("EMAIL_NOT_VERIFIED") ||
+        res.error.includes("email not verified") ||
+        res.error.toLowerCase().includes("verify");
+
+      if (isEmailNotVerified) {
+        // Mark as unverified and auto-switch to TAC mode
+        setEmailNotVerified(true);
         setError(
-          "Please verify your email before signing in. Check your inbox for the verification code."
+          "Your email hasn't been verified yet. We've sent you a code—check your inbox to sign in."
         );
+        // Auto-send TAC code
+        await handleSendTAC();
+        setAuthMode("tac");
         return;
       }
       setError("Incorrect password. Please try again.");
@@ -588,19 +600,34 @@ function SignInForm({
               </button>
 
               {/* Option to use TAC instead */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleSendTAC}
-                  disabled={loading}
-                  className="text-xs text-slate-500 hover:text-[#ec2227] transition-colors underline"
-                >
-                  Or sign in with a code sent to your email
-                </button>
-              </div>
+              {!emailNotVerified && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleSendTAC}
+                    disabled={loading}
+                    className="text-xs text-slate-500 hover:text-[#ec2227] transition-colors underline"
+                  >
+                    Or sign in with a code sent to your email
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <>
+              {/* Unverified email info banner */}
+              {emailNotVerified && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  <p className="font-semibold mb-1">
+                    Email verification required
+                  </p>
+                  <p>
+                    Your email hasn't been verified yet. Enter the 6-digit code
+                    we sent to <strong>{email}</strong> to sign in.
+                  </p>
+                </div>
+              )}
+
               {/* TAC input */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-600">
@@ -618,7 +645,7 @@ function SignInForm({
                   required
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
-                  Check your email for the verification code
+                  Check your email and spam folder for the code
                 </p>
               </div>
 
@@ -640,19 +667,22 @@ function SignInForm({
                 >
                   {tacTimer > 0 ? `Resend code in ${tacTimer}s` : "Resend code"}
                 </button>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode("password");
-                      setTacSentTime(null);
-                      setTacCode("");
-                    }}
-                    className="text-xs text-slate-500 hover:text-[#ec2227] transition-colors underline"
-                  >
-                    Use password instead
-                  </button>
-                </div>
+                {!emailNotVerified && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("password");
+                        setTacSentTime(null);
+                        setTacCode("");
+                        setEmailNotVerified(false);
+                      }}
+                      className="text-xs text-slate-500 hover:text-[#ec2227] transition-colors underline"
+                    >
+                      Use password instead
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
