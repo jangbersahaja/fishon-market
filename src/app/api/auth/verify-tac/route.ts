@@ -34,11 +34,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mark as used
-    await prisma.verificationCode.update({
-      where: { id: verification.id },
-      data: { usedAt: new Date() },
-    });
+    // Don't mark as used here - let the credentials provider handle that
+    // This allows the code to be used with signIn() after verification
 
     // Verify user still exists
     const user = await prisma.user.findUnique({
@@ -48,11 +45,21 @@ export async function POST(request: Request) {
         email: true,
         name: true,
         role: true,
+        emailVerified: true,
       },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Mark email as verified if not already verified
+    // TAC verification proves email ownership
+    if (!user.emailVerified) {
+      await prisma.user.update({
+        where: { email },
+        data: { emailVerified: new Date() },
+      });
     }
 
     return NextResponse.json({ valid: true, user }, { status: 200 });
