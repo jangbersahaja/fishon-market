@@ -6,3 +6,4 @@ export { FavoriteButton } from "./FavoriteButton";
 export { ProfileForm } from "./ProfileForm";
 export { PromoCodesCard } from "./PromoCodesCard";
 export { QuickStats } from "./QuickStats";
+export { ReviewableCharterCard } from "./ReviewableCharterCard";

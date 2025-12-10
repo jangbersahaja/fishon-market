@@ -1,5 +1,6 @@
 "use client";
 
+import { ReviewableCharterCard } from "@/components/account/ReviewableCharterCard";
 import { StarRating } from "@/components/ratings";
 import { Button } from "@/components/ui/button";
 import type { ReviewBadgeId } from "@/utils/reviewBadges";
@@ -27,11 +28,25 @@ interface Review {
   updatedAt: Date;
 }
 
-interface UserReviewsListProps {
-  reviews: Review[];
+interface ReviewableBooking {
+  id: string;
+  charterId: string;
+  charterName: string;
+  tripName: string;
+  location: string;
+  date: Date;
+  status: string;
 }
 
-export function UserReviewsList({ reviews }: UserReviewsListProps) {
+interface UserReviewsListProps {
+  reviews: Review[];
+  reviewableBookings?: ReviewableBooking[];
+}
+
+export function UserReviewsList({ 
+  reviews, 
+  reviewableBookings = [] 
+}: UserReviewsListProps) {
   const locale = useLocale();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +77,8 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
     }
   };
 
-  if (reviews.length === 0) {
+  // Show empty state only if no reviews AND no reviewable bookings
+  if (reviews.length === 0 && reviewableBookings.length === 0) {
     return (
       <div className="p-12 text-center bg-white border border-gray-200 rounded-lg">
         <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full">
@@ -83,7 +99,7 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {error && (
         <div className="flex items-center gap-2 p-4 text-red-800 border border-red-200 rounded-lg bg-red-50">
           <AlertCircle className="flex-shrink-0 w-4 h-4" />
@@ -91,16 +107,47 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
         </div>
       )}
 
-      {reviews.map((review) => {
-        const badges = resolveBadges(review.badges as ReviewBadgeId[]);
-        const canEdit = !review.approved;
+      {/* Reviewable Charters Section */}
+      {reviewableBookings.length > 0 && (
+        <div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Ready to Review ({reviewableBookings.length})
+            </h2>
+            <p className="text-sm text-gray-600">
+              Share your experience with these completed trips
+            </p>
+          </div>
+          <div className="space-y-4">
+            {reviewableBookings.map((booking) => (
+              <ReviewableCharterCard key={booking.id} booking={booking} />
+            ))}
+          </div>
+        </div>
+      )}
 
-        return (
-          <div
-            key={review.id}
-            id={`review-${review.id}`}
-            className="p-6 transition-shadow bg-white border border-gray-200 rounded-lg hover:shadow-md"
-          >
+      {/* Existing Reviews Section */}
+      {reviews.length > 0 && (
+        <div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Your Reviews ({reviews.length})
+            </h2>
+            <p className="text-sm text-gray-600">
+              Reviews you&apos;ve written for your completed trips
+            </p>
+          </div>
+          <div className="space-y-4">
+            {reviews.map((review) => {
+              const badges = resolveBadges(review.badges as ReviewBadgeId[]);
+              const canEdit = !review.approved;
+
+              return (
+                <div
+                  key={review.id}
+                  id={`review-${review.id}`}
+                  className="p-6 transition-shadow bg-white border border-gray-200 rounded-lg hover:shadow-md"
+                >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -191,41 +238,44 @@ export function UserReviewsList({ reviews }: UserReviewsListProps) {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/book/confirm?id=${review.bookingId}`}>
-                  View Booking
-                </Link>
-              </Button>
+                {/* Actions */}
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/book/confirm?id=${review.bookingId}`}>
+                      View Booking
+                    </Link>
+                  </Button>
 
-              {canEdit && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled
-                    title="Edit functionality coming soon"
-                  >
-                    <Edit2 className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(review.id)}
-                    disabled={deletingId === review.id}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    {deletingId === review.id ? "Deleting..." : "Delete"}
-                  </Button>
-                </>
-              )}
-            </div>
+                  {canEdit && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        title="Edit functionality coming soon"
+                      >
+                        <Edit2 className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(review.id)}
+                        disabled={deletingId === review.id}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        {deletingId === review.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
