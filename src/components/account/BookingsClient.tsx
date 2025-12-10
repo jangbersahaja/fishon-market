@@ -8,6 +8,7 @@ import {
   type BookingTab,
 } from "@/lib/helpers/booking-status-helpers";
 import type { BookingWithDetails } from "@/lib/services/booking-service";
+import { logger } from "@/lib/logger";
 import { Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -47,34 +48,70 @@ export function BookingsClient({
   const [reviews, setReviews] = useState<
     Map<string, { id: string; overallRating: number }>
   >(new Map());
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Fetch reviews for completed bookings
   useEffect(() => {
     const completedBookings = bookings.filter(isCompleted);
-    if (completedBookings.length === 0) return;
+    if (completedBookings.length === 0) {
+      setReviews(new Map());
+      return;
+    }
+
+    setReviewsLoading(true);
+    logger.debug("Fetching reviews for completed bookings", {
+      count: completedBookings.length,
+      bookingIds: completedBookings.map((b) => b.id),
+    });
 
     // Fetch reviews for all completed bookings
     Promise.all(
       completedBookings.map((booking) =>
         fetch(`/api/account/reviews/by-booking/${booking.id}`)
-          .then((res) => (res.ok ? res.json() : null))
-          .catch(() => null)
+          .then((res) => {
+            if (!res.ok) {
+              // Log errors (API now returns 200 with null for no review)
+              logger.warn("Failed to fetch review", {
+                bookingId: booking.id,
+                status: res.status,
+              });
+              return null;
+            }
+            return res.json();
+          })
+          .catch((error) => {
+            logger.error("Error fetching review", {
+              bookingId: booking.id,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            return null;
+          })
       )
-    ).then((results) => {
-      const reviewMap = new Map<
-        string,
-        { id: string; overallRating: number }
-      >();
-      results.forEach((review, index) => {
-        if (review) {
-          reviewMap.set(completedBookings[index].id, {
-            id: review.id,
-            overallRating: review.overallRating,
-          });
-        }
+    )
+      .then((results) => {
+        const reviewMap = new Map<
+          string,
+          { id: string; overallRating: number }
+        >();
+        let successCount = 0;
+        results.forEach((review, index) => {
+          if (review) {
+            reviewMap.set(completedBookings[index].id, {
+              id: review.id,
+              overallRating: review.overallRating,
+            });
+            successCount++;
+          }
+        });
+        logger.debug("Reviews fetched successfully", {
+          total: completedBookings.length,
+          found: successCount,
+        });
+        setReviews(reviewMap);
+      })
+      .finally(() => {
+        setReviewsLoading(false);
       });
-      setReviews(reviewMap);
-    });
   }, [bookings]);
 
   // Categorize bookings into tabs

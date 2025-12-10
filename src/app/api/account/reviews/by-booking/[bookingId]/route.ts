@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { logger } from "@/lib/logger";
 import { connection, NextResponse } from "next/server";
 
 export async function GET(
@@ -14,6 +15,16 @@ export async function GET(
     }
 
     const { bookingId } = await params;
+
+    // Verify ownership first
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { userId: true },
+    });
+
+    if (!booking || booking.userId !== session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     // Fetch review by booking ID
     const review = await prisma.review.findUnique({
@@ -31,23 +42,18 @@ export async function GET(
       },
     });
 
+    // Return null instead of 404 when review doesn't exist (this is a valid state)
     if (!review) {
-      return NextResponse.json({ error: "Review not found" }, { status: 404 });
-    }
-
-    // Verify ownership
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      select: { userId: true },
-    });
-
-    if (!booking || booking.userId !== session.user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return NextResponse.json(null);
     }
 
     return NextResponse.json(review);
   } catch (error) {
-    console.error("Error fetching review by booking ID:", error);
+    const { bookingId } = await params;
+    logger.error("Error fetching review by booking ID", {
+      bookingId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
