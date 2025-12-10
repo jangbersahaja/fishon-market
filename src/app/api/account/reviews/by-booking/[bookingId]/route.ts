@@ -7,6 +7,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
+  let bookingId = "unknown"; // For error logging
   try {
     await connection();
     const session = await auth();
@@ -14,7 +15,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { bookingId } = await params;
+    const resolvedParams = await params;
+    bookingId = resolvedParams.bookingId;
 
     // Verify ownership first
     const booking = await prisma.booking.findUnique({
@@ -49,15 +51,6 @@ export async function GET(
 
     return NextResponse.json(review);
   } catch (error) {
-    // Safely extract bookingId for logging (may fail if error occurred during params extraction)
-    let bookingId = "unknown";
-    try {
-      const resolvedParams = await params;
-      bookingId = resolvedParams.bookingId;
-    } catch {
-      // Params destructuring failed, use fallback
-    }
-
     logger.error("Error fetching review by booking ID", {
       bookingId,
       error: error instanceof Error ? error.message : String(error),
