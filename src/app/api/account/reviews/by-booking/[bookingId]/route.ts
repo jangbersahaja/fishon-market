@@ -20,13 +20,19 @@ export async function GET(
     const resolvedParams = await params;
     bookingId = resolvedParams.bookingId;
 
-    // Verify ownership first
+    // Verify booking exists and user owns it
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       select: { userId: true },
     });
 
-    if (!booking || booking.userId !== session.user.id) {
+    if (!booking) {
+      // Return 404 for non-existent bookings (don't leak existence info)
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    if (booking.userId !== session.user.id) {
+      // Return 403 for bookings owned by other users
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
