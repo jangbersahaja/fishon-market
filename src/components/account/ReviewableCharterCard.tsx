@@ -3,6 +3,7 @@
 import { ReviewModal } from "@/components/ratings";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface ReviewableCharterCardProps {
@@ -18,6 +19,7 @@ interface ReviewableCharterCardProps {
 
 export function ReviewableCharterCard({ booking }: ReviewableCharterCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -70,8 +72,8 @@ export function ReviewableCharterCard({ booking }: ReviewableCharterCardProps) {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          // Refresh the page to show updated state
-          window.location.reload();
+          // Refresh the page data to show updated state
+          router.refresh();
         }}
         bookingId={booking.id}
         charterName={booking.charterName}

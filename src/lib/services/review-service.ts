@@ -1,5 +1,6 @@
 // lib/services/review-service.ts
 import { prisma } from "@/lib/database/prisma";
+import { prismaCaptain } from "@/lib/database/prisma-captain";
 import type { ReviewBadgeId } from "@/utils/reviewBadges";
 import type { Booking, Review } from "@prisma/client";
 import { BookingStatus } from "@prisma/client";
@@ -269,9 +270,6 @@ export async function getReviewableBookings(userId: string): Promise<
     status: BookingStatus;
   }>
 > {
-  // Import prismaCaptain for fetching captain data
-  const { prismaCaptain } = await import("@/lib/database/prisma-captain");
-
   // Get PAID and COMPLETED bookings that don't have reviews
   const bookings = await prisma.booking.findMany({
     where: {
@@ -286,6 +284,20 @@ export async function getReviewableBookings(userId: string): Promise<
   if (bookings.length === 0) {
     return [];
   }
+
+  // Get all existing reviews for these bookings in a single query (avoid N+1)
+  const bookingIds = bookings.map((b) => b.id);
+  const existingReviews = await prisma.review.findMany({
+    where: {
+      bookingId: {
+        in: bookingIds,
+      },
+    },
+    select: {
+      bookingId: true,
+    },
+  });
+  const reviewedBookingIds = new Set(existingReviews.map((r) => r.bookingId));
 
   // Get unique charter IDs and trip IDs
   const charterIds = [...new Set(bookings.map((b) => b.charterId))];
@@ -350,13 +362,9 @@ export async function getReviewableBookings(userId: string): Promise<
   const reviewableBookings = [];
   
   for (const booking of bookings) {
-    // Check if already reviewed
-    const existingReview = await prisma.review.findUnique({
-      where: { bookingId: booking.id },
-    });
-
-    if (existingReview) {
-      continue; // Skip bookings that already have reviews
+    // Skip if already reviewed
+    if (reviewedBookingIds.has(booking.id)) {
+      continue;
     }
 
     // For PAID bookings, check if review is available (30 minutes before trip ends)

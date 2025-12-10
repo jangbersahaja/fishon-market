@@ -7,6 +7,7 @@ import type { ReviewBadgeId } from "@/utils/reviewBadges";
 import { resolveBadges } from "@/utils/reviewBadges";
 import { AlertCircle, Calendar, Edit2, MapPin, Trash2 } from "lucide-react";
 import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -48,6 +49,7 @@ export function UserReviewsList({
   reviewableBookings = [] 
 }: UserReviewsListProps) {
   const locale = useLocale();
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,8 +71,8 @@ export function UserReviewsList({
         throw new Error(data.error || "Failed to delete review");
       }
 
-      // Refresh page to show updated list
-      window.location.reload();
+      // Refresh page data to show updated list
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete review");
       setDeletingId(null);
