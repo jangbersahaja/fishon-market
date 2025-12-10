@@ -1,11 +1,16 @@
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
+import { logger } from "@/lib/logger";
 import { connection, NextResponse } from "next/server";
+
+const UNKNOWN_BOOKING_ID = "unknown";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
+  // Initialize bookingId for error logging (will be updated once params are resolved)
+  let bookingId = UNKNOWN_BOOKING_ID;
   try {
     await connection();
     const session = await auth();
@@ -13,7 +18,24 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { bookingId } = await params;
+    const resolvedParams = await params;
+    bookingId = resolvedParams.bookingId;
+
+    // Verify booking exists and user owns it
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { userId: true },
+    });
+
+    if (!booking) {
+      // Return 404 for non-existent bookings (don't leak existence info)
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    if (booking.userId !== session.user.id) {
+      // Return 403 for bookings owned by other users
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     // Fetch review by booking ID
     const review = await prisma.review.findUnique({
@@ -31,23 +53,17 @@ export async function GET(
       },
     });
 
+    // Return null instead of 404 when review doesn't exist (this is a valid state)
     if (!review) {
-      return NextResponse.json({ error: "Review not found" }, { status: 404 });
-    }
-
-    // Verify ownership
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      select: { userId: true },
-    });
-
-    if (!booking || booking.userId !== session.user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return NextResponse.json(null);
     }
 
     return NextResponse.json(review);
   } catch (error) {
-    console.error("Error fetching review by booking ID:", error);
+    logger.error("Error fetching review by booking ID", {
+      bookingId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

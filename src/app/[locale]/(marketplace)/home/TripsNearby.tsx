@@ -47,7 +47,12 @@ function TripsNearbySkeleton() {
   );
 }
 
-export default function TripsNearby({ charters }: { charters: Charter[] }) {
+interface TripsNearbyProps {
+  charters: Charter[];
+  ratingsMap: Map<string, { averageRating: number | null; reviewCount: number }>;
+}
+
+export default function TripsNearby({ charters, ratingsMap }: TripsNearbyProps) {
   const t = useTranslations("home.tripsNearby");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null
@@ -82,6 +87,18 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
   const getCharterKey = (c: { id: number } & Partial<Record<string, any>>) => {
     const backendId = (c as any).backendId as string | undefined;
     return backendId ? `b:${backendId}` : `d:${String(c.id)}`;
+  };
+
+  // Helper to get rating for a charter
+  const getRating = (c: Charter): number | null => {
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.averageRating ?? null;
+  };
+
+  // Helper to get review count for a charter
+  const getReviewCount = (c: Charter): number => {
+    const id = (c as any).backendId ?? String(c.id);
+    return ratingsMap.get(id)?.reviewCount ?? 0;
   };
 
   const nearby: Nearby[] = useMemo(() => {
@@ -289,6 +306,8 @@ export default function TripsNearby({ charters }: { charters: Charter[] }) {
                     context={context}
                     distance={c._distance}
                     showFavoriteButton={true}
+                    averageRating={getRating(c)}
+                    reviewCount={getReviewCount(c)}
                     className="shrink-0 snap-start w-[300px] md:w-[320px] transition-transform hover:-translate-y-1"
                   />
                 );
