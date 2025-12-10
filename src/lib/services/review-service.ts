@@ -1,5 +1,6 @@
 // lib/services/review-service.ts
 import { prisma } from "@/lib/database/prisma";
+import { prismaCaptain } from "@/lib/database/prisma-captain";
 import type { ReviewBadgeId } from "@/utils/reviewBadges";
 import type { Booking, Review } from "@prisma/client";
 import { BookingStatus } from "@prisma/client";
@@ -252,6 +253,153 @@ export async function getUserReviews(userId: string): Promise<Review[]> {
     where: { userId },
     orderBy: { createdAt: "desc" },
   });
+}
+
+/**
+ * Get reviewable bookings for a user (bookings that can be reviewed but haven't been yet)
+ * Returns bookings that are PAID or COMPLETED and don't have a review yet
+ */
+export async function getReviewableBookings(userId: string): Promise<
+  Array<{
+    id: string;
+    charterId: string;
+    charterName: string;
+    tripName: string;
+    location: string;
+    date: Date;
+    status: BookingStatus;
+  }>
+> {
+  // Get PAID and COMPLETED bookings that don't have reviews
+  const bookings = await prisma.booking.findMany({
+    where: {
+      userId,
+      status: {
+        in: [BookingStatus.PAID, BookingStatus.COMPLETED],
+      },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  if (bookings.length === 0) {
+    return [];
+  }
+
+  // Get all existing reviews for these bookings in a single query (avoid N+1)
+  const bookingIds = bookings.map((b) => b.id);
+  const existingReviews = await prisma.review.findMany({
+    where: {
+      bookingId: {
+        in: bookingIds,
+      },
+    },
+    select: {
+      bookingId: true,
+    },
+  });
+  const reviewedBookingIds = new Set(existingReviews.map((r) => r.bookingId));
+
+  // Get unique charter IDs and trip IDs
+  const charterIds = [...new Set(bookings.map((b) => b.charterId))];
+  const tripIds = [...new Set(bookings.map((b) => b.tripId))];
+
+  // Fetch charter data from fishon-captain database
+  const charterDataRaw = await prismaCaptain.$queryRaw<
+    Array<{
+      id: string;
+      name: string;
+      city: string;
+      state: string;
+    }>
+  >`
+    SELECT 
+      c.id,
+      c.name,
+      c.city,
+      c.state
+    FROM "Charter" c
+    WHERE c.id = ANY(${charterIds}::text[])
+  `;
+
+  // Fetch trip data from fishon-captain database
+  const tripDataRaw = await prismaCaptain.$queryRaw<
+    Array<{
+      id: string;
+      name: string;
+      charterId: string;
+    }>
+  >`
+    SELECT 
+      id,
+      name,
+      "charterId"
+    FROM "Trip"
+    WHERE id = ANY(${tripIds}::text[])
+  `;
+
+  // Create lookup maps
+  const charterMap = new Map(
+    charterDataRaw.map((c) => [
+      c.id,
+      {
+        name: c.name,
+        location: `${c.city}, ${c.state}`,
+      },
+    ])
+  );
+
+  const tripMap = new Map(
+    tripDataRaw.map((t) => [
+      t.id,
+      {
+        name: t.name,
+        charterId: t.charterId,
+      },
+    ])
+  );
+
+  // Filter bookings that don't have reviews and are eligible for review
+  const reviewableBookings = [];
+  
+  for (const booking of bookings) {
+    // Skip if already reviewed
+    if (reviewedBookingIds.has(booking.id)) {
+      continue;
+    }
+
+    // For PAID bookings, check if review is available (30 minutes before trip ends)
+    if (booking.status === BookingStatus.PAID) {
+      const tripEndTime = calculateTripEndTime(booking);
+      const reviewAvailableTime = new Date(tripEndTime);
+      reviewAvailableTime.setMinutes(reviewAvailableTime.getMinutes() - 30);
+      const now = new Date();
+
+      if (now < reviewAvailableTime) {
+        continue; // Skip bookings that aren't ready for review yet
+      }
+    }
+
+    // Get enriched data
+    const trip = tripMap.get(booking.tripId);
+    const charter = trip ? charterMap.get(trip.charterId) : null;
+
+    if (!trip || !charter) {
+      continue; // Skip if we can't find charter/trip data
+    }
+
+    // This booking is reviewable
+    reviewableBookings.push({
+      id: booking.id,
+      charterId: booking.charterId,
+      charterName: charter.name,
+      tripName: trip.name,
+      location: charter.location,
+      date: booking.date,
+      status: booking.status,
+    });
+  }
+
+  return reviewableBookings;
 }
 
 /**

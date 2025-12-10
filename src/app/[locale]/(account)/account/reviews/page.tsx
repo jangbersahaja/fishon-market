@@ -1,7 +1,7 @@
 import { UserReviewsList } from "@/components/account/UserReviewsList";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/auth";
-import { getUserReviews } from "@/lib/services/review-service";
+import { getUserReviews, getReviewableBookings } from "@/lib/services/review-service";
 import { ArrowLeft } from "lucide-react";
 import { getLocale, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
@@ -24,7 +24,11 @@ export default async function UserReviewsPage({
     redirect(`/${locale}/login?next=/${locale}/account/reviews`);
   }
 
-  const reviews = await getUserReviews(session.user.id);
+  // Fetch both reviews and reviewable bookings
+  const [reviews, reviewableBookings] = await Promise.all([
+    getUserReviews(session.user.id),
+    getReviewableBookings(session.user.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -44,8 +48,8 @@ export default async function UserReviewsPage({
         </Button>
       </div>
 
-      {/* Reviews List */}
-      <UserReviewsList reviews={reviews} />
+      {/* Reviews List with Reviewable Bookings */}
+      <UserReviewsList reviews={reviews} reviewableBookings={reviewableBookings} />
     </div>
   );
 }
