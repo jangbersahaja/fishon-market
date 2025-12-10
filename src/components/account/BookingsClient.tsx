@@ -48,7 +48,6 @@ export function BookingsClient({
   const [reviews, setReviews] = useState<
     Map<string, { id: string; overallRating: number }>
   >(new Map());
-  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Fetch reviews for completed bookings
   useEffect(() => {
@@ -58,7 +57,6 @@ export function BookingsClient({
       return;
     }
 
-    setReviewsLoading(true);
     logger.debug("Fetching reviews for completed bookings", {
       count: completedBookings.length,
       bookingIds: completedBookings.map((b) => b.id),
@@ -108,9 +106,6 @@ export function BookingsClient({
           found: successCount,
         });
         setReviews(reviewMap);
-      })
-      .finally(() => {
-        setReviewsLoading(false);
       });
   }, [bookings]);
 

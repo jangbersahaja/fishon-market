@@ -49,7 +49,15 @@ export async function GET(
 
     return NextResponse.json(review);
   } catch (error) {
-    const { bookingId } = await params;
+    // Safely extract bookingId for logging (may fail if error occurred during params extraction)
+    let bookingId = "unknown";
+    try {
+      const resolvedParams = await params;
+      bookingId = resolvedParams.bookingId;
+    } catch {
+      // Params destructuring failed, use fallback
+    }
+
     logger.error("Error fetching review by booking ID", {
       bookingId,
       error: error instanceof Error ? error.message : String(error),
