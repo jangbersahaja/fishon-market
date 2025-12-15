@@ -2,6 +2,7 @@
 
 import { CancelBookingButton } from "@/components/account/BookingActionButtons";
 import { CancellationReasonDialog } from "@/components/booking/CancellationReasonDialog";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -20,6 +21,7 @@ export function CancelBookingAction({
   fullWidth = false,
 }: CancelBookingActionProps) {
   const router = useRouter();
+  const t = useTranslations("account.cancelBookingDialog");
   const [showDialog, setShowDialog] = useState(false);
   const [selectedReason, setSelectedReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
@@ -47,7 +49,7 @@ export function CancelBookingAction({
   const handleCancel = async () => {
     const reason = getFinalReason();
     if (!reason) {
-      setError("Please select or enter a cancellation reason");
+      setError(t("reasonLabel"));
       return;
     }
 
@@ -66,17 +68,15 @@ export function CancelBookingAction({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to cancel booking");
+        throw new Error(data.error || t("error"));
       }
 
       setShowDialog(false);
       router.refresh();
-      alert("Booking cancelled successfully");
+      alert(t("success"));
     } catch (error) {
       console.error("Failed to cancel booking:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to cancel booking"
-      );
+      setError(error instanceof Error ? error.message : t("error"));
     } finally {
       setIsSubmitting(false);
     }

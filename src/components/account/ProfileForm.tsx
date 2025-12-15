@@ -4,6 +4,7 @@ import { PhoneInput } from "@/components/shared/PhoneInput";
 import { RelationshipSelect } from "@/components/shared/RelationshipSelect";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,6 +28,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter();
+  const t = useTranslations("account.profile");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user.image);
@@ -54,13 +56,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      setMessage({ type: "error", text: "Please upload an image file" });
+      setMessage({ type: "error", text: t("photoUploadError") });
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: "error", text: "Image must be smaller than 5MB" });
+      setMessage({ type: "error", text: t("photoSizeError") });
       return;
     }
 
@@ -83,13 +85,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       const { url } = await response.json();
       setAvatarUrl(url);
-      setMessage({ type: "success", text: "Profile photo updated!" });
+      setMessage({ type: "success", text: t("photoUpdatedSuccess") });
       router.refresh();
     } catch (error) {
       console.error("Avatar upload error:", error);
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Failed to upload photo",
+        text: error instanceof Error ? error.message : t("photoUploadFailed"),
       });
     } finally {
       setIsUploadingAvatar(false);
@@ -129,7 +131,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       setMessage({
         type: "success",
-        text: "Profile updated successfully!",
+        text: t("saved"),
       });
 
       // Refresh the page data
@@ -137,7 +139,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     } catch (error: any) {
       setMessage({
         type: "error",
-        text: error.message || "Failed to update profile",
+        text: error.message || t("error"),
       });
     } finally {
       setIsLoading(false);
@@ -161,7 +163,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-blue-900">
-            Profile Completion
+            {t("profileCompletion")}
           </span>
           <span className="text-sm font-semibold text-blue-900">
             {completionPercentage}%
@@ -173,10 +175,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
             style={{ width: `${completionPercentage}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-blue-700">
-          A complete profile helps captains verify your booking and prepare for
-          your trip.
-        </p>
+        <p className="mt-2 text-xs text-blue-700">{t("completionHelp")}</p>
       </div>
 
       {/* Success/Error Message */}
@@ -195,7 +194,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       {/* Profile Photo */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Profile Photo
+          {t("profilePhoto")}
         </h2>
         <div className="flex items-center gap-6">
           {/* Avatar Preview */}
@@ -232,7 +231,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               }`}
             >
               <Camera className="w-4 h-4" />
-              {avatarUrl ? "Change Photo" : "Upload Photo"}
+              {avatarUrl ? t("changePhoto") : t("uploadPhoto")}
             </label>
             <input
               type="file"
@@ -243,7 +242,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               className="hidden"
             />
             <p className="mt-2 text-xs text-gray-500">
-              JPG, PNG, or HEIC. Max 5MB. Recommended size: 200x200 pixels.
+              {t("photoRecommendation")}
             </p>
           </div>
         </div>
@@ -252,7 +251,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       {/* Personal Information */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Personal Information
+          {t("personalInfo")}
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -260,7 +259,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               htmlFor="name"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Full Name
+              {t("fullName")}
             </label>
             <input
               type="text"
@@ -278,7 +277,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               htmlFor="email"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Email
+              {t("email")}
             </label>
             <input
               type="email"
@@ -288,7 +287,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-md cursor-not-allowed bg-gray-50"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Email cannot be changed
+              {t("emailCannotChange")}
             </p>
           </div>
 
@@ -297,7 +296,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               htmlFor="phone"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Phone Number
+              {t("phone")}
             </label>
             <PhoneInput
               value={formData.phone}
@@ -312,14 +311,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       {/* Address */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Address</h2>
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          {t("address")}
+        </h2>
         <div className="grid grid-cols-1 gap-4">
           <div>
             <label
               htmlFor="streetAddress"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Street Address
+              {t("streetAddress")}
             </label>
             <input
               type="text"
@@ -337,7 +338,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 htmlFor="city"
                 className="block mb-1 text-sm font-medium text-gray-700"
               >
-                City
+                {t("city")}
               </label>
               <input
                 type="text"
@@ -354,7 +355,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 htmlFor="state"
                 className="block mb-1 text-sm font-medium text-gray-700"
               >
-                State
+                {t("state")}
               </label>
               <select
                 id="state"
@@ -363,7 +364,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ec2227] focus:border-transparent"
               >
-                <option value="">Select State</option>
+                <option value="">{t("selectState")}</option>
                 <option value="Johor">Johor</option>
                 <option value="Kedah">Kedah</option>
                 <option value="Kelantan">Kelantan</option>
@@ -390,7 +391,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 htmlFor="postcode"
                 className="block mb-1 text-sm font-medium text-gray-700"
               >
-                Postcode
+                {t("postcode")}
               </label>
               <input
                 type="text"
@@ -408,7 +409,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 htmlFor="country"
                 className="block mb-1 text-sm font-medium text-gray-700"
               >
-                Country
+                {t("country")}
               </label>
               <input
                 type="text"
@@ -426,10 +427,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
       {/* Emergency Contact */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
         <h2 className="mb-2 text-lg font-semibold text-gray-900">
-          Emergency Contact
+          {t("emergencyContact")}
         </h2>
         <p className="mb-4 text-sm text-gray-600">
-          Optional, but recommended for safety during your fishing trips.
+          {t("emergencyContactOptional")}
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -437,7 +438,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               htmlFor="emergencyName"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Contact Name
+              {t("emergencyContactName")}
             </label>
             <input
               type="text"
@@ -454,7 +455,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               htmlFor="emergencyPhone"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Contact Phone
+              {t("emergencyContactPhone")}
             </label>
             <PhoneInput
               value={formData.emergencyPhone}
@@ -470,7 +471,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               htmlFor="emergencyRelation"
               className="block mb-1 text-sm font-medium text-gray-700"
             >
-              Relationship
+              {t("emergencyContactRelation")}
             </label>
             <RelationshipSelect
               value={formData.emergencyRelation}
@@ -485,9 +486,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       {/* Privacy Notice */}
       <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
         <p className="text-sm text-gray-600">
-          🔒 <strong>Privacy Assurance:</strong> Your personal information is
-          only shared with captains after you complete a booking payment. We
-          never sell your data to third parties.
+          🔒 <strong>{t("privacyAssurance")}:</strong> {t("privacyMessage")}
         </p>
       </div>
 
@@ -498,7 +497,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
           disabled={isLoading}
           className="bg-[#ec2227] hover:bg-[#d11f24] disabled:opacity-50 text-white"
         >
-          {isLoading ? "Saving..." : "Save Changes"}
+          {isLoading ? t("saving") : t("saveChanges")}
         </Button>
       </div>
     </form>

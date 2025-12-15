@@ -12,49 +12,49 @@ import {
   Star,
   User,
 } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const getNavigation = (locale: string) => [
+const getNavigation = (locale: string, t: any) => [
   {
-    name: "Overview",
+    name: t("nav.overview"),
     href: `/${locale}/account/overview`,
     icon: LayoutDashboard,
   },
   {
-    name: "Bookings",
+    name: t("nav.bookings"),
     href: `/${locale}/account/bookings`,
     icon: Calendar,
   },
   {
-    name: "Messages",
+    name: t("nav.messages"),
     href: `/${locale}/account/messages`,
     icon: MessageSquare,
     showBadge: true, // Special flag for unread badge
   },
   {
-    name: "Notifications",
+    name: t("nav.notifications"),
     href: `/${locale}/account/notifications`,
     icon: Bell,
   },
   {
-    name: "Reviews",
+    name: t("nav.reviews"),
     href: `/${locale}/account/reviews`,
     icon: Star,
   },
   {
-    name: "Favorites",
+    name: t("nav.favorites"),
     href: `/${locale}/account/favorites`,
     icon: Heart,
   },
   {
-    name: "Profile",
+    name: t("nav.profile"),
     href: `/${locale}/account/profile`,
     icon: User,
   },
   {
-    name: "Support",
+    name: t("nav.support"),
     href: `/${locale}/support/help`,
     icon: HelpCircle,
   },
@@ -71,8 +71,9 @@ export function AccountNav({
   transparentOnTop?: boolean;
 }) {
   const locale = useLocale();
+  const t = useTranslations("account");
   const pathname = usePathname();
-  const navigation = getNavigation(locale);
+  const navigation = getNavigation(locale, t);
   const { unreadCount } = useUnreadMessages();
 
   // Choose background based on transparent mode

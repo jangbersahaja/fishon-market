@@ -1,7 +1,7 @@
 import { ProfileForm } from "@/components/account";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/database/prisma";
-import { getLocale, setRequestLocale } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -11,15 +11,12 @@ export const metadata = {
 
 type RouteParams = Promise<{ locale: string }>;
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: RouteParams;
-}) {
+export default async function ProfilePage({ params }: { params: RouteParams }) {
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const session = await auth();
+  const t = await getTranslations("account.profile");
 
   if (!session?.user?.id) {
     const locale = await getLocale();
@@ -53,10 +50,8 @@ export default async function ProfilePage({
   return (
     <div className="max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Manage your personal information and preferences
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t("description")}</p>
       </div>
 
       <ProfileForm user={user} />

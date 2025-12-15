@@ -6,78 +6,80 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-
-const statusGuides = [
-  {
-    status: "PAYMENT_PENDING",
-    label: "Payment Received",
-    icon: DollarSign,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
-    description: "Payment received! Awaiting captain approval.",
-    action: "Captain will review within 12 hours. Full refund if declined.",
-  },
-  {
-    status: "PAID",
-    label: "Confirmed",
-    icon: CheckCircle2,
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
-    description: "Your booking is confirmed and payment received.",
-    action: "Prepare for your trip! Contact captain for details.",
-  },
-  {
-    status: "COMPLETED",
-    label: "Completed",
-    icon: CheckCircle2,
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
-    borderColor: "border-emerald-200",
-    description: "Your trip is complete! We hope you had a great time.",
-    action: "Leave a review to help other anglers.",
-  },
-  {
-    status: "REJECTED",
-    label: "Rejected",
-    icon: XCircle,
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
-    description: "Captain declined this booking request.",
-    action: "Try booking another date or different charter.",
-  },
-  {
-    status: "EXPIRED",
-    label: "Expired",
-    icon: AlertCircle,
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200",
-    description: "Captain didn't respond within the time limit.",
-    action: "You can try booking again with same or different dates.",
-  },
-  {
-    status: "CANCELLED",
-    label: "Cancelled",
-    icon: X,
-    color: "text-gray-600",
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
-    description: "This booking was cancelled.",
-    action: "Feel free to book this or another charter anytime.",
-  },
-];
+import { useTranslations } from "next-intl";
 
 export function BookingStatusGuide() {
+  const t = useTranslations("account.bookingStatusGuide");
+  const tStatus = useTranslations("account.bookingStatusValues");
+
+  const statusGuides = [
+    {
+      status: "PAYMENT_PENDING",
+      label: tStatus("paymentAuthorized"),
+      icon: DollarSign,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200",
+      description: "Payment received! Awaiting captain approval.",
+      action: "Captain will review within 12 hours. Full refund if declined.",
+    },
+    {
+      status: "PAID",
+      label: tStatus("paid"),
+      icon: CheckCircle2,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200",
+      description: "Your booking is confirmed and payment received.",
+      action: "Prepare for your trip! Contact captain for details.",
+    },
+    {
+      status: "COMPLETED",
+      label: tStatus("completed"),
+      icon: CheckCircle2,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
+      borderColor: "border-emerald-200",
+      description: "Your trip is complete! We hope you had a great time.",
+      action: "Leave a review to help other anglers.",
+    },
+    {
+      status: "REJECTED",
+      label: tStatus("rejected"),
+      icon: XCircle,
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+      borderColor: "border-red-200",
+      description: "Captain declined this booking request.",
+      action: "Try booking another date or different charter.",
+    },
+    {
+      status: "EXPIRED",
+      label: tStatus("expired"),
+      icon: AlertCircle,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200",
+      description: "Captain didn't respond within the time limit.",
+      action: "You can try booking again with same or different dates.",
+    },
+    {
+      status: "CANCELLED",
+      label: tStatus("cancelled"),
+      icon: X,
+      color: "text-gray-600",
+      bgColor: "bg-gray-50",
+      borderColor: "border-gray-200",
+      description: "This booking was cancelled.",
+      action: "Feel free to book this or another charter anytime.",
+    },
+  ];
+
   return (
     <div className="p-6 bg-white border border-gray-200 rounded-lg">
       <div className="flex items-center gap-2 mb-4">
         <HelpCircle className="w-5 h-5 text-gray-600" />
-        <h2 className="text-lg font-semibold text-gray-900">
-          Booking Status Guide
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t("title")}</h2>
       </div>
       <p className="mb-6 text-sm text-gray-600">
         Understand what each booking status means and what actions you should

@@ -23,10 +23,7 @@ import {
 import { bookingCreatedMessage } from "@/lib/services/message-templates";
 import { createNotification } from "@/lib/services/notification-service";
 import { calculatePricing } from "@/lib/services/pricing-service";
-import {
-  markPromoCodeUsed,
-  validatePromoCode,
-} from "@/lib/services/promo-service";
+import { validatePromoCode } from "@/lib/services/promo-service";
 import { sendCaptainBookingReceivedSMS } from "@/lib/services/sms-service";
 import { getTripById } from "@/lib/services/trip-service";
 import { sendWithRetry } from "@/lib/webhooks/webhook";
@@ -577,12 +574,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
     // Calculate blocked dates for the requested range
     // IMPORTANT: Check both schedule AND unavailability, even if schedule is null
     if (charterSchedule || charterUnavailability) {
-      const { calculateBlockedDates, formatDateYMD } = await import(
-        "@/lib/helpers/availability-helpers"
-      );
-      const { calculateEndDate } = await import(
-        "@/lib/helpers/date-range-helpers"
-      );
+      const { calculateBlockedDates, formatDateYMD } =
+        await import("@/lib/helpers/availability-helpers");
+      const { calculateEndDate } =
+        await import("@/lib/helpers/date-range-helpers");
       const startDate = d;
       const endDateStr = calculateEndDate(formatDateYMD(d), ds);
       const endDate = new Date(endDateStr + "T00:00:00Z");
@@ -938,25 +933,64 @@ async function createAuthenticatedBooking(session: any, body: any) {
       );
     }
 
-    // Mark promo code as used (non-blocking best-effort)
+    // Mark promo code as used (atomic with booking creation for REGISTRATION codes)
+    // For UNIVERSAL codes, just update the global usage count
     if (validatedPromo) {
-      (async () => {
-        try {
-          await markPromoCodeUsed(
-            dbUserId,
-            validatedPromo.promoCodeId,
-            booking.id
-          );
-          console.log("✅ Promo code marked as used:", {
-            userId: dbUserId,
-            promoCodeId: validatedPromo.promoCodeId,
-            bookingId: booking.id,
+      try {
+        // Get the promo code to check its scope
+        const promoCodeRecord = await prisma.promoCode.findUnique({
+          where: { id: validatedPromo.promoCodeId },
+          include: {
+            assignments: {
+              where: { userId: dbUserId },
+              select: { id: true, usedAt: true },
+            },
+          },
+        });
+
+        if (promoCodeRecord) {
+          // For REGISTRATION scope, mark the assignment as used
+          if (
+            promoCodeRecord.scope === "REGISTRATION" &&
+            promoCodeRecord.assignments.length > 0
+          ) {
+            const assignment = promoCodeRecord.assignments[0];
+            if (!assignment.usedAt) {
+              await prisma.userPromoCodeAssignment.update({
+                where: { id: assignment.id },
+                data: {
+                  usedAt: new Date(),
+                  usedInBookingId: booking.id,
+                },
+              });
+              console.log("✅ REGISTRATION promo assignment marked as used:", {
+                userId: dbUserId,
+                promoCodeId: validatedPromo.promoCodeId,
+                bookingId: booking.id,
+              });
+            }
+          } else {
+            console.log("📊 UNIVERSAL promo code - tracking via booking only", {
+              code: promoCodeRecord.code,
+              bookingId: booking.id,
+            });
+          }
+
+          // Always increment global usage count for both scopes
+          await prisma.promoCode.update({
+            where: { id: validatedPromo.promoCodeId },
+            data: { usesCount: { increment: 1 } },
           });
-        } catch (promoError) {
-          console.error("❌ Failed to mark promo code as used:", promoError);
-          // Non-critical - booking is already created
+          console.log("📈 Global promo code usage count incremented:", {
+            promoCodeId: validatedPromo.promoCodeId,
+            newCount: promoCodeRecord.usesCount + 1,
+          });
         }
-      })();
+      } catch (promoError) {
+        console.error("❌ Failed to mark promo code as used:", promoError);
+        // Non-critical - booking is already created successfully
+        // Don't fail the entire booking just because promo tracking failed
+      }
     }
 
     // Auto-create conversation for booking (Phase 2.1) (non-blocking best-effort)
@@ -990,12 +1024,10 @@ async function createAuthenticatedBooking(session: any, body: any) {
           await unlockConversation(conversation.id);
 
           // Send system message informing about payment authorization
-          const { paymentReceivedMessage } = await import(
-            "@/lib/services/message-templates"
-          );
-          const { sendSystemMessage } = await import(
-            "@/lib/services/message-service"
-          );
+          const { paymentReceivedMessage } =
+            await import("@/lib/services/message-templates");
+          const { sendSystemMessage } =
+            await import("@/lib/services/message-service");
           const template = paymentReceivedMessage();
           await sendSystemMessage(
             conversation.id,

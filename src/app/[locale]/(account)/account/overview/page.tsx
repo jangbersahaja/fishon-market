@@ -10,7 +10,7 @@ import {
   getBookingStats,
   getUserBookings,
 } from "@/lib/services/booking-service";
-import { getLocale, setRequestLocale } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -23,8 +23,9 @@ export default async function OverviewPage({
 }) {
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
+  const t = await getTranslations("account");
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -43,11 +44,9 @@ export default async function OverviewPage({
       {/* Welcome Banner */}
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          Welcome back, {session.user.name || "Angler"}!
+          {t("welcomeBack", { name: session.user.name || "Angler" })}
         </h1>
-        <p className="text-gray-600">
-          Here&apos;s what&apos;s happening with your fishing charters.
-        </p>
+        <p className="text-gray-600">{t("welcomeDescription")}</p>
       </div>
 
       {/* Promo Codes */}
@@ -68,11 +67,11 @@ export default async function OverviewPage({
       <div className="p-6 bg-white border border-gray-200 rounded-lg">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900">
-            Recent Bookings
+            {t("recentBookings")}
           </h2>
           {recentBookings.length > 0 && (
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/${locale}/account/bookings`}>View All</Link>
+              <Link href={`/${locale}/account/bookings`}>{t("viewAll")}</Link>
             </Button>
           )}
         </div>
@@ -80,10 +79,10 @@ export default async function OverviewPage({
         {recentBookings.length === 0 ? (
           <EmptyState
             icon="inbox"
-            title="No bookings yet"
-            description="Start exploring and book your first fishing charter!"
+            title={t("noBookingsYet")}
+            description={t("noBookingsDescription")}
             action={{
-              label: "Browse Charters",
+              label: t("browseCharters"),
               href: `/${locale}/search`,
             }}
           />
@@ -100,25 +99,25 @@ export default async function OverviewPage({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="p-6 bg-white border border-gray-200 rounded-lg">
           <h3 className="mb-2 text-lg font-semibold text-gray-900">
-            Need Help?
+            {t("needHelp")}
           </h3>
           <p className="mb-4 text-sm text-gray-600">
-            Have questions about your bookings or need assistance?
+            {t("needHelpDescription")}
           </p>
           <Button variant="outline" asChild>
-            <Link href={`/${locale}/support/help`}>Contact Support</Link>
+            <Link href={`/${locale}/support/help`}>{t("contactSupport")}</Link>
           </Button>
         </div>
 
         <div className="p-6 bg-white border border-gray-200 rounded-lg">
           <h3 className="mb-2 text-lg font-semibold text-gray-900">
-            Explore More
+            {t("exploreMore")}
           </h3>
           <p className="mb-4 text-sm text-gray-600">
-            Discover new fishing charters and experiences.
+            {t("exploreMoreDescription")}
           </p>
           <Button asChild>
-            <Link href={`/${locale}/search`}>Browse Charters</Link>
+            <Link href={`/${locale}/search`}>{t("browseCharters")}</Link>
           </Button>
         </div>
       </div>

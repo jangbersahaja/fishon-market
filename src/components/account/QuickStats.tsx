@@ -1,4 +1,5 @@
 import { Calendar, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface QuickStatsProps {
   stats: {
@@ -11,12 +12,14 @@ interface QuickStatsProps {
 }
 
 export function QuickStats({ stats }: QuickStatsProps) {
+  const t = useTranslations("account.quickStatsComponent");
+
   // Combine pending and payment_authorized for "Pending Review" stat
   const totalPending = stats.pending + stats.paymentAuthorized;
 
   const statItems = [
     {
-      label: "Total Bookings",
+      label: t("totalBookings"),
       value: stats.total,
       icon: Calendar,
       color: "text-blue-600",
@@ -37,7 +40,7 @@ export function QuickStats({ stats }: QuickStatsProps) {
       bgColor: "bg-green-50",
     },
     {
-      label: "Confirmed Trips",
+      label: t("completedTrips"),
       value: stats.paid,
       icon: CheckCircle2,
       color: "text-blue-600",

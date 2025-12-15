@@ -1,9 +1,12 @@
 import { UserReviewsList } from "@/components/account/UserReviewsList";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/auth";
-import { getUserReviews, getReviewableBookings } from "@/lib/services/review-service";
+import {
+  getReviewableBookings,
+  getUserReviews,
+} from "@/lib/services/review-service";
 import { ArrowLeft } from "lucide-react";
-import { getLocale, setRequestLocale } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -16,9 +19,10 @@ export default async function UserReviewsPage({
 }) {
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const locale = await getLocale();
   const session = await auth();
+  const t = await getTranslations("account.reviews");
 
   if (!session?.user?.id) {
     redirect(`/${locale}/login?next=/${locale}/account/reviews`);
@@ -35,21 +39,22 @@ export default async function UserReviewsPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Reviews</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your charter reviews and feedback
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <p className="text-gray-600 mt-1">{t("description")}</p>
         </div>
         <Button variant="outline" size="sm" asChild>
           <Link href={`/${locale}/account/bookings`}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Bookings
+            {t("backToBookings")}
           </Link>
         </Button>
       </div>
 
       {/* Reviews List with Reviewable Bookings */}
-      <UserReviewsList reviews={reviews} reviewableBookings={reviewableBookings} />
+      <UserReviewsList
+        reviews={reviews}
+        reviewableBookings={reviewableBookings}
+      />
     </div>
   );
 }
