@@ -70,37 +70,37 @@ export function UserNav() {
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/account/overview`}>
               <LayoutDashboard className="w-4 h-4 mr-2" />
-              <span>{t("account.overview")}</span>
+              <span>{t("nav.overview")}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/account/bookings`}>
               <Calendar className="w-4 h-4 mr-2" />
-              <span>{t("account.bookings")}</span>
+              <span>{t("nav.bookings")}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/account/notifications`}>
               <Bell className="w-4 h-4 mr-2" />
-              <span>{t("account.notifications")}</span>
+              <span>{t("nav.notifications")}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/account/reviews`}>
               <Star className="w-4 h-4 mr-2" />
-              <span>{t("account.reviews")}</span>
+              <span>{t("nav.reviews")}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/account/favorites`}>
               <Heart className="w-4 h-4 mr-2" />
-              <span>{t("account.favorites")}</span>
+              <span>{t("nav.favorites")}</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/account/profile`}>
               <User className="w-4 h-4 mr-2" />
-              <span>{t("account.profile")}</span>
+              <span>{t("nav.profile")}</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

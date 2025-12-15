@@ -7,8 +7,8 @@ import {
   isInProgress,
   type BookingTab,
 } from "@/lib/helpers/booking-status-helpers";
-import type { BookingWithDetails } from "@/lib/services/booking-service";
 import { logger } from "@/lib/logger";
+import type { BookingWithDetails } from "@/lib/services/booking-service";
 import { Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -24,24 +24,23 @@ export function BookingsClient({
 }: BookingsClientProps) {
   const locale = useLocale();
   const t = useTranslations("account");
-  const tCommon = useTranslations("common");
   const [activeTab, setActiveTab] = useState<BookingTab>("in-progress");
 
   const tabs: { label: string; value: BookingTab; description: string }[] = [
     {
       label: t("upcomingBookings"),
       value: "in-progress",
-      description: "Pending, approved, and upcoming trips",
+      description: t("upcomingBookingsDescription"),
     },
     {
       label: t("pastBookings"),
       value: "completed",
-      description: "Finished trips",
+      description: t("pastBookingsDescription"),
     },
     {
-      label: "Cancelled",
+      label: t("bookingStatusValues.cancelled"),
       value: "cancelled",
-      description: "Rejected, expired, or cancelled bookings",
+      description: t("cancelledBookingsDescription"),
     },
   ];
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,28 +86,27 @@ export function BookingsClient({
             return null;
           })
       )
-    )
-      .then((results) => {
-        const reviewMap = new Map<
-          string,
-          { id: string; overallRating: number }
-        >();
-        let successCount = 0;
-        results.forEach((review, index) => {
-          if (review) {
-            reviewMap.set(completedBookings[index].id, {
-              id: review.id,
-              overallRating: review.overallRating,
-            });
-            successCount++;
-          }
-        });
-        logger.debug("Reviews fetched successfully", {
-          total: completedBookings.length,
-          found: successCount,
-        });
-        setReviews(reviewMap);
+    ).then((results) => {
+      const reviewMap = new Map<
+        string,
+        { id: string; overallRating: number }
+      >();
+      let successCount = 0;
+      results.forEach((review, index) => {
+        if (review) {
+          reviewMap.set(completedBookings[index].id, {
+            id: review.id,
+            overallRating: review.overallRating,
+          });
+          successCount++;
+        }
       });
+      logger.debug("Reviews fetched successfully", {
+        total: completedBookings.length,
+        found: successCount,
+      });
+      setReviews(reviewMap);
+    });
   }, [bookings]);
 
   // Categorize bookings into tabs
@@ -151,9 +149,11 @@ export function BookingsClient({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("bookings")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t("bookingsPageTitle")}
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage your charter bookings and trips
+            {t("bookingsPageDescription")}
           </p>
         </div>
       </div>
@@ -164,7 +164,7 @@ export function BookingsClient({
           <Search className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
           <input
             type="text"
-            placeholder={`${tCommon("search")} by charter name, location, or trip...`}
+            placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ec2227] focus:border-transparent"
@@ -248,8 +248,8 @@ export function BookingsClient({
         ) : (
           <EmptyState
             icon="search"
-            title="No bookings found"
-            description="Try adjusting your search terms"
+            title={t("noBookingsFound")}
+            description={t("adjustSearchTerms")}
           />
         )
       ) : // Tab Results
@@ -268,18 +268,24 @@ export function BookingsClient({
       ) : (
         <EmptyState
           icon="inbox"
-          title={`No ${activeTab.replace("-", " ")} bookings`}
+          title={
+            activeTab === "in-progress"
+              ? t("noInProgressBookings")
+              : activeTab === "completed"
+                ? t("noCompletedTrips")
+                : t("noCancelledBookings")
+          }
           description={
             activeTab === "in-progress"
-              ? "Start exploring and book your first fishing charter!"
+              ? t("noBookingsDescription")
               : activeTab === "completed"
-                ? "You haven't completed any trips yet"
-                : "No cancelled bookings"
+                ? t("noCompletedTrips")
+                : t("noCancelledBookings")
           }
           action={
             activeTab === "in-progress"
               ? {
-                  label: "Browse Charters",
+                  label: t("browseCharters"),
                   href: "/search",
                 }
               : undefined

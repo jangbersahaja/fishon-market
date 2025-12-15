@@ -194,7 +194,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 onClick={() => setOpen(false)}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                {t("account.overview")}
+                {t("nav.overview")}
               </Link>
               <Link
                 href={`/${locale}/account/bookings`}
@@ -202,7 +202,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 onClick={() => setOpen(false)}
               >
                 <Calendar className="w-4 h-4" />
-                {t("account.bookings")}
+                {t("nav.bookings")}
               </Link>
               <Link
                 href={`/${locale}/account/messages`}
@@ -225,7 +225,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 onClick={() => setOpen(false)}
               >
                 <Star className="w-4 h-4" />
-                {t("account.reviews")}
+                {t("nav.reviews")}
               </Link>
               <Link
                 href={`/${locale}/account/favorites`}
@@ -233,7 +233,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 onClick={() => setOpen(false)}
               >
                 <Heart className="w-4 h-4" />
-                {t("account.favorites")}
+                {t("nav.favorites")}
               </Link>
               <Link
                 href={`/${locale}/account/profile`}
@@ -241,7 +241,7 @@ export default function Navbar({ transparentOnTop = false }: NavbarProps) {
                 onClick={() => setOpen(false)}
               >
                 <User className="w-4 h-4" />
-                {t("account.profile")}
+                {t("nav.profile")}
               </Link>
               <Link
                 href={`/${locale}/support/help`}

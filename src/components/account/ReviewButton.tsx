@@ -3,6 +3,7 @@
 import { ReviewModal } from "@/components/ratings";
 import { Button } from "@/components/ui/button";
 import { Loader2, Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 interface ReviewButtonProps {
@@ -26,6 +27,7 @@ export default function ReviewButton({
   tripDate,
   location,
 }: ReviewButtonProps) {
+  const t = useTranslations("account.reviewDialog");
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(
     null
   );
@@ -56,7 +58,7 @@ export default function ReviewButton({
     return (
       <Button variant="outline" className="w-full" disabled>
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Checking...
+        {t("checking", { defaultValue: "Checking..." })}
       </Button>
     );
   }
@@ -71,7 +73,7 @@ export default function ReviewButton({
       <Button variant="outline" className="w-full" asChild>
         <a href={`/account/reviews#review-${eligibility.existingReview.id}`}>
           <Star className="w-4 h-4 mr-2 fill-amber-400 stroke-amber-400" />
-          View Your Review
+          {t("viewReview", { defaultValue: "View Your Review" })}
         </a>
       </Button>
     );
@@ -83,7 +85,7 @@ export default function ReviewButton({
       <div className="relative group">
         <Button variant="outline" className="w-full" disabled>
           <Star className="w-4 h-4 mr-2" />
-          Write Review
+          {t("submitButton")}
         </Button>
         {eligibility.reason && (
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -104,7 +106,7 @@ export default function ReviewButton({
         onClick={() => setIsModalOpen(true)}
       >
         <Star className="w-4 h-4 mr-2" />
-        Write Review
+        {t("submitButton")}
       </Button>
 
       <ReviewModal

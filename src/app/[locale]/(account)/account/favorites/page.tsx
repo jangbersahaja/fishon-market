@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/account";
 import BaseCharterCard from "@/components/charters/BaseCharterCard";
 import { auth } from "@/lib/auth/auth";
 import { getUserFavorites } from "@/lib/services/favorite-service";
-import { getLocale, setRequestLocale } from "next-intl/server";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -19,8 +19,9 @@ export default async function FavoritesPage({
 }) {
   const { locale: paramLocale } = await params;
   setRequestLocale(paramLocale);
-  
+
   const session = await auth();
+  const t = await getTranslations("account.favorites");
 
   const locale = await getLocale();
 
@@ -34,18 +35,16 @@ export default async function FavoritesPage({
     return (
       <div className="max-w-7xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Favorites</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Charters you&apos;ve saved for later
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t("description")}</p>
         </div>
 
         <EmptyState
           icon="inbox"
-          title="No favorites yet"
-          description="Save charters you're interested in to easily find them later"
+          title={t("empty")}
+          description={t("emptyDescription")}
           action={{
-            label: "Browse Charters",
+            label: t("browseCharters"),
             href: `/${locale}/search`,
           }}
         />
@@ -57,10 +56,9 @@ export default async function FavoritesPage({
     <div className="max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">My Favorites</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <p className="mt-1 text-sm text-gray-500">
-          {favorites.length} saved{" "}
-          {favorites.length === 1 ? "charter" : "charters"}
+          {favorites.length} {t(favorites.length === 1 ? "saved" : "charters")}
         </p>
       </div>
 

@@ -7,7 +7,7 @@ import { NotificationListSkeleton } from "@/components/notifications/Notificatio
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Settings } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -21,6 +21,7 @@ export default function NotificationsPage() {
 
 function NotificationsContent() {
   const locale = useLocale();
+  const t = useTranslations("account.notifications");
   const {
     notifications,
     unreadCount,
@@ -43,11 +44,11 @@ function NotificationsContent() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold" id="notifications-heading">
-            Notifications
+            {t("title")}
           </h1>
           {unreadCount > 0 && (
             <p className="mt-1 text-sm text-gray-600" aria-live="polite">
-              {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
+              {t("unreadCount", { count: unreadCount })}
             </p>
           )}
         </div>
@@ -56,7 +57,7 @@ function NotificationsContent() {
           <Link href={`/${locale}/account/notifications/settings`}>
             <Button variant="outline" size="sm">
               <Settings className="w-4 h-4 mr-2" />
-              Settings
+              {t("settings")}
             </Button>
           </Link>
           {unreadCount > 0 && (
@@ -66,7 +67,7 @@ function NotificationsContent() {
               size="sm"
               aria-label={`Mark all ${unreadCount} notifications as read`}
             >
-              Mark all as read
+              {t("markAllAsRead")}
             </Button>
           )}
         </div>
@@ -78,8 +79,12 @@ function NotificationsContent() {
         aria-labelledby="notifications-heading"
       >
         <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-          <TabsTrigger value="all">All ({notifications.length})</TabsTrigger>
-          <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
+          <TabsTrigger value="all">
+            {t("all")} ({notifications.length})
+          </TabsTrigger>
+          <TabsTrigger value="unread">
+            {t("unread")} ({unreadCount})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={filter} className="mt-0">
@@ -88,9 +93,7 @@ function NotificationsContent() {
           ) : filteredNotifications.length === 0 ? (
             <div className="py-12 text-center" role="status">
               <p className="text-gray-500">
-                {filter === "unread"
-                  ? "No unread notifications"
-                  : "No notifications yet"}
+                {filter === "unread" ? t("noUnread") : t("noNotifications")}
               </p>
             </div>
           ) : (
@@ -98,7 +101,7 @@ function NotificationsContent() {
               <div
                 className="bg-white border divide-y rounded-lg shadow-sm"
                 role="feed"
-                aria-label={`${filter === "unread" ? "Unread" : "All"} notifications`}
+                aria-label={`${filter === "unread" ? t("unread") : t("all")} ${t("title").toLowerCase()}`}
                 aria-busy={isLoading}
               >
                 {filteredNotifications.map((notification) => (

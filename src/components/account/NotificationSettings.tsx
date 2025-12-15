@@ -22,6 +22,7 @@ import {
   isNotificationSoundEnabled,
 } from "@/lib/notification-sound";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -67,21 +68,22 @@ interface NotificationPreferences {
 }
 
 const notificationTypes = [
-  { key: "BookingCreated", label: "Booking created" },
-  { key: "BookingApproved", label: "Booking approved" },
-  { key: "BookingRejected", label: "Booking rejected" },
-  { key: "BookingPaid", label: "Booking paid" },
-  { key: "BookingCancelled", label: "Booking cancelled" },
-  { key: "ReviewSubmitted", label: "Review submitted" },
-  { key: "ReviewApproved", label: "Review approved" },
-  { key: "ReviewRejected", label: "Review rejected" },
-  { key: "AccountVerified", label: "Account verified" },
-  { key: "PaymentFailed", label: "Payment failed" },
-  { key: "SystemAnnouncement", label: "System announcements" },
+  { key: "BookingCreated", label: "booking_created" },
+  { key: "BookingApproved", label: "booking_approved" },
+  { key: "BookingRejected", label: "booking_rejected" },
+  { key: "BookingPaid", label: "booking_paid" },
+  { key: "BookingCancelled", label: "booking_cancelled" },
+  { key: "ReviewSubmitted", label: "review_submitted" },
+  { key: "ReviewApproved", label: "review_approved" },
+  { key: "ReviewRejected", label: "review_rejected" },
+  { key: "AccountVerified", label: "account_verified" },
+  { key: "PaymentFailed", label: "payment_failed" },
+  { key: "SystemAnnouncement", label: "system_announcement" },
 ];
 
 export default function NotificationSettings() {
   const { data: session } = useSession();
+  const t = useTranslations("account.notificationSettings");
   const [preferences, setPreferences] =
     useState<NotificationPreferences | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -104,7 +106,7 @@ export default function NotificationSettings() {
         setSoundEnabled(isNotificationSoundEnabled());
       } catch (error) {
         console.error("Failed to load notification preferences:", error);
-        toast.error("Failed to load preferences");
+        toast.error(t("error", { defaultValue: "Failed to load preferences" }));
       } finally {
         setIsLoading(false);
       }
@@ -120,10 +122,14 @@ export default function NotificationSettings() {
     setSoundEnabled(enabled);
     if (enabled) {
       enableNotificationSound();
-      toast.success("Notification sounds enabled");
+      toast.success(
+        t("soundEnabled", { defaultValue: "Notification sounds enabled" })
+      );
     } else {
       disableNotificationSound();
-      toast.success("Notification sounds disabled");
+      toast.success(
+        t("soundDisabled", { defaultValue: "Notification sounds disabled" })
+      );
     }
   };
 
@@ -146,10 +152,10 @@ export default function NotificationSettings() {
 
       if (!response.ok) throw new Error("Failed to save preferences");
 
-      toast.success("Preferences updated");
+      toast.success(t("saved", { defaultValue: "Preferences updated" }));
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      toast.error("Failed to save preferences");
+      toast.error(t("error", { defaultValue: "Failed to save preferences" }));
       // Revert on error
       setPreferences(preferences);
     } finally {
@@ -206,10 +212,10 @@ export default function NotificationSettings() {
 
       if (!response.ok) throw new Error("Failed to save preferences");
 
-      toast.success("All preferences updated");
+      toast.success(t("saved", { defaultValue: "All preferences updated" }));
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      toast.error("Failed to save preferences");
+      toast.error(t("error", { defaultValue: "Failed to save preferences" }));
       // Revert on error
       setPreferences(preferences);
     } finally {
@@ -243,14 +249,33 @@ export default function NotificationSettings() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">Failed to load preferences</p>
+          <p className="text-muted-foreground">
+            {t("loadFailed", { defaultValue: "Failed to load preferences" })}
+          </p>
           <Button className="mt-4" onClick={() => window.location.reload()}>
-            Retry
+            {t("retry", { defaultValue: "Retry" })}
           </Button>
         </CardContent>
       </Card>
     );
   }
+
+  const getNotificationTypeLabel = (label: string) => {
+    const labelMap: Record<string, string> = {
+      booking_created: "Booking created",
+      booking_approved: "Booking approved",
+      booking_rejected: "Booking rejected",
+      booking_paid: "Booking paid",
+      booking_cancelled: "Booking cancelled",
+      review_submitted: "Review submitted",
+      review_approved: "Review approved",
+      review_rejected: "Review rejected",
+      account_verified: "Account verified",
+      payment_failed: "Payment failed",
+      system_announcement: "System announcements",
+    };
+    return labelMap[label] || label;
+  };
 
   return (
     <div className="space-y-6">
@@ -314,7 +339,9 @@ export default function NotificationSettings() {
                   key={emailKey}
                   className="flex items-center justify-between"
                 >
-                  <Label htmlFor={emailKey}>{label}</Label>
+                  <Label htmlFor={emailKey}>
+                    {getNotificationTypeLabel(label)}
+                  </Label>
                   <Switch
                     id={emailKey}
                     checked={preferences[emailKey]}
@@ -367,7 +394,9 @@ export default function NotificationSettings() {
                   key={pushKey}
                   className="flex items-center justify-between"
                 >
-                  <Label htmlFor={pushKey}>{label}</Label>
+                  <Label htmlFor={pushKey}>
+                    {getNotificationTypeLabel(label)}
+                  </Label>
                   <Switch
                     id={pushKey}
                     checked={preferences[pushKey]}
@@ -417,7 +446,9 @@ export default function NotificationSettings() {
               const smsKey = `sms${key}` as keyof NotificationPreferences;
               return (
                 <div key={smsKey} className="flex items-center justify-between">
-                  <Label htmlFor={smsKey}>{label}</Label>
+                  <Label htmlFor={smsKey}>
+                    {getNotificationTypeLabel(label)}
+                  </Label>
                   <Switch
                     id={smsKey}
                     checked={preferences[smsKey]}

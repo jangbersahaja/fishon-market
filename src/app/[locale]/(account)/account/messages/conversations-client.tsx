@@ -4,6 +4,7 @@ import { ConversationListItem } from "@/components/chat/ConversationListItem";
 import { Button } from "@/components/ui/button";
 import { getPusherClient } from "@/lib/pusher/client";
 import { MessageCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -56,6 +57,7 @@ export function ConversationsClient({
   userId,
 }: ConversationsClientProps) {
   const router = useRouter();
+  const t = useTranslations("account.messages");
   const [conversations, setConversations] =
     useState<ConversationData[]>(initialConversations);
   const [totalUnread, setTotalUnread] = useState(initialTotalUnread);
@@ -135,11 +137,15 @@ export function ConversationsClient({
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <MessageCircle className="w-12 h-12 text-gray-300" />
-        <h2 className="text-lg font-semibold text-gray-700">No messages yet</h2>
+        <h2 className="text-lg font-semibold text-gray-700">
+          {t("noMessages")}
+        </h2>
         <p className="max-w-sm text-center text-gray-500">
-          Start booking charters to begin chatting with captains
+          {t("noMessagesDescription")}
         </p>
-        <Button onClick={() => router.push("/search")}>Browse Charters</Button>
+        <Button onClick={() => router.push("/search")}>
+          {t("browseCharters")}
+        </Button>
       </div>
     );
   }
@@ -148,10 +154,12 @@ export function ConversationsClient({
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <div className="px-4 py-4 border-b bg-gray-50">
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         {totalUnread > 0 && (
           <p className="mt-1 text-sm text-gray-600">
-            {totalUnread} unread message{totalUnread !== 1 ? "s" : ""}
+            {totalUnread === 1
+              ? t("unreadMessage")
+              : t("unreadMessages", { count: totalUnread })}
           </p>
         )}
       </div>
