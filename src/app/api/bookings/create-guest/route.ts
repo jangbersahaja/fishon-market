@@ -225,9 +225,8 @@ export async function POST(req: Request) {
     const tripPrice = trip.priceOverride ?? trip.price;
 
     // Get charter's booking flow type
-    const { getCharterFlowType } = await import(
-      "@/lib/services/charter-service"
-    );
+    const { getCharterFlowType } =
+      await import("@/lib/services/charter-service");
     const bookingFlowType = await getCharterFlowType(trip.charter.id);
 
     // If trip defines start times, require one selection
@@ -242,7 +241,7 @@ export async function POST(req: Request) {
     }
 
     // Calculate complete pricing breakdown including platform fees and payment gateway fees
-    const pricingBreakdown = calculatePricing({
+    const pricingBreakdown = await calculatePricing({
       tripPrice,
       days: ds,
       // TODO: Add promo code support in future
@@ -268,9 +267,8 @@ export async function POST(req: Request) {
       initialStatus = "PENDING";
 
       // Get approval deadline (default 24 hours)
-      const { getCharterApprovalTimeHours } = await import(
-        "@/lib/services/charter-service"
-      );
+      const { getCharterApprovalTimeHours } =
+        await import("@/lib/services/charter-service");
       const approvalHours = await getCharterApprovalTimeHours(trip.charter.id);
       const manualSlaHours = Number.isFinite(approvalHours)
         ? Number(approvalHours)
@@ -785,9 +783,8 @@ export async function POST(req: Request) {
 
         const { createConversation, unlockConversation, sendMessage } =
           await import("@/lib/services/message-service");
-        const { bookingCreatedMessage, paymentReceivedMessage } = await import(
-          "@/lib/services/message-templates"
-        );
+        const { bookingCreatedMessage, paymentReceivedMessage } =
+          await import("@/lib/services/message-templates");
 
         // Create conversation with correct parameters
         const conversation = await createConversation(
@@ -1027,9 +1024,8 @@ export async function POST(req: Request) {
         const guests = booking.guests as { adults: number; children: number };
 
         // Fetch charter to get ownerId
-        const { getCharterById } = await import(
-          "@/lib/services/charter-service"
-        );
+        const { getCharterById } =
+          await import("@/lib/services/charter-service");
         const charter = await getCharterById(trip.charter.id);
 
         await trackEvent({

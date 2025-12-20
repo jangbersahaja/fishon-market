@@ -186,7 +186,7 @@ async function createManualBooking(session: any, body: any) {
     }
 
     // Calculate pricing
-    const pricing = calculatePricing({
+    const pricing = await calculatePricing({
       tripPrice: trip.priceOverride ?? trip.price,
       days: ds,
     });

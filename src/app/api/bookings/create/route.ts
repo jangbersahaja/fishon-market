@@ -308,7 +308,7 @@ async function createAuthenticatedBooking(session: any, body: any) {
     }
 
     // Calculate complete pricing breakdown including platform fees and payment gateway fees
-    const pricingBreakdown = calculatePricing({
+    const pricingBreakdown = await calculatePricing({
       tripPrice,
       days: ds,
       promoDiscount: validatedPromo?.discountAmount,
