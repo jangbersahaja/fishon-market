@@ -5,8 +5,21 @@
  * - Platform fees
  * - Payment gateway fees
  * - Discounts/promo codes
- * - Captain earnings
+ * - Captain earnings (with configurable promo split)
+ *
+ * NOTE: This must stay in sync with fishon-captain's pricing-service.ts
+ * Keep both files aligned for consistent calculations across apps
+ *
+ * UPDATED Dec 2025: Added configurable promo split system
+ * - Captain/Platform split configured in fishon-captain SystemSettings
+ * - Fetched via direct database connection to fishon-captain DB
+ * - Default: 50/50 split if config unavailable
  */
+
+import {
+  DEFAULT_PROMO_SPLIT,
+  getPromoSplitConfig,
+} from "@/lib/captain/promo-split";
 
 export interface PricingBreakdown {
   tripPrice: number; // Base price per day (captain's base)
@@ -17,8 +30,10 @@ export interface PricingBreakdown {
   serviceFee: number; // 2% of (subtotal + platformFee - discount)
   sst: number; // Future: SST tax (currently 0)
   finalPrice: number; // What angler pays
-  captainEarnings: number; // What captain receives (subtotal, unchanged)
+  captainEarnings: number; // What captain receives (subtotal - captain promo contribution)
   displayPrice: number; // Trip price shown to angler (tripPrice + platformFee per day)
+  captainPromoContribution?: number; // Captain's share of promo discount
+  platformPromoContribution?: number; // Platform's share of promo discount
 }
 
 export interface PricingInput {
@@ -63,9 +78,16 @@ export interface PricingInput {
  * - Display Price (UI): RM2100
  * - Service Fee (2%): RM42
  * - Final Price: RM2142
- * - Captain Earnings: RM2000
+ * - Captain Earnings: RM2000 (if no promo)
+ *
+ * With Promo (50/50 split, RM100 discount):
+ * - Captain Promo Contribution: RM50
+ * - Platform Promo Contribution: RM50
+ * - Captain Earnings: RM1950 (RM2000 - RM50)
  */
-export function calculatePricing(input: PricingInput): PricingBreakdown {
+export async function calculatePricing(
+  input: PricingInput
+): Promise<PricingBreakdown> {
   const { tripPrice, days, promoDiscount, promoCode } = input;
 
   // Step 1: Subtotal (captain's base price * days)
@@ -98,10 +120,23 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
   const finalPrice =
     Math.round((amountBeforeServiceFee + serviceFee + sst) * 100) / 100;
 
-  // Step 8: Captain Earnings (what captain receives: subtotal, unchanged)
-  const captainEarnings = subtotal;
+  // Step 8: Promo Split (if discount applied)
+  let captainPromoContribution = 0;
+  let platformPromoContribution = 0;
 
-  // Step 9: Display Price (trip price shown to angler per day: base + commission per day)
+  if (discount > 0) {
+    const splitConfig = await getPromoSplitConfig();
+    captainPromoContribution =
+      Math.round(discount * (splitConfig.captainPercent / 100) * 100) / 100;
+    platformPromoContribution =
+      Math.round(discount * (splitConfig.platformPercent / 100) * 100) / 100;
+  }
+
+  // Step 9: Captain Earnings (subtotal minus captain's promo contribution)
+  const captainEarnings =
+    Math.round((subtotal - captainPromoContribution) * 100) / 100;
+
+  // Step 10: Display Price (trip price shown to angler per day: base + commission per day)
   const displayPrice = Math.round((tripPrice + platformFee / days) * 100) / 100;
 
   return {
@@ -115,6 +150,86 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
     finalPrice,
     captainEarnings,
     displayPrice,
+    captainPromoContribution,
+    platformPromoContribution,
+  };
+}
+
+/**
+ * Synchronous pricing calculation for client components
+ *
+ * Uses default 50/50 promo split since client components cannot use async functions
+ * in render phase. Server-side API routes should use calculatePricing() for dynamic split.
+ *
+ * @param input - PricingInput parameters
+ * @returns PricingBreakdown with default split applied to promos
+ */
+export function calculatePricingSync(input: PricingInput): PricingBreakdown {
+  const { tripPrice, days, promoDiscount, promoCode } = input;
+
+  // Step 1: Subtotal (captain's base price * days)
+  const subtotal = tripPrice * days;
+
+  // Step 2: Platform Fee (10% with RM100 cap)
+  const platformFeeUncapped = subtotal * 0.1;
+  const platformFee =
+    Math.round(Math.min(platformFeeUncapped, 100) * 100) / 100;
+
+  // Step 3: Discount
+  let discount = 0;
+  if (promoDiscount !== undefined && promoDiscount > 0) {
+    discount = Math.round(promoDiscount * 100) / 100;
+  } else if (promoCode) {
+    discount = Math.round(subtotal * (promoCode.percentage / 100) * 100) / 100;
+  }
+
+  // Step 4: Amount before service fee
+  const amountBeforeServiceFee = subtotal + platformFee - discount;
+
+  // Step 5: Service Fee (2%)
+  const serviceFee = Math.round(amountBeforeServiceFee * 0.02 * 100) / 100;
+
+  // Step 6: SST (future)
+  const sst = 0;
+
+  // Step 7: Final Price
+  const finalPrice =
+    Math.round((amountBeforeServiceFee + serviceFee + sst) * 100) / 100;
+
+  // Step 8: Promo Split (DEFAULT 50/50)
+  let captainPromoContribution = 0;
+  let platformPromoContribution = 0;
+
+  if (discount > 0) {
+    // Use default 50/50 split for client-side calculations
+    captainPromoContribution =
+      Math.round(discount * (DEFAULT_PROMO_SPLIT.captainPercent / 100) * 100) /
+      100;
+    platformPromoContribution =
+      Math.round(discount * (DEFAULT_PROMO_SPLIT.platformPercent / 100) * 100) /
+      100;
+  }
+
+  // Step 9: Captain Earnings
+  const captainEarnings =
+    Math.round((subtotal - captainPromoContribution) * 100) / 100;
+
+  // Step 10: Display Price
+  const displayPrice = Math.round((tripPrice + platformFee / days) * 100) / 100;
+
+  return {
+    tripPrice,
+    days,
+    subtotal,
+    platformFee,
+    discount,
+    serviceFee,
+    sst,
+    finalPrice,
+    captainEarnings,
+    displayPrice,
+    captainPromoContribution,
+    platformPromoContribution,
   };
 }
 

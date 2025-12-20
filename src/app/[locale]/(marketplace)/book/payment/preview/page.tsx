@@ -155,7 +155,7 @@ export default async function PaymentPreviewPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  
+
   const sp = await searchParams;
   const session = await auth();
   const t = await getTranslations({
@@ -267,7 +267,7 @@ export default async function PaymentPreviewPage({
   }
 
   // Calculate pricing (snapshot - will be re-validated on submit)
-  const pricing = calculatePricing({
+  const pricing = await calculatePricing({
     tripPrice: trip.priceOverride ?? trip.price,
     days: bookingData.days,
     promoDiscount,

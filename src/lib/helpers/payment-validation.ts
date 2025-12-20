@@ -107,7 +107,7 @@ export async function validateSessionAndAvailability(
       }
     }
 
-    const currentPricing = calculatePricing({
+    const currentPricing = await calculatePricing({
       tripPrice: trip.priceOverride ?? trip.price,
       days: data.days,
       promoDiscount,

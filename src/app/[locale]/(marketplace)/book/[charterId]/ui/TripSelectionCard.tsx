@@ -1,7 +1,7 @@
 "use client";
 
 import type { PartialAvailability } from "@/lib/helpers/availability-helpers";
-import { calculatePricing } from "@/lib/services/pricing-service";
+import { calculatePricingSync } from "@/lib/services/pricing-service";
 import type { SpeciesItem } from "@fishon/ui";
 import { SPECIES_BY_ID } from "@fishon/ui";
 import { Check, Clock, Users } from "lucide-react";
@@ -181,7 +181,7 @@ export default function TripSelectionCard({
         {tripsWithAvailability.map(
           ({ trip, isAvailable, availableStartTimes }, index) => {
             const isSelected = index === selectedIndex;
-            const totalPrice = calculatePricing({
+            const totalPrice = calculatePricingSync({
               tripPrice: trip.priceOverride ?? trip.price,
               days,
             });
