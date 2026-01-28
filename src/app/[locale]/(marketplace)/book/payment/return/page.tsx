@@ -31,8 +31,8 @@ export default async function PaymentReturnPage({
     status_id,
     order_id,
     transaction_id,
-    msg: msg?.substring(0, 50),
-    hash: hash?.substring(0, 16) + "...",
+    msg: msg ? msg.substring(0, 50) : undefined,
+    hash: hash ? hash.substring(0, 16) + "..." : undefined,
   });
 
   // Validate required parameters

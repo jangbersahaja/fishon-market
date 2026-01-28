@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
       status_id,
       order_id,
       transaction_id,
-      msg: msg?.substring(0, 50),
-      hash: hash?.substring(0, 16) + "...",
+      msg: msg ? msg.substring(0, 50) : undefined,
+      hash: hash ? hash.substring(0, 16) + "..." : undefined,
       timestamp: new Date().toISOString(),
     });
 
@@ -383,7 +383,10 @@ export async function POST(request: NextRequest) {
             },
           });
         } catch (err) {
-          logger.error("Failed to track PAYMENT_AUTHORIZED", { error: err });
+          logger.error("Failed to track PAYMENT_AUTHORIZED", {
+            component: "senangpay-callback",
+            error: err,
+          });
         }
       })();
 

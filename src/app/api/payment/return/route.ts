@@ -37,17 +37,19 @@ export async function GET(request: NextRequest) {
     status_id,
     order_id,
     transaction_id,
-    msg: msg?.substring(0, 50),
-    hash: hash?.substring(0, 16) + "...",
+    msg: msg ? msg.substring(0, 50) : undefined,
+    hash: hash ? hash.substring(0, 16) + "..." : undefined,
   });
 
   // Detect user's locale from cookies or use default
   const localeCookie = request.cookies.get("NEXT_LOCALE");
-  const locale = localeCookie?.value || "ms"; // Default to Malay
+  const allowedLocales = ["ms", "en"];
+  const localeValue = localeCookie?.value || "ms";
+  const locale = allowedLocales.includes(localeValue) ? localeValue : "ms"; // Validate locale
 
-  // Build redirect URL with locale prefix
-  const base = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "";
-  const redirectUrl = new URL(`/${locale}/book/payment/return`, base);
+  // Build redirect URL with locale prefix using request origin
+  const origin = request.nextUrl.origin;
+  const redirectUrl = new URL(`/${locale}/book/payment/return`, origin);
   
   // Preserve all query parameters
   if (status_id) redirectUrl.searchParams.set("status_id", status_id);
@@ -64,4 +66,12 @@ export async function GET(request: NextRequest) {
 
   // Redirect to the localized payment return page
   return NextResponse.redirect(redirectUrl.toString(), { status: 302 });
+}
+
+/**
+ * POST handler for payment return
+ * Some payment gateways may POST the return callback instead of GET
+ */
+export async function POST(request: NextRequest) {
+  return GET(request);
 }
