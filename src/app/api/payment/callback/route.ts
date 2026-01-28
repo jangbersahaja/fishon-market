@@ -16,6 +16,7 @@
 
 import { trackEvent } from "@/lib/analytics-service";
 import { prisma } from "@/lib/database/prisma";
+import { logger } from "@/lib/logger";
 import {
   getMerchantId,
   getSecretKey,
@@ -77,7 +78,8 @@ async function handleCallback(req: NextRequest) {
 
     // Validate required params
     if (!statusId || !orderId || !transactionId || !msg || !hash) {
-      console.error("❌ Payment callback missing params:", {
+      logger.error("Payment callback missing params", {
+        component: "payment-callback",
         statusId,
         orderId,
         transactionId,
@@ -91,7 +93,9 @@ async function handleCallback(req: NextRequest) {
     const secretKey = getSecretKey();
     const merchantId = getMerchantId();
     if (!secretKey || !merchantId) {
-      console.error("❌ Payment gateway not configured");
+      logger.error("Payment gateway not configured", {
+        component: "payment-callback",
+      });
       return redirectToError("Payment gateway configuration error");
     }
 
@@ -109,7 +113,8 @@ async function handleCallback(req: NextRequest) {
     );
 
     if (!isValid) {
-      console.error("❌ Invalid payment hash - possible tampering:", {
+      logger.error("Invalid payment hash - possible tampering", {
+        component: "payment-callback",
         orderId,
         receivedHash: hash,
       });
@@ -119,7 +124,12 @@ async function handleCallback(req: NextRequest) {
     // Check payment status
     const isSuccess = statusId === "1";
     if (!isSuccess) {
-      console.warn("⚠️ Payment failed:", { orderId, statusId, msg });
+      logger.warn("Payment failed", {
+        component: "payment-callback",
+        orderId,
+        statusId,
+        msg,
+      });
       return redirectToError(`Payment failed: ${msg}`);
     }
 
@@ -134,7 +144,10 @@ async function handleCallback(req: NextRequest) {
     });
 
     if (!booking) {
-      console.error("❌ Booking not found:", bookingId);
+      logger.error("Booking not found", {
+        component: "payment-callback",
+        bookingId,
+      });
       return redirectToError("Booking not found");
     }
 
@@ -143,13 +156,17 @@ async function handleCallback(req: NextRequest) {
       booking.status === "PAID" &&
       booking.paymentTransactionId === transactionId
     ) {
-      console.log("✅ Payment already processed (idempotent):", bookingId);
+      logger.info("Payment already processed (idempotent)", {
+        component: "payment-callback",
+        bookingId,
+      });
       return redirectToSuccess(bookingId);
     }
 
     // Validate booking flow
     if (booking.paymentFlow !== "DIRECT") {
-      console.error("❌ Invalid payment flow for callback:", {
+      logger.error("Invalid payment flow for callback", {
+        component: "payment-callback",
         bookingId,
         flow: booking.paymentFlow,
       });
@@ -166,7 +183,8 @@ async function handleCallback(req: NextRequest) {
       },
     });
 
-    console.log("✅ Payment processed successfully:", {
+    logger.info("Payment processed successfully", {
+      component: "payment-callback",
       bookingId,
       transactionId,
       flow: "DIRECT",
@@ -176,7 +194,10 @@ async function handleCallback(req: NextRequest) {
     const { getTripById } = await import("@/lib/services/trip-service");
     const trip = await getTripById(booking.tripId);
     if (!trip) {
-      console.error("❌ Trip not found for booking:", bookingId);
+      logger.error("Trip not found for booking", {
+        component: "payment-callback",
+        bookingId,
+      });
       // Still redirect to success (payment processed), but skip emails
       return redirectToSuccess(bookingId);
     }
@@ -215,7 +236,10 @@ async function handleCallback(req: NextRequest) {
           });
         }
       } catch (err) {
-        console.error("❌ Failed to send payment webhook:", err);
+        logger.error("Failed to send payment webhook", {
+          component: "payment-callback",
+          error: err,
+        });
       }
     })();
 
@@ -240,7 +264,10 @@ async function handleCallback(req: NextRequest) {
             },
           });
         } catch (err) {
-          console.error("❌ Failed to create payment notification:", err);
+          logger.error("Failed to create payment notification", {
+            component: "payment-callback",
+            error: err,
+          });
         }
       })();
     }
@@ -275,7 +302,10 @@ async function handleCallback(req: NextRequest) {
           bookingId: booking.id,
         });
       } catch (err) {
-        console.error("Failed to send payment confirmation email:", err);
+        logger.error("Failed to send payment confirmation email", {
+          component: "payment-callback",
+          error: err,
+        });
       }
     })();
 
@@ -306,7 +336,10 @@ async function handleCallback(req: NextRequest) {
           bookingId: booking.id,
         });
       } catch (err) {
-        console.error("Failed to send captain booking email:", err);
+        logger.error("Failed to send captain booking email", {
+          component: "payment-callback",
+          error: err,
+        });
       }
     })();
 
@@ -339,14 +372,20 @@ async function handleCallback(req: NextRequest) {
           },
         });
       } catch (err) {
-        console.error("Failed to track payment event:", err);
+        logger.error("Failed to track payment event", {
+          component: "payment-callback",
+          error: err,
+        });
       }
     })();
 
     // Redirect to success
     return redirectToSuccess(bookingId);
   } catch (error: any) {
-    console.error("❌ Payment callback error:", error);
+    logger.error("Payment callback error", {
+      component: "payment-callback",
+      error,
+    });
     return redirectToError("Payment processing error");
   }
 }

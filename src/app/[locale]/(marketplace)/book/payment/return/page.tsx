@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/database/prisma";
+import { logger } from "@/lib/logger";
 import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
 import { setRequestLocale } from "next-intl/server";
@@ -25,7 +26,8 @@ export default async function PaymentReturnPage({
   const searchParamsData = await searchParams;
   const { status_id, order_id, transaction_id, msg, hash } = searchParamsData;
 
-  console.log("🔙 [PAYMENT RETURN] User returned from Senang Pay", {
+  logger.info("User returned from Senang Pay", {
+    component: "payment-return",
     status_id,
     order_id,
     transaction_id,
@@ -35,7 +37,8 @@ export default async function PaymentReturnPage({
 
   // Validate required parameters
   if (!status_id || !order_id || !transaction_id || !msg || !hash) {
-    console.error("❌ [PAYMENT RETURN] Missing required parameters", {
+    logger.error("Missing required parameters", {
+      component: "payment-return",
       has_status_id: !!status_id,
       has_order_id: !!order_id,
       has_transaction_id: !!transaction_id,
@@ -50,7 +53,7 @@ export default async function PaymentReturnPage({
   const secretKey = process.env.SENANGPAY_SECRET_KEY;
 
   if (!merchantId || !secretKey) {
-    console.error("❌ [PAYMENT RETURN] Senang Pay not configured");
+    logger.error("Senang Pay not configured", { component: "payment-return" });
     redirect(`/${locale}/book/confirm?error=payment_gateway_error`);
   }
 
@@ -61,24 +64,22 @@ export default async function PaymentReturnPage({
   );
 
   if (!isValid) {
-    console.error(
-      "❌ [PAYMENT RETURN] Invalid hash detected - possible tampering",
-      {
-        orderId: order_id,
-        receivedHash: hash.substring(0, 16) + "...",
-      }
-    );
+    logger.error("Invalid hash detected - possible tampering", {
+      component: "payment-return",
+      orderId: order_id,
+      receivedHash: hash.substring(0, 16) + "...",
+    });
     redirect(`/${locale}/book/confirm?error=invalid_payment_hash`);
   }
 
-  console.log("✅ [PAYMENT RETURN] Hash verified successfully");
+  logger.info("Hash verified successfully", { component: "payment-return" });
 
   // Check if this is a PaymentSession (AUTO + DIRECT flow) or a Booking (TOKENIZED flow)
   // For AUTO + DIRECT, order_id is a PaymentSession.id, booking is created after successful payment
-  console.log(
-    "🔍 [PAYMENT RETURN] Looking up PaymentSession with ID:",
-    order_id
-  );
+  logger.info("Looking up PaymentSession", {
+    component: "payment-return",
+    order_id,
+  });
 
   const paymentSession = await prisma.paymentSession.findUnique({
     where: { id: order_id },
@@ -90,7 +91,8 @@ export default async function PaymentReturnPage({
     },
   });
 
-  console.log("🔍 [PAYMENT RETURN] PaymentSession lookup result:", {
+  logger.info("PaymentSession lookup result", {
+    component: "payment-return",
     found: !!paymentSession,
     sessionId: paymentSession?.id,
     status: paymentSession?.status,
@@ -100,7 +102,8 @@ export default async function PaymentReturnPage({
   if (paymentSession) {
     if (status_id !== "1") {
       // Payment failed or cancelled - update session status
-      console.log("❌ [PAYMENT RETURN] Payment cancelled/failed for session", {
+      logger.warn("Payment cancelled/failed for session", {
+        component: "payment-return",
         sessionId: order_id,
         reason: msg,
       });
@@ -122,25 +125,21 @@ export default async function PaymentReturnPage({
       if (isSessionValid) {
         // Session still valid - redirect to payment preview to retry
         // User can choose different payment method or retry same one
-        console.log(
-          "🔄 [PAYMENT RETURN] Redirecting to payment preview for retry",
-          {
-            sessionId: order_id,
-            expiresAt: paymentSession.expiresAt,
-          }
-        );
+        logger.info("Redirecting to payment preview for retry", {
+          component: "payment-return",
+          sessionId: order_id,
+          expiresAt: paymentSession.expiresAt,
+        });
         redirect(
           `/${locale}/book/payment/preview?session=${order_id}&message=${encodeURIComponent(cleanMessage)}`
         );
       } else {
         // Session expired - redirect to home with message
-        console.log(
-          "⏰ [PAYMENT RETURN] Session expired, redirecting to home",
-          {
-            sessionId: order_id,
-            expiresAt: paymentSession.expiresAt,
-          }
-        );
+        logger.warn("Session expired, redirecting to home", {
+          component: "payment-return",
+          sessionId: order_id,
+          expiresAt: paymentSession.expiresAt,
+        });
         redirect(
           `/${locale}/home?payment=expired&message=${encodeURIComponent(
             "Your booking session has expired. Please start a new booking."
@@ -151,13 +150,11 @@ export default async function PaymentReturnPage({
 
     // Payment successful for PaymentSession - callback webhook should handle booking creation
     // Just redirect to a holding page that will show success once callback processes
-    console.log(
-      "✅ [PAYMENT RETURN] Payment successful for session, awaiting callback",
-      {
-        sessionId: order_id,
-        transactionId: transaction_id,
-      }
-    );
+    logger.info("Payment successful for session, awaiting callback", {
+      component: "payment-return",
+      sessionId: order_id,
+      transactionId: transaction_id,
+    });
 
     // Check if callback already created the booking
     // Look for a booking created from this session (by matching transaction ID)
@@ -182,7 +179,10 @@ export default async function PaymentReturnPage({
   }
 
   // Check if booking exists (MANUAL flow or TOKENIZED flow)
-  console.log("🔍 [PAYMENT RETURN] Looking up Booking with ID:", order_id);
+  logger.info("Looking up Booking", {
+    component: "payment-return",
+    order_id,
+  });
 
   const booking = await prisma.booking.findUnique({
     where: { id: order_id },
@@ -198,7 +198,8 @@ export default async function PaymentReturnPage({
     },
   });
 
-  console.log("🔍 [PAYMENT RETURN] Booking lookup result:", {
+  logger.info("Booking lookup result", {
+    component: "payment-return",
     found: !!booking,
     bookingId: booking?.id,
     status: booking?.status,
@@ -206,7 +207,8 @@ export default async function PaymentReturnPage({
   });
 
   if (!booking) {
-    console.error("❌ [PAYMENT RETURN] Neither booking nor session found", {
+    logger.error("Neither booking nor session found", {
+      component: "payment-return",
       orderId: order_id,
       orderIdLength: order_id.length,
       orderIdType: typeof order_id,
@@ -221,10 +223,10 @@ export default async function PaymentReturnPage({
     });
 
     if (bookingByTx) {
-      console.log(
-        "🔍 [PAYMENT RETURN] Found booking by transaction ID:",
-        bookingByTx.id
-      );
+      logger.info("Found booking by transaction ID", {
+        component: "payment-return",
+        bookingId: bookingByTx.id,
+      });
       if (status_id === "1") {
         redirect(
           `/${locale}/book/confirm?id=${bookingByTx.id}&payment=success`
@@ -236,9 +238,9 @@ export default async function PaymentReturnPage({
 
     // If payment was cancelled (status_id !== "1"), redirect to home with message
     if (status_id !== "1") {
-      console.log(
-        "❌ [PAYMENT RETURN] Payment was cancelled, no matching records found"
-      );
+      logger.warn("Payment was cancelled, no matching records found", {
+        component: "payment-return",
+      });
       const cleanMsg = (
         msg || "Payment was cancelled. You can try again when ready."
       ).replace(/_/g, " ");
@@ -276,13 +278,11 @@ export default async function PaymentReturnPage({
 
       if (isDeadlineValid) {
         // Deadline still valid - redirect back to payment page to retry
-        console.log(
-          "🔄 [PAYMENT RETURN] MANUAL flow payment cancelled, redirecting to retry",
-          {
-            bookingId: order_id,
-            paymentDeadline: booking.paymentDeadline,
-          }
-        );
+        logger.info("MANUAL flow payment cancelled, redirecting to retry", {
+          component: "payment-return",
+          bookingId: order_id,
+          paymentDeadline: booking.paymentDeadline,
+        });
 
         // Record the failed attempt
         await prisma.booking.update({
@@ -297,7 +297,8 @@ export default async function PaymentReturnPage({
         );
       } else {
         // Payment deadline passed - booking should be expired
-        console.log("⏰ [PAYMENT RETURN] MANUAL flow payment deadline passed", {
+        logger.warn("MANUAL flow payment deadline passed", {
+          component: "payment-return",
           bookingId: order_id,
           paymentDeadline: booking.paymentDeadline,
         });
@@ -315,7 +316,8 @@ export default async function PaymentReturnPage({
   // IDEMPOTENCY: Check if already processed by callback webhook
   // The callback webhook is the authoritative source; this is just for UX
   if (booking.status === "PAID" && booking.paidAt) {
-    console.log("✅ [PAYMENT RETURN] Already processed by callback webhook", {
+    logger.info("Already processed by callback webhook", {
+      component: "payment-return",
       bookingId: order_id,
       transactionId: booking.paymentTransactionId,
     });
@@ -328,14 +330,12 @@ export default async function PaymentReturnPage({
   // Check if booking is in PAYMENT_AUTHORIZED status (AUTO flow with FPX/E-wallet)
   // In this case, the callback webhook should process it soon, so just redirect
   if (booking.status === "PAYMENT_AUTHORIZED" && status_id === "1") {
-    console.log(
-      "✅ [PAYMENT RETURN] Booking in PAYMENT_AUTHORIZED, callback will process",
-      {
-        bookingId: order_id,
-        transactionId: transaction_id,
-        msg: "Waiting for callback webhook to complete processing",
-      }
-    );
+    logger.info("Booking in PAYMENT_AUTHORIZED, callback will process", {
+      component: "payment-return",
+      bookingId: order_id,
+      transactionId: transaction_id,
+      msg: "Waiting for callback webhook to complete processing",
+    });
 
     // Redirect to confirmation page - callback will update status to PAID
     // The confirmation page will show the current status
@@ -346,7 +346,8 @@ export default async function PaymentReturnPage({
   // This is a fallback in case callback fails or is delayed
   if (status_id === "1") {
     // Payment successful
-    console.log("✅ [PAYMENT RETURN] Processing successful payment", {
+    logger.info("Processing successful payment", {
+      component: "payment-return",
       orderId: order_id,
       transactionId: transaction_id,
       msg,
@@ -387,7 +388,8 @@ export default async function PaymentReturnPage({
         },
       });
 
-      console.log("✅ [PAYMENT RETURN] Booking updated to PAID", {
+      logger.info("Booking updated to PAID", {
+        component: "payment-return",
         bookingId: order_id,
         transactionId: transaction_id,
         platformFee,
@@ -403,7 +405,8 @@ export default async function PaymentReturnPage({
 
       redirect(`/${locale}/book/confirm?id=${order_id}&payment=success`);
     } catch (error) {
-      console.error("❌ [PAYMENT RETURN] Failed to update booking", {
+      logger.error("Failed to update booking", {
+        component: "payment-return",
         orderId: order_id,
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -412,15 +415,16 @@ export default async function PaymentReturnPage({
       // Despite error, payment was likely successful on Senang Pay side
       // Callback webhook should have processed it or will process it
       // Redirect to booking page so user can see their booking
-      console.log(
-        "⚠️ [PAYMENT RETURN] Redirecting to booking despite error - callback should have processed",
-        { orderId: order_id }
+      logger.warn(
+        "Redirecting to booking despite error - callback should have processed",
+        { component: "payment-return", orderId: order_id }
       );
       redirect(`/${locale}/book/confirm?id=${order_id}&payment=processing`);
     }
   } else {
     // Payment failed
-    console.log("❌ [PAYMENT RETURN] Payment failed", {
+    logger.warn("Payment failed", {
+      component: "payment-return",
       orderId: order_id,
       reason: msg,
     });
@@ -436,7 +440,8 @@ export default async function PaymentReturnPage({
         },
       });
 
-      console.log("📝 [PAYMENT RETURN] Payment failure note recorded", {
+      logger.info("Payment failure note recorded", {
+        component: "payment-return",
         bookingId: order_id,
       });
 
@@ -444,7 +449,8 @@ export default async function PaymentReturnPage({
         `/${locale}/book/confirm?id=${order_id}&payment=failed&reason=${encodeURIComponent(cleanMsg)}`
       );
     } catch (error) {
-      console.error("❌ [PAYMENT RETURN] Failed to record payment failure", {
+      logger.error("Failed to record payment failure", {
+        component: "payment-return",
         orderId: order_id,
         error,
       });

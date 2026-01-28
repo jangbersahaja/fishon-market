@@ -1,6 +1,7 @@
 import { trackEvent } from "@/lib/analytics-service";
 import { addDaysUTC, hasConflicts, TimeSlot } from "@/lib/booking/overlap";
 import { prisma } from "@/lib/database/prisma";
+import { logger } from "@/lib/logger";
 import { triggerPaymentSideEffects } from "@/lib/payment/payment-side-effects";
 import { verifyReturnHash } from "@/lib/payment/senangpay";
 import { NextRequest, NextResponse } from "next/server";
@@ -32,7 +33,8 @@ export async function POST(request: NextRequest) {
     const msg = formData.get("msg")?.toString();
     const hash = formData.get("hash")?.toString();
 
-    console.log("📥 [SENANGPAY CALLBACK] Received callback", {
+    logger.info("Received callback", {
+      component: "senangpay-callback",
       status_id,
       order_id,
       transaction_id,
@@ -43,7 +45,8 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!status_id || !order_id || !transaction_id || !msg || !hash) {
-      console.error("❌ [SENANGPAY CALLBACK] Missing required fields", {
+      logger.error("Missing required fields", {
+        component: "senangpay-callback",
         has_status_id: !!status_id,
         has_order_id: !!order_id,
         has_transaction_id: !!transaction_id,
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
     const secretKey = process.env.SENANGPAY_SECRET_KEY;
 
     if (!merchantId || !secretKey) {
-      console.error("❌ [SENANGPAY CALLBACK] Gateway not configured");
+      logger.error("Gateway not configured", { component: "senangpay-callback" });
       return new NextResponse("Internal Server Error: Gateway not configured", {
         status: 500,
       });
@@ -73,17 +76,15 @@ export async function POST(request: NextRequest) {
     );
 
     if (!isValid) {
-      console.error(
-        "❌ [SENANGPAY CALLBACK] Invalid hash - possible tampering",
-        {
-          orderId: order_id,
-          receivedHash: hash.substring(0, 16) + "...",
-        }
-      );
+      logger.error("Invalid hash - possible tampering", {
+        component: "senangpay-callback",
+        orderId: order_id,
+        receivedHash: hash.substring(0, 16) + "...",
+      });
       return new NextResponse("Bad Request: Invalid hash", { status: 400 });
     }
 
-    console.log("✅ [SENANGPAY CALLBACK] Hash verified successfully");
+    logger.info("Hash verified successfully", { component: "senangpay-callback" });
 
     // Check if this is a payment session or existing booking
     const paymentSession = await prisma.paymentSession.findUnique({
@@ -98,7 +99,8 @@ export async function POST(request: NextRequest) {
           where: { id: order_id },
           data: { status: "FAILED" },
         });
-        console.log("❌ [SENANGPAY CALLBACK] Payment failed for session", {
+        logger.warn("Payment failed for session", {
+          component: "senangpay-callback",
           sessionId: order_id,
           reason: msg,
         });
@@ -113,7 +115,8 @@ export async function POST(request: NextRequest) {
       const { getTripById } = await import("@/lib/services/trip-service");
       const trip = await getTripById(bookingData.tripId);
       if (!trip) {
-        console.error("❌ [SENANGPAY CALLBACK] Trip not found", {
+        logger.error("Trip not found", {
+          component: "senangpay-callback",
           tripId: bookingData.tripId,
         });
         return new NextResponse("Not Found: Trip not found", { status: 404 });
@@ -167,7 +170,8 @@ export async function POST(request: NextRequest) {
       );
 
       if (conflictDetected) {
-        console.error("❌ [SENANGPAY CALLBACK] Date conflict detected", {
+        logger.error("Date conflict detected", {
+          component: "senangpay-callback",
           sessionId: order_id,
           charterId: bookingData.charterId,
           date: bookingData.date,
@@ -192,7 +196,8 @@ export async function POST(request: NextRequest) {
 
         // TODO: Trigger refund process for the customer
         // For now, log for manual refund processing
-        console.warn("⚠️ [SENANGPAY CALLBACK] REFUND REQUIRED", {
+        logger.warn("REFUND REQUIRED", {
+          component: "senangpay-callback",
           sessionId: order_id,
           transactionId: transaction_id,
           amount: pricingBreakdown.finalPrice,
@@ -264,13 +269,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      console.log(
-        "✅ [SENANGPAY CALLBACK] Booking created from payment session",
-        {
-          sessionId: order_id,
-          bookingId: booking.id,
-        }
-      );
+      logger.info("Booking created from payment session", {
+        component: "senangpay-callback",
+        sessionId: order_id,
+        bookingId: booking.id,
+      });
 
       // Create conversation for the booking (DIRECT flow)
       if (trip.charter.ownerId) {
@@ -287,13 +290,11 @@ export async function POST(request: NextRequest) {
             bookingData.charterId, // charterId
             trip.charter.ownerId // ownerId (User.id of charter owner)
           );
-          console.log(
-            "✅ [SENANGPAY CALLBACK] Conversation created for DIRECT flow booking",
-            {
-              bookingId: booking.id,
-              conversationId: conversation.id,
-            }
-          );
+          logger.info("Conversation created for DIRECT flow booking", {
+            component: "senangpay-callback",
+            bookingId: booking.id,
+            conversationId: conversation.id,
+          });
 
           // Send payment received system message
           const paymentTemplate = paymentReceivedMessage();
@@ -339,20 +340,20 @@ export async function POST(request: NextRequest) {
             }
           );
 
-          console.log(
-            "✅ [SENANGPAY CALLBACK] System messages sent for DIRECT flow booking"
-          );
+          logger.info("System messages sent for DIRECT flow booking", {
+            component: "senangpay-callback",
+          });
         } catch (convError) {
-          console.error(
-            "❌ [SENANGPAY CALLBACK] Failed to create conversation:",
-            convError
-          );
+          logger.error("Failed to create conversation", {
+            component: "senangpay-callback",
+            error: convError,
+          });
           // Non-critical - booking is still valid
         }
       } else {
-        console.warn(
-          "⚠️ [SENANGPAY CALLBACK] Skipping conversation creation - charter owner not found"
-        );
+        logger.warn("Skipping conversation creation - charter owner not found", {
+          component: "senangpay-callback",
+        });
       }
 
       // Track PAYMENT_AUTHORIZED for DIRECT flow (non-blocking)
@@ -382,7 +383,7 @@ export async function POST(request: NextRequest) {
             },
           });
         } catch (err) {
-          console.error("Failed to track PAYMENT_AUTHORIZED:", err);
+          logger.error("Failed to track PAYMENT_AUTHORIZED", { error: err });
         }
       })();
 
@@ -417,7 +418,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!booking) {
-      console.error("❌ [SENANGPAY CALLBACK] Booking/Session not found", {
+      logger.error("Booking/Session not found", {
+        component: "senangpay-callback",
         orderId: order_id,
       });
       return new NextResponse("Not Found: Booking not found", { status: 404 });
@@ -425,21 +427,20 @@ export async function POST(request: NextRequest) {
 
     // IDEMPOTENCY: Check if already processed
     if (booking.status === "PAID" && booking.paidAt) {
-      console.log(
-        "✅ [SENANGPAY CALLBACK] Already processed (idempotent request)",
-        {
-          bookingId: order_id,
-          transactionId: booking.paymentTransactionId,
-          paidAt: booking.paidAt,
-        }
-      );
+      logger.info("Already processed (idempotent request)", {
+        component: "senangpay-callback",
+        bookingId: order_id,
+        transactionId: booking.paymentTransactionId,
+        paidAt: booking.paidAt,
+      });
       return new NextResponse("OK", { status: 200 });
     }
 
     // Process payment based on status
     if (status_id === "1") {
       // Payment successful
-      console.log("✅ [SENANGPAY CALLBACK] Processing successful payment", {
+      logger.info("Processing successful payment", {
+        component: "senangpay-callback",
         orderId: order_id,
         transactionId: transaction_id,
         msg,
@@ -479,7 +480,8 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      console.log("✅ [SENANGPAY CALLBACK] Booking updated to PAID", {
+      logger.info("Booking updated to PAID", {
+        component: "senangpay-callback",
         bookingId: order_id,
         transactionId: transaction_id,
         finalPrice,
@@ -494,7 +496,8 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Payment failed
-      console.log("❌ [SENANGPAY CALLBACK] Payment failed", {
+      logger.warn("Payment failed", {
+        component: "senangpay-callback",
         orderId: order_id,
         reason: msg,
       });
@@ -506,14 +509,19 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      console.log("📝 [SENANGPAY CALLBACK] Payment failure note recorded");
+      logger.info("Payment failure note recorded", {
+        component: "senangpay-callback",
+      });
     }
 
     // Return "OK" to acknowledge receipt to Senang Pay
     // This tells Senang Pay we received and processed the callback
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
-    console.error("❌ [SENANGPAY CALLBACK] Error processing callback:", error);
+    logger.error("Error processing callback", {
+      component: "senangpay-callback",
+      error,
+    });
     // Still return 200 to prevent Senang Pay from retrying
     // Log the error for investigation
     return new NextResponse("OK", { status: 200 });
