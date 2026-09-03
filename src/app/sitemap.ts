@@ -39,8 +39,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const [charters, blogPosts] = await Promise.all([
-    prismaCaptain.charter
-      .findMany({ where: { isActive: true }, select: { id: true, updatedAt: true } })
+    prismaCaptain
+      .$queryRaw<Array<{ id: string; updatedAt: Date }>>`
+        SELECT id, "updatedAt" FROM "Charter" WHERE "isActive" = true
+      `
       .catch(() => []),
     prisma.blogPost
       .findMany({ where: { published: true }, select: { slug: true, updatedAt: true } })
