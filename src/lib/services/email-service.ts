@@ -311,6 +311,7 @@ export async function sendBookingConfirmedCaptainEmail(
     to: params.to,
     subject: `Payment Received - ${params.charterName}`,
     html,
+    bcc: process.env.ADMIN_NOTIFICATION_EMAIL || undefined,
     emailType: "CAPTAIN_NOTIFICATION",
     bookingId: params.bookingId,
   });

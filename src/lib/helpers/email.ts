@@ -29,6 +29,7 @@ export type MailInput = {
   to: string;
   subject: string;
   html: string;
+  bcc?: string;
 };
 
 export type MailInputWithContext = MailInput & {
@@ -57,6 +58,7 @@ async function sendViaResend({
   to,
   subject,
   html,
+  bcc,
 }: MailInput): Promise<{ success: true; messageId: string }> {
   const resend = getResendClient();
   if (!resend) {
@@ -75,6 +77,7 @@ async function sendViaResend({
     to,
     subject,
     html,
+    ...(bcc && { bcc }),
   });
 
   if (error) {
@@ -144,7 +147,7 @@ function isRetryableError(err: unknown): boolean {
 /**
  * Send email via SMTP with retry logic (fallback transport)
  */
-async function sendViaSMTP({ to, subject, html }: MailInput) {
+async function sendViaSMTP({ to, subject, html, bcc }: MailInput) {
   const from = process.env.SMTP_USER!;
   const maxRetries = 3;
   let lastError: unknown;
@@ -153,7 +156,7 @@ async function sendViaSMTP({ to, subject, html }: MailInput) {
     try {
       // Create fresh transporter for each attempt (serverless best practice)
       const transporter = createTransporter();
-      const info = await transporter.sendMail({ from, to, subject, html });
+      const info = await transporter.sendMail({ from, to, subject, html, ...(bcc && { bcc }) });
 
       console.info("[email] sent via SMTP", {
         to,
@@ -205,6 +208,7 @@ export async function sendMail({
   to,
   subject,
   html,
+  bcc,
   emailType,
   userId,
   bookingId,
@@ -216,7 +220,7 @@ export async function sendMail({
   // Try Resend first if configured
   if (resend) {
     try {
-      const result = await sendViaResend({ to, subject, html });
+      const result = await sendViaResend({ to, subject, html, bcc });
       console.info("[email] sent via Resend", {
         to,
         subject,
@@ -252,7 +256,7 @@ export async function sendMail({
 
   // Fallback to SMTP
   try {
-    const result = await sendViaSMTP({ to, subject, html });
+    const result = await sendViaSMTP({ to, subject, html, bcc });
 
     // Log success with fallback info
     logEmailSuccess({
