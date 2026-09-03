@@ -246,7 +246,7 @@ const Footer = ({ destinations = [] }: FooterProps) => {
       {/* Bottom Bar */}
       <div className="w-full border-t border-white/10 bg-[#c81e23]">
         <div className="flex flex-col items-center justify-between w-full gap-4 px-6 py-6 mx-auto max-w-7xl md:flex-row text-white/60">
-          <p className="text-sm">© 2025 Fishon. {t("allRightsReserved")}.</p>
+          <p className="text-sm">Fishon.my dimiliki dan dikendalikan oleh Kartel Motion Ventures (003441013-T).</p>
         </div>
       </div>
     </footer>
