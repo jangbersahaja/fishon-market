@@ -52,7 +52,8 @@ export async function createBlogPost(formData: FormData) {
     },
   });
 
-  revalidatePath("/blog");
+  revalidatePath("/ms/blog");
+  revalidatePath("/en/blog");
   revalidatePath("/admin/blog/posts");
 
   redirect("/admin/blog/posts");
@@ -104,8 +105,10 @@ export async function updateBlogPost(postId: string, formData: FormData) {
     },
   });
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${post.slug}`);
+  revalidatePath("/ms/blog");
+  revalidatePath("/en/blog");
+  revalidatePath(`/ms/blog/${post.slug}`);
+  revalidatePath(`/en/blog/${post.slug}`);
   revalidatePath("/admin/blog/posts");
 
   return { success: true, postId: post.id };
@@ -122,7 +125,8 @@ export async function deleteBlogPost(postId: string) {
     where: { id: postId },
   });
 
-  revalidatePath("/blog");
+  revalidatePath("/ms/blog");
+  revalidatePath("/en/blog");
   revalidatePath("/admin/blog/posts");
 
   return { success: true };
@@ -157,8 +161,10 @@ export async function togglePublishBlogPost(postId: string) {
     },
   });
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${post.slug}`);
+  revalidatePath("/ms/blog");
+  revalidatePath("/en/blog");
+  revalidatePath(`/ms/blog/${post.slug}`);
+  revalidatePath(`/en/blog/${post.slug}`);
   revalidatePath("/admin/blog/posts");
 
   return { success: true, published: post.published };
