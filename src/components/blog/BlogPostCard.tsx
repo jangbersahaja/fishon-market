@@ -14,7 +14,7 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
 
   return (
     <article className="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
-      <Link href={`/blog/${post.slug}`}>
+      <Link href={`/${locale}/blog/${post.slug}`}>
         {/* Cover Image */}
         {post.coverImage ? (
           <div className="relative aspect-video overflow-hidden bg-gray-100">
