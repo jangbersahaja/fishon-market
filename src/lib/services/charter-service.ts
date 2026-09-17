@@ -266,6 +266,9 @@ export async function getChartersByTechnique(
 export async function getCharterFlowType(
   charterId: string
 ): Promise<"MANUAL" | "AUTO"> {
+  // Platform-wide: MANUAL flow is disabled. All charters use AUTO flow.
+  return "AUTO";
+
   try {
     // Try DB first when enabled
     if (isDbPreferred() && isCaptainDbConfigured()) {
