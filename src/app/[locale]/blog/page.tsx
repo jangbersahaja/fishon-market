@@ -125,7 +125,7 @@ export default async function BlogPage({
               {categories.map((category) => (
                 <Link
                   key={category.id}
-                  href={`/blog/category/${category.slug}`}
+                  href={`/${locale}/blog/category/${category.slug}`}
                   className="px-4 py-2 text-sm font-medium transition rounded-full bg-white/20 hover:bg-white/30"
                 >
                   {category.name}
@@ -190,7 +190,7 @@ export default async function BlogPage({
                 >
                   {page > 1 && (
                     <Link
-                      href={`/blog?page=${page - 1}`}
+                      href={`/${locale}/blog?page=${page - 1}`}
                       className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                       {t("pagination.previous")}
@@ -200,7 +200,7 @@ export default async function BlogPage({
                     (p) => (
                       <Link
                         key={p}
-                        href={`/blog?page=${p}`}
+                        href={`/${locale}/blog?page=${p}`}
                         className={`rounded-md border px-4 py-2 text-sm font-medium ${
                           p === page
                             ? "border-[#ec2227] bg-[#ec2227] text-white"
@@ -214,7 +214,7 @@ export default async function BlogPage({
                   )}
                   {page < totalPages && (
                     <Link
-                      href={`/blog?page=${page + 1}`}
+                      href={`/${locale}/blog?page=${page + 1}`}
                       className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                       {t("pagination.next")}

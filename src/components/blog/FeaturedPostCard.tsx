@@ -19,7 +19,7 @@ export default function FeaturedPostCard({
   if (variant === "small") {
     return (
       <article className="group relative overflow-hidden rounded-lg">
-        <Link href={`/blog/${post.slug}`} className="flex gap-4">
+        <Link href={`/${locale}/blog/${post.slug}`} className="flex gap-4">
           {/* Thumbnail */}
           <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
             {post.coverImage ? (
@@ -83,7 +83,7 @@ export default function FeaturedPostCard({
   // Large variant (default)
   return (
     <article className="group relative overflow-hidden rounded-lg">
-      <Link href={`/blog/${post.slug}`}>
+      <Link href={`/${locale}/blog/${post.slug}`}>
         {/* Cover Image with Overlay */}
         <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
           {post.coverImage ? (
