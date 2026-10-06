@@ -51,6 +51,8 @@ export interface BookingWithDetails {
   longitude?: number | null;
   // Trip details
   durationHours?: number | null;
+  // Charter cover image (lowest sortOrder CharterMedia for the charter)
+  coverImageUrl?: string | null;
   // Time slots
   timeSlots?: Array<{
     day: number;
@@ -130,6 +132,23 @@ async function enrichBookingsWithCaptainData(
     WHERE id = ANY(${tripIds}::text[])
   `;
 
+  // Fetch the cover image (lowest sortOrder) per charter from the captain DB.
+  // DISTINCT ON returns one row per charterId, honoring the ORDER BY.
+  const coverDataRaw = await prismaCaptain.$queryRaw<
+    Array<{ charterId: string; url: string }>
+  >`
+    SELECT DISTINCT ON (m."charterId")
+      m."charterId",
+      m.url
+    FROM "CharterMedia" m
+    WHERE m."charterId" = ANY(${charterIds}::text[])
+    ORDER BY m."charterId", m."sortOrder" ASC
+  `;
+
+  const coverMap = new Map(
+    coverDataRaw.map((row) => [row.charterId, row.url])
+  );
+
   // Convert Decimal types to numbers and create lookup maps
   const charterMap = new Map(
     captainDataRaw.map((c) => [
@@ -187,6 +206,8 @@ async function enrichBookingsWithCaptainData(
       location: charter?.location || "Unknown Location",
       tripName: trip?.name || "Unknown Trip",
       durationHours: trip?.durationHours || 0,
+      // Charter cover image (lowest sortOrder media), keyed by the booking's charterId
+      coverImageUrl: coverMap.get(booking.charterId) || null,
       // Map Prisma field names to interface field names
       unitPrice: booking.tripPrice ? Number(booking.tripPrice) : 0,
       totalPrice: booking.finalPrice ? Number(booking.finalPrice) : 0,
@@ -270,6 +291,91 @@ export async function getUserBookings(
     return await enrichBookingsWithCaptainData(bookings);
   } catch (error) {
     console.error(`Error fetching bookings for user ${userId}:`, error);
+    throw new Error("Failed to fetch bookings. Please try again later.");
+  }
+}
+
+/**
+ * Build the Prisma `where` clause for a user's bookings from filters.
+ * Shared by the list and paginated variants.
+ */
+function buildBookingWhere(userId: string, filters?: BookingFilters): any {
+  const where: any = { userId };
+
+  if (filters?.status) {
+    where.status = Array.isArray(filters.status)
+      ? { in: filters.status }
+      : filters.status;
+  }
+
+  if (filters?.startDate || filters?.endDate) {
+    where.date = {};
+    if (filters.startDate) where.date.gte = filters.startDate;
+    if (filters.endDate) where.date.lte = filters.endDate;
+  }
+
+  if (filters?.searchTerm) {
+    const term = filters.searchTerm.toLowerCase();
+    where.OR = [
+      { charterName: { contains: term, mode: "insensitive" } },
+      { location: { contains: term, mode: "insensitive" } },
+      { tripName: { contains: term, mode: "insensitive" } },
+    ];
+  }
+
+  return where;
+}
+
+export interface PaginatedBookings {
+  bookings: BookingWithDetails[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Get a page of bookings for a user (offset-based pagination).
+ *
+ * Separate from getUserBookings() so existing array-returning callers are
+ * unaffected. Used by GET /api/account/bookings only when page/pageSize query
+ * params are supplied.
+ *
+ * @param page - 1-indexed page number (clamped to >= 1)
+ * @param pageSize - items per page (clamped to 1..100)
+ */
+export async function getUserBookingsPaginated(
+  userId: string,
+  page: number,
+  pageSize: number,
+  filters?: BookingFilters
+): Promise<PaginatedBookings> {
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const safePageSize =
+    Number.isFinite(pageSize) && pageSize > 0
+      ? Math.min(Math.floor(pageSize), 100)
+      : 20;
+
+  const where = buildBookingWhere(userId, filters);
+
+  try {
+    const [total, bookings] = await Promise.all([
+      prisma.booking.count({ where }),
+      prisma.booking.findMany({
+        where,
+        include: { conversation: { select: { id: true } } },
+        orderBy: { createdAt: "desc" },
+        skip: (safePage - 1) * safePageSize,
+        take: safePageSize,
+      }),
+    ]);
+
+    const enriched = await enrichBookingsWithCaptainData(bookings);
+    return { bookings: enriched, total, page: safePage, pageSize: safePageSize };
+  } catch (error) {
+    console.error(
+      `Error fetching paginated bookings for user ${userId}:`,
+      error
+    );
     throw new Error("Failed to fetch bookings. Please try again later.");
   }
 }
