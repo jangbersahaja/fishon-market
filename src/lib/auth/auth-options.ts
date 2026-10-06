@@ -166,11 +166,13 @@ export const authOptions: NextAuthOptions = {
           try {
             const dbUser = await prisma.user.findUnique({
               where: { email: user.email.toLowerCase() },
-              select: { id: true, role: true },
+              select: { id: true, role: true, image: true, phone: true },
             });
             if (dbUser) {
               token.id = dbUser.id;
               (token as any).role = dbUser.role;
+              (token as any).avatarUrl = dbUser.image ?? null;
+              (token as any).phone = dbUser.phone ?? null;
             }
           } catch (error) {
             console.error("Error fetching user role:", error);
@@ -183,10 +185,12 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { email: String(token.email).toLowerCase() },
-            select: { role: true },
+            select: { role: true, image: true, phone: true },
           });
           if (dbUser) {
             (token as any).role = dbUser.role;
+            (token as any).avatarUrl = dbUser.image ?? null;
+            (token as any).phone = dbUser.phone ?? null;
           }
         } catch (error) {
           console.error("Error refreshing user role:", error);
@@ -199,6 +203,10 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id as string | undefined;
         (session.user as any).role = (token as any).role as string | undefined;
+        (session.user as any).avatarUrl =
+          ((token as any).avatarUrl as string | null | undefined) ?? null;
+        (session.user as any).phone =
+          ((token as any).phone as string | null | undefined) ?? null;
       }
       return session;
     },
